@@ -1,0 +1,55 @@
+# Historical runs
+history/*
+!history/.gitkeep
+active_run.json
+active_pipeline.json
+
+# User data
+my_data/*
+!my_data/image.jpg
+!my_data/6_dimensions.npy
+
+# New block
+my_blocks/*
+!my_blocks/.gitkeep
+temp_computations.py
+
+# Node and npm related
+node_modules/
+npm-debug.log
+package-lock.json
+yarn.lock
+
+# Build artifacts
+frontend/build/
+frontend/dist/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime*
+
+# Python related
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+*.egg
+*.venv/
+*.virtualenv/
+backend/db.sqlite3 # If you use SQLite
+
+# Environment variables
+.env
+
+# Miscellaneous
+*.bak
+*.tmp
+*.swp

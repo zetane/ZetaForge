@@ -1,0 +1,51 @@
+{
+    "block": {
+        "information": {
+            "id": "block_text",
+            "name": "Text",
+            "description": "description",
+            "system_version": "block system version number"
+        },
+        "inputs": {
+        },
+        "outputs": {
+            "text": {
+                "type": "str",
+                "input_connections": [
+                ],
+                "relay_connections": [
+                ]
+            }
+        },
+        "parameters": {
+            "text": {
+                "value": "",
+                "type": "str"
+            }
+        },
+        "action": {
+            "languages": {
+                "name": "python",
+                "version": "3.9"            
+            },
+            "container_uuid": "block_text",
+            "container_image_uuid": "block_text",
+            "block_source": "block_text"
+        },
+        "views":{
+            "node": {
+                "active": "True or False",
+                "html": "<textarea style='width: 135px; height: 100px;' parameters-text></textarea>",
+                "pos_x": "300",
+                "pos_y": "200",
+                "pos_z": "999, this is the z-index for 2D canvas"
+            }
+        },
+        "controllers":{
+
+        },
+        "events": [
+
+        ]
+    }
+}

@@ -1,0 +1,105 @@
+{
+    "block": {
+        "information": {
+            "id": "canny_edge",
+            "organization": "organization name",
+            "permissions": "public, private (member roles, members list)",
+            "name": "Canny Edge",
+            "description": "description",
+            "system_version": "block system version number",
+            "block_version": "block version number",
+            "creation_date": "creation date",
+            "creator": "name of block creator"
+        },
+
+        "inputs": {
+            "image_path": {
+                "type": "str",
+                "shape": "optional shape",
+                "description": "description",
+                "required": "True or False",
+                "connections": [
+                ],
+                "relay_connections": [
+                ]
+            },
+            "range_min": {
+                "type": "int",
+                "shape": "optional shape",
+                "description": "description",
+                "required": "True or False",
+                "connections": [
+                ],
+                "relay_connections": [
+                ]
+            },
+            "range_max": {
+                "type": "int",
+                "shape": "optional shape",
+                "description": "description",
+                "required": "True or False",
+                "connections": [
+                ],
+                "relay_connections": [
+                ]
+            },
+            "step": {
+                "type": "int",
+                "shape": "optional shape",
+                "description": "description",
+                "required": "True or False",
+                "connections": [
+                ],
+                "relay_connections": [
+                ]
+            }
+        },
+        "outputs": {
+            "image_paths": {
+                "type": "List[str]",
+                "shape": "optional shape",
+                "description": "description",
+                "required": "True or False",
+                "connections": [
+                ],
+                "relay_connections": [
+                ]
+            }
+        },
+        "parameters": {
+
+        },
+        "action": {
+            "times": "number of times (1,2,...), all or continuous/streaming",
+            "production": "replace or stream (stream will add the event to the events queue, replace will keep only last event in the event queue",
+            "compute_type": "container, image (run using the container id or rebuilding the image), block_source, blocks, function, prompt, script",
+
+            "languages": {
+                "name": "python",
+                "version": "3.9"            
+            },
+
+            "container_uuid": "canny_edge",
+            "container_image_uuid": "canny_edge",
+            "block_source": "blocks/canny_edge",
+            "version:": "latest"
+        },
+        "views":{
+            "node": {
+                "active": "True or False",
+                "html": "",
+                "pos_x": "300",
+                "pos_y": "200",
+                "pos_z": "999, this is the z-index for 2D canvas"
+            },
+            "view_1": "block_unique_id, active or not",
+            "view_2": "block_unique_id, active or not"
+        },
+        "controllers":{
+
+        },
+        "events": [
+
+        ]
+    }
+}

@@ -1,0 +1,44 @@
+{
+    "block": {
+        "information": {
+            "id": "training_iris",
+            "name": "Train Iris",
+            "description": "description",
+            "system_versions": [],
+            "block_version": "block version number"
+        },
+
+        "inputs": {
+            "epoch": {
+                "type": "int",
+                "connections": [],
+                "relay_connections": []
+            }
+        },
+        "outputs": {
+            "val_acc": {
+                "type": "float",
+                "connections": [],
+                "relay_connections": []
+            }
+        },
+        "parameters": {},
+        "action": {
+            "container_uuid": "training_iris",
+            "container_image_uuid": "training_iris",
+            "block_source": "blocks/training_iris",
+            "version:": "latest"
+        },
+        "views":{
+            "mode": "modal",
+            "node": {
+                "active": "True or False",
+                "html": "",
+                "pos_x": "300",
+                "pos_y": "200",
+                "pos_z": "999"
+            }
+        },
+        "events": []
+    }
+}

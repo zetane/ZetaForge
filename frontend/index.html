@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+  <script src="https://cdn.jsdelivr.net/npm/uuid@8.3.2/dist/umd/uuidv4.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/themes/base/jquery-ui.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.1.3/js/bootstrap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.30.1/min/vs/loader.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/json-formatter-js@2.2.1/dist/json-formatter.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/carbon-components/css/carbon-components.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.1.3/css/bootstrap.min.css">
+  
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/js/all.min.js" integrity="sha256-KzZiKy0DWYsnwMF+X1DvQngQ2/FxF7MF3Ff72XcpuPs=" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css" integrity="sha256-h20CPZ0QyXlBuAw7A+KluUYx/3pK+c7lYEpqLTlxjYQ=" crossorigin="anonymous" />
+  
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/micromodal/dist/micromodal.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
+  <link rel="stylesheet" type="text/css" href="./src/css/index.css" />
+  <link rel="stylesheet" type="text/css" href="./src/css/drawflow.css" />
+  <link id="theme-link" rel="stylesheet" type="text/css" href="../src/css/theme2.css" />
+  <link rel="stylesheet" type="text/css" href="./src/css/beautiful.css" />
+  <link id="theme-menus-link" rel="stylesheet" type="text/css" href="./src/css/theme2_menus.css" />
+
+  <link rel="icon" type="image/png" href="./src/assets/images/zetane_logo.png">
+  <script src="./src/js/ZetaneDrawflowEditor.js"></script>
+
+  <title>Zetane AI Forge</title>
+</head>
+
+<body>    
+  <div style="display: flex; align-items: center;padding-top:5px">
+    <img style="padding-left: 15px;height:40px;" src="./src/assets/images/zetane_logo.png">
+    <h2 style="padding-left: 15px;padding-right: 15px;color: rgba(105, 23, 176, 1);"><span style="font-family: 'Roboto';font-size: 28px;">Zetane</span></h2>
+
+    <div id="spinner" class="loader" style="display: none;"></div>
+  </div>
+
+  <div class="button-container">
+    <!-- *** Kubernetes is presently disabled since it has not been tested recently -->
+    <input type="checkbox" id="compute_with_kubernetes" style="display: none;">
+    <label for="compute_with_kubernetes" style="display: none;padding-right:20px;padding-left: 5px;">Kubernetes</label>
+    <input type="checkbox" id="build" checked>
+    <label for="build" style="padding-right:20px;padding-left: 5px;">Build</label>
+    <script>
+      $('#compute_with_kubernetes').change(function() {
+        $('#build').prop('checked', true);
+      });
+    </script>
+
+
+    <button id="run" class="button_z"><i class="fa fa-play"></i> Run</button>
+    <script src="src/js/runPipeline.js"></script>
+  
+
+    <button id="getLog" class="button_z" onclick="getLog()">Log</button>
+    <div id="log_overlay">
+      <div class="log-overlay-content">
+        <textarea id="log" style="height: 85vh; width: 100%; overflow: auto; background-color: black; color: white; padding: 20px;" readonly></textarea>
+      </div>
+      <a href="javascript:void(0)" class="closebtn" onclick="closeLogOverlay()">&times;</a>
+    </div>
+    <script src="src/js/showLogs.js"></script>
+
+
+    <button type="button" class="button_z" id="json_button" data-bs-toggle="modal" data-bs-target="#myModal">
+      Pipeline
+    </button>
+    <div class="modal fade" id="myModal" style="z-index: 1550 !important;color:black">
+      <div class="modal-dialog  modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title">Pipeline of Blocks</h4>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body" id="json_pipeline">
+            <p>This is the content of the modal.</p>         
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="src/js/showPipelineJson.js"></script>
+
+
+    <!-- *** History stored locally in JSON files -->
+      <button id="getHistory" class="button_z" onclick="getHistoryLocal()">Last</button>
+      <div id="history_overlay">
+        <div class="history-overlay-local-content" id="history-local-content"></div>
+        <a href="javascript:void(0)" class="closebtn" onclick="closeHistoryOverlay()">&times;</a>
+      </div>
+    <script src="src/js/showHistory.js"></script>
+
+    <!-- *** History stored on a postgreSQL database -->
+    <!-- <button id="getHistory" class="button_z" onclick="getHistory()">History</button>
+    <div id="history_overlay">
+      <div class="history-overlay-content">
+        <div id="pagination">
+          <button id="prevPage" disabled>Previous</button>
+          <span id="currentPage"></span>
+          <button id="nextPage" disabled>Next</button>
+        </div>
+        <table id="myTable" class="bx--data-table bx--data-table--compact">
+          <thead>
+            <tr id="tableHeaders">
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+          </tbody>
+        </table>
+      </div>
+      <a href="javascript:void(0)" class="closebtn" onclick="closeHistoryOverlay()">&times;</a>
+    </div>
+    <script src="src/js/showHistory.js"></script> -->
+
+
+    <button id="saveButton" class="button_z">Save</button>
+    <script src="src/js/savePipeline.js"></script>
+
+
+    <div id="code_overlay">
+      <div class="code-overlay-content"></div>
+      <div style="text-align: left;">
+        <label for="blockName">File Name:</label>
+        <input type="text" id="blockName" name="blockName" placeholder="Block name" value="block"">
+        <button id="saveCodeButton" class="button_z" style='margin-right: 100px;margin-bottom: 20px;'>Save</button>
+      </div>
+        <div>
+        <textarea id="prompt" style='margin-left: 50px;font-size: 20px;'></textarea>
+        <button id="changeButton" class="button_z" style='margin-left: 5px;margin-bottom: 15px;'>Generate</button>
+      </div>
+      <div id="code_editor"></div>
+      <a href="javascript:void(0)" class="closebtn" onclick="closeCodeOverlay()">&times;</a>
+    </div>
+    <script src="src/js/codeOverlay.js"></script>
+
+
+    <input type="file" id="fileInput" style="display: none" />
+    <button id="loadButton" class="button_z">Load</button>
+    <script src="src/js/loadPipeline.js"></script>
+
+
+    <button id="clear_btn" class="button_z" onclick="editor.clearModuleSelected()">Clear</button>
+
+    <button id="theme-button" class="button_z">Theme</button>
+    <script type="text/javascript" src="src/js/changeColorTheme.js"></script>    
+  </div>
+
+
+  <div id="view_overlay">
+      <iframe id="frameContent" style="height:95vh;width:95%;" frameborder="0"></iframe>
+      <div class="view_overlay-content">
+      </div>
+      <a href="javascript:void(0)" class="closebtn" onclick="closeOverlay()">&times;</a>
+  </div>
+  <script src="src/js/viewOverlay.js"></script>
+
+
+  <div class="wrapper">
+    <div id="side_library" class="col">
+      <!-- This is populated at launch by items in the following format:
+      <div class="drag-drawflow" draggable="true" ondragstart="drag(event)" data-node="block_new_python">
+        <i class="fa fa-plus-square"></i><span> New Python</span>
+      </div> -->
+    </div>
+    <script src="src/js/populateSidebarLibrary.js"></script>
+
+    <div class="col-right">
+      <!-- HIDDEN TABS -->
+      <div class="menu" style="display: none;">
+        <ul>
+          <li style="margin-left:10px;padding-left: 5px;" onclick="editor.changeModule(' Home'); changeModule(event);" class="selected">Home</li>
+          <li style="padding-left: 5px;" onclick="editor.changeModule(' Tab1'); changeModule(event);">Tab1</li>
+        </ul>
+      </div>
+      <div id="drawflow" ondrop="drop(event)" ondragover="allowDrop(event)">
+        <div class="btn-lock">
+          <i id="lock" class="fas fa-lock" onclick="editor.editor_mode='fixed'; changeMode('lock');"></i>
+          <i id="unlock" class="fas fa-lock-open" onclick="editor.editor_mode='edit'; changeMode('unlock');" style="display:none;"></i>
+        </div>
+        <div class="bar-zoom">
+          <i class="fas fa-search-minus" onclick="editor.zoom_out()"></i>
+          <i class="fas fa-search" onclick="editor.zoom_reset()"></i>
+          <i class="fas fa-search-plus" onclick="editor.zoom_in()"></i>
+        </div>
+      </div>
+    </div>    
+  </div>
+  <script src="src/js/drawflowManipulations.js"></script>
+  <script src="src/js/initDrawflow.js"></script>
+
+</body>
+</html>
