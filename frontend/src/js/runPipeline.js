@@ -63,24 +63,23 @@ try {
     }
     });
 
+    // To use the a local postgresql database
+    // const result3 = await $.ajax({
+    // type: 'POST',
+    // url: '/get-graph',
+    // contentType: 'application/json',
+    // data: JSON.stringify(window.graph),
+    // success: function(response) {
+    //     var console_print = response.data[0].data['1'].events[0].outputs.log;
 
-    const result3 = await $.ajax({
-    type: 'POST',
-    url: '/get-graph',
-    contentType: 'application/json',
-    // data: JSON.stringify(data),
-    data: JSON.stringify(window.graph),
-    success: function(response) {
-        var console_print = response.data[0].data['1'].events[0].outputs.log;
+    //     var console_print_for_html = console_print.replace(/\n/g, '<br>');
 
-        var console_print_for_html = console_print.replace(/\n/g, '<br>');
-
-        const paths = response.data[0].data['1'].events[0].outputs.image_path;        
-    },
-    error: function(response) {
-        alert('Error: ' + response.responseJSON.error);
-    }
-    });
+    //     const paths = response.data[0].data['1'].events[0].outputs.image_path;        
+    // },
+    // error: function(response) {
+    //     alert('Error: ' + response.responseJSON.error);
+    // }
+    // });
 
 } catch (error) {
     alert('Error: ' + error.responseJSON.error);

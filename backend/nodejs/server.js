@@ -1,3 +1,5 @@
+const local_postgresql_database = false;
+
 const express = require('express');
 var fs = require('fs');
 const path = require('path');
@@ -32,17 +34,19 @@ const configuration = new Configuration({
 });
 const openai = new OpenAIApi(configuration);
 
-// Initialize PostgreSQL client
-const client = new Client({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT || 5432,
-});
+if (local_postgresql_database){
+  // Initialize PostgreSQL client
+  const client = new Client({
+    user: process.env.DB_USER,
+    host: process.env.DB_HOST,
+    database: process.env.DB_NAME,
+    password: process.env.DB_PASSWORD,
+    port: process.env.DB_PORT || 5432,
+  });
 
-// Connect to the database
-client.connect();
+  // Connect to the database
+  client.connect();
+}
 
 
 function getActiveRun() {
