@@ -1,0 +1,46 @@
+@mixin ztn-colors-g10 {
+	--pds-blue-0: #91c5ff;
+	--pds-blue-10: #78b8ff;
+	--pds-blue-20: #60abff;
+	--pds-blue-30: #479eff;
+	--pds-blue-40: #2f91ff;
+	--pds-blue-50: #d816ff;
+	--pds-blue-60: #ff0ad6;
+	--pds-blue-70: #ff00ad;
+	--pds-blue-80: #085ebf;
+	--pds-blue-90: #0751a6;
+	--pds-blue-100: #053f80;
+	--cds-button-primary: var(--pds-blue-60) !important;
+	--cds-button-primary-hover: var(--pds-blue-70) !important;
+	--cds-background-brand: var(--pds-blue-60) !important;
+	--cds-border-interactive: var(--pds-blue-60) !important;
+	--cds-link-primary: var(--pds-blue-60) !important;
+	--cds-link-primary-hover: var(--pds-blue-70) !important;
+	--cds-link-secondary: var(--pds-blue-70) !important;
+	--cds-link-inverse: var(--pds-blue-40) !important;
+	--cds-focus: var(--pds-blue-60) !important;
+	--cds-focus-inverse: var(--pds-blue-60) !important;
+}
+@mixin ztn-colors-g100 {
+	--pds-blue-0: #91c5ff;
+	--pds-blue-10: #78b8ff;
+	--pds-blue-20: #60abff;
+	--pds-blue-30: #479eff;
+	--pds-blue-40: #2f91ff;
+	--pds-blue-50: #d816ff;
+	--pds-blue-60: #ff0ad6;
+	--pds-blue-70: #ff00ad;
+	--pds-blue-80: #085ebf;
+	--pds-blue-90: #0751a6;
+	--pds-blue-100: #053f80;
+	--cds-button-primary: var(--pds-blue-60) !important;
+	--cds-button-primary-hover: var(--pds-blue-70) !important;
+	--cds-background-brand: var(--pds-blue-60) !important;
+	--cds-border-interactive: var(--pds-blue-60) !important;
+	--cds-link-primary: var(--pds-blue-60) !important;
+	--cds-link-primary-hover: var(--pds-blue-70) !important;
+	--cds-link-secondary: var(--pds-blue-70) !important;
+	--cds-link-inverse: var(--pds-blue-40) !important;
+	--cds-focus: var(--pds-blue-60) !important;
+	--cds-focus-inverse: var(--pds-blue-60) !important;
+}

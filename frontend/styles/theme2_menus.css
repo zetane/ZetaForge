@@ -1,0 +1,35 @@
+.drag-drawflow {
+	background-color: rgba(69, 69, 69, 1);
+	border: 1px solid orange;
+}
+
+.menu {
+	background: black;
+	color: white;
+}
+
+.menu ul {
+	padding: 0px;
+	margin: 0px;
+	line-height: 40px;
+}
+
+.menu ul li {
+	border-color: gray;
+	background-color: gray;
+	/* border-right: 3px solid var(--border-color);
+  border-top: 3px solid var(--border-color);
+  border-left: 3px solid var(--border-color); */
+	border-top-left-radius: 5px;
+	border-top-right-radius: 5px;
+	border-width: 2px;
+}
+
+.menu ul li.selected {
+	border-color: gray;
+	background-color: gray;
+}
+
+.col {
+	border-right: transparent;
+}
