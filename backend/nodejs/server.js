@@ -8,7 +8,7 @@ const { exec } = require('child_process');
 const app = express();
 const port = 3330;
 
-app.use(express.static(path.join(__dirname, '..', '..', 'frontend')));
+app.use(express.static(path.join(__dirname, '..', '..', 'backup_frontend')));
 app.use('/blocks', express.static(path.join(__dirname, '..', '..', 'blocks')));
 app.use('/my_data', express.static(path.join(__dirname, '..', '..', 'my_data')));
 app.use('/history', express.static(path.join(__dirname, '..', '..', 'history')));
