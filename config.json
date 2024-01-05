@@ -1,0 +1,12 @@
+{
+    "ServerPort":"8080",
+    "IsLocal":true,
+    "KanikoImage":"gcr.io/kaniko-project/executor:latest",
+    "Bucket":"zetaforge",
+    "S3Port":"9444",
+    "RegistryPort":"5000",
+    "ComputationFile":"computations.py",
+    "EntrypointFile":"entrypoint.py",
+    "WorkDir":"/app",
+    "FileDir":"/files"
+} 
