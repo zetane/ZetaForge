@@ -399,9 +399,6 @@ func buildHistory(sinkPath string) error {
     if err := os.Mkdir(filepath.Join(sinkPath, "pipeline"), 0755); err != nil {
         return err
     }
-    if err := os.Mkdir(filepath.Join(sinkPath, "partial_results"), 0755); err != nil {
-        return err
-    }
     if err := os.Mkdir(filepath.Join(sinkPath, "logs"), 0755); err != nil {
         return err
     }
@@ -468,7 +465,7 @@ func logs(sink string, workflow oargo.Workflow) error {
     return nil
 }
 
-func runArgo(sink string, pipeline zjson.Pipeline) (oargo.Workflow, error) {
+func runArgo(sink string, pipeline zjson.Pipeline, hub *Hub) (oargo.Workflow, error) {
     var workflow oargo.Workflow
     exeCmd := cmd.NewCmd("argo", "submit", filepath.Join(sink, "pipeline.yml"), "--output", "json")
     <- exeCmd.Start()
@@ -481,8 +478,6 @@ func runArgo(sink string, pipeline zjson.Pipeline) (oargo.Workflow, error) {
         return workflow, err
     }
 
-    completed := make(map[string]bool)
-
     for {
         getCmd := cmd.NewCmd("argo", "get", workflow.Metadata.Name, "--output", "json")
         <- getCmd.Start()
@@ -490,22 +485,36 @@ func runArgo(sink string, pipeline zjson.Pipeline) (oargo.Workflow, error) {
         if err := json.Unmarshal([]byte(jsonData), &workflow); err != nil {
             return workflow, err
         }
-        for _, node := range workflow.Status.Nodes {
+
+        for name, node := range workflow.Status.Nodes {
             if node.Type == "Pod" {
-                if _, exist := completed[node.Id]; !exist {
-                    if node.Phase == "Succeeded" {
-                        completed[node.Id] = true
-                        path := filepath.Join(sink, "partial_results" , node.Template + "_results.json")
-                        results(path, pipeline, workflow)
+                nameSplit := strings.Split(name, "-")
+                nameLen := len(nameSplit)
+                nameSplit = append(nameSplit, nameSplit[nameLen - 1])
+                nameSplit[nameLen - 1] = node.Template
+                podName := strings.Join(nameSplit, "-")
+                logCmd := cmd.NewCmd("argo", "logs", workflow.Metadata.Name, podName)
+                <- logCmd.Start()
+                logs := strings.Join(logCmd.Status().Stdout, "\n")
+                if len(logs) > 0 {
+                    hub.Broadcast <- Message{
+                        RoomId: pipeline.Id,
+                        Content: logs,
                     }
                 }
+                
             }
+        }
+
+        hub.Broadcast <- Message{
+            RoomId: pipeline.Id,
+            Content: workflow.Status.Phase,
         }
 
         if workflow.Status.Phase != "Running" {
             break
         }
-        time.Sleep(time.Second)
+        time.Sleep(time.Second * 10)
     }
 
     return workflow, nil
@@ -534,9 +543,17 @@ func deleteFiles(files []string, cfg Config, awsConfig aws.Config) {
     }
 }
 
-func execute(pipeline zjson.Pipeline, cfg Config, awsConfig aws.Config) {
+func execute(pipeline zjson.Pipeline, cfg Config, awsConfig aws.Config, hub *Hub) {
     sink := filepath.Join(pipeline.Sink, pipeline.Id + "-" + time.Now().Format("2006-01-02T15-04-05.000"))
     defer log.Printf("Completed")
+
+    if _, ok := hub.Clients[pipeline.Id]; ok {
+        log.Printf("Pipeline already exists")
+        return
+    }
+
+    hub.Clients[pipeline.Id] = make(map[*Client]bool)
+    defer hub.CloseRoom(pipeline.Id)
 
     if err := upload(cfg.EntrypointFile, cfg.EntrypointFile, cfg, awsConfig); err != nil { // should never fail
         log.Printf("Failed to upload entrypoint file; err=%v", err)
@@ -605,7 +622,7 @@ func execute(pipeline zjson.Pipeline, cfg Config, awsConfig aws.Config) {
         uploadedFiles = append(uploadedFiles, name)
     }
 
-    output, err := runArgo(sink, pipeline)
+    output, err := runArgo(sink, pipeline, hub)
     defer deleteArgo(output)
     if err != nil {
         deleteFiles(uploadedFiles, cfg, awsConfig)
