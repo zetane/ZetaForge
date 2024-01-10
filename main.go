@@ -55,7 +55,7 @@ func localConfig(cfg Config) gin.HandlerFunc {
     }
 }
 
-func run(ctx *gin.Context) {
+func run(ctx *gin.Context, hub *Hub) {
     schema, err := json.Marshal(jsonschema.Reflect(&zjson.Pipeline{}))
 
     if err != nil { // Should never happen outside of development
@@ -111,9 +111,7 @@ func run(ctx *gin.Context) {
         return 
     }
  
-    go execute(pipeline, cfg.(Config), awsConfig.(aws.Config))
-
-    ctx.String(http.StatusOK, "") 
+    go execute(pipeline, cfg.(Config), awsConfig.(aws.Config), hub)
 }
 
 func main() {
@@ -128,9 +126,21 @@ func main() {
         return
     }
 
+    hub := newHub()
+    go hub.Run()
+
     router := gin.Default()
     router.Use(localConfig(config))
-    router.POST("/run", run)
+    router.POST("/run", func(ctx *gin.Context) {
+        run(ctx, hub)
+    })
+    router.GET("/ws/:roomId", func(ctx *gin.Context) {
+        roomId := ctx.Param("roomId")
+        if err := serveSocket(ctx, roomId, hub); err != nil {
+            log.Printf("Websocket error; err=%v", err)
+            ctx.String(http.StatusInternalServerError, err.Error())
+        }
+    })
 
     router.Run(":" + config.ServerPort)
 }
