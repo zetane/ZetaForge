@@ -1,3 +1,11 @@
 {
-  "extends": "next/core-web-vitals"
+  "extends": [
+    "next/babel",
+    "next/core-web-vitals",
+    "prettier",
+    "plugin:prettier/recommended" //needs to be the last extension in the list
+  ],
+  "rules": {
+    "prettier/prettier": "error"
+  }
 }

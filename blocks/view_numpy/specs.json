@@ -54,7 +54,7 @@
             "container_uuid": "view_numpy",
             "container_image_uuid": "view_numpy",
             "block_source": "blocks/view_numpy",
-            "version:": "latest"
+            "version": "latest"
         },
         "views":{
             "mode": "modal",

@@ -1,0 +1,42 @@
+.library-tile {
+  height: 132px;
+  width: 132px;
+  border-radius: 7px;
+  padding: 0px !important;
+  margin: 5px;
+  cursor: move; 
+
+  /* Prevent background color leak outs */
+  -webkit-background-clip: padding-box;
+  -moz-background-clip: padding;
+  background-clip: padding-box;
+}
+
+.library-header {
+  background-color: var(--cds-button-primary-hover);
+  color: var(--cds-link-inverse);
+  height: 30px;
+  padding: 5px;
+  border-radius: 7px 7px 0px 0px;
+}
+
+.library-switcher {
+  position: fixed !important;
+  left: 0px;
+  top: 48px;
+  border-radius: 2px;
+  z-index: 9000;
+}
+
+.library-tab {
+  padding: 0px !important;
+}
+
+.cds--tabs .cds--tab--list {
+  width: 100% !important;
+  block-size: 3rem;
+}
+
+.cds--tabs .cds--tabs__nav-item-label-wrapper {
+  justify-content: center;
+}

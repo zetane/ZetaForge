@@ -76,7 +76,7 @@ Specs.json files will have the same template for all programming languages and b
             "container_uuid": "minimal",
             "container_image_uuid": "minimal",
             "block_source": "blocks/minimal",
-            "version:": "latest"
+            "version": "latest"
         },
         "views":{
             "mode": "modal",

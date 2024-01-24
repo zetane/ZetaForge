@@ -45,7 +45,7 @@
             "container_uuid": "view_two_columns",
             "container_image_uuid": "view_two_columns",
             "block_source": "blocks/view_two_columns",
-            "version:": "latest"
+            "version": "latest"
         },
         "views": {
             "mode": "new_tab",

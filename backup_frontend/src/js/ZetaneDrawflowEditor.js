@@ -1,5 +1,4 @@
-class Drawflow {
-  // export default class Drawflow {
+export default class Drawflow {
   constructor(container, render = null, parent = null) {
     this.events = {};
     this.container = container;
@@ -171,14 +170,15 @@ class Drawflow {
 
 
   load_block() {
-    for (var key in this.drawflow_block) {
+    console.log("loading blocks: ", this.drawflow_block)
+    for (const key in this.drawflow_block) {
       this.addNode_from_JSON(this.drawflow_block[key], this.drawflow_block[key].views.node.pos_x, this.drawflow_block[key].views.node.pos_y);
     }
-    for (var key in this.drawflow_block) {
+    for (const key in this.drawflow_block) {
       let outputs_keys = Object.keys(this.drawflow_block[key].outputs);
-      for (var i = 0; i < outputs_keys.length; i++) {
+      for (let i = 0; i < outputs_keys.length; i++) {
         let input_connections = this.drawflow_block[key].outputs[outputs_keys[i]].connections;
-        for (var j = 0; j < input_connections.length; j++) {
+        for (let j = 0; j < input_connections.length; j++) {
           this.addConnection(key, input_connections[j].node, outputs_keys[i], input_connections[j].input);
 
 
@@ -1706,7 +1706,6 @@ class Drawflow {
   updateNodeValue(event) {
     var attr = event.target.attributes
     for (var i = 0; i < attr.length; i++) {
-      // if (attr[i].nodeName.startsWith('df-')) {
       if (attr[i].nodeName.startsWith('parameters-')) {
         // var keys = attr[i].nodeName.slice(3).split("-");
         var keys = attr[i].nodeName.slice(11).split("-");

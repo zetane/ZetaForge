@@ -8,5 +8,6 @@
     "ComputationFile":"computations.py",
     "EntrypointFile":"entrypoint.py",
     "WorkDir":"/app",
-    "FileDir":"/files"
+    "FileDir":"/files",
+    "ArgoPath":"argo"
 } 

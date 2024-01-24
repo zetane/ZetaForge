@@ -1,0 +1,61 @@
+{
+  "information": {
+    "id": "canny_edge",
+    "name": "Canny Edge",
+    "description": "description",
+    "block_version": "block version number",
+    "block_source": "blocks/canny_edge",
+    "block_type": ""
+  },
+  "inputs": {
+    "image_path": {
+      "type": "str",
+      "connections": [],
+      "relays": []
+    },
+    "range_min": {
+      "type": "int",
+      "connections": [],
+      "relays": []
+    },
+    "range_max": {
+      "type": "int",
+      "connections": [],
+      "relays": []
+    },
+    "step": {
+      "type": "int",
+      "connections": [],
+      "relays": []
+    }
+  },
+  "outputs": {
+    "image_paths": {
+      "type": "List[str]",
+      "connections": [],
+      "relays": []
+    }
+  },
+  "action": {
+    "container": {
+      "image": "canny_edge",
+      "version": "latest",
+      "command_line": [
+        "python",
+        "entrypoint.py"
+      ]
+    }
+  },
+  "views": {
+    "node": {
+      "active": "True or False",
+      "title_bar": {},
+      "preview": {},
+      "html": "",
+      "pos_x": "300",
+      "pos_y": "200",
+      "pos_z": "999, this is the z-index for 2D canvas"
+    }
+  },
+  "events": []
+}

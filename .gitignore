@@ -14,6 +14,9 @@ my_blocks/*
 !my_blocks/.gitkeep
 temp_computations.py
 
+# Pipelines
+my_pipelines/*
+
 # Node and npm related
 node_modules/
 npm-debug.log

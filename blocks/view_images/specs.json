@@ -45,7 +45,7 @@
             "container_uuid": "view_images",
             "container_image_uuid": "view_images",
             "block_source": "blocks/view_images",
-            "version:": "latest"
+            "version": "latest"
         },
         "views": {
             "mode": "modal",

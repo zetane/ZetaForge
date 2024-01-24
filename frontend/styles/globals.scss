@@ -1,37 +1,53 @@
 @use '@carbon/react/scss/themes';
 @use '@carbon/react/scss/theme';
+@use '@carbon/react/scss/grid';
 
 @use './color-tokens.scss';
 @use './font.scss';
+@use './drawflow-dark-theme.scss';
+@use './drawflow-light-theme.scss';
 @import '@carbon/styles/css/styles.css';
 
 @import './beautiful.css';
-@import './drawflow.css';
-@import './theme_menus.css';
-@import './theme.css';
-@import './theme2_menus.css';
-@import './theme2.css';
+@import './drawflow.scss';
+@import './drawflows.scss';
+@import './library.scss';
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-html {
+@include grid.flex-grid();
+
+body {
 	background-color: var(--cds-background) !important;
 }
 :root {
 	@include theme.theme();
-	background-color: var(--cds-background) !important;
 }
 
 .cds--g10 {
 	@include theme.theme(themes.$g10);
 	@include color-tokens.ztn-colors-g10;
+	@include drawflow-light-theme.drawflow-light;
 }
 
 .cds--g100 {
 	@include theme.theme(themes.$g100);
 	@include color-tokens.ztn-colors-g100;
+	@include drawflow-dark-theme.drawflow-dark;
+}
+
+.cds--side-nav {
+	max-inline-size: 30rem !important;
+} 
+
+.cds--side-nav--expanded {
+	inline-size: 30rem !important;
+}
+
+.cds--side-nav__items {
+	padding: 0px !important;
 }
 
 [data-carbon-theme='g10'] {
@@ -42,12 +58,6 @@ html {
 	@include theme.theme(themes.$g100);
 }
 
-[data-carbon-theme='g100'] {
-	.cds--btn--primary {
-		background-color: red !important;
-	}
-}
-
 .theme-mode-transition * {
-	transition: all 400ms cubic-bezier(0.2, 0.2, 0.38, 0.9);
+	transition: all 200ms cubic-bezier(0.2, 0.2, 0.38, 0.9);
 }
