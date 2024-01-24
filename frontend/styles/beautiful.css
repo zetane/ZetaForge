@@ -57,14 +57,9 @@ header a {
 
 .drag-drawflow {
 	/* line-height: 50px; */
-	line-height: 40px;
-	border: 1px solid var(--border-color);
-	padding-left: 20px;
-	border-radius: 10px;
 	cursor: move;
-	user-select: none;
-	padding-bottom: 3px;
 }
+
 .menu {
 	position: absolute;
 	height: 40px;
@@ -198,9 +193,8 @@ header a {
 
 #drawflow {
 	position: relative;
-	width: calc(100vw - 301px);
-	height: calc(100% - 50px);
-	top: 40px;
+	width: 100%;
+	height: calc(100dvh - 7rem);
 	/* background: var(--background-color); */
 	background-size: 25px 25px;
 	/* background-image:
@@ -216,7 +210,7 @@ header a {
 		display: none;
 	}
 	#drawflow {
-		width: calc(100vw - 51px);
+		width: 100%;
 	}
 }
 
@@ -283,8 +277,7 @@ header a {
 	cursor: auto;
 	display: inline-block;
 	white-space: nowrap;
-	margin-left: 50px;
-	top: -28px;
+	margin-left: 10px;
 }
 
 .variable-text-output {
@@ -293,8 +286,7 @@ header a {
 	/* min-width: 100px; */
 	display: inline-block;
 	white-space: nowrap;
-	/* margin-left: 50px; */
-	top: -28px;
+	margin-right: 10px;
 }
 
 .drawflow .drawflow-node {

@@ -48,7 +48,7 @@
             "container_uuid": "string_list",
             "container_image_uuid": "string_list",
             "block_source": "blocks/string_list",
-            "version:": "latest"
+            "version": "latest"
         },
         "views":{
             "node": {

@@ -1,0 +1,118 @@
+{
+  "id": "1",
+  "pipeline": {
+    "1": {
+      "information": {
+        "id": "training_iris-1",
+        "name": "Train Iris",
+        "description": "description",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "blocks/training_iris",
+        "block_type": ""
+      },
+      "inputs": {
+        "epoch": {
+          "type": "int",
+          "connections": [
+            {
+              "block": "2",
+              "variable": "integer"
+            }
+          ],
+          "relays": []
+        }
+      },
+      "outputs": {
+        "val_acc": {
+          "type": "float",
+          "connections": [],
+          "relays": []
+        }
+      },
+      "action": {
+        "container": {
+          "image": "training_iris",
+          "version": "latest",
+          "command_line": [
+            "python",
+            "entrypoint.py"
+          ]
+        }
+      },
+      "views": {
+        "node": {
+          "behavior": "modal",
+          "active": "true",
+          "title_bar": {
+            "background_color": "#D55908"
+          },
+          "preview": {
+            "active": "false"
+          },
+          "html": "",
+          "pos_x": "1076",
+          "pos_y": "419.60416412353516",
+          "pos_z": "999"
+        }
+      },
+      "events": {}
+    },
+    "2": {
+      "information": {
+        "id": "integer-2",
+        "name": "Integer",
+        "description": "description",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "blocks/integer",
+        "block_type": ""
+      },
+      "inputs": {},
+      "outputs": {
+        "integer": {
+          "type": "int",
+          "connections": [
+            {
+              "block": "1",
+              "variable": "epoch"
+            }
+          ],
+          "relays": []
+        }
+      },
+      "action": {
+        "parameters": {
+          "integer": {
+            "type": "int",
+            "value": "500"
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "behavior": "",
+          "active": "true",
+          "title_bar": {
+            "background_color": "#D55908"
+          },
+          "preview": {
+            "active": "false"
+          },
+          "html": "<input type='number' id='integerInput' value='44419' name='integerInput' step='1' parameters-integer/>",
+          "pos_x": "729",
+          "pos_y": "488",
+          "pos_z": "999, this is the z-index for 2D canvas"
+        }
+      },
+      "events": {}
+    }
+  },
+  "source": "./my_data",
+  "sink": "./history",
+  "build": "./my_pipelines"
+}

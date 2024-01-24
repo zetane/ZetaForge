@@ -54,7 +54,7 @@
             "container_uuid": "view_threejs",
             "container_image_uuid": "view_threejs",
             "block_source": "blocks/view_threejs",
-            "version:": "latest"
+            "version": "latest"
         },
         "views":{
             "mode": "new_tab",

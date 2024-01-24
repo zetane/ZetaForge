@@ -5,21 +5,29 @@
 	--pds-blue-30: #479eff;
 	--pds-blue-40: #2f91ff;
 	--pds-blue-50: #d816ff;
-	--pds-blue-60: #ff0ad6;
-	--pds-blue-70: #ff00ad;
+	--pds-blue-60: rgba(105, 23, 176, 1);
+	--pds-blue-70: rgb(191, 158, 252);
 	--pds-blue-80: #085ebf;
 	--pds-blue-90: #0751a6;
 	--pds-blue-100: #053f80;
-	--cds-button-primary: var(--pds-blue-60) !important;
-	--cds-button-primary-hover: var(--pds-blue-70) !important;
-	--cds-background-brand: var(--pds-blue-60) !important;
-	--cds-border-interactive: var(--pds-blue-60) !important;
-	--cds-link-primary: var(--pds-blue-60) !important;
-	--cds-link-primary-hover: var(--pds-blue-70) !important;
-	--cds-link-secondary: var(--pds-blue-70) !important;
-	--cds-link-inverse: var(--pds-blue-40) !important;
-	--cds-focus: var(--pds-blue-60) !important;
-	--cds-focus-inverse: var(--pds-blue-60) !important;
+
+	--ztn-purple-0: rgba(105, 23, 176, 1);
+	--ztn-purple-10: rgb(191, 158, 252);
+	--ztn-red-0: rgba(255, 0, 0, 1);
+	--ztn-white-0: #ffffff;
+	--ztn-gray-0: rgba(139,139,139,1);
+	--ztn-black-0: #000;
+
+	--cds-button-primary: var(--ztn-purple-0) !important;
+	--cds-button-primary-hover: var(--ztn-purple-0) !important;
+	--cds-background-brand: var(--ztn-white-0) !important;
+	--cds-border-interactive: var(--ztn-purple-0) !important;
+	--cds-link-primary: var(--ztn-black-0) !important;
+	--cds-link-primary-hover: var(--ztn-purple-0) !important;
+	--cds-link-secondary: var(--ztn-purple-0) !important;
+	--cds-link-inverse: var(--ztn-white-0) !important;
+	--cds-focus: var(--ztn-purple-0) !important;
+	--cds-focus-inverse: var(--ztn-purple-0) !important;
 }
 @mixin ztn-colors-g100 {
 	--pds-blue-0: #91c5ff;
@@ -28,19 +36,23 @@
 	--pds-blue-30: #479eff;
 	--pds-blue-40: #2f91ff;
 	--pds-blue-50: #d816ff;
-	--pds-blue-60: #ff0ad6;
-	--pds-blue-70: #ff00ad;
+	--pds-blue-60: rgba(105, 23, 176, 1);
+	--pds-blue-70: rgb(191, 158, 252);
 	--pds-blue-80: #085ebf;
 	--pds-blue-90: #0751a6;
 	--pds-blue-100: #053f80;
+
+	--ztn-black-0: #000;
+	--ztn-purple-10: rgb(191, 158, 252);
+
 	--cds-button-primary: var(--pds-blue-60) !important;
-	--cds-button-primary-hover: var(--pds-blue-70) !important;
+	--cds-button-primary-hover: var(--ztn-purple-10) !important;
 	--cds-background-brand: var(--pds-blue-60) !important;
 	--cds-border-interactive: var(--pds-blue-60) !important;
-	--cds-link-primary: var(--pds-blue-60) !important;
-	--cds-link-primary-hover: var(--pds-blue-70) !important;
+	--cds-link-primary: white !important;
+	--cds-link-primary-hover: #eee !important;
 	--cds-link-secondary: var(--pds-blue-70) !important;
-	--cds-link-inverse: var(--pds-blue-40) !important;
+	--cds-link-inverse: var(--ztn-black-0) !important;
 	--cds-focus: var(--pds-blue-60) !important;
 	--cds-focus-inverse: var(--pds-blue-60) !important;
 }

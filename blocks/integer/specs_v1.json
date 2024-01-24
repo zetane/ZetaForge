@@ -1,0 +1,38 @@
+{
+  "information": {
+    "id": "integer",
+    "name": "Integer",
+    "description": "description",
+    "block_version": "block version number",
+    "block_source": "blocks/integer",
+    "block_type": ""
+  },
+  "inputs": {},
+  "outputs": {
+    "integer": {
+      "type": "int",
+      "connections": [],
+      "relays": []
+    }
+  },
+  "action": {
+    "parameters": {
+      "integer": {
+        "type": "int",
+        "value": null
+      }
+    }
+  },
+  "views": {
+    "node": {
+      "active": "True or False",
+      "title_bar": {},
+      "preview": {},
+      "html": "<input type='number' id='integerInput' value='44419' name='integerInput' step='1' parameters-integer/>",
+      "pos_x": "300",
+      "pos_y": "200",
+      "pos_z": "999, this is the z-index for 2D canvas"
+    }
+  },
+  "events": []
+}

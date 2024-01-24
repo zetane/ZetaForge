@@ -37,7 +37,7 @@
             "container_uuid": "gpt-turbo",
             "container_image_uuid": "gpt-turbo",
             "block_source": "blocks/gpt-turbo",
-            "version:": "latest"
+            "version": "latest"
         },
         "views":{
             "mode": "modal",

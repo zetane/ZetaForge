@@ -3,11 +3,6 @@ html, body {
     background-color: black;
   }
   
-  .drag-drawflow {
-    background-color: rgba(69, 69, 69, 1);
-    border: 1px solid orange;
-  }
-  
   .menu {
     background: black;
     color: white;

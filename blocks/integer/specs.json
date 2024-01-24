@@ -48,7 +48,7 @@
             "container_uuid": "integer",
             "container_image_uuid": "integer",
             "block_source": "blocks/integer",
-            "version:": "latest"
+            "version": "latest"
         },
         "views":{
             "node": {

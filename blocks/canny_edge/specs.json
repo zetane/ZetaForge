@@ -82,7 +82,7 @@
             "container_uuid": "canny_edge",
             "container_image_uuid": "canny_edge",
             "block_source": "blocks/canny_edge",
-            "version:": "latest"
+            "version": "latest"
         },
         "views":{
             "node": {

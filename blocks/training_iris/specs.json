@@ -27,7 +27,7 @@
             "container_uuid": "training_iris",
             "container_image_uuid": "training_iris",
             "block_source": "blocks/training_iris",
-            "version:": "latest"
+            "version": "latest"
         },
         "views":{
             "mode": "modal",
