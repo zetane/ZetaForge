@@ -1,30 +1,29 @@
 {
   "information": {
-    "id": "training_iris",
-    "name": "Train Iris",
+    "id": "view-two-columns",
+    "name": " View Two Columns",
     "description": "description",
-    "system_versions": [],
     "block_version": "block version number",
-    "block_source": "blocks/training_iris",
+    "block_source": "blocks/view-two-columns",
     "block_type": ""
   },
   "inputs": {
-    "epoch": {
-      "type": "int",
+    "array_of_pairs": {
+      "type": "Any",
       "connections": [],
       "relays": []
     }
   },
   "outputs": {
-    "val_acc": {
-      "type": "float",
+    "html": {
+      "type": "str",
       "connections": [],
       "relays": []
     }
   },
   "action": {
     "container": {
-      "image": "training_iris",
+      "image": "view_two_columns",
       "version": "latest",
       "command_line": [
         "python",
@@ -34,14 +33,18 @@
   },
   "views": {
     "node": {
-      "behavior": "modal",
+      "behavior": "new_tab",
       "active": "True or False",
-      "title_bar": {},
-      "preview": {},
+      "title_bar": {
+        "background_color": "#D55908"
+      },
+      "preview": {
+        "active": "true"
+      },
       "html": "",
       "pos_x": "300",
       "pos_y": "200",
-      "pos_z": "999"
+      "pos_z": "999, this is the z-index for 2D canvas"
     }
   },
   "events": []

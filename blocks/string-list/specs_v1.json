@@ -1,10 +1,10 @@
 {
   "information": {
-    "id": "string_list",
+    "id": "string-list",
     "name": "String List",
     "description": "description",
     "block_version": "block version number",
-    "block_source": "blocks/string_list",
+    "block_source": "blocks/string-list",
     "block_type": ""
   },
   "inputs": {},

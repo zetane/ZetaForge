@@ -563,8 +563,6 @@ func execute(pipeline zjson.Pipeline, cfg Config, awsConfig aws.Config, hub *Hub
 		return
 	}
 
-	log.Printf("Made it after upload")
-
 	if err := buildHistory(sink); err != nil {
 		log.Printf("Failed to build history folder; err=%v", err)
 		return
@@ -603,6 +601,8 @@ func execute(pipeline zjson.Pipeline, cfg Config, awsConfig aws.Config, hub *Hub
 
 	uploadedFiles := []string{"files.tar.gz"}
 	for path, image := range blocks {
+		log.Printf("Path: %v", path)
+		log.Printf("Image: %v", image)
 		if _, err := os.Stat(filepath.Join(path, cfg.ComputationFile)); err != nil {
 			deleteFiles(uploadedFiles, cfg, awsConfig)
 			log.Printf("Computation file does not exist; err=%v", err)
@@ -610,7 +610,7 @@ func execute(pipeline zjson.Pipeline, cfg Config, awsConfig aws.Config, hub *Hub
 		}
 
 		output, err := runArgo(sink, pipeline, hub, cfg)
-		defer deleteArgo(output)
+		defer deleteArgo(output, cfg)
 		if err != nil {
 			deleteFiles(uploadedFiles, cfg, awsConfig)
 			log.Printf("Error during pipeline execution; err=%v", err)
@@ -626,7 +626,7 @@ func execute(pipeline zjson.Pipeline, cfg Config, awsConfig aws.Config, hub *Hub
 		uploadedFiles = append(uploadedFiles, name)
 	}
 
-	output, err := runArgo(sink, pipeline, cfg)
+	output, err := runArgo(sink, pipeline, hub, cfg)
 	defer deleteArgo(output, cfg)
 	if err != nil {
 		log.Println(output)

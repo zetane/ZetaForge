@@ -1,29 +1,44 @@
 {
   "information": {
-    "id": "view_two_columns",
-    "name": " View Two Columns",
+    "id": "canny-edge",
+    "name": "Canny Edge",
     "description": "description",
     "block_version": "block version number",
-    "block_source": "blocks/view_two_columns",
+    "block_source": "blocks/canny-edge",
     "block_type": ""
   },
   "inputs": {
-    "array_of_pairs": {
-      "type": "Any",
+    "image_path": {
+      "type": "str",
+      "connections": [],
+      "relays": []
+    },
+    "range_min": {
+      "type": "int",
+      "connections": [],
+      "relays": []
+    },
+    "range_max": {
+      "type": "int",
+      "connections": [],
+      "relays": []
+    },
+    "step": {
+      "type": "int",
       "connections": [],
       "relays": []
     }
   },
   "outputs": {
-    "html": {
-      "type": "str",
+    "image_paths": {
+      "type": "List[str]",
       "connections": [],
       "relays": []
     }
   },
   "action": {
     "container": {
-      "image": "view_two_columns",
+      "image": "canny-edge",
       "version": "latest",
       "command_line": [
         "python",
@@ -33,14 +48,9 @@
   },
   "views": {
     "node": {
-      "behavior": "new_tab",
       "active": "True or False",
-      "title_bar": {
-        "background_color": "#D55908"
-      },
-      "preview": {
-        "active": "true"
-      },
+      "title_bar": {},
+      "preview": {},
       "html": "",
       "pos_x": "300",
       "pos_y": "200",

@@ -1,15 +1,15 @@
 {
   "information": {
-    "id": "view_numpy",
-    "name": "View Numpy",
+    "id": "view-threejs",
+    "name": "View Three.js",
     "description": "description",
     "block_version": "block version number",
-    "block_source": "blocks/view_numpy",
+    "block_source": "blocks/view-threejs",
     "block_type": ""
   },
   "inputs": {
-    "my_numpy": {
-      "type": "str",
+    "num_cubes": {
+      "type": "int",
       "connections": [],
       "relays": []
     }
@@ -23,7 +23,7 @@
   },
   "action": {
     "container": {
-      "image": "view_numpy",
+      "image": "view_threejs",
       "version": "latest",
       "command_line": [
         "python",
@@ -33,7 +33,7 @@
   },
   "views": {
     "node": {
-      "behavior": "modal",
+      "behavior": "new_tab",
       "active": "True or False",
       "title_bar": {
         "background_color": "#D55908"

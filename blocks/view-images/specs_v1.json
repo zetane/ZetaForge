@@ -1,15 +1,15 @@
 {
   "information": {
-    "id": "view_threejs",
-    "name": "View Three.js",
+    "id": "view-images",
+    "name": "View Images",
     "description": "description",
     "block_version": "block version number",
-    "block_source": "blocks/view_threejs",
+    "block_source": "blocks/view-images",
     "block_type": ""
   },
   "inputs": {
-    "num_cubes": {
-      "type": "int",
+    "image_paths_view": {
+      "type": "List[str]",
       "connections": [],
       "relays": []
     }
@@ -23,7 +23,7 @@
   },
   "action": {
     "container": {
-      "image": "view_threejs",
+      "image": "view-images",
       "version": "latest",
       "command_line": [
         "python",
@@ -32,8 +32,8 @@
     }
   },
   "views": {
+    "mode": "modal",
     "node": {
-      "behavior": "new_tab",
       "active": "True or False",
       "title_bar": {
         "background_color": "#D55908"
