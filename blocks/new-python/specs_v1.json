@@ -1,9 +1,9 @@
 {
   "information": {
-    "id": "new_python",
+    "id": "new-python",
     "name": "New_Python",
     "description": "",
-    "block_source": "blocks/new_python",
+    "block_source": "blocks/new-python",
     "block_type": ""
   },
   "inputs": {

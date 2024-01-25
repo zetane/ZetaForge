@@ -1,44 +1,29 @@
 {
   "information": {
-    "id": "canny_edge",
-    "name": "Canny Edge",
+    "id": "view-numpy",
+    "name": "View Numpy",
     "description": "description",
     "block_version": "block version number",
-    "block_source": "blocks/canny_edge",
+    "block_source": "blocks/view-numpy",
     "block_type": ""
   },
   "inputs": {
-    "image_path": {
+    "my_numpy": {
       "type": "str",
-      "connections": [],
-      "relays": []
-    },
-    "range_min": {
-      "type": "int",
-      "connections": [],
-      "relays": []
-    },
-    "range_max": {
-      "type": "int",
-      "connections": [],
-      "relays": []
-    },
-    "step": {
-      "type": "int",
       "connections": [],
       "relays": []
     }
   },
   "outputs": {
-    "image_paths": {
-      "type": "List[str]",
+    "html": {
+      "type": "str",
       "connections": [],
       "relays": []
     }
   },
   "action": {
     "container": {
-      "image": "canny_edge",
+      "image": "view_numpy",
       "version": "latest",
       "command_line": [
         "python",
@@ -48,9 +33,14 @@
   },
   "views": {
     "node": {
+      "behavior": "modal",
       "active": "True or False",
-      "title_bar": {},
-      "preview": {},
+      "title_bar": {
+        "background_color": "#D55908"
+      },
+      "preview": {
+        "active": "true"
+      },
       "html": "",
       "pos_x": "300",
       "pos_y": "200",
