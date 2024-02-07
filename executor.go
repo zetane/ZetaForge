@@ -69,7 +69,7 @@ func upload(source string, key string, cfg Config, awsConfig aws.Config) error {
 	return nil
 }
 
-func tarFile(source string, key string) error {
+func tarFile(source string, key string, files bool) error {
 	file, err := os.Create(key)
 
 	if err != nil {
@@ -98,8 +98,12 @@ func tarFile(source string, key string) error {
 			return err
 		}
 
-		sourceName := strings.TrimPrefix(source, "."+string(filepath.Separator))
-		header.Name = strings.TrimPrefix(strings.Replace(path, sourceName, "files", -1), string(filepath.Separator))
+		if files {
+			sourceName := strings.TrimPrefix(source, "." + string(filepath.Separator))
+			header.Name = strings.TrimPrefix(strings.Replace(path, sourceName, "files", -1), string(filepath.Separator))
+		} else {
+			header.Name = strings.TrimPrefix(strings.Replace(path, source, "", -1), string(filepath.Separator))
+		}
 		if err := tw.WriteHeader(header); err != nil {
 			return err
 		}
@@ -122,7 +126,7 @@ func tarFile(source string, key string) error {
 	return nil
 }
 
-func tarUpload(source string, key string, cfg Config, awsConfig aws.Config) error {
+func tarUpload(source string, key string, files bool, cfg Config, awsConfig aws.Config) error {
 	if err := tarFile(source, key); err != nil {
 		return err
 	}
@@ -583,6 +587,7 @@ func execute(pipeline zjson.Pipeline, cfg Config, awsConfig aws.Config, hub *Hub
 		log.Printf("Failed to translate the pipeline; err=%v", err)
 		return
 	}
+
 	log.Printf("Made it after translate")
 	yml, err := yaml.Marshal(&workflow)
 	if err != nil {
@@ -594,7 +599,7 @@ func execute(pipeline zjson.Pipeline, cfg Config, awsConfig aws.Config, hub *Hub
 		return
 	}
 
-	if err := tarUpload(pipeline.Source, "files.tar.gz", cfg, awsConfig); err != nil {
+	if err := tarUpload(pipeline.Source, "files.tar.gz", true, cfg, awsConfig); err != nil {
 		log.Printf("Failed to upload files; err=%v", err)
 		return
 	}
@@ -609,12 +614,14 @@ func execute(pipeline zjson.Pipeline, cfg Config, awsConfig aws.Config, hub *Hub
 			return
 		}
 
-		output, err := runArgo(sink, pipeline, hub, cfg)
-		defer deleteArgo(output, cfg)
-		if err != nil {
-			deleteFiles(uploadedFiles, cfg, awsConfig)
-			log.Printf("Error during pipeline execution; err=%v", err)
-			return
+		if len(image) > 0 {
+			key := image + "-build.tar.gz"
+			if err := tarUpload(path, key, false, cfg, awsConfig); err != nil {
+				deleteFiles(uploadedFiles, cfg, awsConfig)
+				log.Printf("Failed to upload build context; err=%v", err)
+				return
+			}
+			uploadedFiles = append(uploadedFiles, key)
 		}
 
 		name := filepath.Base(path) + ".py"
