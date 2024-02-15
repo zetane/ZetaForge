@@ -1,13 +1,16 @@
 {
-    "ServerPort":"8080",
-    "IsLocal":true,
-    "KanikoImage":"gcr.io/kaniko-project/executor:latest",
-    "Bucket":"zetaforge",
-    "S3Port":"9444",
-    "RegistryPort":"5000",
-    "ComputationFile":"computations.py",
-    "EntrypointFile":"entrypoint.py",
-    "WorkDir":"/app",
-    "FileDir":"/files",
-    "ArgoPath":"argo"
+	"IsLocal":true,
+	"ServerPort":"8080",
+	"KanikoImage":"gcr.io/kaniko-project/executor:latest",
+	"WorkDir":"/app",
+	"FileDir":"/files",
+	"ComputationFile":"computations.py",
+	"EntrypointFile":"entrypoint.py",
+	"ServiceAccount":"executor",
+	"Bucket":"forge-bucket",
+
+	"Local": {
+		"BucketPort":"9444",
+		"RegistryPort":"5000"
+	}
 } 

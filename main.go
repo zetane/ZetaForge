@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -17,40 +18,85 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/invopop/jsonschema"
 	"github.com/xeipuuv/gojsonschema"
+	"k8s.io/client-go/tools/clientcmd"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
 type Config struct {
-	ServerPort      string
 	IsLocal         bool
+	ServerPort      string
 	KanikoImage     string
-	Bucket          string
-	S3Port          string
-	RegistryPort    string
-	ComputationFile string
-	EntrypointFile  string
 	WorkDir         string
 	FileDir         string
-	ArgoPath        string
+	ComputationFile string
+	EntrypointFile  string
+	ServiceAccount  string
+	Bucket          string
+	Local           Local `json:"Local,omitempty"`
+	Cloud           Cloud `json:"Cloud,omitempty"`
 }
 
-func localConfig(cfg Config) gin.HandlerFunc {
+type Local struct {
+	BucketPort   string
+	RegistryPort string
+}
+
+type Cloud struct {
+	Registry     string
+	RegistryAddr string
+	RegistryUser string
+	RegistryPass string
+	ClusterIP    string
+	Token        string
+	CaCert       string
+}
+
+func loadConfig(cfg Config) gin.HandlerFunc {
 	if cfg.IsLocal {
 		awsAccessKey := "AKIAIOSFODNN7EXAMPLE"
 		awsSecretKey := "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
 		creds := credentials.NewStaticCredentialsProvider(awsAccessKey, awsSecretKey, "")
 		region := config.WithRegion("us-east-2")
-		awsConfig, err := config.LoadDefaultConfig(context.TODO(), region, config.WithCredentialsProvider(creds))
+		awsConfig, err := config.LoadDefaultConfig(context.Background(), region, config.WithCredentialsProvider(creds))
 		if err != nil {
 			log.Fatalf("Local credentials missing; err=%v", err)
 		}
+
+		client := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+			clientcmd.NewDefaultClientConfigLoadingRules(),
+			&clientcmd.ConfigOverrides{},
+		)
+
 		return func(ctx *gin.Context) {
 			ctx.Set("cfg", cfg)
 			ctx.Set("aws", awsConfig)
+			ctx.Set("client", client)
 			ctx.Next()
 		}
 	} else {
+		cacert, err := base64.StdEncoding.DecodeString(cfg.Cloud.CaCert)
+		if err != nil {
+			log.Fatalf("Invalid CA certificate; err=%v", err)
+		}
+
+		config := clientcmdapi.NewConfig()
+		config.Clusters["zetacluster"] = &clientcmdapi.Cluster{
+			Server:                   "https://" + cfg.Cloud.ClusterIP,
+			CertificateAuthorityData: cacert,
+		}
+		config.AuthInfos["zetaauth"] = &clientcmdapi.AuthInfo{
+			Token: cfg.Cloud.Token,
+		}
+		config.Contexts["zetacontext"] = &clientcmdapi.Context{
+			Cluster:  "zetacluster",
+			AuthInfo: "zetaauth",
+		}
+		config.CurrentContext = "zetacontext"
+
+		client := clientcmd.NewDefaultClientConfig(*config, &clientcmd.ConfigOverrides{})
 		return func(ctx *gin.Context) {
 			ctx.Set("cfg", cfg)
+			ctx.Set("client", client)
 			ctx.Next()
 		}
 	}
@@ -96,14 +142,6 @@ func run(ctx *gin.Context, hub *Hub) {
 		return
 	}
 
-	awsConfig, ok := ctx.Get("aws")
-
-	if !ok {
-		log.Printf("AWS config is missing")
-		ctx.String(http.StatusInternalServerError, "AWS config is missing")
-		return
-	}
-
 	cfg, ok := ctx.Get("cfg")
 
 	if !ok {
@@ -111,8 +149,28 @@ func run(ctx *gin.Context, hub *Hub) {
 		ctx.String(http.StatusInternalServerError, "Config is missing")
 		return
 	}
+	config := cfg.(Config)
 
-	go execute(pipeline, cfg.(Config), awsConfig.(aws.Config), hub)
+	client, ok := ctx.Get("client")
+
+	if !ok {
+		log.Printf("Client is missing")
+		ctx.String(http.StatusInternalServerError, "Client is missing")
+		return
+	}
+
+	if config.IsLocal {
+		awsConfig, ok := ctx.Get("aws")
+
+		if !ok {
+			log.Printf("AWS config is missing")
+			ctx.String(http.StatusInternalServerError, "AWS config is missing")
+			return
+		}
+		go local_execute(&pipeline, config, awsConfig.(aws.Config), client.(clientcmd.ClientConfig), hub)
+	} else {
+		go cloud_execute(&pipeline, config, client.(clientcmd.ClientConfig), hub)
+	}
 }
 
 func main() {
@@ -131,7 +189,7 @@ func main() {
 	go hub.Run()
 
 	router := gin.Default()
-	router.Use(localConfig(config))
+	router.Use(loadConfig(config))
 	router.POST("/run", func(ctx *gin.Context) {
 		run(ctx, hub)
 	})
