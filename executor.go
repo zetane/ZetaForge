@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"io/fs"
 	"log"
@@ -14,26 +15,20 @@ import (
 	"strings"
 	"time"
 
-	"server/iargo"
-	"server/oargo"
 	"server/zjson"
 
+	"github.com/argoproj/argo-workflows/v3/pkg/apiclient"
+	workflowpkg "github.com/argoproj/argo-workflows/v3/pkg/apiclient/workflow"
+	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	endpoints "github.com/aws/smithy-go/endpoints"
-	"github.com/go-cmd/cmd"
 	"golang.org/x/net/context"
-	"gopkg.in/yaml.v3"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
-type Image struct {
-	Repository string `json:"Repository"`
-	Version    string `json:"Tag"`
-}
-
-func (image *Image) Name() string {
-	return image.Repository + ":" + image.Version
-}
+const BUCKET = "zetaforge"
 
 type Endpoint struct {
 	Bucket string
@@ -45,7 +40,7 @@ func (endpoint *Endpoint) ResolveEndpoint(ctx context.Context, params s3.Endpoin
 	return endpoints.Endpoint{URI: *uri}, err
 }
 
-func upload(source string, key string, cfg Config, awsConfig aws.Config) error {
+func upload(ctx context.Context, source string, key string, cfg Config, awsConfig aws.Config) error {
 	file, err := os.Open(source)
 	if err != nil {
 		return err
@@ -53,16 +48,16 @@ func upload(source string, key string, cfg Config, awsConfig aws.Config) error {
 	defer file.Close()
 
 	client := s3.NewFromConfig(awsConfig, func(o *s3.Options) {
-		o.EndpointResolverV2 = &Endpoint{Bucket: cfg.Bucket, S3Port: cfg.S3Port}
+		o.EndpointResolverV2 = &Endpoint{Bucket: BUCKET, S3Port: cfg.Local.BucketPort}
 	})
 
 	params := &s3.PutObjectInput{
-		Bucket: aws.String(cfg.Bucket),
+		Bucket: aws.String(BUCKET),
 		Key:    aws.String(key),
 		Body:   file,
 	}
 
-	if _, err := client.PutObject(context.TODO(), params); err != nil {
+	if _, err := client.PutObject(ctx, params); err != nil {
 		return err
 	}
 
@@ -126,26 +121,26 @@ func tarFile(source string, key string, files bool) error {
 	return nil
 }
 
-func tarUpload(source string, key string, files bool, cfg Config, awsConfig aws.Config) error {
-	if err := tarFile(source, key); err != nil {
+func tarUpload(ctx context.Context, source string, key string, files bool, cfg Config, awsConfig aws.Config) error {
+	if err := tarFile(source, key, files); err != nil {
 		return err
 	}
 	defer os.Remove(key)
 
-	if err := upload(key, key, cfg, awsConfig); err != nil {
+	if err := upload(ctx, key, key, cfg, awsConfig); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func tarDownload(sink string, key string, cfg Config, awsConfig aws.Config) error {
+func tarDownload(ctx context.Context, sink string, key string, cfg Config, awsConfig aws.Config) error {
 	client := s3.NewFromConfig(awsConfig, func(o *s3.Options) {
-		o.EndpointResolverV2 = &Endpoint{Bucket: cfg.Bucket, S3Port: cfg.S3Port}
+		o.EndpointResolverV2 = &Endpoint{Bucket: BUCKET, S3Port: cfg.Local.BucketPort}
 	})
 
-	result, err := client.GetObject(context.TODO(), &s3.GetObjectInput{
-		Bucket: aws.String(cfg.Bucket),
+	result, err := client.GetObject(ctx, &s3.GetObjectInput{
+		Bucket: aws.String(BUCKET),
 		Key:    aws.String(key),
 	})
 
@@ -206,194 +201,6 @@ func tarDownload(sink string, key string, cfg Config, awsConfig aws.Config) erro
 	}
 }
 
-func blockTemplate(block zjson.Block, cfg Config) iargo.Template {
-	var artifact []interface{}
-	artifact = append(artifact, iargo.UncompressedArtifact{
-		Name: "computations",
-		Path: cfg.WorkDir + "/" + cfg.ComputationFile,
-		S3:   iargo.Storage{Key: block.Action.Container.Image + ".py"},
-	})
-	artifact = append(artifact, iargo.UncompressedArtifact{
-		Name: "entrypoint",
-		Path: cfg.WorkDir + "/" + cfg.EntrypointFile,
-		S3:   iargo.Storage{Key: cfg.EntrypointFile},
-	})
-	image := "localhost:" + cfg.RegistryPort + "/" + block.Action.Container.Image + ":" + block.Action.Container.Version
-	return iargo.Template{
-		Name: block.Information.Id,
-		Container: iargo.Container{
-			Image:           image,
-			Command:         block.Action.Container.CommandLine,
-			ImagePullPolicy: "IfNotPresent",
-		},
-		Inputs: iargo.Put{Artifacts: artifact},
-	}
-}
-
-func kanikoTemplate(block zjson.Block, cfg Config) iargo.Template {
-	name := block.Action.Container.Image + "-" + block.Action.Container.Version
-	var artifact []interface{}
-	artifact = append(artifact, iargo.UncompressedArtifact{
-		Name: "context",
-		Path: "/workspace/context.tar.gz",
-		S3:   iargo.Storage{Key: name + "-build.tar.gz"},
-	})
-	return iargo.Template{
-		Name: name + "-build",
-		Container: iargo.Container{
-			Image: cfg.KanikoImage,
-			Command: []string{
-				"/kaniko/executor",
-				"--context",
-				"tar:///workspace/context.tar.gz",
-				"--destination",
-				"registry:" + cfg.RegistryPort + "/" + block.Action.Container.Image + ":" + block.Action.Container.Version,
-				"--insecure",
-			},
-		},
-		Inputs: iargo.Put{Artifacts: artifact},
-	}
-}
-
-func translate(pipeline zjson.Pipeline, cfg Config) (iargo.Workflow, map[string]string, error) {
-	workflow := iargo.Workflow{
-		ApiVersion: "argoproj.io/v1alpha1",
-		Kind:       "Workflow",
-		Metadata:   iargo.Metadata{GenerateName: pipeline.Id + "-"},
-		Spec: iargo.Spec{
-			ArtifactRepositoryRef: iargo.ArtifactRepository{
-				ConfigMap: "zetane-repository",
-				Key:       "default",
-			},
-			Entrypoint:         "DAG",
-			ServiceAccountName: "executor",
-		},
-	}
-
-	blocks := make(map[string]string)
-	tasks := make(map[string]iargo.Task)
-	templates := make(map[string]iargo.Template)
-	for _, block := range pipeline.Pipeline {
-		template := blockTemplate(block, cfg)
-		task := iargo.Task{Name: template.Name, Template: template.Name}
-
-		if len(block.Action.Container.Image) > 0 {
-			kaniko := kanikoTemplate(block, cfg)
-			pullCmd := cmd.NewCmd("docker", "image", "pull", template.Container.Image)
-			<-pullCmd.Start()
-			imageCmd := cmd.NewCmd("docker", "image", "ls", "--format", "json")
-			<-imageCmd.Start()
-			toBuild := true
-			for _, img := range imageCmd.Status().Stdout {
-				var image Image
-				if err := json.Unmarshal([]byte(img), &image); err != nil {
-					return workflow, blocks, err
-				}
-				if template.Container.Image == image.Name() {
-					toBuild = false
-					break
-				}
-			}
-
-			blockPath := filepath.Join(pipeline.Build, pipeline.Id, block.Action.Container.Image)
-			blocks[blockPath] = ""
-			if toBuild {
-				blocks[blockPath] = block.Action.Container.Image + "-" + block.Action.Container.Version
-				templates[kaniko.Name] = kaniko
-				tasks[kaniko.Name] = iargo.Task{Name: kaniko.Name, Template: kaniko.Name}
-				task.Dependencies = append(task.Dependencies, kaniko.Name)
-			}
-		}
-
-		inputFile := false
-		outputFile := false
-		for name, input := range block.Inputs {
-			if input.Type == "file" || input.Type == "List[file]" {
-				inputFile = true
-			}
-			if len(input.Connections) > 0 {
-				if len(input.Connections) == 1 {
-					connection := input.Connections[0]
-					inputBlock := pipeline.Pipeline[connection.Block]
-					param, ok := inputBlock.Action.Parameters[connection.Variable]
-					if ok {
-						template.Container.Env = append(template.Container.Env, iargo.EnvVar{
-							Name:  name,
-							Value: param.Value,
-						})
-					} else {
-						template.Container.Env = append(template.Container.Env, iargo.EnvVar{
-							Name:  name,
-							Value: "{{inputs.parameters." + name + "}}",
-						})
-						template.Inputs.Parameters = append(template.Inputs.Parameters, iargo.Parameter{
-							Name: name,
-						})
-						inputNodeName := inputBlock.Information.Id
-						task.Dependencies = append(task.Dependencies, inputNodeName)
-						path := "{{tasks." + inputNodeName + ".outputs.parameters." + connection.Variable + "}}"
-						task.Argument.Parameters = append(task.Argument.Parameters, iargo.Parameter{
-							Name:  name,
-							Value: path,
-						})
-					}
-				} else {
-					// TODO
-					return workflow, blocks, errors.New("unsupported multiple inputs")
-				}
-			}
-		}
-
-		for name, output := range block.Outputs {
-			if output.Type == "file" || output.Type == "List[file]" {
-				outputFile = true
-			}
-			if len(output.Connections) > 0 {
-				template.Outputs.Parameters = append(template.Outputs.Parameters, iargo.Parameter{
-					Name:      name,
-					ValueFrom: iargo.ValueFrom{Path: name + ".txt"},
-				})
-			}
-		}
-
-		if inputFile {
-			template.Inputs.Artifacts = append(template.Inputs.Artifacts, iargo.Artifact{
-				Name: "in",
-				Path: cfg.FileDir,
-				S3:   iargo.Storage{Key: "files.tar.gz"},
-			})
-		}
-		if outputFile {
-			template.Outputs.Artifacts = append(template.Outputs.Artifacts, iargo.Artifact{
-				Name: "out",
-				Path: cfg.FileDir,
-				S3:   iargo.Storage{Key: "files.tar.gz"},
-			})
-		}
-
-		tasks[task.Name] = task
-		templates[template.Name] = template
-	}
-
-	dag := iargo.Template{Name: "DAG"}
-
-	for _, template := range templates {
-		if len(template.Container.Command) > 0 {
-			workflow.Spec.Templates = append(workflow.Spec.Templates, template)
-		}
-	}
-
-	for name, task := range tasks {
-		if len(templates[name].Container.Command) > 0 {
-			dag.DAG.Tasks = append(dag.DAG.Tasks, task)
-		}
-	}
-
-	workflow.Spec.Templates = append(workflow.Spec.Templates, dag)
-
-	return workflow, blocks, nil
-}
-
 func buildHistory(sinkPath string) error {
 	if err := os.Mkdir(sinkPath, 0755); err != nil {
 		return err
@@ -426,19 +233,19 @@ func writeFile(path string, content string) error {
 	return file.Close()
 }
 
-func results(path string, pipeline zjson.Pipeline, workflow oargo.Workflow) error {
+func results(path string, pipeline *zjson.Pipeline, workflow *wfv1.Workflow) error {
 	for _, node := range workflow.Status.Nodes {
 		if node.Type == "Pod" {
-			block := pipeline.Pipeline[node.Template]
+			block := pipeline.Pipeline[node.TemplateName]
 			block.Events.Inputs = []string{}
 			block.Events.Outputs = []string{}
-			for _, parameter := range node.Input.Parameters {
-				block.Events.Inputs = append(block.Events.Inputs, parameter.Name+":"+parameter.Value)
+			for _, parameter := range node.Inputs.Parameters {
+				block.Events.Inputs = append(block.Events.Inputs, string(parameter.Name)+":"+string(*parameter.Value))
 			}
-			for _, parameter := range node.Output.Parameters {
-				block.Events.Outputs = append(block.Events.Outputs, parameter.Name+":"+parameter.Value)
+			for _, parameter := range node.Outputs.Parameters {
+				block.Events.Outputs = append(block.Events.Outputs, string(parameter.Name)+":"+string(*parameter.Value))
 			}
-			pipeline.Pipeline[node.Template] = block
+			pipeline.Pipeline[node.TemplateName] = block
 		}
 	}
 
@@ -450,119 +257,199 @@ func results(path string, pipeline zjson.Pipeline, workflow oargo.Workflow) erro
 	return writeFile(path, string(data))
 }
 
-func logs(sink string, workflow oargo.Workflow) error {
-	for name, node := range workflow.Status.Nodes {
-		if node.Type == "Pod" {
-			nameSplit := strings.Split(name, "-")
-			nameLen := len(nameSplit)
-			nameSplit = append(nameSplit, nameSplit[nameLen-1])
-			nameSplit[nameLen-1] = node.Template
-			podName := strings.Join(nameSplit, "-")
-			logCmd := cmd.NewCmd("argo", "logs", workflow.Metadata.Name, podName)
-			<-logCmd.Start()
-			logs := strings.Join(logCmd.Status().Stdout, "\n")
-			path := filepath.Join(sink, "logs", node.Template+".log")
-			if err := writeFile(path, logs); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
+func streaming(ctx context.Context, sink string, name string, roomId string, client clientcmd.ClientConfig, hub *Hub) {
+	ctx, cli, err := apiclient.NewClientFromOpts(
+		apiclient.Opts{
+			ClientConfigSupplier: func() clientcmd.ClientConfig {
+				return client
+			},
+			Context: ctx,
+		},
+	)
 
-func runArgo(sink string, pipeline zjson.Pipeline, hub *Hub, cfg Config) (oargo.Workflow, error) {
-	var workflow oargo.Workflow
-	exeCmd := cmd.NewCmd(cfg.ArgoPath, "submit", filepath.Join(sink, "pipeline.yml"), "--output", "json")
-	<-exeCmd.Start()
+	if err != nil {
+		log.Printf("Log stream error; err=%v", err)
+		return
+	}
 
-	if len(exeCmd.Status().Stdout) == 0 {
-		log.Printf("Executing workflow")
-		return workflow, errors.New(strings.Join(exeCmd.Status().Stderr, "\n"))
+	namespace, _, err := client.Namespace()
+
+	if err != nil {
+		log.Printf("Log stream error; err=%v", err)
+		return
 	}
-	jsonData := strings.Join(exeCmd.Status().Stdout, "\n")
-	if err := json.Unmarshal([]byte(jsonData), &workflow); err != nil {
-		log.Printf("Unmarshalling jsondata")
-		return workflow, err
+
+	serviceClient := cli.NewWorkflowServiceClient()
+	stream, err := serviceClient.WorkflowLogs(ctx, &workflowpkg.WorkflowLogRequest{
+		Namespace: namespace,
+		Name:      name,
+		LogOptions: &corev1.PodLogOptions{
+			Container: "main", // TODO expand logs
+			Follow:    true,
+		},
+	})
+
+	if err != nil {
+		log.Printf("Log stream error; err=%v", err)
+		return
 	}
+
+	logMap := make(map[string][]string)
 
 	for {
-		getCmd := cmd.NewCmd(cfg.ArgoPath, "get", workflow.Metadata.Name, "--output", "json")
-		<-getCmd.Start()
-		jsonData = strings.Join(getCmd.Status().Stdout, "\n")
-		if err := json.Unmarshal([]byte(jsonData), &workflow); err != nil {
-			return workflow, err
-		}
+		event, err := stream.Recv()
 
-		for name, node := range workflow.Status.Nodes {
-			if node.Type == "Pod" {
-				nameSplit := strings.Split(name, "-")
-				nameLen := len(nameSplit)
-				nameSplit = append(nameSplit, nameSplit[nameLen-1])
-				nameSplit[nameLen-1] = node.Template
-				podName := strings.Join(nameSplit, "-")
-				logCmd := cmd.NewCmd("argo", "logs", workflow.Metadata.Name, podName)
-				<-logCmd.Start()
-				logs := strings.Join(logCmd.Status().Stdout, "\n")
-				if len(logs) > 0 {
-					hub.Broadcast <- Message{
-						RoomId:  pipeline.Id,
-						Content: logs,
-					}
-				}
-
-			}
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			log.Printf("Log stream error; err=%v", err)
+			break
 		}
 
 		hub.Broadcast <- Message{
-			RoomId:  pipeline.Id,
-			Content: workflow.Status.Phase,
+			RoomId:  roomId,
+			Content: fmt.Sprintf("%s: %s", event.PodName, event.Content),
 		}
 
-		if workflow.Status.Phase != "Running" {
+		if _, ok := logMap[event.PodName]; ok {
+			logMap[event.PodName] = append(logMap[event.PodName], event.Content)
+		} else {
+			logMap[event.PodName] = []string{event.Content}
+		}
+	}
+
+	if sink != "" {
+		for podname, logs := range logMap {
+			path := filepath.Join(sink, "logs", podname+".log")
+			if err := writeFile(path, strings.Join(logs, "\n")); err != nil {
+				log.Printf("Log stream error; err=%v", err)
+			}
+		}
+	}
+}
+
+func runArgo(ctx context.Context, workflow *wfv1.Workflow, sink string, id string, client clientcmd.ClientConfig, hub *Hub) (*wfv1.Workflow, error) {
+	ctx, cli, err := apiclient.NewClientFromOpts(
+		apiclient.Opts{
+			ClientConfigSupplier: func() clientcmd.ClientConfig {
+				return client
+			},
+			Context: ctx,
+		},
+	)
+
+	if err != nil {
+		return &wfv1.Workflow{}, err
+	}
+
+	namespace, _, err := client.Namespace()
+
+	if err != nil {
+		return &wfv1.Workflow{}, err
+	}
+
+	serviceClient := cli.NewWorkflowServiceClient()
+	workflow, err = serviceClient.CreateWorkflow(ctx, &workflowpkg.WorkflowCreateRequest{
+		Namespace: namespace,
+		Workflow:  workflow,
+	})
+
+	if err != nil {
+		return workflow, err
+	}
+
+	go streaming(ctx, sink, workflow.Name, id, client, hub)
+
+	for {
+		workflow, err = serviceClient.GetWorkflow(ctx, &workflowpkg.WorkflowGetRequest{
+			Name:      workflow.Name,
+			Namespace: namespace,
+		})
+
+		if err != nil {
+			return workflow, err
+		}
+
+		hub.Broadcast <- Message{
+			RoomId:  id,
+			Content: string(workflow.Status.Phase),
+		}
+
+		if workflow.Status.Phase.Completed() {
 			break
 		}
-		time.Sleep(time.Second * 10)
+		time.Sleep(time.Second)
+	}
+
+	if workflow.Status.Phase != wfv1.WorkflowSucceeded {
+		errorCode := ""
+		for name, node := range workflow.Status.Nodes {
+			if node.Type == wfv1.NodeTypePod {
+				if node.Phase == wfv1.NodeFailed || node.Phase == wfv1.NodeError {
+					errorCode += name + ": " + node.Message
+				}
+			}
+		}
+		return workflow, errors.New(errorCode)
 	}
 
 	return workflow, nil
 }
 
-func deleteArgo(workflow oargo.Workflow, cfg Config) {
-	if len(workflow.Metadata.Name) == 0 {
-		delCmd := cmd.NewCmd(cfg.ArgoPath, "delete", "@latest")
-		<-delCmd.Start()
-	} else {
-		delCmd := cmd.NewCmd(cfg.ArgoPath, "delete", workflow.Metadata.Name)
-		<-delCmd.Start()
-	}
-}
+func deleteArgo(ctx context.Context, name string, client clientcmd.ClientConfig) {
+	ctx, cli, err := apiclient.NewClientFromOpts(
+		apiclient.Opts{
+			ClientConfigSupplier: func() clientcmd.ClientConfig {
+				return client
+			},
+			Context: ctx,
+		},
+	)
 
-func deleteFiles(files []string, cfg Config, awsConfig aws.Config) {
-	client := s3.NewFromConfig(awsConfig, func(o *s3.Options) {
-		o.EndpointResolverV2 = &Endpoint{Bucket: cfg.Bucket, S3Port: cfg.S3Port}
-	})
-	for _, file := range files {
-		params := &s3.DeleteObjectInput{
-			Bucket: aws.String(cfg.Bucket),
-			Key:    aws.String(file),
-		}
-		client.DeleteObject(context.TODO(), params)
-	}
-}
+	namespace, _, err := client.Namespace()
 
-func execute(pipeline zjson.Pipeline, cfg Config, awsConfig aws.Config, hub *Hub) {
-	sink := filepath.Join(pipeline.Sink, pipeline.Id+"-"+time.Now().Format("2006-01-02T15-04-05.000"))
-	defer log.Printf("Completed")
-
-	if _, ok := hub.Clients[pipeline.Id]; ok {
-		log.Printf("Pipeline already exists")
+	if err != nil {
+		log.Printf("Failed to delete workflow %s; err=%v", name, err)
 		return
 	}
 
-	hub.Clients[pipeline.Id] = make(map[*Client]bool)
+	serviceClient := cli.NewWorkflowServiceClient()
+	_, err = serviceClient.DeleteWorkflow(ctx, &workflowpkg.WorkflowDeleteRequest{
+		Name:      name,
+		Namespace: namespace,
+		Force:     false,
+	})
+
+	if err != nil {
+		log.Printf("Failed to delete workflow %s; err=%v", name, err)
+	}
+}
+
+func deleteFiles(ctx context.Context, files []string, cfg Config, awsConfig aws.Config) {
+	client := s3.NewFromConfig(awsConfig, func(o *s3.Options) {
+		o.EndpointResolverV2 = &Endpoint{Bucket: BUCKET, S3Port: cfg.Local.BucketPort}
+	})
+	for _, file := range files {
+		params := &s3.DeleteObjectInput{
+			Bucket: aws.String(BUCKET),
+			Key:    aws.String(file),
+		}
+		client.DeleteObject(ctx, params)
+	}
+}
+
+func local_execute(pipeline *zjson.Pipeline, cfg Config, awsConfig aws.Config, client clientcmd.ClientConfig, hub *Hub) {
+	sink := filepath.Join(pipeline.Sink, pipeline.Id+"-"+time.Now().Format("2006-01-02T15-04-05.000"))
+	ctx := context.Background()
+	defer log.Printf("Completed")
+
+	if err := hub.OpenRoom(pipeline.Id); err != nil {
+		log.Printf("Failed to open log room; err=%v", err)
+		return
+	}
 	defer hub.CloseRoom(pipeline.Id)
 
-	if err := upload(cfg.EntrypointFile, cfg.EntrypointFile, cfg, awsConfig); err != nil { // should never fail
+	if err := upload(ctx, cfg.EntrypointFile, cfg.EntrypointFile, cfg, awsConfig); err != nil { // should never fail
 		log.Printf("Failed to upload entrypoint file; err=%v", err)
 		return
 	}
@@ -582,24 +469,25 @@ func execute(pipeline zjson.Pipeline, cfg Config, awsConfig aws.Config, hub *Hub
 		return
 	}
 
-	workflow, blocks, err := translate(pipeline, cfg)
+	workflow, blocks, err := translate(ctx, pipeline, "org", cfg)
 	if err != nil {
 		log.Printf("Failed to translate the pipeline; err=%v", err)
 		return
 	}
 
 	log.Printf("Made it after translate")
-	yml, err := yaml.Marshal(&workflow)
+	jsonWorkflow, err := json.MarshalIndent(&workflow, "", "  ")
 	if err != nil {
-		log.Printf("Invalid pipeline.yml; err=%v", err)
-		return
-	}
-	if err := writeFile(filepath.Join(sink, "pipeline.yml"), string(yml)); err != nil {
-		log.Printf("Failed to write pipeline.yml; err=%v", err)
+		log.Printf("Invalid translated pipeline.json; err=%v", err)
 		return
 	}
 
-	if err := tarUpload(pipeline.Source, "files.tar.gz", true, cfg, awsConfig); err != nil {
+	if err := writeFile(filepath.Join(sink, "pipeline.json"), string(jsonWorkflow)); err != nil {
+		log.Printf("Failed to write translated pipeline.json; err=%v", err)
+		return
+	}
+
+	if err := tarUpload(ctx, pipeline.Source, "files.tar.gz", true, cfg, awsConfig); err != nil {
 		log.Printf("Failed to upload files; err=%v", err)
 		return
 	}
@@ -609,15 +497,15 @@ func execute(pipeline zjson.Pipeline, cfg Config, awsConfig aws.Config, hub *Hub
 		log.Printf("Path: %v", path)
 		log.Printf("Image: %v", image)
 		if _, err := os.Stat(filepath.Join(path, cfg.ComputationFile)); err != nil {
-			deleteFiles(uploadedFiles, cfg, awsConfig)
+			deleteFiles(ctx, uploadedFiles, cfg, awsConfig)
 			log.Printf("Computation file does not exist; err=%v", err)
 			return
 		}
 
 		if len(image) > 0 {
 			key := image + "-build.tar.gz"
-			if err := tarUpload(path, key, false, cfg, awsConfig); err != nil {
-				deleteFiles(uploadedFiles, cfg, awsConfig)
+			if err := tarUpload(ctx, path, key, false, cfg, awsConfig); err != nil {
+				deleteFiles(ctx, uploadedFiles, cfg, awsConfig)
 				log.Printf("Failed to upload build context; err=%v", err)
 				return
 			}
@@ -625,40 +513,57 @@ func execute(pipeline zjson.Pipeline, cfg Config, awsConfig aws.Config, hub *Hub
 		}
 
 		name := filepath.Base(path) + ".py"
-		if err := upload(filepath.Join(path, cfg.ComputationFile), name, cfg, awsConfig); err != nil {
-			deleteFiles(uploadedFiles, cfg, awsConfig)
+		if err := upload(ctx, filepath.Join(path, cfg.ComputationFile), name, cfg, awsConfig); err != nil {
+			deleteFiles(ctx, uploadedFiles, cfg, awsConfig)
 			log.Printf("Failed to upload computation file; err=%v", err)
 			return
 		}
 		uploadedFiles = append(uploadedFiles, name)
 	}
 
-	output, err := runArgo(sink, pipeline, hub, cfg)
-	defer deleteArgo(output, cfg)
+	workflow, err = runArgo(ctx, workflow, sink, pipeline.Id, client, hub)
+	defer deleteArgo(ctx, workflow.Name, client)
 	if err != nil {
-		log.Println(output)
-		deleteFiles(uploadedFiles, cfg, awsConfig)
+		deleteFiles(ctx, uploadedFiles, cfg, awsConfig)
 		log.Printf("Error during pipeline execution; err=%v", err)
 		return
 	}
 
-	if err := results(filepath.Join(sink, "results", "results.json"), pipeline, output); err != nil {
-		deleteFiles(uploadedFiles, cfg, awsConfig)
+	if err := results(filepath.Join(sink, "results", "results.json"), pipeline, workflow); err != nil {
+		deleteFiles(ctx, uploadedFiles, cfg, awsConfig)
 		log.Printf("Failed to download results; err=%v", err)
 		return
 	}
 
-	if err := logs(sink, output); err != nil {
-		deleteFiles(uploadedFiles, cfg, awsConfig)
-		log.Printf("Failed to download logs; err=%v", err)
-		return
-	}
-
-	if err := tarDownload(sink, "files.tar.gz", cfg, awsConfig); err != nil {
-		deleteFiles(uploadedFiles, cfg, awsConfig)
+	if err := tarDownload(ctx, sink, "files.tar.gz", cfg, awsConfig); err != nil {
+		deleteFiles(ctx, uploadedFiles, cfg, awsConfig)
 		log.Printf("Failed to download files; err=%v", err)
 		return
 	}
 
-	deleteFiles(uploadedFiles, cfg, awsConfig)
+	deleteFiles(ctx, uploadedFiles, cfg, awsConfig)
+}
+
+func cloud_execute(pipeline *zjson.Pipeline, cfg Config, client clientcmd.ClientConfig, hub *Hub) {
+	ctx := context.Background()
+	defer log.Printf("Completed")
+
+	if err := hub.OpenRoom(pipeline.Id); err != nil {
+		log.Printf("Failed to open log room; err=%v", err)
+		return
+	}
+	defer hub.CloseRoom(pipeline.Id)
+
+	workflow, _, err := translate(ctx, pipeline, "org", cfg)
+	if err != nil {
+		log.Printf("Failed to translate the pipeline; err=%v", err)
+		return
+	}
+
+	workflow, err = runArgo(ctx, workflow, "", pipeline.Id, client, hub)
+	defer deleteArgo(ctx, workflow.Name, client)
+	if err != nil {
+		log.Printf("Error during pipeline execution; err=%v", err)
+		return
+	}
 }
