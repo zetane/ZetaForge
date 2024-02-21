@@ -4,7 +4,7 @@
     "name": "New_Python",
     "description": "",
     "block_source": "blocks/new-python",
-    "block_type": ""
+    "block_type": "compute"
   },
   "inputs": {
     "input1": {

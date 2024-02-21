@@ -1,12 +1,13 @@
-import './styles/globals.scss';
-import Navbar from '@/components/ui/Navbar';
+import ProviderInjector from '@/components/ProviderInjector';
+import BlockEditorPanel from '@/components/ui/BlockEditorPanel';
+import DrawflowWrapper from '@/components/ui/DrawflowWrapper';
 import ForgeTheme from '@/components/ui/ForgeTheme';
 import MainContent from '@/components/ui/MainContent';
 import ModalWrapper from '@/components/ui/ModalWrapper';
+import Navbar from '@/components/ui/Navbar';
 import LibraryFetcher from '@/components/ui/library/LibraryFetcher';
 import LibrarySwitcher from '@/components/ui/library/LibrarySwitcher';
-import DrawflowWrapper from '@/components/ui/DrawflowWrapper';
-import ProviderInjector from '@/components/ProviderInjector';
+import './styles/globals.scss';
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
           <LibrarySwitcher />
           <MainContent>
             <DrawflowWrapper />
+            <BlockEditorPanel />
           </MainContent>
           <ModalWrapper />
         </ForgeTheme>

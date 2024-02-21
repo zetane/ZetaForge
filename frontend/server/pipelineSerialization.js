@@ -1,18 +1,18 @@
+import fs from "fs/promises";
+import path from "path";
+import process from "process";
+import { setDifference } from "../utils/set.js";
 import {
   fileExists,
   filterDirectories,
   readJsonToObject,
   withFileSystemRollback,
 } from "./fileSystem.js";
-import { setDifference } from "../utils/set.js";
-import fs from "fs/promises";
-import path from "path";
-import process from "process";
 
 const BLOCK_SPECS = "specs_v1.json";
 
-export async function saveBlock(blockSpecs, fromPath, toPath) {
-  const newFolder = path.join(toPath, blockSpecs.information.id)
+export async function saveBlock(blockSpecs, blockId, fromPath, toPath) {
+  const newFolder = path.join(toPath, blockSpecs.information.id+"-"+blockId)
   const existingBlock = path.join(fromPath, blockSpecs.information.id)
   withFileSystemRollback([toPath], async () => {
     await fs.mkdir(newFolder, { recursive: true });
@@ -95,3 +95,27 @@ async function readPipelineBlocks(specsPath) {
   const specs = await readJsonToObject(specsPath);
   return getPipelineBlocks(specs);
 }
+
+
+export async function removeBlock(blockId, pipelinePath) {
+  const blockPath = await getPipelineBlockPath(pipelinePath, blockId);
+  withFileSystemRollback([blockPath], () => {
+    fs.rm(blockPath, { recursive: true });
+  });
+}
+
+export async function getBlockPath(blockId, pipelinePath) {
+  return await getPipelineBlockPath(pipelinePath, blockId);
+}
+
+export async function getPipelineBlockPath(pipelinePath, blockId) {
+  const blockPaths = await getBlocksInDirectory(pipelinePath);
+
+  for (const blockPath of blockPaths) {
+    const id = blockPath.split("/").pop().split("-").pop();
+    if (blockId == id) {
+      return blockPath;
+    }
+  }
+}
+

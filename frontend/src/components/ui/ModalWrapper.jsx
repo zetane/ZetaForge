@@ -1,7 +1,6 @@
-'use client'
+import { modalContentAtom } from "@/atoms/modalAtom";
 import { Modal } from "@carbon/react";
 import { useAtom } from "jotai";
-import { modalContentAtom } from "@/atoms/modalAtom";
 
 export default function ModalWrapper({children}) {
   const [modalContent, setModalContent] = useAtom(modalContentAtom)

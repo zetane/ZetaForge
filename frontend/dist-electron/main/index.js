@@ -295,6 +295,167 @@ const X = ({
   router: r,
   windows: n = []
 }) => new G({ createContext: e, router: r, windows: n });
+path.join(process.cwd(), ".cache");
+const readSpecs = async (dir) => {
+  const items = await fs.readdir(dir);
+  return specBuilder(items, dir);
+};
+const specBuilder = async (specs, dir) => {
+  const specsData = [];
+  for (const item of specs) {
+    try {
+      const itemPath = path.join(dir, item);
+      const stat = await fs.stat(itemPath);
+      if (stat.isDirectory()) {
+        const specs2 = path.join(itemPath, "specs_v1.json");
+        try {
+          await fs.stat(specs2);
+          const specData = await fs.readFile(specs2);
+          specsData.push(JSON.parse(specData));
+        } catch (error) {
+          console.log("ERROR: ", error);
+        }
+      }
+    } catch (error) {
+      console.log("ERRRRRROR: ", error);
+    }
+  }
+  return specsData;
+};
+async function fileExists(filePath) {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+async function readJsonToObject(filePath) {
+  const buffer = await fs.readFile(filePath);
+  return JSON.parse(buffer);
+}
+async function filterDirectories(filePaths) {
+  const stats = await Promise.all(filePaths.map((p) => fs.stat(p)));
+  return filePaths.map((p, i2) => [p, stats[i2]]).filter(([p, s]) => s.isDirectory()).map(([p, s]) => p);
+}
+async function withFileSystemRollback(restorablePaths, workFunction) {
+  const tempDirectory = await fs.mkdtemp(path.join(tmpdir(), "rollback"));
+  const existingFiles = [];
+  const notExistingFiles = [];
+  try {
+    for (const p of restorablePaths) {
+      if (await fileExists(p)) {
+        await fs.cp(p, path.join(tempDirectory, btoa(p)), { recursive: true });
+        existingFiles.push(p);
+      } else {
+        notExistingFiles.push(p);
+      }
+    }
+    await workFunction();
+  } catch (e) {
+    console.error(
+      "File system operations failed. Starting file rollback. Caused by:",
+      e
+    );
+    for (const p of existingFiles) {
+      await fs.rm(p, { recursive: true });
+      await fs.cp(path.join(tempDirectory, btoa(p)), p, { recursive: true });
+    }
+    for (const p of notExistingFiles) {
+      await fs.rm(p, { recursive: true });
+    }
+  } finally {
+    await fs.rm(tempDirectory, { recursive: true });
+  }
+}
+function setDifference(setA, setB) {
+  const difference = new Set(setA);
+  setB.forEach((e) => {
+    difference.delete(e);
+  });
+  return difference;
+}
+const BLOCK_SPECS = "specs_v1.json";
+async function saveBlock(blockSpecs, blockId, fromPath, toPath) {
+  const newFolder = path.join(toPath, blockSpecs.information.id + "-" + blockId);
+  const existingBlock = path.join(fromPath, blockSpecs.information.id);
+  withFileSystemRollback([toPath], async () => {
+    await fs.mkdir(newFolder, { recursive: true });
+    await fs.cp(existingBlock, newFolder, { recursive: true });
+  });
+  return newFolder;
+}
+async function copyPipeline(pipelineSpecs, pipelineName, fromDir, toDir) {
+  const pipeline_specs = pipelineName + ".json";
+  const bufferPath = path.resolve(process$1.cwd(), fromDir);
+  const pipelineDirectory = toDir;
+  const pipelineSpecsPath = path.join(pipelineDirectory, pipeline_specs);
+  const blockIndex = await getBlockIndex([bufferPath]);
+  const pipelineBlockIndex = await fileExists(pipelineDirectory) ? await getBlockIndex([pipelineDirectory]) : {};
+  const newPipelineBlock = getPipelineBlocks(pipelineSpecs);
+  const oldPipelineBlocks = await fileExists(pipelineSpecsPath) ? await readPipelineBlocks(pipelineSpecsPath) : /* @__PURE__ */ new Set();
+  const blocksToAdd = setDifference(newPipelineBlock, oldPipelineBlocks);
+  const blocksToRemove = setDifference(oldPipelineBlocks, newPipelineBlock);
+  withFileSystemRollback([pipelineDirectory], async () => {
+    await fs.mkdir(pipelineDirectory, { recursive: true });
+    for (const block of blocksToAdd) {
+      const pipelineBlockPath = path.join(pipelineDirectory, block);
+      await fs.cp(blockIndex[block], pipelineBlockPath, { recursive: true });
+    }
+    for (const block of blocksToRemove) {
+      await fs.rm(pipelineBlockIndex[block], { recursive: true });
+    }
+    await fs.writeFile(
+      pipelineSpecsPath,
+      JSON.stringify(pipelineSpecs, null, 2)
+    );
+  });
+  return { specs: pipeline_specs, dirPath: pipelineDirectory };
+}
+async function getBlockIndex(blockDirectories) {
+  const blockIndex = {};
+  for (const directory of blockDirectories) {
+    const blockPaths = await getBlocksInDirectory(directory);
+    for (const blockPath of blockPaths) {
+      const specs = await readJsonToObject(path.join(blockPath, BLOCK_SPECS));
+      blockIndex[specs.information.id] = blockPath;
+    }
+  }
+  return blockIndex;
+}
+function getPipelineBlocks(pipelineSpecs) {
+  return new Set(
+    Object.keys(pipelineSpecs.pipeline).map((k2) => pipelineSpecs.pipeline[k2]).map((b) => b.information.id).map((id) => id.substring(0, id.lastIndexOf("-")))
+  );
+}
+async function getBlocksInDirectory(directory) {
+  const files = await fs.readdir(directory);
+  const filePaths = files.map((b) => path.join(directory, b));
+  const directories = await filterDirectories(filePaths);
+  return directories;
+}
+async function readPipelineBlocks(specsPath) {
+  const specs = await readJsonToObject(specsPath);
+  return getPipelineBlocks(specs);
+}
+async function removeBlock(blockId, pipelinePath) {
+  const blockPath = await getPipelineBlockPath(pipelinePath, blockId);
+  withFileSystemRollback([blockPath], () => {
+    fs.rm(blockPath, { recursive: true });
+  });
+}
+async function getBlockPath(blockId, pipelinePath) {
+  return await getPipelineBlockPath(pipelinePath, blockId);
+}
+async function getPipelineBlockPath(pipelinePath, blockId) {
+  const blockPaths = await getBlocksInDirectory(pipelinePath);
+  for (const blockPath of blockPaths) {
+    const id = blockPath.split("/").pop().split("-").pop();
+    if (blockId == id) {
+      return blockPath;
+    }
+  }
+}
 function isObject(value) {
   return !!value && !Array.isArray(value) && typeof value === "object";
 }
@@ -989,149 +1150,6 @@ function createTRPCInner() {
 const t = initTRPC.create();
 const router = t.router;
 const publicProcedure = t.procedure;
-path.join(process.cwd(), ".cache");
-const readSpecs = async (dir) => {
-  const items = await fs.readdir(dir);
-  return specBuilder(items, dir);
-};
-const specBuilder = async (specs, dir) => {
-  const specsData = [];
-  for (const item of specs) {
-    try {
-      const itemPath = path.join(dir, item);
-      const stat = await fs.stat(itemPath);
-      if (stat.isDirectory()) {
-        const specs2 = path.join(itemPath, "specs_v1.json");
-        try {
-          await fs.stat(specs2);
-          const specData = await fs.readFile(specs2);
-          specsData.push(JSON.parse(specData));
-        } catch (error) {
-          console.log("ERROR: ", error);
-        }
-      }
-    } catch (error) {
-      console.log("ERRRRRROR: ", error);
-    }
-  }
-  return specsData;
-};
-async function fileExists(filePath) {
-  try {
-    await fs.access(filePath);
-    return true;
-  } catch {
-    return false;
-  }
-}
-async function readJsonToObject(filePath) {
-  const buffer = await fs.readFile(filePath);
-  return JSON.parse(buffer);
-}
-async function filterDirectories(filePaths) {
-  const stats = await Promise.all(filePaths.map((p) => fs.stat(p)));
-  return filePaths.map((p, i2) => [p, stats[i2]]).filter(([p, s]) => s.isDirectory()).map(([p, s]) => p);
-}
-async function withFileSystemRollback(restorablePaths, workFunction) {
-  const tempDirectory = await fs.mkdtemp(path.join(tmpdir(), "rollback"));
-  const existingFiles = [];
-  const notExistingFiles = [];
-  try {
-    for (const p of restorablePaths) {
-      if (await fileExists(p)) {
-        await fs.cp(p, path.join(tempDirectory, btoa(p)), { recursive: true });
-        existingFiles.push(p);
-      } else {
-        notExistingFiles.push(p);
-      }
-    }
-    await workFunction();
-  } catch (e) {
-    console.error(
-      "File system operations failed. Starting file rollback. Caused by:",
-      e
-    );
-    for (const p of existingFiles) {
-      await fs.rm(p, { recursive: true });
-      await fs.cp(path.join(tempDirectory, btoa(p)), p, { recursive: true });
-    }
-    for (const p of notExistingFiles) {
-      await fs.rm(p, { recursive: true });
-    }
-  } finally {
-    await fs.rm(tempDirectory, { recursive: true });
-  }
-}
-function setDifference(setA, setB) {
-  const difference = new Set(setA);
-  setB.forEach((e) => {
-    difference.delete(e);
-  });
-  return difference;
-}
-const BLOCK_SPECS = "specs_v1.json";
-async function saveBlock(blockSpecs, fromPath, toPath) {
-  const newFolder = path.join(toPath, blockSpecs.information.id);
-  const existingBlock = path.join(fromPath, blockSpecs.information.id);
-  withFileSystemRollback([toPath], async () => {
-    await fs.mkdir(newFolder, { recursive: true });
-    await fs.cp(existingBlock, newFolder, { recursive: true });
-  });
-  return newFolder;
-}
-async function copyPipeline(pipelineSpecs, pipelineName, fromDir, toDir) {
-  const pipeline_specs = pipelineName + ".json";
-  const bufferPath = path.resolve(process$1.cwd(), fromDir);
-  const pipelineDirectory = toDir;
-  const pipelineSpecsPath = path.join(pipelineDirectory, pipeline_specs);
-  const blockIndex = await getBlockIndex([bufferPath]);
-  const pipelineBlockIndex = await fileExists(pipelineDirectory) ? await getBlockIndex([pipelineDirectory]) : {};
-  const newPipelineBlock = getPipelineBlocks(pipelineSpecs);
-  const oldPipelineBlocks = await fileExists(pipelineSpecsPath) ? await readPipelineBlocks(pipelineSpecsPath) : /* @__PURE__ */ new Set();
-  const blocksToAdd = setDifference(newPipelineBlock, oldPipelineBlocks);
-  const blocksToRemove = setDifference(oldPipelineBlocks, newPipelineBlock);
-  withFileSystemRollback([pipelineDirectory], async () => {
-    await fs.mkdir(pipelineDirectory, { recursive: true });
-    for (const block of blocksToAdd) {
-      const pipelineBlockPath = path.join(pipelineDirectory, block);
-      await fs.cp(blockIndex[block], pipelineBlockPath, { recursive: true });
-    }
-    for (const block of blocksToRemove) {
-      await fs.rm(pipelineBlockIndex[block], { recursive: true });
-    }
-    await fs.writeFile(
-      pipelineSpecsPath,
-      JSON.stringify(pipelineSpecs, null, 2)
-    );
-  });
-  return { specs: pipeline_specs, dirPath: pipelineDirectory };
-}
-async function getBlockIndex(blockDirectories) {
-  const blockIndex = {};
-  for (const directory of blockDirectories) {
-    const blockPaths = await getBlocksInDirectory(directory);
-    for (const blockPath of blockPaths) {
-      const specs = await readJsonToObject(path.join(blockPath, BLOCK_SPECS));
-      blockIndex[specs.information.id] = blockPath;
-    }
-  }
-  return blockIndex;
-}
-function getPipelineBlocks(pipelineSpecs) {
-  return new Set(
-    Object.keys(pipelineSpecs.pipeline).map((k2) => pipelineSpecs.pipeline[k2]).map((b) => b.information.id).map((id) => id.substring(0, id.lastIndexOf("-")))
-  );
-}
-async function getBlocksInDirectory(directory) {
-  const files = await fs.readdir(directory);
-  const filePaths = files.map((b) => path.join(directory, b));
-  const directories = await filterDirectories(filePaths);
-  return directories;
-}
-async function readPipelineBlocks(specsPath) {
-  const specs = await readJsonToObject(specsPath);
-  return getPipelineBlocks(specs);
-}
 const appRouter = router({
   getBlocks: publicProcedure.query(async () => {
     const coreBlocks = "../core/blocks";
@@ -1167,14 +1185,30 @@ const appRouter = router({
   }),
   saveBlock: publicProcedure.input(z$1.object({
     blockSpec: z$1.any(),
+    blockId: z$1.number(),
     blockPath: z$1.string(),
     pipelinePath: z$1.string()
   })).mutation(async (opts) => {
     const { input } = opts;
-    const { blockSpec, blockPath, pipelinePath } = input;
-    const savePaths = await saveBlock(blockSpec, blockPath, pipelinePath);
-    console.log("saved: ", savePaths);
+    const { blockSpec, blockId, blockPath, pipelinePath } = input;
+    const savePaths = await saveBlock(blockSpec, blockId, blockPath, pipelinePath);
     return savePaths;
+  }),
+  getBlockPath: publicProcedure.input(z$1.object({
+    blockId: z$1.number(),
+    pipelinePath: z$1.string()
+  })).mutation(async (opts) => {
+    const { input } = opts;
+    const { blockId, pipelinePath } = input;
+    return await getBlockPath(blockId, pipelinePath);
+  }),
+  removeBlock: publicProcedure.input(z$1.object({
+    blockId: z$1.string(),
+    pipelinePath: z$1.string()
+  })).mutation(async (opts) => {
+    const { input } = opts;
+    const { blockId, pipelinePath } = input;
+    removeBlock(blockId, pipelinePath);
   })
 });
 const __filename = fileURLToPath(import.meta.url);

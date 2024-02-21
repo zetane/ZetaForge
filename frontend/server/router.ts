@@ -1,8 +1,8 @@
-import { z } from 'zod';
-import { publicProcedure, router } from './trpc';
 import { dialog } from 'electron';
-import { copyPipeline, saveBlock } from './pipelineSerialization.js'
+import { z } from 'zod';
 import { readSpecs } from "./fileSystem.js";
+import { copyPipeline, getBlockPath, removeBlock, saveBlock } from './pipelineSerialization.js';
+import { publicProcedure, router } from './trpc';
 
 export const appRouter = router({
   getBlocks: publicProcedure
@@ -43,15 +43,35 @@ export const appRouter = router({
   saveBlock: publicProcedure
     .input(z.object({
       blockSpec: z.any(),
+      blockId: z.number(),
       blockPath: z.string(),
       pipelinePath: z.string()
     })) 
     .mutation(async(opts) => {
       const {input} = opts;
-      const {blockSpec, blockPath, pipelinePath} = input;
-      const savePaths = await saveBlock(blockSpec, blockPath, pipelinePath);
-      console.log("saved: ", savePaths)
+      const {blockSpec, blockId, blockPath, pipelinePath} = input;
+      const savePaths = await saveBlock(blockSpec, blockId, blockPath, pipelinePath);
       return savePaths;
+    }),
+  getBlockPath: publicProcedure
+    .input(z.object({
+      blockId: z.number(),
+      pipelinePath: z.string(),
+    }))
+    .mutation(async (opts) => {
+      const {input} = opts;
+      const {blockId, pipelinePath} = input;
+      return await getBlockPath(blockId, pipelinePath);
+    }),
+  removeBlock: publicProcedure
+    .input(z.object({
+      blockId: z.string(),
+      pipelinePath: z.string(),
+    }))
+    .mutation(async (opts) => {
+      const {input} = opts;
+      const {blockId, pipelinePath} = input;
+      removeBlock(blockId, pipelinePath);
     })
 
 });

@@ -6,7 +6,7 @@
     "system_versions": [],
     "block_version": "block version number",
     "block_source": "blocks/gpt-turbo",
-    "block_type": ""
+    "block_type": "compute"
   },
   "inputs": {
     "descriptions": {
