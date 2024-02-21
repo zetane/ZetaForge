@@ -1,7 +1,21 @@
-import uuid
 import json
+import uuid
 
-def compute(image_paths_view):    
+
+def compute(image_paths_view):
+    """Generates an HTML file with a unique name and returns the file name.
+
+    Inputs:
+        image_paths_view (list): A list of image paths to display in the gallery.
+
+    Outputs:
+        dict: A dictionary with the key 'html' and the value being the name of the generated HTML file.
+
+    Requirements:
+        json
+        uuid
+    """
+
     html_template = """
 <!DOCTYPE html>
 <html>
@@ -74,10 +88,16 @@ def compute(image_paths_view):
 
     image_paths_view_str = json.dumps(image_paths_view)
 
-    html_code = html_template.replace('$image_paths', image_paths_view_str)
+    html_code = html_template.replace("$image_paths", image_paths_view_str)
 
     # Write the file
     with open(html_path, "w") as file:
         file.write(html_code)
 
-    return {'html': f'viz_{unique_id}.html'}
+    return {"html": f"viz_{unique_id}.html"}
+
+
+def test():
+    """Test the compute function."""
+
+    print("Running test")

@@ -1,17 +1,19 @@
 def compute(epoch):
-    '''A textual description of the compute function.
+    """Trains and evaluates a neural network on the iris dataset.
 
-        Inputs:
-            in1 (all): Textual description of in1
-            in2 (all): Textual description of in2
-            ... 
-        Outputs:
-            out1 (all): Textual description of out1
-            out2 (all): Textual description of out2
-            ...
-    '''
-    import torch
+    Inputs:
+        epoch (int): The number of training epochs.
+
+    Outputs:
+        result (dict): A dictionary containing the validation accuracy.
+
+    Requirements:
+        scikit-learn
+        torch
+    """
     import time
+
+    import torch
     import torch.nn as nn
     import torch.optim as optim
     from sklearn import datasets
@@ -24,7 +26,9 @@ def compute(epoch):
     X = iris.data
     y = iris.target
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42
+    )
 
     scaler = StandardScaler()
     X_train = scaler.fit_transform(X_train)
@@ -87,8 +91,12 @@ def compute(epoch):
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
 
-        print(f'Accuracy of the network on the test data: {100 * correct / total} %')
+        print(f"Accuracy of the network on the test data: {100 * correct / total} %")
+
+    return {"val_acc": 100 * correct / total}
 
 
+def test():
+    """Test the compute function."""
 
-    return {'val_acc': 100 * correct / total}
+    print("Running test")

@@ -22,6 +22,7 @@
 body {
 	background-color: var(--cds-background) !important;
 }
+
 :root {
 	@include theme.theme();
 }
@@ -44,7 +45,7 @@ main {
 
 .cds--side-nav {
 	max-inline-size: 30rem !important;
-} 
+}
 
 .cds--side-nav--expanded {
 	inline-size: 30rem !important;

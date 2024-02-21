@@ -1,0 +1,32 @@
+{
+    "block": {
+        "information": {
+            "id": "",
+            "name": "",
+            "description": "",
+            "system_version": ""
+        },
+        "parameters": {
+        },
+        "action": {
+            "languages": {
+                "name": "python",
+                "version": "3.9"            
+            },
+            "container_uuid": "",
+            "container_image_uuid": "",
+            "block_source": ""
+        },
+        "views":{
+            "node": {
+                "html": "",
+                "pos_x": "300",
+                "pos_y": "200",
+                "pos_z": "999, this is the z-index for 2D canvas"
+            }
+        },
+        "controllers":{
+        },
+        "events": []
+    }
+}

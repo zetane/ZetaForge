@@ -5,7 +5,7 @@
     "description": "description",
     "block_version": "block version number",
     "block_source": "blocks/view-images",
-    "block_type": ""
+    "block_type": "view"
   },
   "inputs": {
     "image_paths_view": {
@@ -25,10 +25,7 @@
     "container": {
       "image": "view-images",
       "version": "latest",
-      "command_line": [
-        "python",
-        "entrypoint.py"
-      ]
+      "command_line": ["python", "entrypoint.py"]
     }
   },
   "views": {

@@ -1,7 +1,21 @@
-import uuid
 import json
+import uuid
 
-def compute(array_of_pairs):    
+
+def compute(array_of_pairs):
+    """Generates an HTML file displaying image and text pairs in columns.
+
+    Inputs:
+        array_of_pairs (list): A list of dictionaries, each containing image and text pairs.
+
+    Outputs:
+        dict: A dictionary with the key 'html' and the value being the name of the generated HTML file.
+
+    Requirements:
+        json
+        uuid
+    """
+
     html_template = """<!DOCTYPE html>
 <html lang="en">
 
@@ -225,10 +239,16 @@ def compute(array_of_pairs):
 
     image_paths_view_str = json.dumps(array_of_pairs)
 
-    html_code = html_template.replace('$object_array', image_paths_view_str)
+    html_code = html_template.replace("$object_array", image_paths_view_str)
 
     # Write the file
     with open(html_path, "w") as file:
         file.write(html_code)
 
-    return {'html': f"viz_{unique_id}.html"}
+    return {"html": f"viz_{unique_id}.html"}
+
+
+def test():
+    """Test the compute function."""
+
+    print("Running test")

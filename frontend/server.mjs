@@ -1,18 +1,19 @@
 const local_postgresql_database = false;
 
-import compression from "compression";
-import express from "express";
-import { readFile, readFileSync, writeFile, access, constants } from "fs";
-import path from "path";
-import { exec } from "child_process";
-import { Configuration, OpenAIApi } from "openai";
-import 'dotenv/config'
-import pg from "pg";
-const { Client } = pg;
 import bodyParser from "body-parser";
-import { copyPipeline, saveBlock } from "./server/pipelineSerialization.js";
-import { readSpecs } from "./server/fileSystem.js";
+import { exec, spawn } from "child_process";
+import compression from "compression";
 import cors from "cors";
+import 'dotenv/config';
+import express from "express";
+import fs, { access, constants, readFile, readFileSync, writeFile } from "fs";
+import multer from "multer";
+import { Configuration, OpenAIApi } from "openai";
+import path from "path";
+import pg from "pg";
+import { readSpecs } from "./server/fileSystem.js";
+import { copyPipeline, saveBlock } from "./server/pipelineSerialization.js";
+const { Client } = pg;
 
 const app = express();
 const port = 3330;
@@ -55,6 +56,7 @@ if (local_postgresql_database){
   client.connect();
 }
 
+const upload = multer({ dest: "_temp_import" });
 
 function getActiveRun() {
     try {
@@ -268,7 +270,6 @@ app.get('/log', (req, res) => {
   }
 });
 
-
 app.get('/get-history-local', (req, res) => {
   const active = getActiveRun()
   if (active && active.run_id) {
@@ -324,7 +325,296 @@ app.get('/blocks', async (req, res) => {
   }
 })
 
+app.post("/import-files", upload.array("files"), (req, res) => {
+  const files = req.files;
+
+  files.forEach((file) => {
+    const targetPath = path.join(req.body.blockPath, file.originalname);
+
+    // Move file from temporary location to target directory
+    fs.renameSync(file.path, targetPath);
+  });
+
+  res.send("Files imported successfully");
+});
+
+app.post("/import-folder", upload.array("files"), (req, res) => {
+  const files = req.files;
+  const paths = req.body.paths;
+
+  if (!Array.isArray(paths) || paths.length !== files.length) {
+    return res.status(400).send("Mismatch between files and paths data.");
+  }
+
+  files.forEach((file, index) => {
+    const relativePath = paths[index];
+    const targetPath = path.join(req.body.blockPath, relativePath);
+    const directory = path.dirname(targetPath);
+
+    // Create directory if it doesn't exist, including any nested subdirectories
+    if (!fs.existsSync(directory)) {
+      fs.mkdirSync(directory, { recursive: true });
+    }
+
+    // Move file from temporary location to target directory
+    fs.renameSync(file.path, targetPath);
+  });
+
+  res.send("Folder imported successfully");
+});
+
+
+app.post("/save-file", (req, res) => {
+  const { pipelinePath, filePath, content } = req.body;
+  const pipelineFilePath = path.join(pipelinePath, filePath);
+
+  fs.writeFile(pipelineFilePath, content, (err) => {
+    if (err) {
+      console.error("Error writing data to file:", err);
+      res.status(500).send({ error: "Error writing data to file" });
+      return;
+    }
+    res.send({ log: `Saved file at ${filePath}` });
+  });
+});
+
+app.post("/get-agent", async (req, res) => {
+  const { blockPath } = req.body;
+  const specsPath = `${blockPath}/specs_v1.json`;
+
+  fs.readFile(specsPath, (err, data) => {
+    if (err) {
+      console.error(`Error sending the file: ${err}`);
+      res.status(500).json({ error: "Could not retrieve agent" });
+      return;
+    }
+
+    const specs = JSON.parse(data);
+    if (specs.information.block_type == "view") {
+      res.status(200).json("gpt-4_python_view");
+    } else {
+      res.status(200).json("gpt-4_python_compute");
+    }
+  });
+});
+
+app.post("/get-code-template", async (req, res) => {
+  const { agentName, blockPath } = req.body;
+
+  try {
+    // Construct the file path
+    const filePath = path.join(blockPath, "computations.py");
+
+    fs.readFile(filePath, "utf8", (error, fileContents) => {
+      if (error) {
+        console.error("Error reading file:", error);
+        res.status(500).send("Error reading file");
+        return;
+      }
+      // Send the contents back inside the callback
+      res.send({ content: fileContents });
+    });
+  } catch (error) {
+    console.error("Error reading file:", error);
+    res.status(500).send("Error reading file");
+  }
+});
+
+app.post("/api/call-agent", async (req, res) => {
+  const userMessage = req.body.message;
+  const agentName = req.body.agent;
+  const conversationHistory = req.body.history;
+  console.log("USER MESSAGE", userMessage);
+
+  try {
+    // Path to the Python script
+    const scriptPath = "agents/" + agentName + "/generate/computations.py";
+    const pythonProcess = spawn("python", [scriptPath]);
+
+    const inputData = { userMessage, conversationHistory };
+    pythonProcess.stdin.write(JSON.stringify(inputData));
+    pythonProcess.stdin.end();
+
+    // Collect data from the Python script
+    let scriptOutput = "";
+    pythonProcess.stdout.on("data", (data) => {
+      scriptOutput += data.toString();
+    });
+
+    pythonProcess.stdout.on("end", () => {
+      console.log("Received from Python script:", scriptOutput);
+      try {
+        res.send(JSON.parse(scriptOutput));
+      } catch (parseError) {
+        console.error("Error parsing script output:", parseError);
+        res.status(500).send({ error: "Error parsing script output" });
+      }
+    });
+
+    pythonProcess.stderr.on("data", (data) => {
+      console.error(`stderr: ${data}`);
+    });
+
+    pythonProcess.on("close", (code) => {
+      if (code !== 0) {
+        console.log(`Python script exited with code ${code}`);
+        res.status(500).send({ error: "Python script error" });
+      }
+    });
+  } catch (err) {
+    console.error("Server error:", err);
+    res.status(500).send({ error: "Internal server error" });
+  }
+});
+
+app.post("/get-directory-tree", (req, res) => {
+  const blockFolder = req.body.folder;
+  try {
+    const fileSystem = getFileSystemContent(blockFolder);
+    res.json(fileSystem);
+  } catch (err) {
+    console.error("Error reading directory:", err);
+    res.status(500).send({ error: "Error reading directory" });
+  }
+});
+
+const getFileSystemContent = (dirPath) => {
+  const fileSystem = {};
+
+  const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+  entries.forEach((entry) => {
+    if (entry.isDirectory()) {
+      // If the entry is a directory, recurse into it
+      fileSystem[entry.name] = {
+        type: "folder",
+        expanded: false,
+        content: getFileSystemContent(path.join(dirPath, entry.name)), // Recursive call
+      };
+    } else {
+      // Determine the file extension
+      const ext = path.extname(entry.name).toLowerCase();
+
+      // Read content if the file has one of the specified extensions
+      let fileContent = `This file type is not supported for display.\n`; // Default placeholder content
+      if (
+        [
+          ".json",
+          ".py",
+          ".txt",
+          ".html",
+          ".gitkeep",
+          ".md",
+          ".yaml",
+          ".bat",
+        ].includes(ext) ||
+        entry.name == "Dockerfile" ||
+        entry.name == "LICENSE"
+      ) {
+        const fullPath = path.join(dirPath, entry.name);
+        try {
+          fileContent = fs.readFileSync(fullPath, "utf8");
+        } catch (error) {
+          console.error(`Error reading file ${entry.name}:`, error);
+          fileContent = `Error reading file ${entry.name}`;
+        }
+      }
+
+      // Store file information
+      fileSystem[entry.name] = {
+        type: "file",
+        content: fileContent,
+      };
+    }
+  });
+
+  return fileSystem;
+};
+
+app.post("/new-block-react", (req, res) => {
+  const data = req.body;
+
+  function unescape(s) {
+    return s
+      .replace(/\\n/g, "\n")
+      .replace(/\\r/g, "\r")
+      .replace(/\\"/g, '"')
+      .replace(/\\\\/g, "\\");
+  }
+
+  let folderPath = data.block_name;
+  const filePath = path.join(data.blockPath, "computations.py");
+  const computations_script = unescape(data.computations_script);
+
+  fs.writeFile(filePath, computations_script, (err) => {
+    if (err) {
+      console.error("Error writing data to file:", err);
+      res.status(500).send({ error: "Error writing data to file" });
+      return;
+    }
+
+    let command =
+      `python -B "../agents/${data.agent_name}/compile/computations.py" ` +
+      `--block_path "${data.blockPath}" ` +
+      `--block_name "${data.block_name}" ` +
+      `--block_user_name "${data.block_user_name}" `;
+
+    exec(command, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`exec error: ${error}`);
+        res.status(500).send({ error: error.message });
+        return;
+      }
+      res.send({
+        stdout: stdout,
+        stderr: stderr,
+        log: "Saved compute file to " + folderPath,
+      });
+      console.log("stdout", stdout, "stderr", stderr);
+    });
+  });
+});
+
+app.post("/run-docker-commands", (req, res) => {
+  const { blockPath: blockPath } = req.body;
+
+  // Execute the Python script
+  const pythonProcess = spawn("python", ["run_test.py"], {
+    cwd: blockPath,
+  });
+
+  pythonProcess.stdout.on("data", (data) => {
+    console.log(data.toString());
+  });
+
+  pythonProcess.stderr.on("data", (data) => {
+    console.error(data.toString());
+  });
+
+  pythonProcess.on("exit", (code) => {
+    console.log(`Child exited with code ${code}`);
+    res.send({ message: `Python script executed with exit code: ${code}` });
+  });
+});
+
+app.get("/api/logs", (req, res) => {
+  const filePath = req.query.filePath;
+
+  // Check if the file exists
+  if (fs.existsSync(filePath)) {
+    // File exists, read and return its content
+    fs.readFile(filePath, "utf8", (err, data) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).send("Error reading log file");
+      }
+      res.send(data);
+    });
+  } else {
+    // File does not exist, send a default message or an empty string
+    res.send("Logs not available yet");
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
 });
-

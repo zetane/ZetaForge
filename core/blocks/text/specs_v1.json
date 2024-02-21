@@ -4,7 +4,7 @@
     "name": "Text",
     "description": "description",
     "block_source": "blocks/text",
-    "block_type": ""
+    "block_type": "compute"
   },
   "inputs": {},
   "outputs": {

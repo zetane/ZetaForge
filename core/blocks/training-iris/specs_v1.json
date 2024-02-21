@@ -6,7 +6,7 @@
     "system_versions": [],
     "block_version": "block version number",
     "block_source": "blocks/training-iris",
-    "block_type": ""
+    "block_type": "compute"
   },
   "inputs": {
     "epoch": {
@@ -26,10 +26,7 @@
     "container": {
       "image": "training_iris",
       "version": "latest",
-      "command_line": [
-        "python",
-        "entrypoint.py"
-      ]
+      "command_line": ["python", "entrypoint.py"]
     }
   },
   "views": {

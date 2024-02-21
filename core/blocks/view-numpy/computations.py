@@ -1,5 +1,6 @@
-from string import Template
 import uuid
+from string import Template
+
 import numpy as np
 
 # THIS IS TO HAVE A SLICER
@@ -31,11 +32,26 @@ import numpy as np
 #     return arr[tuple(slices)]
 
 
-def compute(my_numpy):    
+def compute(my_numpy):
+    """Generates an HTML file displaying NumPy data and shape.
+
+    Inputs:
+        my_numpy (str): The path to a NumPy data file.
+
+    Outputs:
+        dict: A dictionary with the key 'html' and the value being the name of the generated HTML file.
+
+    Requirements:
+        numpy
+        string
+        uuid
+    """
+
     data = np.load(my_numpy)
     shape_list = str(list(data.shape))
     numpy_list = data.flatten().tolist()
-    html_template = Template("""
+    html_template = Template(
+        """
 <!DOCTYPE html>
 <html>
 
@@ -914,16 +930,23 @@ def compute(my_numpy):
 </body>
 
 </html>
-    """)
+    """
+    )
 
     # Generate a UUID
     unique_id = str(uuid.uuid4())
 
     html_path = f"views/viz_{unique_id}.html"
-    html_code = html_template.substitute(numpy_data = numpy_list, numpy_shape = shape_list)
+    html_code = html_template.substitute(numpy_data=numpy_list, numpy_shape=shape_list)
 
     # Write the file
     with open(html_path, "w") as file:
         file.write(html_code)
 
-    return {'html': f"viz_{unique_id}.html"}
+    return {"html": f"viz_{unique_id}.html"}
+
+
+def test():
+    """Test the compute function."""
+
+    print("Running test")

@@ -1,5 +1,5 @@
 export default class Drawflow {
-  constructor(container, render = null, parent = null) {
+  constructor(container, openViewCallback, render = null, parent = null) {
     this.events = {};
     this.container = container;
     this.precanvas = null;
@@ -50,7 +50,14 @@ export default class Drawflow {
     // Mobile
     this.evCache = new Array();
     this.prevDiff = -1;
+
+    this.removeNodeSubscribers = [];
+
+    this.openViewCallback = openViewCallback;
   }
+
+  
+
 
   start() {
     // console.info("Start Drawflow!!");
@@ -168,7 +175,7 @@ export default class Drawflow {
   //   this.nodeId = number;
   // }
 
-  load_block(node, notifi=true) {
+load_block(node, notifi=true) {
     this.addNode_from_JSON(node, node.views.node.pos_x, node.views.node.pos_y);
     if (notifi) {
       this.dispatch('import', 'import')
@@ -1338,7 +1345,7 @@ export default class Drawflow {
       <div class="title-box" style="display: flex; align-items: center;background-color:`+ title_background_color +`;"> 
           ${block.information.name}
           <div style="margin-left: auto; display: flex;">
-              <button class="view-btn" onclick="openCode('../../`+ block.information.block_source + `/computations.py')">
+              <button id="btn_open_code" class="view-btn">
                   <div>
                       <svg class="mySvg" style="margin-bottom:15px" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="white" stroke="#5eb017" stroke-width="0.6" class="bi bi-eye" viewBox="0 0 16 16"> 
                       <path d="M5.854 4.854a.5.5 0 1 0-.708-.708l-3.5 3.5a.5.5 0 0 0 0 .708l3.5 3.5a.5.5 0 0 0 .708-.708L2.707 8l3.147-3.146zm4.292 0a.5.5 0 0 1 .708-.708l3.5 3.5a.5.5 0 0 1 0 .708l-3.5 3.5a.5.5 0 0 1-.708-.708L13.293 8l-3.147-3.146z"/>
@@ -1532,6 +1539,12 @@ export default class Drawflow {
         });
       }
     }
+
+    const openCodeButton = content.querySelector("#btn_open_code")
+    openCodeButton.addEventListener("click", () => {
+      this.openViewCallback(newNodeId)
+    })
+
     node.appendChild(inputs);
     node.appendChild(content);
     node.appendChild(outputs);
@@ -2042,7 +2055,12 @@ export default class Drawflow {
     }, 3000);  // Delay is in milliseconds
   }
 
+  registerRemoveNode(subscriber){
+    this.removeNodeSubscribers.push(subscriber);
+  }
+
   removeNodeId(id) {
+    this.removeNodeSubscribers.forEach((s) => s(id.replace("node-", "")))
     this.removeConnectionNodeId(id);
     var moduleName = this.getModuleFromNodeId(id.slice(5))
     if (this.module === moduleName) {
@@ -2347,7 +2365,7 @@ export default class Drawflow {
   }
 
   import_block(data, clear = true, notifi = true) {
-    }
+      }
 
   import(data, notifi = true) {
     // this.clear();
@@ -2430,5 +2448,5 @@ export default class Drawflow {
       }
       return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
     });
-  }
+  } 
 }

@@ -1,9 +1,23 @@
-from string import Template
 import uuid
+from string import Template
 
 
 def compute(num_cubes=3):
-    html_template = Template("""
+    """Generates an HTML file displaying a 3D scene with cubes using Three.js.
+
+    Inputs:
+        num_cubes (int): The number of cubes to generate in the 3D scene.
+
+    Outputs:
+        dict: A dictionary with the key 'html' and the value being the name of the generated HTML file.
+
+    Requirements:
+        uuid
+        string
+    """
+
+    html_template = Template(
+        """
 <canvas id="c"></canvas>
 <script type="importmap">
     {
@@ -104,8 +118,8 @@ addLights();
 animate();
 </script>
 
-    """)
-
+    """
+    )
 
     # Generate a UUID
     unique_id = str(uuid.uuid4())
@@ -116,5 +130,11 @@ animate();
     # Write the file
     with open(html_path, "w") as file:
         file.write(html_code)
-  
-    return {'html': f"viz_{unique_id}.html"}
+
+    return {"html": f"viz_{unique_id}.html"}
+
+
+def test():
+    """Test the compute function."""
+
+    print("Running test")

@@ -5,7 +5,7 @@
     "description": "description",
     "block_version": "block version number",
     "block_source": "blocks/integer",
-    "block_type": ""
+    "block_type": "compute"
   },
   "inputs": {},
   "outputs": {
