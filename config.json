@@ -10,7 +10,7 @@
 	"Bucket":"forge-bucket",
 
 	"Local": {
-		"BucketPort":"9444",
+		"BucketPort":"8333",
 		"RegistryPort":"5000"
 	}
 } 

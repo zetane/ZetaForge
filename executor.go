@@ -21,7 +21,10 @@ import (
 	workflowpkg "github.com/argoproj/argo-workflows/v3/pkg/apiclient/workflow"
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	endpoints "github.com/aws/smithy-go/endpoints"
 	"golang.org/x/net/context"
 	corev1 "k8s.io/api/core/v1"
@@ -40,16 +43,32 @@ func (endpoint *Endpoint) ResolveEndpoint(ctx context.Context, params s3.Endpoin
 	return endpoints.Endpoint{URI: *uri}, err
 }
 
-func upload(ctx context.Context, source string, key string, cfg Config, awsConfig aws.Config) error {
+func s3Client(ctx context.Context, cfg Config) (*s3.Client, error) {
+	awsAccessKey := "AKIAIOSFODNN7EXAMPLE"
+	awsSecretKey := "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+	creds := credentials.NewStaticCredentialsProvider(awsAccessKey, awsSecretKey, "")
+	region := config.WithRegion("us-east-2")
+	awsConfig, err := config.LoadDefaultConfig(ctx, region, config.WithCredentialsProvider(creds))
+	if err != nil {
+		return &s3.Client{}, err
+	}
+	client := s3.NewFromConfig(awsConfig, func(o *s3.Options) {
+		o.EndpointResolverV2 = &Endpoint{Bucket: BUCKET, S3Port: cfg.Local.BucketPort}
+	})
+
+	return client, nil
+}
+
+func upload(ctx context.Context, source string, key string, cfg Config) error {
 	file, err := os.Open(source)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
-
-	client := s3.NewFromConfig(awsConfig, func(o *s3.Options) {
-		o.EndpointResolverV2 = &Endpoint{Bucket: BUCKET, S3Port: cfg.Local.BucketPort}
-	})
+	client, err := s3Client(ctx, cfg)
+	if err != nil {
+		return err
+	}
 
 	params := &s3.PutObjectInput{
 		Bucket: aws.String(BUCKET),
@@ -57,14 +76,32 @@ func upload(ctx context.Context, source string, key string, cfg Config, awsConfi
 		Body:   file,
 	}
 
-	if _, err := client.PutObject(ctx, params); err != nil {
-		return err
-	}
-
-	return nil
+	_, err = client.PutObject(ctx, params)
+	return err
 }
 
-func tarFile(source string, key string, files bool) error {
+func filesUpload(ctx context.Context, source string, prefix string, cfg Config) error {
+	err := filepath.Walk(source, func(path string, info fs.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if !info.Mode().IsRegular() {
+			return nil
+		}
+
+		name := filepath.ToSlash(strings.TrimPrefix(
+			strings.Replace(path, filepath.Clean(source), "", -1),
+			string(filepath.Separator),
+		))
+
+		return upload(ctx, path, prefix+name, cfg)
+	})
+
+	return err
+}
+
+func tarFile(source string, key string) error {
 	file, err := os.Create(key)
 
 	if err != nil {
@@ -93,12 +130,8 @@ func tarFile(source string, key string, files bool) error {
 			return err
 		}
 
-		if files {
-			sourceName := strings.TrimPrefix(source, "." + string(filepath.Separator))
-			header.Name = strings.TrimPrefix(strings.Replace(path, sourceName, "files", -1), string(filepath.Separator))
-		} else {
-			header.Name = strings.TrimPrefix(strings.Replace(path, source, "", -1), string(filepath.Separator))
-		}
+		header.Name = strings.TrimPrefix(strings.Replace(path, source, "", -1), string(filepath.Separator))
+
 		if err := tw.WriteHeader(header); err != nil {
 			return err
 		}
@@ -115,93 +148,104 @@ func tarFile(source string, key string, files bool) error {
 		return file.Close()
 	})
 
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
-func tarUpload(ctx context.Context, source string, key string, files bool, cfg Config, awsConfig aws.Config) error {
-	if err := tarFile(source, key, files); err != nil {
+func tarUpload(ctx context.Context, source string, key string, cfg Config) error {
+	if err := tarFile(source, key); err != nil {
 		return err
 	}
 	defer os.Remove(key)
 
-	if err := upload(ctx, key, key, cfg, awsConfig); err != nil {
+	if err := upload(ctx, key, key, cfg); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func tarDownload(ctx context.Context, sink string, key string, cfg Config, awsConfig aws.Config) error {
-	client := s3.NewFromConfig(awsConfig, func(o *s3.Options) {
-		o.EndpointResolverV2 = &Endpoint{Bucket: BUCKET, S3Port: cfg.Local.BucketPort}
-	})
+func filesDownload(ctx context.Context, sink string, prefix string, cfg Config) error {
+	client, err := s3Client(ctx, cfg)
+	if err != nil {
+		return err
+	}
 
-	result, err := client.GetObject(ctx, &s3.GetObjectInput{
+	res, err := client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
 		Bucket: aws.String(BUCKET),
-		Key:    aws.String(key),
+		Prefix: aws.String(prefix),
 	})
 
-	if err != nil {
-		return err
-	}
+	for _, content := range res.Contents {
+		dir, filename := filepath.Split(*content.Key)
 
-	defer result.Body.Close()
-
-	gzr, err := gzip.NewReader(result.Body)
-
-	if err != nil {
-		return err
-	}
-
-	defer gzr.Close()
-
-	tr := tar.NewReader(gzr)
-
-	for {
-		header, err := tr.Next()
-
-		switch {
-		case err == io.EOF:
-			return nil
-		case err != nil:
+		location := filepath.Join(sink, dir)
+		if err := os.MkdirAll(location, 0755); err != nil {
 			return err
-		case header == nil:
-			continue
+		}
+		result, err := client.GetObject(ctx, &s3.GetObjectInput{
+			Bucket: aws.String(BUCKET),
+			Key:    content.Key,
+		})
+
+		if err != nil {
+			return err
 		}
 
-		target := filepath.Join(sink, header.Name)
-		if !fs.ValidPath(target) {
-			return errors.New("invalid path: " + target)
+		file, err := os.OpenFile(filepath.Join(location, filename), os.O_CREATE|os.O_RDWR, 0644)
+		if err != nil {
+			result.Body.Close()
+			return err
 		}
 
-		switch header.Typeflag {
-		case tar.TypeDir:
-			if _, err := os.Stat(target); err != nil {
-				if err := os.Mkdir(target, 0755); err != nil {
-					return err
-				}
-			}
-
-		case tar.TypeReg:
-			file, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
-			if err != nil {
-				return err
-			}
-
-			if _, err := io.Copy(file, tr); err != nil {
-				return err
-			}
-
-			file.Close()
+		if _, err := io.Copy(file, result.Body); err != nil {
+			result.Body.Close()
+			return err
 		}
 
+		result.Body.Close()
+	}
+
+	return nil
+}
+
+func filesDelete(ctx context.Context, prefix string, extraFiles []string, cfg Config) {
+	client, err := s3Client(ctx, cfg)
+	if err != nil {
+		log.Printf("Failed to delete files; err=%v", err)
+		return
+	}
+
+	params := &s3.DeleteObjectsInput{
+		Bucket: aws.String(BUCKET),
+		Delete: &types.Delete{
+			Objects: []types.ObjectIdentifier{},
+		},
+	}
+
+	res, err := client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
+		Bucket: aws.String(BUCKET),
+		Prefix: aws.String(prefix),
+	})
+
+	for _, content := range res.Contents {
+		params.Delete.Objects = append(params.Delete.Objects, types.ObjectIdentifier{
+			Key: content.Key,
+		})
+	}
+
+	for _, file := range extraFiles {
+		params.Delete.Objects = append(params.Delete.Objects, types.ObjectIdentifier{
+			Key: aws.String(file),
+		})
+	}
+
+	_, err = client.DeleteObjects(ctx, params)
+	if err != nil {
+		log.Printf("Failed to delete files; err=%v", err)
 	}
 }
 
-func buildHistory(sinkPath string) error {
+func history(sinkPath string) error {
 	if err := os.Mkdir(sinkPath, 0755); err != nil {
 		return err
 	}
@@ -220,7 +264,7 @@ func buildHistory(sinkPath string) error {
 	return nil
 }
 
-func writeFile(path string, content string) error {
+func fileWrite(path string, content string) error {
 	file, err := os.Create(path)
 	if err != nil {
 		return err
@@ -254,7 +298,7 @@ func results(path string, pipeline *zjson.Pipeline, workflow *wfv1.Workflow) err
 		return err
 	}
 
-	return writeFile(path, string(data))
+	return fileWrite(path, string(data))
 }
 
 func streaming(ctx context.Context, sink string, name string, roomId string, client clientcmd.ClientConfig, hub *Hub) {
@@ -321,14 +365,14 @@ func streaming(ctx context.Context, sink string, name string, roomId string, cli
 	if sink != "" {
 		for podname, logs := range logMap {
 			path := filepath.Join(sink, "logs", podname+".log")
-			if err := writeFile(path, strings.Join(logs, "\n")); err != nil {
+			if err := fileWrite(path, strings.Join(logs, "\n")); err != nil {
 				log.Printf("Log stream error; err=%v", err)
 			}
 		}
 	}
 }
 
-func runArgo(ctx context.Context, workflow *wfv1.Workflow, sink string, id string, client clientcmd.ClientConfig, hub *Hub) (*wfv1.Workflow, error) {
+func argoRun(ctx context.Context, workflow *wfv1.Workflow, sink string, id string, client clientcmd.ClientConfig, hub *Hub) (*wfv1.Workflow, error) {
 	ctx, cli, err := apiclient.NewClientFromOpts(
 		apiclient.Opts{
 			ClientConfigSupplier: func() clientcmd.ClientConfig {
@@ -396,7 +440,7 @@ func runArgo(ctx context.Context, workflow *wfv1.Workflow, sink string, id strin
 	return workflow, nil
 }
 
-func deleteArgo(ctx context.Context, name string, client clientcmd.ClientConfig) {
+func argoDelete(ctx context.Context, name string, client clientcmd.ClientConfig) {
 	ctx, cli, err := apiclient.NewClientFromOpts(
 		apiclient.Opts{
 			ClientConfigSupplier: func() clientcmd.ClientConfig {
@@ -425,20 +469,7 @@ func deleteArgo(ctx context.Context, name string, client clientcmd.ClientConfig)
 	}
 }
 
-func deleteFiles(ctx context.Context, files []string, cfg Config, awsConfig aws.Config) {
-	client := s3.NewFromConfig(awsConfig, func(o *s3.Options) {
-		o.EndpointResolverV2 = &Endpoint{Bucket: BUCKET, S3Port: cfg.Local.BucketPort}
-	})
-	for _, file := range files {
-		params := &s3.DeleteObjectInput{
-			Bucket: aws.String(BUCKET),
-			Key:    aws.String(file),
-		}
-		client.DeleteObject(ctx, params)
-	}
-}
-
-func local_execute(pipeline *zjson.Pipeline, cfg Config, awsConfig aws.Config, client clientcmd.ClientConfig, hub *Hub) {
+func localExecute(pipeline *zjson.Pipeline, cfg Config, client clientcmd.ClientConfig, hub *Hub) {
 	sink := filepath.Join(pipeline.Sink, pipeline.Id+"-"+time.Now().Format("2006-01-02T15-04-05.000"))
 	ctx := context.Background()
 	defer log.Printf("Completed")
@@ -449,12 +480,12 @@ func local_execute(pipeline *zjson.Pipeline, cfg Config, awsConfig aws.Config, c
 	}
 	defer hub.CloseRoom(pipeline.Id)
 
-	if err := upload(ctx, cfg.EntrypointFile, cfg.EntrypointFile, cfg, awsConfig); err != nil { // should never fail
+	if err := upload(ctx, cfg.EntrypointFile, cfg.EntrypointFile, cfg); err != nil { // should never fail
 		log.Printf("Failed to upload entrypoint file; err=%v", err)
 		return
 	}
 
-	if err := buildHistory(sink); err != nil {
+	if err := history(sink); err != nil {
 		log.Printf("Failed to build history folder; err=%v", err)
 		return
 	}
@@ -464,7 +495,7 @@ func local_execute(pipeline *zjson.Pipeline, cfg Config, awsConfig aws.Config, c
 		log.Printf("Invalid pipeline.json; err=%v", err)
 		return
 	}
-	if err := writeFile(filepath.Join(sink, "pipeline", "pipeline.json"), string(jsonData)); err != nil {
+	if err := fileWrite(filepath.Join(sink, "pipeline", "pipeline.json"), string(jsonData)); err != nil {
 		log.Printf("Failed to write pipeline.json; err=%v", err)
 		return
 	}
@@ -482,30 +513,31 @@ func local_execute(pipeline *zjson.Pipeline, cfg Config, awsConfig aws.Config, c
 		return
 	}
 
-	if err := writeFile(filepath.Join(sink, "pipeline.json"), string(jsonWorkflow)); err != nil {
+	if err := fileWrite(filepath.Join(sink, "pipeline.json"), string(jsonWorkflow)); err != nil {
 		log.Printf("Failed to write translated pipeline.json; err=%v", err)
 		return
 	}
 
-	if err := tarUpload(ctx, pipeline.Source, "files.tar.gz", true, cfg, awsConfig); err != nil {
-		log.Printf("Failed to upload files; err=%v", err)
-		return
+	files := "files/"
+
+	if err := filesUpload(ctx, pipeline.Source, files, cfg); err != nil {
+		log.Println(err)
 	}
 
-	uploadedFiles := []string{"files.tar.gz"}
+	uploadedFiles := []string{}
 	for path, image := range blocks {
-		log.Printf("Path: %v", path)
-		log.Printf("Image: %v", image)
+		log.Printf("Path: %s", path)
+		log.Printf("Image: %s", image)
 		if _, err := os.Stat(filepath.Join(path, cfg.ComputationFile)); err != nil {
-			deleteFiles(ctx, uploadedFiles, cfg, awsConfig)
+			filesDelete(ctx, files, uploadedFiles, cfg)
 			log.Printf("Computation file does not exist; err=%v", err)
 			return
 		}
 
 		if len(image) > 0 {
 			key := image + "-build.tar.gz"
-			if err := tarUpload(ctx, path, key, false, cfg, awsConfig); err != nil {
-				deleteFiles(ctx, uploadedFiles, cfg, awsConfig)
+			if err := tarUpload(ctx, path, key, cfg); err != nil {
+				filesDelete(ctx, files, uploadedFiles, cfg)
 				log.Printf("Failed to upload build context; err=%v", err)
 				return
 			}
@@ -513,38 +545,38 @@ func local_execute(pipeline *zjson.Pipeline, cfg Config, awsConfig aws.Config, c
 		}
 
 		name := filepath.Base(path) + ".py"
-		if err := upload(ctx, filepath.Join(path, cfg.ComputationFile), name, cfg, awsConfig); err != nil {
-			deleteFiles(ctx, uploadedFiles, cfg, awsConfig)
+		if err := upload(ctx, filepath.Join(path, cfg.ComputationFile), name, cfg); err != nil {
+			filesDelete(ctx, files, uploadedFiles, cfg)
 			log.Printf("Failed to upload computation file; err=%v", err)
 			return
 		}
 		uploadedFiles = append(uploadedFiles, name)
 	}
 
-	workflow, err = runArgo(ctx, workflow, sink, pipeline.Id, client, hub)
-	defer deleteArgo(ctx, workflow.Name, client)
+	workflow, err = argoRun(ctx, workflow, sink, pipeline.Id, client, hub)
+	defer argoDelete(ctx, workflow.Name, client)
 	if err != nil {
-		deleteFiles(ctx, uploadedFiles, cfg, awsConfig)
+		filesDelete(ctx, files, uploadedFiles, cfg)
 		log.Printf("Error during pipeline execution; err=%v", err)
 		return
 	}
 
 	if err := results(filepath.Join(sink, "results", "results.json"), pipeline, workflow); err != nil {
-		deleteFiles(ctx, uploadedFiles, cfg, awsConfig)
+		filesDelete(ctx, files, uploadedFiles, cfg)
 		log.Printf("Failed to download results; err=%v", err)
 		return
 	}
 
-	if err := tarDownload(ctx, sink, "files.tar.gz", cfg, awsConfig); err != nil {
-		deleteFiles(ctx, uploadedFiles, cfg, awsConfig)
+	if err := filesDownload(ctx, sink, files, cfg); err != nil {
+		filesDelete(ctx, files, uploadedFiles, cfg)
 		log.Printf("Failed to download files; err=%v", err)
 		return
 	}
 
-	deleteFiles(ctx, uploadedFiles, cfg, awsConfig)
+	filesDelete(ctx, files, uploadedFiles, cfg)
 }
 
-func cloud_execute(pipeline *zjson.Pipeline, cfg Config, client clientcmd.ClientConfig, hub *Hub) {
+func cloudExecute(pipeline *zjson.Pipeline, cfg Config, client clientcmd.ClientConfig, hub *Hub) {
 	ctx := context.Background()
 	defer log.Printf("Completed")
 
@@ -560,8 +592,8 @@ func cloud_execute(pipeline *zjson.Pipeline, cfg Config, client clientcmd.Client
 		return
 	}
 
-	workflow, err = runArgo(ctx, workflow, "", pipeline.Id, client, hub)
-	defer deleteArgo(ctx, workflow.Name, client)
+	workflow, err = argoRun(ctx, workflow, "", pipeline.Id, client, hub)
+	defer argoDelete(ctx, workflow.Name, client)
 	if err != nil {
 		log.Printf("Error during pipeline execution; err=%v", err)
 		return
