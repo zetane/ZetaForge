@@ -1,15 +1,15 @@
-import { app, BrowserWindow, shell, ipcMain } from 'electron'
+import { BrowserWindow, app, ipcMain, shell } from 'electron'
+import { createIPCHandler } from 'electron-trpc/main'
 import { release } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { startExpressServer } from "../../server/express.mjs"
 import { update } from './update'
-import { fork } from 'child_process'
-import { createIPCHandler } from 'electron-trpc/main';
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-import { appRouter } from "../../server/router";
+import { appRouter } from "../../server/router"
 
 // The built directory structure
 //
@@ -130,10 +130,4 @@ ipcMain.handle('open-win', (_, arg) => {
   }
 })
 
-// TODO: Fork is bad, should be using UtilityProcess and MessagePorts
-// Possibly want to use tRPC-electron which binds tRPC calls to IPC calls
-let ps;
-  //...
-ps = fork(`${__dirname}/../../server.mjs`, [], {
-  cwd: `${__dirname}/../../`,
-});
+startExpressServer();
