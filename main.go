@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"encoding/base64"
 	"encoding/json"
 	"log"
@@ -12,9 +11,6 @@ import (
 
 	"server/zjson"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/gin-gonic/gin"
 	"github.com/invopop/jsonschema"
 	"github.com/xeipuuv/gojsonschema"
@@ -53,15 +49,6 @@ type Cloud struct {
 
 func loadConfig(cfg Config) gin.HandlerFunc {
 	if cfg.IsLocal {
-		awsAccessKey := "AKIAIOSFODNN7EXAMPLE"
-		awsSecretKey := "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
-		creds := credentials.NewStaticCredentialsProvider(awsAccessKey, awsSecretKey, "")
-		region := config.WithRegion("us-east-2")
-		awsConfig, err := config.LoadDefaultConfig(context.Background(), region, config.WithCredentialsProvider(creds))
-		if err != nil {
-			log.Fatalf("Local credentials missing; err=%v", err)
-		}
-
 		client := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 			clientcmd.NewDefaultClientConfigLoadingRules(),
 			&clientcmd.ConfigOverrides{},
@@ -69,7 +56,6 @@ func loadConfig(cfg Config) gin.HandlerFunc {
 
 		return func(ctx *gin.Context) {
 			ctx.Set("cfg", cfg)
-			ctx.Set("aws", awsConfig)
 			ctx.Set("client", client)
 			ctx.Next()
 		}
@@ -160,16 +146,9 @@ func run(ctx *gin.Context, hub *Hub) {
 	}
 
 	if config.IsLocal {
-		awsConfig, ok := ctx.Get("aws")
-
-		if !ok {
-			log.Printf("AWS config is missing")
-			ctx.String(http.StatusInternalServerError, "AWS config is missing")
-			return
-		}
-		go local_execute(&pipeline, config, awsConfig.(aws.Config), client.(clientcmd.ClientConfig), hub)
+		go localExecute(&pipeline, config, client.(clientcmd.ClientConfig), hub)
 	} else {
-		go cloud_execute(&pipeline, config, client.(clientcmd.ClientConfig), hub)
+		go cloudExecute(&pipeline, config, client.(clientcmd.ClientConfig), hub)
 	}
 }
 

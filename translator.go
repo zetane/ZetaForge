@@ -302,9 +302,9 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 
 		var filesName string
 		if cfg.IsLocal {
-			filesName = "files.tar.gz"
+			filesName = "files"
 		} else {
-			filesName = organization + "-files.tar.gz"
+			filesName = organization + "-files"
 			workflow.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
 				{
 					Name: cfg.Cloud.Registry,
@@ -321,6 +321,9 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 						Key: filesName,
 					},
 				},
+				Archive: &wfv1.ArchiveStrategy{
+					None: &wfv1.NoneStrategy{},
+				},
 			})
 		}
 		if outputFile {
@@ -331,6 +334,9 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 					S3: &wfv1.S3Artifact{
 						Key: filesName,
 					},
+				},
+				Archive: &wfv1.ArchiveStrategy{
+					None: &wfv1.NoneStrategy{},
 				},
 			})
 		}
