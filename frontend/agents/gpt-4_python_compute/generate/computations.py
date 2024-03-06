@@ -1,9 +1,10 @@
-import os
-import sys
-import re
 import json
-from dotenv import load_dotenv
+import os
+import re
+import sys
 import traceback
+
+from dotenv import load_dotenv
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate
 
@@ -82,12 +83,7 @@ def extract_python_code(response):
     return "\n\n".join(processed_code_blocks)
 
 
-def compute(user_prompt, model_version, conversation_history):
-    # Load the API key from an environment variable
-    api_key = os.getenv('OPENAI_API_KEY')
-    if not api_key:
-        raise ValueError("No API key found. Please set the OPENAI_API_KEY in .env file.")
-
+def compute(user_prompt, model_version, conversation_history, apiKey):
     # Use only the last entry from the history
     if conversation_history:
         conversation_history = [conversation_history[-1]]
@@ -109,7 +105,7 @@ def compute(user_prompt, model_version, conversation_history):
     chat_prompt = ChatPromptTemplate.from_messages(messages)
 
     # Initialize the ChatOpenAI model
-    chat_model = ChatOpenAI(openai_api_key=api_key, model=model_version)
+    chat_model = ChatOpenAI(openai_api_key=apiKey, model=model_version)
     chain = chat_prompt | chat_model
 
     # Query
@@ -134,9 +130,10 @@ if __name__ == "__main__":
         user_prompt = data['userMessage']
         # model_version = data.get('selectedModel', 'gpt-4')
         conversation_history = data.get('conversationHistory', [])
+        apiKey = data["apiKey"]
 
         # Call the compute function and get the result
-        result = compute(user_prompt, 'gpt-4', conversation_history)
+        result = compute(user_prompt, 'gpt-4', conversation_history, apiKey)
 
         # Print the result as a JSON string
         print(json.dumps(result))

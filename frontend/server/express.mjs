@@ -422,17 +422,15 @@ function startExpressServer() {
   });
 
   app.post("/api/call-agent", async (req, res) => {
-    const userMessage = req.body.message;
-    const agentName = req.body.agent;
-    const conversationHistory = req.body.history;
+    const { userMessage, agentName, conversationHistory, apiKey} = req.body
     console.log("USER MESSAGE", userMessage);
-
+  
     try {
       // Path to the Python script
       const scriptPath = "agents/" + agentName + "/generate/computations.py";
       const pythonProcess = spawn("python", [scriptPath]);
 
-      const inputData = { userMessage, conversationHistory };
+      const inputData = { apiKey, userMessage, conversationHistory };
       pythonProcess.stdin.write(JSON.stringify(inputData));
       pythonProcess.stdin.end();
 
