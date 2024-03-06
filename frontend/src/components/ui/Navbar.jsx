@@ -1,33 +1,34 @@
 import { modalContentAtom } from "@/atoms/modalAtom";
 import { darkModeAtom } from "@/atoms/themeAtom";
-import { PlayFilledAlt, Renew } from "@carbon/icons-react";
+import { Password, Renew } from "@carbon/icons-react";
 import {
   Header,
   HeaderGlobalAction,
   HeaderGlobalBar,
   HeaderMenu,
-  HeaderMenuButton,
   HeaderMenuItem,
   HeaderName,
   HeaderNavigation,
-  SkipToContent,
+  SkipToContent
 } from "@carbon/react";
 import { useAtom } from "jotai";
-import LoadPipelineButton from "./LoadPipelineButton";
 import LoadBlockButton from "./LoadBlockButton";
+import LoadPipelineButton from "./LoadPipelineButton";
 import PipelineNameLabel from "./PipelineNameLabel";
-import SavePipelineButton from "./SavePipelineButton";
 import RunPipelineButton from "./RunPipelineButton";
+import SavePipelineButton from "./SavePipelineButton";
+import ApiKeysModal from "./modal/ApiKeysModal";
+import ClosableModal from "./modal/ClosableModel";
 
 export default function Navbar({ children }) {
   const [darkMode, setDarkMode] = useAtom(darkModeAtom);
   const [modalContent, setModalContent] = useAtom(modalContentAtom);
 
-  const modalPopper = (title) => {
+  const modalPopper = (content) => {
     setModalContent({
+      ...modalContent,
       show: true,
-      content: modalContent.content,
-      modalHeading: title,
+      content: content,
     });
   };
 
@@ -49,19 +50,23 @@ export default function Navbar({ children }) {
         <HeaderMenu menuLinkName="Inspect">
           <HeaderMenuItem
             label="Previous Run"
-            onClick={() => modalPopper("Previous Run")}
+            onClick={() => modalPopper(<ClosableModal />)}
           >
             Previous Run
           </HeaderMenuItem>
           <HeaderMenuItem
             label="Pipeline"
-            onClick={() => modalPopper("Pipeline")}
+            onClick={() => modalPopper(<ClosableModal />)}
           >
             Pipeline
           </HeaderMenuItem>
         </HeaderMenu>
         <HeaderMenu menuLinkName="Settings">
-          <HeaderMenuItem label="Api Keys">Api Keys</HeaderMenuItem>
+          <HeaderMenuItem 
+          onClick={() => modalPopper(<ApiKeysModal />)}>
+            <Password  size={16} className="mx-1 align-middle"></Password>
+            <span>API Keys</span>
+          </HeaderMenuItem>
           <HeaderMenuItem label="Theme" onClick={() => setDarkMode(!darkMode)}>
             Theme
           </HeaderMenuItem>

@@ -1,3 +1,4 @@
+import { openAIApiKeyAtom } from '@/atoms/apiKeysAtom';
 import { blockEditorRootAtom, isBlockEditorOpenAtom } from "@/atoms/editorAtom";
 import {
   Bot,
@@ -30,6 +31,7 @@ export default function Editor() {
   const [blockPath] = useAtom(blockEditorRootAtom);
   const [blockFolderName, setBlockFolderName] = useState(null); //TODO check if still needed
   const setBlockEditorOpen = useSetAtom(isBlockEditorOpenAtom);
+  const [openAIApiKey] = useAtom(openAIApiKeyAtom);
 
   // const [agentName, setAgentName] = useState('gpt-4_python_compute');
   const [agentName, setAgent] = useState("gpt-4_python_compute");
@@ -135,9 +137,10 @@ export default function Editor() {
     const newPrompt = chatTextarea.current.value.trim();
 
     const toSend = {
-      message: newPrompt,
-      agent: agentName,
-      history: queryAndResponses,
+      userMessage: newPrompt,
+      agentName: agentName,
+      conversationHistory: queryAndResponses,
+      apiKey: openAIApiKey
     };
 
     if (newPrompt) {
@@ -421,29 +424,31 @@ export default function Editor() {
                 ) : (
                   // Render input group if showEditor is false
                   <>
-                    <div className="relative">
-                      <textarea
-                        className="min-h-20 w-full rounded-lg border-purple-300 bg-black p-2 text-base text-white placeholder-purple-300"
-                        ref={chatTextarea}
-                        placeholder="Ask to generate code or modify last code"
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && !e.shiftKey) {
-                            e.preventDefault();
-                            handleSubmit(e);
-                          }
-                        }}
-                      />
-                      <div className="absolute bottom-2 right-1">
-                        <IconButton
-                          iconDescription="Send"
-                          size="md"
-                          kind="ghost"
-                          onClick={handleSubmit}
-                        >
-                          <Send size={24}></Send>
-                        </IconButton>
+                    {openAIApiKey &&
+                      <div className="relative">
+                        <textarea
+                          className="min-h-20 w-full rounded-lg border-purple-300 bg-black p-2 text-base text-white placeholder-purple-300"
+                          ref={chatTextarea}
+                          placeholder="Ask to generate code or modify last code"
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && !e.shiftKey) {
+                              e.preventDefault();
+                              handleSubmit(e);
+                            }
+                          }}
+                        />
+                        <div className="absolute bottom-2 right-1">
+                          <IconButton
+                            iconDescription="Send"
+                            size="md"
+                            kind="ghost"
+                            onClick={handleSubmit}
+                          >
+                            <Send size={24}></Send>
+                          </IconButton>
+                        </div>
                       </div>
-                    </div>
+                    }
                     {isLoading && (
                       <Loading
                         active={true}

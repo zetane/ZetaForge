@@ -2,8 +2,7 @@ import { atom } from 'jotai'
 
 const modalContentAtom = atom({ 
   show: false, 
-  content: 'Hello world',
-  modalHeading: ''
+  content: null,
 })
 
-export {modalContentAtom}
+export { modalContentAtom }
