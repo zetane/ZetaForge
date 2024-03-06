@@ -164,7 +164,7 @@ export default function Editor() {
 
       chatTextarea.current.value = "";
       setTimeout(() => {
-        const textarea = document.querySelector(".textarea-input");
+const textarea = document.querySelector(".textarea-input");
         if (textarea) {
           resizeTextarea(textarea);
         }
@@ -179,17 +179,6 @@ export default function Editor() {
   const handleSave = (e) => {
     if (editorManualPrompt) {
       recordCode(editorManualPrompt, editorValue);
-
-      chatTextarea.current.value = "";
-      setTimeout(() => {
-        const textarea = document.querySelector(".textarea-input");
-        if (textarea) {
-          resizeTextarea(textarea);
-        }
-        setTimeout(() => {
-          window.scrollTo(0, document.body.scrollHeight);
-        }, 100);
-      }, 0);
     }
     setShowEditor(false);
     e.currentTarget.blur();
@@ -344,7 +333,7 @@ export default function Editor() {
                       {item.prompt}
                     </span>
                     <div>
-                      <span>Code #{index}</span>
+                      Code #{index}
                       <div
                         className="relative"
                         style={{
@@ -394,24 +383,19 @@ export default function Editor() {
                 {showEditor ? (
                   // Render EditorCodeMirror if showEditor is true
                   <div>
-                    <div className="centered-container">
-                      <div className="preserve-format prompt">
-                        {editorManualPrompt}
-                      </div>
-                    </div>
-                    <div className="code-container centered-container">
-                      <div className="viewer-container">
+                    {editorManualPrompt}
+                    <div className="relative">
                         <EditorCodeMirror
                           code={editorValue}
                           onChange={handleEditorChange}
                         />
-                      </div>
-                      <div className="button-container">
+                      <div className="absolute right-0 top-0">
                         <Button
                           renderIcon={Save}
                           iconDescription="Save code"
                           hasIconOnly
                           size="md"
+                          kind="ghost"
                           className="edit-button"
                           onClick={handleSave}
                         />
