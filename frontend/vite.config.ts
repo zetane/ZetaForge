@@ -1,7 +1,7 @@
+import react from '@vitejs/plugin-react'
 import { rmSync } from 'node:fs'
 import path from 'node:path'
 import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
 import electron from 'vite-plugin-electron/simple'
 import pkg from './package.json'
 
@@ -27,7 +27,8 @@ export default defineConfig(({ command }) => {
           entry: 'electron/main/index.ts',
           onstart(args) {
             if (process.env.VSCODE_DEBUG) {
-              console.log(/* For `.vscode/.debug.script.mjs` */'[startup] Electron App')
+              const debugPortArugment =  `--remote-debugging-port=${process.env.REMOTE_DEBUGGING_PORT}`
+              args.startup(['.', debugPortArugment]);
             } else {
               args.startup()
             }
