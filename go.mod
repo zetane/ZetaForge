@@ -14,6 +14,7 @@ require (
 	github.com/google/go-containerregistry v0.19.0
 	github.com/gorilla/websocket v1.5.1
 	github.com/invopop/jsonschema v0.12.0
+	github.com/mixpanel/mixpanel-go v1.2.1
 	github.com/xeipuuv/gojsonschema v1.2.0
 	golang.org/x/net v0.19.0
 	k8s.io/api v0.24.3
