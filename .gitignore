@@ -1,6 +1,6 @@
 # user data
-.cache/*
-!.cache/.gitkeep
+frontend/.cache/*
+!frontend/.cache/.gitkeep
 
 # Node and npm related
 node_modules/

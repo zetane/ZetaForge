@@ -1,0 +1,45 @@
+{
+  "information": {
+    "id": "new-python",
+    "name": "New_Python",
+    "description": "",
+    "block_source": "core/blocks/new-python",
+    "block_type": "compute",
+    "system_versions": [
+      "0.1"
+    ]
+  },
+  "inputs": {
+    "input1": {
+      "type": "all",
+      "connections": [],
+      "relays": []
+    }
+  },
+  "outputs": {
+    "output1": {
+      "type": "all",
+      "connections": [],
+      "relays": []
+    }
+  },
+  "action": {
+    "parameters": {
+      "text": {
+        "type": "",
+        "value": ""
+      }
+    }
+  },
+  "views": {
+    "node": {
+      "title_bar": {},
+      "preview": {},
+      "html": "",
+      "pos_x": "300",
+      "pos_y": "200",
+      "pos_z": "999, this is the z-index for 2D canvas"
+    }
+  },
+  "events": {}
+}

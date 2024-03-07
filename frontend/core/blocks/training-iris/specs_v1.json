@@ -1,0 +1,50 @@
+{
+  "information": {
+    "id": "training-iris",
+    "name": "Train Iris",
+    "description": "description",
+    "system_versions": [
+      "0.1"
+    ],
+    "block_version": "block version number",
+    "block_source": "core/blocks/training-iris",
+    "block_type": "compute"
+  },
+  "inputs": {
+    "epoch": {
+      "type": "int",
+      "connections": [],
+      "relays": []
+    }
+  },
+  "outputs": {
+    "val_acc": {
+      "type": "float",
+      "connections": [],
+      "relays": []
+    }
+  },
+  "action": {
+    "container": {
+      "image": "training_iris",
+      "version": "latest",
+      "command_line": [
+        "python",
+        "entrypoint.py"
+      ]
+    }
+  },
+  "views": {
+    "node": {
+      "behavior": "modal",
+      "active": "True or False",
+      "title_bar": {},
+      "preview": {},
+      "html": "",
+      "pos_x": "300",
+      "pos_y": "200",
+      "pos_z": "999"
+    }
+  },
+  "events": {}
+}

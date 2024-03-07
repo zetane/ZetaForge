@@ -5,12 +5,16 @@ import { useAtom } from "jotai";
 import { useRef } from "react";
 import { getDirectoryPath } from "@/../utils/fileUtils";
 import { useImmerAtom } from "jotai-immer";
+import { genJSON } from "@/utils/blockUtils";
+import { trpc } from "@/utils/trpc";
 
 export default function LoadPipelineButton() {
   const FILE_EXTENSION_REGEX = /\.[^/.]+$/;
   const [editor] = useAtom(drawflowEditorAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const fileInput = useRef();
+
+  const savePipelineMutation = trpc.savePipeline.useMutation()
 
   const selectFile = () => {
     fileInput.current.click();
@@ -23,18 +27,34 @@ export default function LoadPipelineButton() {
       const folder = file.webkitRelativePath.split("/")[0]
       const name = removeFileExtension(file.name)
       if (folder == name) {
-        console.log(file)
+        // Clear drawflow canvas
+        editor.clearModuleSelected()
+
+        // We don't need to purge the cache on disk
+        // bc the savePipeline call below will 
         const data = JSON.parse(await (new Blob([file])).text())
-        const folderPath = getDirectoryPath(file.path)
-        data['sink'] = folderPath
-        data['build'] = folderPath
-        data['source'] = folderPath
         console.log(data)
-        editor.load_pipeline(data);
+        const folderPath = getDirectoryPath(file.path)
+
+        const cacheData = {
+          specs: data,
+          name: pipeline.name,
+          buffer: folderPath,
+          writePath: pipeline.buffer
+        }
+        const cacheResponse = await savePipelineMutation.mutateAsync(cacheData)
+
+        for (const key in data.pipeline) {
+          const block = data.pipeline[key]
+          const json = genJSON(block, key)
+          editor.addNode_from_JSON(json)
+        }
 
         setPipeline((draft) => {
           draft.name = name
           draft.path = folderPath
+          draft.saveTime = Date.now()
+          draft.data = data.pipeline
         });
         break;
       }

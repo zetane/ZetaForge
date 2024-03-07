@@ -13,6 +13,13 @@ export default function SavePipelineButton() {
 
   const handleClick = async (editor, pipeline) => {
     const pipelineSpecs = editor.convert_drawflow_to_block(pipeline.name);
+    // If a pipeline is loaded, pipeline.path will be set to the load path
+    // If it isn't set, electron will pop a file picker window
+    // The response from the server after saving will contain that new path
+    // TODO: the pipelineAtom data and these fields are redundant
+    // They should be consolidated
+    pipelineSpecs['sink'] = pipeline.path ? pipeline.path : pipeline.buffer
+    pipelineSpecs['build'] = pipeline.path ? pipeline.path : pipeline.buffer
     const saveData = {
       specs: pipelineSpecs, 
       name: pipeline.name, 
@@ -27,12 +34,15 @@ export default function SavePipelineButton() {
       if (specs) {
         draft.name = specs.split(".")[0]
       }
+      if (dirPath) {
+        draft.path = dirPath
+      }
     })
   };
 
   return (
     <div>
-      <HeaderMenuItem onClick={() => handleClick(editor, pipeline)}>Save Pipeline</HeaderMenuItem>
+      <HeaderMenuItem onClick={() => handleClick(editor, pipeline)}>Save</HeaderMenuItem>
     </div>
   );
 }

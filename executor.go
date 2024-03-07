@@ -246,7 +246,7 @@ func filesDelete(ctx context.Context, prefix string, extraFiles []string, cfg Co
 }
 
 func history(sinkPath string) error {
-	if err := os.Mkdir(sinkPath, 0755); err != nil {
+	if err := os.MkdirAll(sinkPath, 0755); err != nil {
 		return err
 	}
 	if err := os.Mkdir(filepath.Join(sinkPath, "files"), 0755); err != nil {
@@ -281,13 +281,13 @@ func results(path string, pipeline *zjson.Pipeline, workflow *wfv1.Workflow) err
 	for _, node := range workflow.Status.Nodes {
 		if node.Type == "Pod" {
 			block := pipeline.Pipeline[node.TemplateName]
-			block.Events.Inputs = []string{}
-			block.Events.Outputs = []string{}
+			block.Events.Inputs = make(map[string]string)
+			block.Events.Outputs = make(map[string]string)
 			for _, parameter := range node.Inputs.Parameters {
-				block.Events.Inputs = append(block.Events.Inputs, string(parameter.Name)+":"+string(*parameter.Value))
+				block.Events.Inputs[string(parameter.Name)] = string(*parameter.Value)
 			}
 			for _, parameter := range node.Outputs.Parameters {
-				block.Events.Outputs = append(block.Events.Outputs, string(parameter.Name)+":"+string(*parameter.Value))
+				block.Events.Outputs[string(parameter.Name)] = string(*parameter.Value)
 			}
 			pipeline.Pipeline[node.TemplateName] = block
 		}
@@ -470,7 +470,7 @@ func argoDelete(ctx context.Context, name string, client clientcmd.ClientConfig)
 }
 
 func localExecute(pipeline *zjson.Pipeline, cfg Config, client clientcmd.ClientConfig, hub *Hub) {
-	sink := filepath.Join(pipeline.Sink, pipeline.Id+"-"+time.Now().Format("2006-01-02T15-04-05.000"))
+	sink := filepath.Join(pipeline.Sink, "history", pipeline.Id+"-"+time.Now().Format("2006-01-02T15-04-05.000"))
 	ctx := context.Background()
 	defer log.Printf("Completed")
 
@@ -506,23 +506,18 @@ func localExecute(pipeline *zjson.Pipeline, cfg Config, client clientcmd.ClientC
 		return
 	}
 
-	log.Printf("Made it after translate")
 	jsonWorkflow, err := json.MarshalIndent(&workflow, "", "  ")
 	if err != nil {
 		log.Printf("Invalid translated pipeline.json; err=%v", err)
 		return
 	}
 
-	if err := fileWrite(filepath.Join(sink, "pipeline.json"), string(jsonWorkflow)); err != nil {
+	if err := fileWrite(filepath.Join(sink, pipeline.Id+".json"), string(jsonWorkflow)); err != nil {
 		log.Printf("Failed to write translated pipeline.json; err=%v", err)
 		return
 	}
 
 	files := "files/"
-
-	if err := filesUpload(ctx, pipeline.Source, files, cfg); err != nil {
-		log.Println(err)
-	}
 
 	uploadedFiles := []string{}
 	for path, image := range blocks {
@@ -554,12 +549,12 @@ func localExecute(pipeline *zjson.Pipeline, cfg Config, client clientcmd.ClientC
 	}
 
 	workflow, err = argoRun(ctx, workflow, sink, pipeline.Id, client, hub)
-	defer argoDelete(ctx, workflow.Name, client)
 	if err != nil {
 		filesDelete(ctx, files, uploadedFiles, cfg)
 		log.Printf("Error during pipeline execution; err=%v", err)
 		return
 	}
+	defer argoDelete(ctx, workflow.Name, client)
 
 	if err := results(filepath.Join(sink, "results", "results.json"), pipeline, workflow); err != nil {
 		filesDelete(ctx, files, uploadedFiles, cfg)

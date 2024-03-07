@@ -33,11 +33,11 @@ export interface Action {
 }
 
 export interface TitleBar {
-  background_color: string;
+  background_color?: string;
 }
 
 export interface Preview {
-  active: string;
+  active?: string;
 }
 
 export interface Node {
@@ -48,7 +48,7 @@ export interface Node {
   pos_x: string;
   pos_y: string;
   pos_z: string;
-  behavior: string;
+  behavior?: string;
 }
 
 export interface Views {
@@ -61,8 +61,8 @@ export interface Parameter {
 }
 
 export interface Event {
-  inputs?: string[];
-  outputs?: string[];
+  inputs?: {[key: string]: string};
+  outputs?: {[key: string]: string};
 }
 
 export interface Block {
@@ -77,7 +77,6 @@ export interface Block {
 export interface Pipeline {
   id: string;
   pipeline: { [key: string]: Block };
-  source: string;
   sink: string;
   build: string;
 }

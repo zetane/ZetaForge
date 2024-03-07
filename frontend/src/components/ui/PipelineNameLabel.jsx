@@ -1,13 +1,32 @@
 import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { TextInput } from "@carbon/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Save } from "@carbon/icons-react"
 import {Unsaved} from "@carbon/icons-react"
 import { useImmerAtom } from "jotai-immer";
+import {trpc} from "@/utils/trpc"
+import { customAlphabet } from 'nanoid'
 
 export default function PipelineNameLabel() {
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const [editing, setEditing] = useState(false);
+
+  const cacheQuery = trpc.getCachePath.useQuery();
+  const cachePath = cacheQuery?.data || ""
+
+  useEffect(() => {
+    setPipeline((draft) => {
+      const nanoid = customAlphabet('1234567890abcedfghijklmnopqrstuvwxyz', 12)
+      const name = `pipeline-${nanoid()}`
+      // Sending a path.sep from the server here
+      // TODO: This logic will change because authoritative history
+      // should be stored in the object store and we should
+      // fetch the history stored in sqlite
+
+      draft.buffer = `${cachePath}${name}`
+      draft.name = name
+    })
+  }, [cachePath])
 
   const updatePipeline = (e) => {
     setPipeline((draft) => {

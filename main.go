@@ -2,25 +2,26 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"log"
+	"math/big"
+	"net"
 	"net/http"
 	"os"
-	"strings"
-	"crypto/sha256"
-    "encoding/hex"
 	"server/zjson"
-	"net"
-	"math/big"
+	"strings"
+
 	"github.com/gin-gonic/gin"
 	"github.com/invopop/jsonschema"
 	"github.com/xeipuuv/gojsonschema"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
-	"fmt"
 
-    "github.com/mixpanel/mixpanel-go"
+	"github.com/mixpanel/mixpanel-go"
 )
 
 type Config struct {
@@ -36,8 +37,6 @@ type Config struct {
 	Local           Local `json:"Local,omitempty"`
 	Cloud           Cloud `json:"Cloud,omitempty"`
 }
-
-
 
 type Local struct {
 	BucketPort   string
@@ -95,10 +94,9 @@ func loadConfig(cfg Config) gin.HandlerFunc {
 	}
 }
 
-//UTILITY FUNCTIONS FOR GENERATING DISTINCT ID FOR MIXPANEL
+// UTILITY FUNCTIONS FOR GENERATING DISTINCT ID FOR MIXPANEL
 func macAddressToDecimal(mac string) (*big.Int, error) {
 	macWithoutColons := strings.ReplaceAll(mac, ":", "")
-
 
 	macBytes, err := hex.DecodeString(macWithoutColons)
 	if err != nil {
@@ -110,13 +108,12 @@ func macAddressToDecimal(mac string) (*big.Int, error) {
 
 	return macAsBigInt, nil
 
-	
 }
 
 func getMACAddress() (string, *big.Int, error) {
-	
+
 	// return value: big Int, which is MAC address of the device. In the case of Failure, we return zero, as big Int.
-	
+
 	interfaces, err := net.Interfaces()
 	if err != nil {
 		return "", nil, err
@@ -137,10 +134,8 @@ func getMACAddress() (string, *big.Int, error) {
 	return "", new(big.Int).SetInt64(int64(0)), fmt.Errorf("unable to determine distinct_id, using default distinct_id")
 }
 
-
 func run(ctx *gin.Context, hub *Hub) {
 
-	
 	schema, err := json.Marshal(jsonschema.Reflect(&zjson.Pipeline{}))
 
 	if err != nil { // Should never happen outside of development
@@ -179,6 +174,7 @@ func run(ctx *gin.Context, hub *Hub) {
 		ctx.String(http.StatusInternalServerError, err.Error())
 		return
 	}
+	log.Printf("%+v", pipeline)
 
 	cfg, ok := ctx.Get("cfg")
 
@@ -191,25 +187,19 @@ func run(ctx *gin.Context, hub *Hub) {
 
 	client, ok := ctx.Get("client")
 
-
 	//Get Mac address as a big integer, then hash it with sha256. Note that, this might give a different result if we run s2 from the cloud
 	_, macInt, err := getMACAddress()
 
-	
 	macAsString := macInt.String()
 	hash := sha256.New()
 	hash.Write([]byte(macAsString))
 	hashedResult := hash.Sum(nil)
 	distinctID := hex.EncodeToString(hashedResult)
-   
 
-    
-   
- 
 	mp := mixpanel.NewApiClient("4c09914a48f08de1dbe3dc4dd2dcf90d")
 	if err := mp.Track(ctx, []*mixpanel.Event{
 		mp.NewEvent("Run Created", distinctID, map[string]interface{}{
-            "distinct_id": distinctID,
+			"distinct_id": distinctID,
 		}),
 	}); err != nil {
 		panic(err)
@@ -245,9 +235,26 @@ func main() {
 
 	router := gin.Default()
 	router.Use(loadConfig(config))
+
+	// CORS middleware
+	router.Use(func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+
+		// Handle OPTIONS requests for CORS preflight
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(http.StatusOK)
+			return
+		}
+
+		c.Next()
+	})
+
 	router.POST("/run", func(ctx *gin.Context) {
 		run(ctx, hub)
 	})
+
 	router.GET("/ws/:roomId", func(ctx *gin.Context) {
 		roomId := ctx.Param("roomId")
 		if err := serveSocket(ctx, roomId, hub); err != nil {

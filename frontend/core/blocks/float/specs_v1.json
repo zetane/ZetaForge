@@ -1,0 +1,41 @@
+{
+  "information": {
+    "id": "float",
+    "name": "Float",
+    "description": "description",
+    "block_version": "block version number",
+    "block_source": "core/blocks",
+    "block_type": "compute",
+    "system_versions": [
+      "0.1"
+    ]
+  },
+  "inputs": {},
+  "outputs": {
+    "integer": {
+      "type": "float",
+      "connections": [],
+      "relays": []
+    }
+  },
+  "action": {
+    "parameters": {
+      "integer": {
+        "type": "float",
+        "value": null
+      }
+    }
+  },
+  "views": {
+    "node": {
+      "active": "True or False",
+      "title_bar": {},
+      "preview": {},
+      "html": "<input type='number' id='float-input' value='44419' name='floatInput' step='1' parameters-float/>",
+      "pos_x": "300",
+      "pos_y": "200",
+      "pos_z": "999, this is the z-index for 2D canvas"
+    }
+  },
+  "events": {}
+}

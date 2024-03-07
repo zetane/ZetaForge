@@ -27,10 +27,9 @@ const readSpecs = async (dir: string, transformFunc: Function) => {
         const files = [];
 
         if (stat.isDirectory()) {
-          const specs = path.join(itemPath, "specs.json");
           try {
-            await fs.promises.stat(specs)
-            transformFunc(specs)
+            await fs.promises.stat(itemPath)
+            transformFunc(itemPath)
           } catch (error) {
             console.log("ERROR: ", error)
             continue
@@ -73,7 +72,7 @@ function saveJsonFile(filename: string, data: any): void {
 }
 
 // Function to convert from specs to Block
-function convertToBlock(input_block: any): Block {
+function convertBlockV1(input_block: any): Block {
     // Map the source JSON structure to the Block structure
 
     const blockInformation: Information = {
@@ -82,7 +81,7 @@ function convertToBlock(input_block: any): Block {
         description: input_block.information.description,
         system_versions: ['0.1'],
         block_version: input_block.information.block_version,
-        block_source: input_block.action.block_source, 
+        block_source: input_block.information.block_source, 
         block_type: "" // Assuming this needs to be mapped from somewhere else in `sourceData`
     };
 
@@ -184,21 +183,74 @@ function convertToBlock(input_block: any): Block {
     return block
 }
 
-const blockFileConverter = (sourceFile: string) => {
-    const targetFilename = `${sourceFile}_v1.json`; // Replace with your target JSON file path
+const convertBlockV2 = (inputBlock) => {
+    console.log("Existing Block -----")
+    console.log(inputBlock)
+    inputBlock.information["system_versions"] = ["0.1"]
+    console.log(inputBlock)
+    inputBlock.views.node.pos_x.toString() 
+    inputBlock.views.node.pos_y.toString()
+    inputBlock.views.node.pos_z.toString()
+    inputBlock.events = {}
+    console.log("Converted to V2: ", inputBlock)
+    return inputBlock
+}
+
+const blockFileConverter = (source: string) => {
+    const targetFilename = `specs_v1.json`; // Replace with your target JSON file path
+    const blockFile = path.join(source, targetFilename)
 
     try {
-        const sourceData = readJsonFile<any>(sourceFile);
-        const blockData = convertToBlock(sourceData.block);
-        saveJsonFile(targetFilename, blockData);
+        const sourceData = readJsonFile<any>(blockFile);
+        const blockD = sourceData?.block ? sourceData.block : sourceData
+        // TODO: formalize this function swapping based on a migration tag
+        // V0 -> V1
+        //const blockData = convertBlockV1(blockD);
+        // V1 -> V2
+        const blockData = convertBlockV2(blockD);
+        saveJsonFile(blockFile, blockData);
     } catch (error) {
         console.error("An error occurred:", error);
     }
 }
 
+const pipelineConverterV2 = (pipelinePath: string, pipelineName: string) => {
+    const pipelineFolder = path.join(pipelinePath, pipelineName)
+    console.log(pipelineFolder)
+    const pipelineSpec = path.join(pipelineFolder, pipelineName+".json")
+    console.log("Reading spec: ", pipelineSpec)
+    try {
+        const sourceData = readJsonFile<string>(pipelineSpec);
+        const pipelineData = sourceData?.pipeline
+        const blocks: { [key: string]: Block } = {}
+        console.log(Object.keys(pipelineData))
+        for (const key of Object.keys(pipelineData) as Array<string>) {
+            console.log("key: ", key)
+            let originalBlock = pipelineData[key as any]
+            console.log(originalBlock)
+            blocks[key] = convertBlockV2(originalBlock)
+
+            const blockPath = originalBlock.information.id + "-" + key
+
+            blockFileConverter(path.join(pipelinePath, blockPath))
+        }
+        const pipeline: Pipeline = {
+            id: "1",
+            pipeline: blocks,
+            source: "./my_data",
+            sink: "./history",
+            build: "./my_pipelines"
+        }
+        saveJsonFile(pipelineSpec, pipeline)
+    } catch (error) {
+        console.error("An error occured:", error)
+    }
+ 
+}
+
 const pipelineConverter = (pipeline: string) => {
     const sourceFilename = `${pipeline}.json`
-    const target = `../../../pipelines/${pipeline}-v1.json`
+    const target = `../../core/pipelines/${pipeline}-v1.json`
 
     try {
         const sourceData = readJsonFile<string>(sourceFilename);
@@ -208,7 +260,7 @@ const pipelineConverter = (pipeline: string) => {
             console.log("key: ", key)
             let originalBlock = sourceData[key as any]
             console.log(originalBlock)
-            blocks[key] = convertToBlock(originalBlock)
+            blocks[key] = convertBlockV1(originalBlock)
         }
         const pipeline: Pipeline = {
             id: "1",
@@ -223,7 +275,16 @@ const pipelineConverter = (pipeline: string) => {
     }
 }
 
-const pipeline = 'demo_training_multiple_iris'
-pipelineConverter(pipeline)
 
-//readSpecs('../../../blocks', blockFileConverter)
+// Convert a pipeline
+const pipeline = '/Users/jon/pipelines'
+pipelineConverterV2(pipeline, 'canny-edge-real')
+
+// Convert a block
+//const block = 'canny-edge'
+//console.log(process.cwd())
+//const blockPath = path.join('../../core/blocks', block)
+//blockFileConverter(blockPath)
+
+// Convert a folder of blocks
+//readSpecs('../../core/blocks', blockFileConverter)
