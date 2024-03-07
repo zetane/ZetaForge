@@ -1,13 +1,15 @@
 import { dialog } from 'electron';
 import { z } from 'zod';
+import path from "path";
+import fs from "fs/promises";
 import { readSpecs } from "./fileSystem.js";
-import { copyPipeline, getBlockPath, removeBlock, saveBlock } from './pipelineSerialization.js';
+import { copyPipeline, getBlockPath, removeBlock, saveBlock, saveSpec } from './pipelineSerialization.js';
 import { publicProcedure, router } from './trpc';
 
 export const appRouter = router({
   getBlocks: publicProcedure
     .query(async () => {
-      const coreBlocks = "../core/blocks"
+      const coreBlocks = "core/blocks"
       try {
         const blocks = await readSpecs(coreBlocks)
         return blocks
@@ -32,36 +34,64 @@ export const appRouter = router({
           const pathArr = savePath.filePath?.split("/")
           name = pathArr ? pathArr[(pathArr.length - 1)] : name
           writePath = savePath.filePath
-        }
-      }
-      console.log("writing: ", writePath)
-      const savePaths = await copyPipeline(specs, name, buffer, writePath);
-      console.log("wrote: ", savePaths)
+          specs['sink'] = writePath
+          specs['build'] = writePath
 
-      return savePaths;
+          if (writePath) {
+            try {
+              const stat = await fs.stat(writePath)
+              if (stat.isDirectory()) {
+                fs.rm(writePath, {recursive: true, force: true})
+              }
+            } catch {
+              console.log("Creating dir: ", writePath)
+            }
+          }
+        }
+      } 
+
+      if (writePath) {
+        const savePaths = await copyPipeline(specs, name, buffer, writePath);
+        return savePaths;
+      }
+
+      return {}
   }),
   saveBlock: publicProcedure
     .input(z.object({
+      pipelineSpec: z.any(),
+      name: z.string(),
       blockSpec: z.any(),
-      blockId: z.number(),
+      blockId: z.string(),
       blockPath: z.string(),
       pipelinePath: z.string()
     })) 
     .mutation(async(opts) => {
       const {input} = opts;
-      const {blockSpec, blockId, blockPath, pipelinePath} = input;
-      const savePaths = await saveBlock(blockSpec, blockId, blockPath, pipelinePath);
+      const {pipelineSpec, name, blockSpec, blockId, blockPath, pipelinePath} = input;
+      let savePaths;
+      if (blockSpec.action?.container) {
+        const blockKey = blockSpec.information.id + "-" + blockId;
+        savePaths = await saveBlock(blockKey, blockPath, pipelinePath);
+        await saveSpec(pipelineSpec, pipelinePath, name+".json")
+      } else if (blockSpec.action?.parameters) {
+        savePaths = await saveSpec(pipelineSpec, pipelinePath, name+".json")
+      }
       return savePaths;
     }),
   getBlockPath: publicProcedure
     .input(z.object({
-      blockId: z.number(),
+      blockId: z.string(),
       pipelinePath: z.string(),
     }))
     .mutation(async (opts) => {
       const {input} = opts;
       const {blockId, pipelinePath} = input;
       return await getBlockPath(blockId, pipelinePath);
+    }),
+  getCachePath: publicProcedure
+    .query(async () => {
+      return path.join(process.cwd(), ".cache") + path.sep
     }),
   removeBlock: publicProcedure
     .input(z.object({
@@ -72,8 +102,7 @@ export const appRouter = router({
       const {input} = opts;
       const {blockId, pipelinePath} = input;
       removeBlock(blockId, pipelinePath);
-    })
-
+    }),
 });
  
 // Export type router type signature,

@@ -60,7 +60,6 @@ export default function LibraryWrapper({ specs }) {
     setSearchResults(results);
   }, [searchTerm, specs]);
 
-  const rowGridSize = 2;
   const tileGrid = []
   let rowGrid = []
 
@@ -68,7 +67,7 @@ export default function LibraryWrapper({ specs }) {
     let countIndex = index + 1
     let tile = tileBuilder(spec, index)
     rowGrid.push(tile)
-    if (countIndex % rowGridSize != 0 && (searchResults.length == countIndex)) {
+    if ((searchResults.length == countIndex)) {
       // handle end of tiles when not divisible by the row length
       tileGrid.push((<Row key={index}>{rowGrid}</Row>))
     } 

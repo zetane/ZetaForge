@@ -15,8 +15,10 @@ import { useAtom } from "jotai";
 import LoadBlockButton from "./LoadBlockButton";
 import LoadPipelineButton from "./LoadPipelineButton";
 import PipelineNameLabel from "./PipelineNameLabel";
-import RunPipelineButton from "./RunPipelineButton";
 import SavePipelineButton from "./SavePipelineButton";
+import SaveAsPipelineButton from "./SaveAsPipelineButton";
+import RunPipelineButton from "./RunPipelineButton";
+import NewButton from "./NewButton";
 import ApiKeysModal from "./modal/ApiKeysModal";
 import ClosableModal from "./modal/ClosableModel";
 
@@ -40,8 +42,9 @@ export default function Navbar({ children }) {
       </HeaderName>
       <HeaderNavigation aria-label="Zetaforge">
         <HeaderMenu menuLinkName="File">
-          <HeaderMenuItem>New</HeaderMenuItem>
+          <NewButton/>
           <SavePipelineButton />
+          <SaveAsPipelineButton />
           <HeaderMenu menuLinkName="Load" >
             <LoadPipelineButton />
             <LoadBlockButton />

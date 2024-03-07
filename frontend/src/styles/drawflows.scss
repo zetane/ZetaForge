@@ -11,10 +11,12 @@
   border: var(--dfNodeBorderSize)  solid var(--dfNodeBorderColor);
   border-radius: var(--dfNodeBorderRadius);
   min-height: var(--dfNodeMinHeight);
-  width: auto;
+  width: 277px;
   min-width: var(--dfNodeMinWidth);
   -webkit-box-shadow: var(--dfNodeBoxShadowHL) var(--dfNodeBoxShadowVL) var(--dfNodeBoxShadowBR) var(--dfNodeBoxShadowS) var(--dfNodeBoxShadowColor);
   box-shadow:  var(--dfNodeBoxShadowHL) var(--dfNodeBoxShadowVL) var(--dfNodeBoxShadowBR) var(--dfNodeBoxShadowS) var(--dfNodeBoxShadowColor);
+  position: absolute;
+  z-index: 9;
 }
 
 .drawflow .drawflow-node:hover {
@@ -36,12 +38,14 @@
 }
 
 .drawflow .drawflow-node .input {
-  left: var(--dfInputLeft);
   background: var(--dfInputBackgroundColor);
   border: var(--dfInputBorderSize)  solid var(--dfInputBorderColor);
   border-radius: var(--dfInputBorderRadius);
   height: var(--dfInputHeight);
   width: var(--dfInputWidth);
+  cursor: crosshair;
+  z-index: 10;
+  margin: 10px 0px 10px 0px;
 }
 
 .drawflow .drawflow-node .input:hover {
@@ -50,17 +54,15 @@
   border-radius: var(--dfInputHoverBorderRadius);
 }
 
-.drawflow .drawflow-node .outputs {
-  float: var(--dfNodeTypeFloat);
-}
-
 .drawflow .drawflow-node .output {
-  right: var(--dfOutputRight);
   background: var(--dfOutputBackgroundColor);
   border: var(--dfOutputBorderSize)  solid var(--dfOutputBorderColor);
   border-radius: var(--dfOutputBorderRadius);
   height: var(--dfOutputHeight);
   width: var(--dfOutputWidth);
+  cursor: crosshair;
+  z-index: 10;
+  margin: 10px 0px 10px 0px;
 }
 
 .drawflow .drawflow-node .output:hover {

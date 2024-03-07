@@ -298,8 +298,8 @@ const textarea = document.querySelector(".textarea-input");
   };
 
   return (
-    <div className="absolute inset-y-16 right-8 max-h-full w-1/3 overflow-y-scroll bg-carbonGray-900">
-      <div className="flex flex-row items-center justify-between bg-carbonGray-700">
+    <div className="editor-block absolute inset-y-16 right-8 max-h-full w-1/3 overflow-y-scroll bg-carbonGray-900">
+      <div className="flex flex-row items-center justify-between">
         <span className="p-4 text-lg italic">{blockFolderName}</span>
         <div className="flex flex-row items-center justify-end">
           <div className="p-4">

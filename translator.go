@@ -72,16 +72,16 @@ func checkImage(ctx context.Context, tagName string, cfg Config) (bool, error) {
 	}
 }
 
-func blockTemplate(block *zjson.Block, organization string, cfg Config) *wfv1.Template {
+func blockTemplate(block *zjson.Block, blockKey string, organization string, cfg Config) *wfv1.Template {
 	var image string
 	var computationName string
 	if cfg.IsLocal {
 		image = "localhost:" + cfg.Local.RegistryPort + "/" + block.Action.Container.Image + ":" + block.Action.Container.Version
-		computationName = block.Action.Container.Image + ".py"
+		computationName = blockKey + ".py"
 
 	} else {
 		image = cfg.Cloud.RegistryAddr + ":" + organization + "-" + block.Action.Container.Image + "-" + block.Action.Container.Version
-		computationName = organization + "-" + block.Action.Container.Image + ".py"
+		computationName = organization + "-" + blockKey + ".py"
 	}
 	entrypoint := wfv1.Artifact{
 		Name: "entrypoint",
@@ -107,14 +107,17 @@ func blockTemplate(block *zjson.Block, organization string, cfg Config) *wfv1.Te
 			None: &wfv1.NoneStrategy{},
 		},
 	}
+	idMap := make(map[string]string)
+	idMap["key"] = blockKey
 	return &wfv1.Template{
-		Name: block.Information.Id,
+		Name: blockKey,
 		Container: &corev1.Container{
 			Image:           image,
 			Command:         block.Action.Container.CommandLine,
 			ImagePullPolicy: "IfNotPresent",
 		},
-		Inputs: wfv1.Inputs{Artifacts: []wfv1.Artifact{entrypoint, computations}},
+		Inputs:   wfv1.Inputs{Artifacts: []wfv1.Artifact{entrypoint, computations}},
+		Metadata: wfv1.Metadata{Annotations: idMap},
 	}
 }
 
@@ -228,8 +231,9 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 	blocks := make(map[string]string)
 	tasks := make(map[string]*wfv1.DAGTask)
 	templates := make(map[string]*wfv1.Template)
-	for _, block := range pipeline.Pipeline {
-		template := blockTemplate(&block, organization, cfg)
+	for id, block := range pipeline.Pipeline {
+		blockKey := id
+		template := blockTemplate(&block, blockKey, organization, cfg)
 		task := wfv1.DAGTask{Name: template.Name, Template: template.Name}
 
 		if len(block.Action.Container.Image) > 0 {
@@ -239,7 +243,7 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 				return &workflow, blocks, err
 			}
 
-			blockPath := filepath.Join(pipeline.Build, pipeline.Id, block.Action.Container.Image)
+			blockPath := filepath.Join(pipeline.Build, blockKey)
 			blocks[blockPath] = ""
 			if toBuild {
 				blocks[blockPath] = block.Action.Container.Image + "-" + block.Action.Container.Version
@@ -260,6 +264,7 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 					connection := input.Connections[0]
 					inputBlock := pipeline.Pipeline[connection.Block]
 					param, ok := inputBlock.Action.Parameters[connection.Variable]
+					// Parameter is in the graph
 					if ok {
 						template.Container.Env = append(template.Container.Env, corev1.EnvVar{
 							Name:  name,
@@ -273,7 +278,7 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 						template.Inputs.Parameters = append(template.Inputs.Parameters, wfv1.Parameter{
 							Name: name,
 						})
-						inputNodeName := inputBlock.Information.Id
+						inputNodeName := connection.Block
 						task.Dependencies = append(task.Dependencies, inputNodeName)
 						path := "{{tasks." + inputNodeName + ".outputs.parameters." + connection.Variable + "}}"
 						task.Arguments.Parameters = append(task.Arguments.Parameters, wfv1.Parameter{
@@ -292,12 +297,10 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 			if output.Type == "file" || output.Type == "List[file]" {
 				outputFile = true
 			}
-			if len(output.Connections) > 0 {
-				template.Outputs.Parameters = append(template.Outputs.Parameters, wfv1.Parameter{
-					Name:      name,
-					ValueFrom: &wfv1.ValueFrom{Path: name + ".txt"},
-				})
-			}
+			template.Outputs.Parameters = append(template.Outputs.Parameters, wfv1.Parameter{
+				Name:      name,
+				ValueFrom: &wfv1.ValueFrom{Path: name + ".txt"},
+			})
 		}
 
 		var filesName string

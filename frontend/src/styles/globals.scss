@@ -31,6 +31,17 @@ main {
 	width: 100vw;
 }
 
+
+.editor-block {
+	background-color: var(--cds-background) !important;
+	height: 94%;
+	border: 1px solid var(--cds-border-subtle)
+}
+
+.bg-util {
+	background-color: var(--cds-background) !important;
+}
+
 .cds--g10 {
 	@include theme.theme(themes.$g10);
 	@include color-tokens.ztn-colors-g10;

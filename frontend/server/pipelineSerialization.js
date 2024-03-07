@@ -11,12 +11,24 @@ import {
 
 const BLOCK_SPECS = "specs_v1.json";
 
-export async function saveBlock(blockSpecs, blockId, fromPath, toPath) {
-  const newFolder = path.join(toPath, blockSpecs.information.id+"-"+blockId)
-  const existingBlock = path.join(fromPath, blockSpecs.information.id)
+export async function saveSpec(spec, writePath, pipelineName) {
+  const pipelineSpecsPath = path.join(writePath, pipelineName)
+  withFileSystemRollback([writePath], async () => {
+    await fs.mkdir(writePath, { recursive: true });
+    await fs.writeFile(
+      pipelineSpecsPath,
+      JSON.stringify(spec, null, 2)
+    );
+  })
+}
+
+export async function saveBlock(blockKey, fromPath, toPath) {
+  const newFolder = path.join(toPath, blockKey)
+  console.log(`saving ${blockKey} from ${fromPath} to ${newFolder}`)
+
   withFileSystemRollback([toPath], async () => {
     await fs.mkdir(newFolder, { recursive: true });
-    await fs.cp(existingBlock, newFolder, { recursive: true });
+    await fs.cp(fromPath, newFolder, { recursive: true });
   })
   return newFolder;
 }
@@ -25,32 +37,63 @@ export async function copyPipeline(pipelineSpecs, pipelineName, fromDir, toDir) 
   const pipeline_specs = pipelineName + ".json";
   const bufferPath = path.resolve(process.cwd(), fromDir)
 
-  // Takes existing pipeline + spec
-  const pipelineDirectory = toDir;
-  const pipelineSpecsPath = path.join(pipelineDirectory, pipeline_specs);
+  console.log(`supposed to be writing from ${fromDir} to ${toDir}`)
+  console.log(pipelineSpecs)
 
-  const blockIndex = await getBlockIndex([bufferPath]);
-  const pipelineBlockIndex = (await fileExists(pipelineDirectory))
-    ? await getBlockIndex([pipelineDirectory])
+  // Takes existing pipeline + spec
+  const writePipelineDirectory = toDir;
+  const pipelineSpecsPath = path.join(writePipelineDirectory, pipeline_specs);
+
+  const fromBlockIndex = await getBlockIndex([bufferPath]);
+
+  const toBlockIndex = (await fileExists(writePipelineDirectory))
+    ? await getBlockIndex([writePipelineDirectory])
     : {};
 
-  const newPipelineBlock = getPipelineBlocks(pipelineSpecs);
-  const oldPipelineBlocks = (await fileExists(pipelineSpecsPath))
+  // Gets pipeline specs from the specs coming from the graph
+  // Submitted by the client
+  const newPipelineBlocks = getPipelineBlocks(pipelineSpecs);
+  const existingPipelineBlocks = (await fileExists(pipelineSpecsPath))
     ? await readPipelineBlocks(pipelineSpecsPath)
     : new Set();
 
-  const blocksToAdd = setDifference(newPipelineBlock, oldPipelineBlocks);
-  const blocksToRemove = setDifference(oldPipelineBlocks, newPipelineBlock);
+  console.log("new blocks: ", newPipelineBlocks)
+  console.log("existing blocks: ", existingPipelineBlocks)
+  const blocksToRemove = setDifference(existingPipelineBlocks, newPipelineBlocks);
+  console.log("Removing: ", blocksToRemove)
 
-  withFileSystemRollback([pipelineDirectory], async () => {
-    await fs.mkdir(pipelineDirectory, { recursive: true });
-    for (const block of blocksToAdd) {
-      const pipelineBlockPath = path.join(pipelineDirectory, block);
-      await fs.cp(blockIndex[block], pipelineBlockPath, { recursive: true });
+  console.log("Block index: ", fromBlockIndex)
+
+  withFileSystemRollback([writePipelineDirectory], async () => {
+    await fs.mkdir(writePipelineDirectory, { recursive: true });
+    for (const key of Array.from(newPipelineBlocks)) {
+      const newBlockPath = path.join(writePipelineDirectory, key);
+      let existingBlockPath = fromBlockIndex[key]
+      if (!existingBlockPath) {
+        // NOTE: BAD KEY
+        // At a certain point we serialized non unique keys 
+        // for folder names so there's a chance that we will
+        // fail to find the correct key and need to fall back
+        // to fetching a common folder name
+        const blockSpec = pipelineSpecs.pipeline[key]
+        existingBlockPath = fromBlockIndex[blockSpec.information.id]
+      }
+      if (!existingBlockPath) {
+        // If we still can't find a path
+        // we try to fall back to the block source path
+        const blockSpec = pipelineSpecs.pipeline[key]
+        existingBlockPath = blockSpec.information.block_source
+      }
+
+      console.log(`saving ${key} from ${existingBlockPath} to ${newBlockPath}`)
+      if (existingBlockPath != newBlockPath) {
+        // if it's the same folder, don't try to copy it
+        await fs.cp(existingBlockPath, newBlockPath, {recursive: true})
+      }
     }
 
-    for (const block of blocksToRemove) {
-      await fs.rm(pipelineBlockIndex[block], { recursive: true });
+    for (const block of Array.from(blocksToRemove)) {
+      await fs.rm(toBlockIndex[block], { recursive: true });
     }
 
     await fs.writeFile(
@@ -59,28 +102,43 @@ export async function copyPipeline(pipelineSpecs, pipelineName, fromDir, toDir) 
     );
   });
 
-  return {specs: pipeline_specs, dirPath: pipelineDirectory}
+  return {specs: pipeline_specs, dirPath: writePipelineDirectory}
 }
 
 async function getBlockIndex(blockDirectories) {
   const blockIndex = {};
   for (const directory of blockDirectories) {
-    const blockPaths = await getBlocksInDirectory(directory);
-    for (const blockPath of blockPaths) {
-      const specs = await readJsonToObject(path.join(blockPath, BLOCK_SPECS));
-      blockIndex[specs.information.id] = blockPath;
+    try {
+      const blockPaths = await getBlocksInDirectory(directory);
+      for (const blockPath of blockPaths) {
+        const normPath = path.normalize(blockPath)
+        const blockId = normPath.split(path.sep).pop()
+        blockIndex[blockId] = blockPath;
+      }
+    } catch (error) {
+      if (error.code === 'ENOENT') {
+        console.error('Directory or file does not exist:', error.path);
+      } else {
+        // Handle other types of errors or rethrow the error
+        throw error;
+      }
     }
   }
   return blockIndex;
 }
 
 function getPipelineBlocks(pipelineSpecs) {
-  return new Set(
-    Object.keys(pipelineSpecs.pipeline)
-      .map((k) => pipelineSpecs.pipeline[k])
-      .map((b) => b.information.id)
-      .map((id) => id.substring(0, id.lastIndexOf("-")))
-  );
+  const blocks = new Set()
+  const pipeline = pipelineSpecs.pipeline
+  console.log("WTF: ", pipeline)
+  for (const [key, block] of Object.entries(pipeline)) {
+    console.log("KEY: ", key)
+    console.log("BLOCK: ", block)
+    if (block.action.container || block.action.pipeline) {
+      blocks.add(key)
+    }
+  }
+  return blocks;
 }
 
 async function getBlocksInDirectory(directory) {
@@ -112,7 +170,7 @@ export async function getPipelineBlockPath(pipelinePath, blockId) {
   const blockPaths = await getBlocksInDirectory(pipelinePath);
 
   for (const blockPath of blockPaths) {
-    const id = blockPath.split("/").pop().split("-").pop();
+    const id = blockPath.split(path.sep).pop();
     if (blockId == id) {
       return blockPath;
     }
