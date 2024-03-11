@@ -12,6 +12,7 @@
     }
   },
   "type": "module",
+  
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build && electron-builder",
