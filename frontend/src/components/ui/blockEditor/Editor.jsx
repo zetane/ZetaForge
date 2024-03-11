@@ -77,7 +77,7 @@ export default function Editor() {
 
     const fetchCodeTemplate = async () => {
       try {
-        const response = await fetch(`${serverAddress}/get-code-template`, {
+        const response = await fetch(`${serverAddress}/get-chat-history`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -87,14 +87,8 @@ export default function Editor() {
         if (!response.ok) {
           throw new Error("Network response was not ok");
         }
-        const data = await response.json();
-        setQueryAndResponses([
-          {
-            timestamp: Date.now(),
-            prompt: "Code Template",
-            response: data.content,
-          },
-        ]);
+        const history = await response.json();
+        setQueryAndResponses(history);
       } catch (error) {
         console.error("Fetch error:", error);
       }
@@ -106,15 +100,22 @@ export default function Editor() {
   }, [blockPath]);
 
   const recordCode = (promptToRecord, codeToRecord) => {
-    const newElement = {
-      timestamp: Date.now(),
-      prompt: promptToRecord,
-      response: codeToRecord,
-    };
-    setQueryAndResponses((prevQueryAndResponses) => [
-      ...prevQueryAndResponses,
-      newElement,
-    ]);
+    const newQueriesAndResponses = [
+      ...queryAndResponses,
+      {
+        timestamp: Date.now(),
+        prompt: promptToRecord,
+        response: codeToRecord,
+      }
+    ];
+    setQueryAndResponses(newQueriesAndResponses);
+    fetch(`${serverAddress}/save-chat-history`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ blockPath: blockPath, history: newQueriesAndResponses }),
+    });
   };
 
   const handleEditorChange = (value) => {

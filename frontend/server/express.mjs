@@ -7,12 +7,14 @@ import cors from "cors";
 import 'dotenv/config';
 import express from "express";
 import fs, { access, constants, readFile, readFileSync, writeFile } from "fs";
+import fsp from "fs/promises";
 import multer from "multer";
 import { Configuration, OpenAIApi } from "openai";
 import path from "path";
 import pg from "pg";
-import { readSpecs } from "./fileSystem.js";
+import { fileExists, readJsonToObject, readSpecs } from "./fileSystem.js";
 import { copyPipeline, saveBlock } from "./pipelineSerialization.js";
+
 const { Client } = pg;
 
 function startExpressServer() {
@@ -399,26 +401,22 @@ function startExpressServer() {
     });
   });
 
-  app.post("/get-code-template", async (req, res) => {
-    const { agentName, blockPath } = req.body;
-
-    try {
-      // Construct the file path
-      const filePath = path.join(blockPath, "computations.py");
-
-      fs.readFile(filePath, "utf8", (error, fileContents) => {
-        if (error) {
-          console.error("Error reading file:", error);
-          res.status(500).send("Error reading file");
-          return;
-        }
-        // Send the contents back inside the callback
-        res.send({ content: fileContents });
-      });
-    } catch (error) {
-      console.error("Error reading file:", error);
-      res.status(500).send("Error reading file");
+  app.post("/get-chat-history", async (req, res) => {
+    const { blockPath } = req.body;
+    const chatHistoryPath = path.join(blockPath, "chatHistory.json");
+    let history = undefined;
+    if ((await fileExists(chatHistoryPath))) {
+      history = await readJsonToObject(chatHistoryPath);
+    } else {
+      const codeTemplatePath = path.join(blockPath, "computations.py");
+      const codeTemplate = await fsp.readFile(codeTemplatePath, "utf8");
+      history = [{
+          timestamp: Date.now(),
+          prompt: "Code Template",
+          response: codeTemplate,
+      }];      
     }
+    res.send(history);
   });
 
   app.post("/api/call-agent", async (req, res) => {
@@ -464,6 +462,15 @@ function startExpressServer() {
       console.error("Server error:", err);
       res.status(500).send({ error: "Internal server error" });
     }
+  });
+
+  app.post('/save-chat-history', async (req, res) => {
+    const { blockPath, history } = req.body;
+
+    const chatHistoryPath = path.join(blockPath, "chatHistory.json");
+    await fsp.writeFile(chatHistoryPath, JSON.stringify(history, null, 2));
+
+    res.status(200);
   });
 
   app.post("/get-directory-tree", (req, res) => {
