@@ -29,6 +29,15 @@
     ],
     "artifactName": "${productName}_${version}.${ext}"
   },
+   "extraResources": [
+    {
+      "from": "./core",
+      "to": "core",
+      "filter": [
+        "**/*"
+      ]
+    }
+  ],
   "nsis": {
     "oneClick": false,
     "perMachine": false,

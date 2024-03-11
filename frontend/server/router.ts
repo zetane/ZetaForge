@@ -1,15 +1,22 @@
-import { dialog } from 'electron';
+import { dialog, app } from 'electron';
 import { z } from 'zod';
-import path from "path";
+import path, {dirname} from "path";
 import fs from "fs/promises";
 import { readSpecs } from "./fileSystem.js";
 import { copyPipeline, getBlockPath, removeBlock, saveBlock, saveSpec } from './pipelineSerialization.js';
 import { publicProcedure, router } from './trpc';
+import { fileURLToPath } from 'url';
 
 export const appRouter = router({
   getBlocks: publicProcedure
     .query(async () => {
-      const coreBlocks = "core/blocks"
+      const resources = process.resourcesPath
+      let coreBlocks = "core/blocks"
+      if(app.isPackaged)
+      {
+      coreBlocks = path.join(resources, "core", "blocks")
+      }
+      
       try {
         const blocks = await readSpecs(coreBlocks)
         return blocks

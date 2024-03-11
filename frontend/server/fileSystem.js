@@ -7,7 +7,6 @@ const cacheDirectory = path.join(process.cwd(), ".cache");
 export const readSpecs = async (dir) => {
   const items = await fs.readdir(dir);
   //const pipelines = await fs.readdir("../pipelines");
-
   return specBuilder(items, dir);
 }
 
