@@ -8,6 +8,7 @@
 	"EntrypointFile":"entrypoint.py",
 	"ServiceAccount":"executor",
 	"Bucket":"forge-bucket",
+	"Database":"./zetaforge.db",
 
 	"Local": {
 		"BucketPort":"8333",

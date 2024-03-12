@@ -5,7 +5,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 )
 
@@ -14,7 +13,7 @@ const pongWait = 60 * time.Second
 const pingPeriod = (pongWait * 9) / 10
 
 type Client struct {
-	RoomId string
+	Room   string
 	Conn   *websocket.Conn
 	ToSend chan Message
 	Hub    *Hub
@@ -41,7 +40,7 @@ func (client *Client) Receive() {
 			}
 			return
 		}
-		msg.RoomId = client.RoomId
+		msg.Room = client.Room
 		client.Hub.Broadcast <- msg
 	}
 }
@@ -62,7 +61,7 @@ func (client *Client) Send() {
 				client.Conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			} else {
-				msg.RoomId = ""
+				msg.Room = ""
 				if err := client.Conn.WriteJSON(msg); err != nil {
 					if websocket.IsUnexpectedCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway) {
 						log.Printf("Write error: %v", err)
@@ -83,7 +82,7 @@ func (client *Client) Send() {
 }
 
 type Message struct {
-	RoomId  string `json:"id,omitempty"`
+	Room    string `json:"room,omitempty"`
 	Content string `json:"content"`
 }
 
@@ -107,18 +106,18 @@ func (hub *Hub) Run() {
 	for {
 		select {
 		case client := <-hub.Register:
-			hub.Clients[client.RoomId][client] = true
+			hub.Clients[client.Room][client] = true
 		case client := <-hub.Unregister:
-			if _, ok := hub.Clients[client.RoomId]; ok {
-				delete(hub.Clients[client.RoomId], client)
+			if _, ok := hub.Clients[client.Room]; ok {
+				delete(hub.Clients[client.Room], client)
 				close(client.ToSend)
 			}
 		case message := <-hub.Broadcast:
-			for client := range hub.Clients[message.RoomId] {
+			for client := range hub.Clients[message.Room] {
 				select {
 				case client.ToSend <- message:
 				default:
-					delete(hub.Clients[client.RoomId], client)
+					delete(hub.Clients[client.Room], client)
 					close(client.ToSend)
 				}
 			}
@@ -126,42 +125,32 @@ func (hub *Hub) Run() {
 	}
 }
 
-func (hub *Hub) OpenRoom(roomId string) error {
-	if _, ok := hub.Clients[roomId]; ok {
+func (hub *Hub) OpenRoom(room string) error {
+	if _, ok := hub.Clients[room]; ok {
 		return errors.New("Pipeline already exists")
 	}
 
-	hub.Clients[roomId] = make(map[*Client]bool)
+	hub.Clients[room] = make(map[*Client]bool)
 
 	return nil
 }
 
-func (hub *Hub) CloseRoom(roomId string) {
-	if _, ok := hub.Clients[roomId]; ok {
-		for client := range hub.Clients[roomId] {
+func (hub *Hub) CloseRoom(room string) {
+	if _, ok := hub.Clients[room]; ok {
+		for client := range hub.Clients[room] {
 			close(client.ToSend)
 		}
-		delete(hub.Clients, roomId)
+		delete(hub.Clients, room)
 	}
 }
 
-func serveSocket(ctx *gin.Context, roomId string, hub *Hub) error {
-	if _, ok := hub.Clients[roomId]; !ok { // if does not exist
-		return errors.New("room " + roomId + " does not exist")
-	}
-
-	upgrader := websocket.Upgrader{
-		ReadBufferSize:  1024,
-		WriteBufferSize: 1024,
-	}
-
-	conn, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
-	if err != nil {
-		return err
+func serveSocket(conn *websocket.Conn, room string, hub *Hub) HTTPError {
+	if _, ok := hub.Clients[room]; !ok { // if does not exist
+		return BadRequest{"room " + room + " does not exist"}
 	}
 
 	client := &Client{
-		RoomId: roomId,
+		Room:   room,
 		Conn:   conn,
 		ToSend: make(chan Message, 256),
 		Hub:    hub,
