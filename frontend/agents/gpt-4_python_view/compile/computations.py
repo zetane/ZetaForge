@@ -128,17 +128,17 @@ print("Description:", extract_description(docstring))
 with open(os.path.join(args.block_path, "specs_v1.json"), "r") as f:
     specs = json.load(f)
 
-specs["block"].update(parsed_docstring)
-specs["block"]["information"]["id"] = args.block_name
-specs["block"]["information"]["name"] = args.block_name
-specs["block"]["information"]["name"] = args.block_user_name
-specs["block"]["information"]["description"] = extract_description(docstring)
-specs["block"]["action"]["container_uuid"] = args.block_name
-specs["block"]["action"]["container_image_uuid"] = args.block_name
-specs["block"]["action"]["block_source"] = "my_blocks/" + args.block_name
-specs["block"]["action"]["version"] = "latest"
+specs.update(parsed_docstring)
+specs["information"]["id"] = args.block_name
+specs["information"]["name"] = args.block_name
+specs["information"]["name"] = args.block_user_name
+specs["information"]["description"] = extract_description(docstring)
+specs["action"]["container_uuid"] = args.block_name
+specs["action"]["container_image_uuid"] = args.block_name
+specs["action"]["block_source"] = "my_blocks/" + args.block_name
+specs["action"]["version"] = "latest"
 
-with open(os.path.join(args.block_path, "specs.json_v1.json"), "w") as f:
-    json.dump(specs, f, indent=4)
+with open(os.path.join(args.block_path, "specs_v1.json"), "w") as f:
+    json.dump(specs, f, indent=2)
 
 extract_requirements_from_docstring(docstring, args.block_path)
