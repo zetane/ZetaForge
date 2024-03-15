@@ -218,7 +218,6 @@ export default class Drawflow {
         for (let j = 0; j < inputConnections.length; j++) {
           let inputNodeKey = inputConnections[j].block
           let inputNodeName = inputConnections[j].variable
-          //console.log(key, inputNodeKey, outputNames[i], inputNodeName)
           this.addConnection(key, inputNodeKey, outputNames[i], inputNodeName);
         }
       }
@@ -575,7 +574,6 @@ export default class Drawflow {
             this.updateConnectionNodes('node-' + id_input);
             this.dispatch('connectionCreated', { output_id: id_output, input_id: id_input, output_class: output_class, input_class: input_class });
           } else {
-            console.log("connection exists?")
             this.dispatch('connectionCancel', true);
             this.connection_ele.remove();
           }
@@ -1253,10 +1251,7 @@ export default class Drawflow {
   }
 
   getNode(id) {
-    console.log(id)
     let moduleName = this.getModuleFromNodeId(id)
-    console.log(moduleName)
-    console.log(this.drawflow.drawflow)
     return this.drawflow.drawflow[moduleName].data[id];
   }
 
@@ -1597,7 +1592,6 @@ export default class Drawflow {
 
   getNextId() {
     let ids = Object.keys(this.drawflow.drawflow[this.module].data)
-    console.log("ides: ", ids)
     ids = ids.map((id) => (parseInt(id)))
     if (ids.length == 0) {
       return 1
@@ -2242,6 +2236,10 @@ export default class Drawflow {
     this.drawflow = { "drawflow": { "Home": { "data": {} } } };
   }
 
+  clearDrawflowData() {
+    this.drawflow = { "drawflow": { "Home": {"data": {} } } }
+  }
+
   export() {
     const dataExport = JSON.parse(JSON.stringify(this.drawflow));
     this.dispatch('export', dataExport);
@@ -2338,13 +2336,14 @@ export default class Drawflow {
     }
 
 
+    const newPipeline = {}
     for (let i = 0; i < node_keys.length; i++) {
       const node = graph_with_connections.drawflow.Home.data[node_keys[i]]
       const nodes_inputs = this.getChildrenAsArray(node, "inputs");
       const nodes_outputs = this.getChildrenAsArray(node, "outputs");
-      const nodes_parameters = this.getChildrenAsArray(node, "data");
 
-      const block = blocks[node_keys[i]]
+      const block = JSON.parse(JSON.stringify(blocks[node_keys[i]]))
+      block.events = {}
       const block_variable_keys_inputs = Object.keys(block.inputs);
       for (let j = 0; j < block_variable_keys_inputs.length; j++) {
         let block_output_connections = this.renameKeyInArrayOfObjects(nodes_inputs[j].connections, 'input', 'variable');        
@@ -2359,19 +2358,13 @@ export default class Drawflow {
         block.outputs[block_variable_keys_outputs[j]].connections = block_input_connections;
       }
       
-      const block_variable_keys_parameters = Object.keys(block.action?.parameters ?? {})
-      for (let j = 0; j < nodes_parameters.length; j++) {
-        block.action.parameters[block_variable_keys_parameters[j]]['value'] = nodes_parameters[j];
-      }
+      newPipeline[node_keys[i]] = block
     }
     const pipeline = {
         id: name,
-        pipeline: {},
+        pipeline: newPipeline,
         sink: "./history",
         build: "./my_pipelines"
-    }
-    for (let i = 0; i < node_keys.length; i++) {
-      pipeline.pipeline[node_keys[i]] = blocks[node_keys[i]]
     }
 
     return pipeline;

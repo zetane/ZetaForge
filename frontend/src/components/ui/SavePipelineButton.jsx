@@ -30,6 +30,7 @@ export default function SavePipelineButton() {
     // They should be consolidated
     pipelineSpecs['sink'] = pipeline.path ? pipeline.path : pipeline.buffer
     pipelineSpecs['build'] = pipeline.path ? pipeline.path : pipeline.buffer
+    pipelineSpecs['name'] = pipeline.name
     const saveData = {
       specs: pipelineSpecs, 
       name: pipeline.name, 

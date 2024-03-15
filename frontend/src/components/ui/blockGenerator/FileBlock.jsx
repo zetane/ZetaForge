@@ -28,7 +28,7 @@ const uploadToS3 = async (key, file) => {
 }
 
 
-export const FileBlock = ({blockId}) => {
+export const FileBlock = ({blockId, block, setPipeline}) => {
   const [editor] = useAtom(drawflowEditorAtom);
   const fileInput = useRef();
 
@@ -37,13 +37,30 @@ export const FileBlock = ({blockId}) => {
     const file = files[0]
     const name = file.name
     const response = await uploadToS3(`files/${name.toString()}`, file)
-    console.log(response)
-    // DANGER
-    const thisBlock = editor.getNode(blockId)
-    const pathStr = `"/files/${name.toString()}"`
-    thisBlock.data = {path: pathStr}
-    console.log(thisBlock)
+
+    const updatedBlock = {
+      ...block,
+      action: {
+        ...block.action,
+        parameters: {
+          ...block.action.parameters,
+          path: {
+            ...block.action.parameters.path,
+            value: file.path.toString(),
+          },
+        },
+      },
+    };
+
+    setPipeline((prevPipeline) => {
+      prevPipeline.data = ({
+          ...prevPipeline.data,
+          [blockId]: updatedBlock,
+      })
+    });
   }
+
+  const path = block.action.parameters?.path?.value || '';
 
   return (
     <div className="block-content">

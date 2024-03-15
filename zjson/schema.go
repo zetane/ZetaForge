@@ -1,6 +1,6 @@
 package zjson
 
-type Information struct {
+type BlockInformation struct {
 	Id             string   `json:"id"`
 	Name           string   `json:"name"`
 	Description    string   `json:"description"`
@@ -8,6 +8,14 @@ type Information struct {
 	BlockVersion   string   `json:"block_version"`
 	BlockSource    string   `json:"block_source"`
 	BlockType      string   `json:"block_type"`
+}
+
+type PipelineInformation struct {
+	Name           string `json:"name"`
+	Description    string `json:"description"`
+	SystemVersions string `json:"system_versions"`
+	Source         string `json:"source"`
+	Type           string `json:"type"`
 }
 
 type Connection struct {
@@ -38,7 +46,8 @@ type TitleBar struct {
 }
 
 type Preview struct {
-	Active string `json:"active,omitempty"`
+	Active  string `json:"active,omitempty"`
+	Content string `json:"content,omitempty"`
 }
 
 type Node struct {
@@ -65,19 +74,21 @@ type Parameter struct {
 type Event struct {
 	Inputs  map[string]string `json:"inputs,omitempty"`
 	Outputs map[string]string `json:"outputs,omitempty"`
+	Log     []string          `json:"log,omitempty"`
 }
 
 type Block struct {
-	Information Information    `json:"information"`
-	Inputs      map[string]Put `json:"inputs"`
-	Outputs     map[string]Put `json:"outputs"`
-	Action      Action         `json:"action"`
-	Views       Views          `json:"views,omitempty"`
-	Events      Event          `json:"events"`
+	Information BlockInformation `json:"information"`
+	Inputs      map[string]Put   `json:"inputs"`
+	Outputs     map[string]Put   `json:"outputs"`
+	Action      Action           `json:"action"`
+	Views       Views            `json:"views,omitempty"`
+	Events      Event            `json:"events"`
 }
 
 type Pipeline struct {
 	Id       string           `json:"id"`
+	Name     string           `json:"name"`
 	Pipeline map[string]Block `json:"pipeline"`
 	Sink     string           `json:"sink"`
 	Build    string           `json:"build"`

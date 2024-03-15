@@ -2,7 +2,7 @@ import { dialog, app } from 'electron';
 import { z } from 'zod';
 import path, {dirname} from "path";
 import fs from "fs/promises";
-import { readSpecs } from "./fileSystem.js";
+import { fileExists, readSpecs, s3Upload} from "./fileSystem.js";
 import { copyPipeline, getBlockPath, removeBlock, saveBlock, saveSpec } from './pipelineSerialization.js';
 import { publicProcedure, router } from './trpc';
 import { fileURLToPath } from 'url';
@@ -113,7 +113,18 @@ export const appRouter = router({
       const {blockId, pipelinePath} = input;
       removeBlock(blockId, pipelinePath);
     }),
-    getDistinctId: publicProcedure
+  uploadToS3: publicProcedure
+    .input(z.object({
+      filePath: z.string(),
+    }))
+    .mutation(async (opts) => {
+      const {input} = opts;
+      const {filePath} = input;
+
+      const res = await s3Upload(filePath)
+      return res;
+    }),
+  getDistinctId: publicProcedure
     .input(z.object({
       distinctId: z.string()
     }))

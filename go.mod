@@ -14,8 +14,8 @@ require (
 	github.com/google/go-containerregistry v0.19.0
 	github.com/gorilla/websocket v1.5.1
 	github.com/invopop/jsonschema v0.12.0
-	github.com/mixpanel/mixpanel-go v1.2.1
 	github.com/mattn/go-sqlite3 v1.14.22
+	github.com/mixpanel/mixpanel-go v1.2.1
 	github.com/pressly/goose/v3 v3.18.0
 	github.com/xeipuuv/gojsonschema v1.2.0
 	golang.org/x/net v0.19.0
@@ -84,7 +84,7 @@ require (
 	github.com/google/gnostic v0.6.9 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
-	github.com/google/uuid v1.5.0 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
 	github.com/huandu/xstrings v1.3.3 // indirect

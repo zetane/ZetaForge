@@ -5,7 +5,7 @@ import Drawflow from '@/components/ZetaneDrawflowEditor';
 import { trpc } from "@/utils/trpc";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { useAtom, useSetAtom } from 'jotai';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import BlockGenerator from '@/components/ui/blockGenerator/BlockGenerator';
 import { useImmerAtom } from 'jotai-immer';
 import { genJSON } from '@/utils/blockUtils';
@@ -29,7 +29,6 @@ const launchDrawflow = (parentDomRef, canvasDomRef, openViewCallback) => {
         },
         "Tab1": {
           "data": {
-
           }
         }
       }
@@ -53,7 +52,7 @@ export default function DrawflowWrapper() {
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const setBlockEditorRoot = useSetAtom(blockEditorRootAtom);
   const setEditorOpen = useSetAtom(isBlockEditorOpenAtom);
-  const drawflowParentRef = useRef(null);
+  const [renderNodes, setRenderNodes] = useState([])
   const drawflowCanvas = useRef(null);
   const pipelineRef = useRef(null)
   pipelineRef.current = pipeline
@@ -61,13 +60,12 @@ export default function DrawflowWrapper() {
   const savePipeline = trpc.savePipeline.useMutation();
   const getBlockPath = trpc.getBlockPath.useMutation();
 
-  useEffect(() => {
-    const constructedEditor = launchDrawflow(drawflowParentRef.current, drawflowCanvas.current, openView);
+  const handleDrawflow = useCallback((node) => {
+    if (!node) { return }
+    const constructedEditor = launchDrawflow(node, drawflowCanvas.current, openView);
     if (constructedEditor) {
       constructedEditor.on('nodeRemoved', (id) => removeNodeToDrawflow(id, pipelineRef.current));
       setEditor(constructedEditor);
-      drawflowCanvas.current = constructedEditor.precanvas
-
     }
   }, []);
 
@@ -95,16 +93,46 @@ export default function DrawflowWrapper() {
         console.error("Error saving pipeline:", error);
       }
     };
-  
+
     fetchData();
+
+    const nodes = Object.entries(pipeline.data).map(([key, block]) => {
+      return (<BlockGenerator key={key} block={block} openView={openView} id={key} historySink={pipeline.history} setPipeline={setPipeline} />)
+    })
+    setRenderNodes(nodes)
   }, [pipeline.data])
+
+  useEffect(() => {
+    if (renderNodes.length) {
+      for (const [id, block] of Object.entries(pipeline.data)) {
+        const json = genJSON(block, id)
+        editor.addNode_from_JSON(json)
+      }
+
+      for (const [id, block] of Object.entries(pipeline.data)) {
+        let outputNames = block.outputs
+        for (const [outputKey, output] of Object.entries(outputNames)) {
+          let inputConnections = output.connections;
+          for (const input of inputConnections) {
+            try {
+            editor.addConnection(id, input.block, outputKey, input.variable);
+            } catch (e) {
+              console.log(e)
+            }
+          }
+        }
+      }
+    } else {
+      if (editor) {
+        editor.clear()
+      }
+    }
+  }, [renderNodes])
 
   const addBlockToPipeline = (block) => {
     const nanoid = customAlphabet('1234567890abcedfghijklmnopqrstuvwxyz', 12)
     const newNanoid = nanoid()
     const id = `${block.information.id}-${newNanoid}`
-    const json = genJSON(block, id)
-    editor.addNode_from_JSON(json)
     setPipeline((draft) => {
       draft.data = {
         ...draft.data,
@@ -113,8 +141,6 @@ export default function DrawflowWrapper() {
     })
     return id;
   }
-
-
 
   const dropHandler = async (event, editor) => {
     // Loads block to graph
@@ -168,12 +194,8 @@ export default function DrawflowWrapper() {
     setEditorOpen(true);
   };
 
-  let renderNodes = Object.entries(pipeline.data).map(([key, block]) => {
-    return (<BlockGenerator key={key} block={block} openView={openView} id={key} editor={editor}/>)
-  })
-
   return (
-    <div id="drawflow" ref={drawflowParentRef}
+    <div id="drawflow" ref={handleDrawflow}
       onDrop={(ev) => { dropHandler(ev, editor) }}
       onDragOver={(ev) => { dragOverHandler(ev) }}
     >

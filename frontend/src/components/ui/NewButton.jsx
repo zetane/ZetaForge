@@ -10,7 +10,6 @@ export default function SavePipelineButton() {
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
 
   const handleClick = async (editor, pipeline) => {
-    editor.clearModuleSelected()
     const nanoid = customAlphabet('1234567890abcedfghijklmnopqrstuvwxyz', 12)
     const name = `pipeline-${nanoid()}`
     setPipeline((draft) => {

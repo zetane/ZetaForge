@@ -9,13 +9,14 @@ import (
 )
 
 type Execution struct {
-	ID        int64
-	Pipeline  int64
-	Status    interface{}
-	Created   int64
-	Completed sql.NullInt64
-	Json      sql.NullString
-	Deleted   int64
+	ID          int64
+	Pipeline    int64
+	Status      interface{}
+	Created     int64
+	Completed   sql.NullInt64
+	Json        sql.NullString
+	Deleted     int64
+	Executionid string
 }
 
 type Pipeline struct {

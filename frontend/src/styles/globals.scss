@@ -54,6 +54,15 @@ main {
 	@include drawflow-dark-theme.drawflow-dark;
 }
 
+.cds--header__action.cds--btn--icon-only {
+	background: none;
+	border: none;
+}
+
+.cds--btn.cds--btn--icon-only.cds--header__action.cds--btn--disabled svg {
+	fill: var(--cds-icon-on-color-disabled) !important;
+}
+
 .cds--side-nav {
 	max-inline-size: 30rem !important;
 }

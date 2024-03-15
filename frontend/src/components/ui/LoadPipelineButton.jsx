@@ -54,13 +54,9 @@ export default function LoadPipelineButton() {
       const folder = file.webkitRelativePath.split("/")[0]
       const name = removeFileExtension(file.name)
       if (folder == name) {
-        // Clear drawflow canvas
-        editor.clearModuleSelected()
-
         // We don't need to purge the cache on disk
         // bc the savePipeline call below will 
         const data = JSON.parse(await (new Blob([file])).text())
-        
         const folderPath = getDirectoryPath(file.path)
 
         const cacheData = {
@@ -71,18 +67,14 @@ export default function LoadPipelineButton() {
         }
         const cacheResponse = await savePipelineMutation.mutateAsync(cacheData)
 
-        for (const key in data.pipeline) {
-          const block = data.pipeline[key]
-          const json = genJSON(block, key)
-          editor.addNode_from_JSON(json)
-        }
-
         setPipeline((draft) => {
           draft.name = name
           draft.path = folderPath
           draft.saveTime = Date.now()
           draft.data = data.pipeline
         });
+
+        fileInput.current.value = ''
         break;
       }
     }

@@ -14,7 +14,7 @@ const addExecutionWorkflow = `-- name: AddExecutionWorkflow :one
 UPDATE Executions
 SET json = json(?)
 WHERE id = ?
-RETURNING id, pipeline, status, created, completed, json, deleted
+RETURNING id, pipeline, status, created, completed, json, deleted, executionid
 `
 
 type AddExecutionWorkflowParams struct {
@@ -33,6 +33,7 @@ func (q *Queries) AddExecutionWorkflow(ctx context.Context, arg AddExecutionWork
 		&i.Completed,
 		&i.Json,
 		&i.Deleted,
+		&i.Executionid,
 	)
 	return i, err
 }
@@ -41,7 +42,7 @@ const completeExecution = `-- name: CompleteExecution :one
 UPDATE Executions
 SET completed = unixepoch('now') 
 WHERE id = ? 
-RETURNING id, pipeline, status, created, completed, json, deleted
+RETURNING id, pipeline, status, created, completed, json, deleted, executionid
 `
 
 func (q *Queries) CompleteExecution(ctx context.Context, id int64) (Execution, error) {
@@ -55,21 +56,27 @@ func (q *Queries) CompleteExecution(ctx context.Context, id int64) (Execution, e
 		&i.Completed,
 		&i.Json,
 		&i.Deleted,
+		&i.Executionid,
 	)
 	return i, err
 }
 
 const createExecution = `-- name: CreateExecution :one
 INSERT INTO Executions(
-	pipeline, created
+	pipeline, executionid, created
 ) VALUES (
-	?, unixepoch('now')
+	?, ?, unixepoch('now')
 )
-RETURNING id, pipeline, status, created, completed, json, deleted
+RETURNING id, pipeline, status, created, completed, json, deleted, executionid
 `
 
-func (q *Queries) CreateExecution(ctx context.Context, pipeline int64) (Execution, error) {
-	row := q.db.QueryRowContext(ctx, createExecution, pipeline)
+type CreateExecutionParams struct {
+	Pipeline    int64
+	Executionid string
+}
+
+func (q *Queries) CreateExecution(ctx context.Context, arg CreateExecutionParams) (Execution, error) {
+	row := q.db.QueryRowContext(ctx, createExecution, arg.Pipeline, arg.Executionid)
 	var i Execution
 	err := row.Scan(
 		&i.ID,
@@ -79,12 +86,13 @@ func (q *Queries) CreateExecution(ctx context.Context, pipeline int64) (Executio
 		&i.Completed,
 		&i.Json,
 		&i.Deleted,
+		&i.Executionid,
 	)
 	return i, err
 }
 
 const getExecution = `-- name: GetExecution :one
-SELECT id, pipeline, status, created, completed, json, deleted FROM Executions
+SELECT id, pipeline, status, created, completed, json, deleted, executionid FROM Executions
 WHERE id = ?
 `
 
@@ -99,12 +107,13 @@ func (q *Queries) GetExecution(ctx context.Context, id int64) (Execution, error)
 		&i.Completed,
 		&i.Json,
 		&i.Deleted,
+		&i.Executionid,
 	)
 	return i, err
 }
 
 const listExecutions = `-- name: ListExecutions :many
-SELECT e.id, e.pipeline, e.status, e.created, e.completed, e.json, e.deleted, p.hash FROM Executions e
+SELECT e.id, e.pipeline, e.status, e.created, e.completed, e.json, e.deleted, e.executionid, p.hash FROM Executions e
 INNER JOIN Pipelines p ON p.id = e.pipeline
 WHERE organization = ? AND uuid = ? AND e.deleted = FALSE AND p.deleted = FALSE
 ORDER BY e.created DESC
@@ -116,14 +125,15 @@ type ListExecutionsParams struct {
 }
 
 type ListExecutionsRow struct {
-	ID        int64
-	Pipeline  int64
-	Status    interface{}
-	Created   int64
-	Completed sql.NullInt64
-	Json      sql.NullString
-	Deleted   int64
-	Hash      string
+	ID          int64
+	Pipeline    int64
+	Status      interface{}
+	Created     int64
+	Completed   sql.NullInt64
+	Json        sql.NullString
+	Deleted     int64
+	Executionid string
+	Hash        string
 }
 
 func (q *Queries) ListExecutions(ctx context.Context, arg ListExecutionsParams) ([]ListExecutionsRow, error) {
@@ -143,6 +153,7 @@ func (q *Queries) ListExecutions(ctx context.Context, arg ListExecutionsParams) 
 			&i.Completed,
 			&i.Json,
 			&i.Deleted,
+			&i.Executionid,
 			&i.Hash,
 		); err != nil {
 			return nil, err
@@ -159,7 +170,7 @@ func (q *Queries) ListExecutions(ctx context.Context, arg ListExecutionsParams) 
 }
 
 const listPipelineExecutions = `-- name: ListPipelineExecutions :many
-SELECT e.id, e.pipeline, e.status, e.created, e.completed, e.json, e.deleted FROM Executions e
+SELECT e.id, e.pipeline, e.status, e.created, e.completed, e.json, e.deleted, e.executionid FROM Executions e
 INNER JOIN Pipelines p ON p.id = e.pipeline
 WHERE organization = ? AND uuid = ? AND hash = ? AND e.deleted = FALSE
 ORDER BY e.created DESC
@@ -188,6 +199,7 @@ func (q *Queries) ListPipelineExecutions(ctx context.Context, arg ListPipelineEx
 			&i.Completed,
 			&i.Json,
 			&i.Deleted,
+			&i.Executionid,
 		); err != nil {
 			return nil, err
 		}
@@ -206,7 +218,7 @@ const softDeleteExecution = `-- name: SoftDeleteExecution :one
 UPDATE Executions
 SET deleted = TRUE
 WHERE id = ?
-RETURNING id, pipeline, status, created, completed, json, deleted
+RETURNING id, pipeline, status, created, completed, json, deleted, executionid
 `
 
 func (q *Queries) SoftDeleteExecution(ctx context.Context, id int64) (Execution, error) {
@@ -220,6 +232,7 @@ func (q *Queries) SoftDeleteExecution(ctx context.Context, id int64) (Execution,
 		&i.Completed,
 		&i.Json,
 		&i.Deleted,
+		&i.Executionid,
 	)
 	return i, err
 }
@@ -228,7 +241,7 @@ const updateExecutionStatus = `-- name: UpdateExecutionStatus :one
 UPDATE Executions
 SET status = ?
 WHERE id = ?
-RETURNING id, pipeline, status, created, completed, json, deleted
+RETURNING id, pipeline, status, created, completed, json, deleted, executionid
 `
 
 type UpdateExecutionStatusParams struct {
@@ -247,6 +260,7 @@ func (q *Queries) UpdateExecutionStatus(ctx context.Context, arg UpdateExecution
 		&i.Completed,
 		&i.Json,
 		&i.Deleted,
+		&i.Executionid,
 	)
 	return i, err
 }

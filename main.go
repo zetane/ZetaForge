@@ -16,12 +16,14 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
 	"server/zjson"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/invopop/jsonschema"
 	_ "github.com/mattn/go-sqlite3"
@@ -64,6 +66,27 @@ type Cloud struct {
 	ClusterIP    string
 	Token        string
 	CaCert       string
+}
+
+type WebSocketWriter struct {
+	PipelineId  string
+	MessageFunc func(string, string)
+	// Add other fields as needed
+}
+
+func (w *WebSocketWriter) Write(p []byte) (n int, err error) {
+	message := string(p)
+	w.MessageFunc(message, w.PipelineId)
+	return len(p), nil
+}
+
+func createLogger(pipelineId string, file io.Writer, messageFunc func(string, string)) io.Writer {
+	wsWriter := &WebSocketWriter{
+		PipelineId:  pipelineId,
+		MessageFunc: messageFunc,
+	}
+
+	return io.MultiWriter(os.Stdout, wsWriter, file)
 }
 
 // UTILITY FUNCTIONS FOR GENERATING DISTINCT ID FOR MIXPANEL
@@ -137,10 +160,12 @@ func validateJson(ctx context.Context, body io.ReadCloser) (zjson.Pipeline, HTTP
 	if err := json.Unmarshal(buffer.Bytes(), &pipeline); err != nil {
 		return zjson.Pipeline{}, InternalServerError{err.Error()}
 	}
-	log.Printf("%+v", pipeline)
 
 	//Get Mac address as a big integer, then hash it with sha256. Note that, this might give a different result if we run s2 from the cloud
 	_, macInt, err := getMACAddress()
+	if err != nil {
+		log.Printf("Mixpanel error; err=%v", err)
+	}
 
 	macAsString := macInt.String()
 	hash := sha256.New()
@@ -248,15 +273,36 @@ func main() {
 			return
 		}
 
-		if config.IsLocal {
-			go localExecute(&pipeline, res.ID, config, client, db, hub)
-		} else {
-			go cloudExecute(&pipeline, res.ID, config, client, db, hub)
+		executionId, uuidErr := uuid.NewV7()
+		if uuidErr != nil {
+			log.Printf("uuid generation failed; err=%v", uuidErr)
+			ctx.String(500, fmt.Sprintf("%v", uuidErr))
 		}
+
+		// TODO: client needs to handle file uploading to S3
+		// along with handling results files
+		sink := filepath.Join(pipeline.Sink, "history", executionId.String())
+		pipeline.Sink = sink
+		if config.IsLocal {
+			go localExecute(&pipeline, res.ID, executionId.String(), config, client, db, hub)
+		} else {
+			go cloudExecute(&pipeline, res.ID, executionId.String(), config, client, db, hub)
+		}
+		newRes := make(map[string]any)
+		newRes["executionId"] = executionId.String()
+		newRes["history"] = sink
+		newRes["pipeline"] = res
+		ctx.JSON(http.StatusCreated, newRes)
 	})
 	router.GET("/ws/:room", func(ctx *gin.Context) {
 		room := ctx.Param("room")
 		upgrader := websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				// Allow specific origin
+				origin := r.Header.Get("Origin")
+				return strings.HasPrefix(origin, "http://localhost") || strings.HasPrefix(origin, "http://127.0.0.1")
+			},
+
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,
 		}
@@ -383,9 +429,9 @@ func main() {
 		ctx.JSON(http.StatusOK, response)
 	})
 	pipeline.POST("/:uuid/:hash/execute", func(ctx *gin.Context) {
-		uuid := ctx.Param("uuid")
+		paramUuid := ctx.Param("uuid")
 		hash := ctx.Param("hash")
-		res, err := getPipeline(ctx.Request.Context(), db, "org", uuid, hash)
+		res, err := getPipeline(ctx.Request.Context(), db, "org", paramUuid, hash)
 		if err != nil {
 			log.Printf("Failed to execute pipeline; err=%v", err)
 			ctx.String(err.Status(), err.Error())
@@ -398,12 +444,29 @@ func main() {
 			return
 		}
 
-		if config.IsLocal {
-			go localExecute(&pipeline, res.ID, config, client, db, hub)
-		} else {
-			go cloudExecute(&pipeline, res.ID, config, client, db, hub)
+		executionId, uuidErr := uuid.NewV7()
+		if uuidErr != nil {
+			log.Printf("uuid generation failed; err=%v", uuidErr)
+			ctx.String(500, fmt.Sprintf("%v", uuidErr))
 		}
+
+		// TODO: client needs to handle file uploading to S3
+		// along with handling results files
+		sink := filepath.Join(pipeline.Sink, "history", executionId.String())
+		pipeline.Sink = sink
+
+		if config.IsLocal {
+			go localExecute(&pipeline, res.ID, executionId.String(), config, client, db, hub)
+		} else {
+			go cloudExecute(&pipeline, res.ID, executionId.String(), config, client, db, hub)
+		}
+
+		newRes := make(map[string]any)
+		newRes["pipeline"] = res
+		newRes["executionId"] = executionId.String()
+		ctx.JSON(http.StatusCreated, newRes)
 	})
+
 	pipeline.DELETE("/:uuid/:hash/:index", func(ctx *gin.Context) {
 		uuid := ctx.Param("uuid")
 		hash := ctx.Param("hash")

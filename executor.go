@@ -210,6 +210,7 @@ func downloadFiles(ctx context.Context, sink string, prefix string, cfg Config) 
 }
 
 func deleteFiles(ctx context.Context, prefix string, extraFiles []string, cfg Config) {
+	log.Printf("Deleting: %s", prefix)
 	client, err := s3Client(ctx, cfg)
 	if err != nil {
 		log.Printf("Failed to delete files; err=%v", err)
@@ -247,6 +248,7 @@ func deleteFiles(ctx context.Context, prefix string, extraFiles []string, cfg Co
 }
 
 func history(sinkPath string) error {
+	log.Printf("sinkPath: %v", sinkPath)
 	if err := os.MkdirAll(sinkPath, 0755); err != nil {
 		return err
 	}
@@ -350,16 +352,29 @@ func streaming(ctx context.Context, sink string, name string, room string, clien
 			log.Printf("Log stream error; err=%v", err)
 			break
 		}
+		// Remove the square brackets from the string
+		blockId := ""
+		blockId = strings.TrimPrefix(event.PodName, "[")
+		blockId = strings.TrimSuffix(blockId, "]")
+
+		parts := strings.Split(blockId, "-")
+
+		// Extract the desired parts
+		if len(parts) >= 4 {
+			blockId = strings.Join(parts[2:len(parts)-1], "-")
+		} else {
+			fmt.Println("Invalid input string format")
+		}
 
 		hub.Broadcast <- Message{
 			Room:    room,
-			Content: fmt.Sprintf("%s: %s", event.PodName, event.Content),
+			Content: fmt.Sprintf("[%s]:::: %s", blockId, event.Content),
 		}
 
-		if _, ok := logMap[event.PodName]; ok {
-			logMap[event.PodName] = append(logMap[event.PodName], event.Content)
+		if _, ok := logMap[blockId]; ok {
+			logMap[blockId] = append(logMap[blockId], event.Content)
 		} else {
-			logMap[event.PodName] = []string{event.Content}
+			logMap[blockId] = []string{event.Content}
 		}
 	}
 
@@ -416,10 +431,7 @@ func runArgo(ctx context.Context, workflow *wfv1.Workflow, sink string, pipeline
 			return workflow, err
 		}
 
-		hub.Broadcast <- Message{
-			Room:    pipeline,
-			Content: status,
-		}
+		log.Printf("Status: %s", status)
 
 		if string(workflow.Status.Phase) != status {
 			status = string(workflow.Status.Phase)
@@ -427,6 +439,7 @@ func runArgo(ctx context.Context, workflow *wfv1.Workflow, sink string, pipeline
 		}
 
 		if workflow.Status.Phase.Completed() {
+			log.Printf("Status: Completed")
 			break
 		}
 		time.Sleep(time.Second)
@@ -476,12 +489,11 @@ func deleteArgo(ctx context.Context, name string, client clientcmd.ClientConfig)
 	}
 }
 
-func localExecute(pipeline *zjson.Pipeline, id int64, cfg Config, client clientcmd.ClientConfig, db *sql.DB, hub *Hub) {
-	sink := filepath.Join(pipeline.Sink, "history", pipeline.Id+"-"+time.Now().Format("2006-01-02T15-04-05.000"))
+func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Config, client clientcmd.ClientConfig, db *sql.DB, hub *Hub) {
 	ctx := context.Background()
 	defer log.Printf("Completed")
 
-	execution, err := createExecution(ctx, db, id)
+	execution, err := createExecution(ctx, db, id, executionId)
 	if err != nil {
 		log.Printf("Failed to write execution to database; err=%v", err)
 		return
@@ -492,6 +504,7 @@ func localExecute(pipeline *zjson.Pipeline, id int64, cfg Config, client clientc
 		log.Printf("Failed to open log room; err=%v", err)
 		return
 	}
+
 	defer hub.CloseRoom(pipeline.Id)
 
 	if err := upload(ctx, cfg.EntrypointFile, cfg.EntrypointFile, cfg); err != nil { // should never fail
@@ -499,17 +512,35 @@ func localExecute(pipeline *zjson.Pipeline, id int64, cfg Config, client clientc
 		return
 	}
 
-	if err := history(sink); err != nil {
+	if err := history(pipeline.Sink); err != nil {
 		log.Printf("Failed to build history folder; err=%v", err)
 		return
 	}
+
+	file, err := os.OpenFile(filepath.Join(pipeline.Sink, "logs", pipeline.Id+".txt"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Printf("Error creating pipeline log: %v", err)
+	}
+
+	pipelineLogger := createLogger(pipeline.Id, file, func(message string, pipelineId string) {
+		if pipelineId != "" {
+			hub.Broadcast <- Message{
+				Room:    pipelineId,
+				Content: fmt.Sprintf("[executor-%s]:::: %s", pipelineId, message),
+			}
+		}
+		fmt.Printf("[executor]:: %s", message)
+	})
+	log.SetOutput(pipelineLogger)
+
+	defer file.Close()
 
 	jsonData, err := json.MarshalIndent(pipeline, "", "  ")
 	if err != nil {
 		log.Printf("Invalid pipeline.json; err=%v", err)
 		return
 	}
-	if err := writeFile(filepath.Join(sink, "pipeline", "pipeline.json"), string(jsonData)); err != nil {
+	if err := writeFile(filepath.Join(pipeline.Sink, "pipeline", "pipeline.json"), string(jsonData)); err != nil {
 		log.Printf("Failed to write pipeline.json; err=%v", err)
 		return
 	}
@@ -526,7 +557,7 @@ func localExecute(pipeline *zjson.Pipeline, id int64, cfg Config, client clientc
 		return
 	}
 
-	if err := writeFile(filepath.Join(sink, pipeline.Id+".json"), string(jsonWorkflow)); err != nil {
+	if err := writeFile(filepath.Join(pipeline.Sink, pipeline.Id+".json"), string(jsonWorkflow)); err != nil {
 		log.Printf("Failed to write translated pipeline.json; err=%v", err)
 		return
 	}
@@ -567,7 +598,7 @@ func localExecute(pipeline *zjson.Pipeline, id int64, cfg Config, client clientc
 		uploadedFiles = append(uploadedFiles, name)
 	}
 
-	workflow, err = runArgo(ctx, workflow, sink, pipeline.Id, execution.ID, client, db, hub)
+	workflow, err = runArgo(ctx, workflow, pipeline.Sink, pipeline.Id, execution.ID, client, db, hub)
 	if workflow != nil {
 		defer deleteArgo(ctx, workflow.Name, client)
 	}
@@ -577,13 +608,13 @@ func localExecute(pipeline *zjson.Pipeline, id int64, cfg Config, client clientc
 		return
 	}
 
-	if err := results(filepath.Join(sink, "results", "results.json"), pipeline, workflow); err != nil {
+	if err := results(filepath.Join(pipeline.Sink, "results", "results.json"), pipeline, workflow); err != nil {
 		deleteFiles(ctx, files, uploadedFiles, cfg)
 		log.Printf("Failed to download results; err=%v", err)
 		return
 	}
 
-	if err := downloadFiles(ctx, sink, files, cfg); err != nil {
+	if err := downloadFiles(ctx, pipeline.Sink, files, cfg); err != nil {
 		deleteFiles(ctx, files, uploadedFiles, cfg)
 		log.Printf("Failed to download files; err=%v", err)
 		return
@@ -592,11 +623,11 @@ func localExecute(pipeline *zjson.Pipeline, id int64, cfg Config, client clientc
 	deleteFiles(ctx, files, uploadedFiles, cfg)
 }
 
-func cloudExecute(pipeline *zjson.Pipeline, id int64, cfg Config, client clientcmd.ClientConfig, db *sql.DB, hub *Hub) {
+func cloudExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Config, client clientcmd.ClientConfig, db *sql.DB, hub *Hub) {
 	ctx := context.Background()
 	defer log.Printf("Completed")
 
-	execution, err := createExecution(ctx, db, id)
+	execution, err := createExecution(ctx, db, id, executionId)
 	if err != nil {
 		log.Printf("Failed to write execution to database; err=%v", err)
 		return
