@@ -36,6 +36,13 @@
       "filter": [
         "**/*"
       ]
+    },
+    {
+      "from": "./agents",
+      "to": "agents",
+      "filter": [
+        "**/*"
+      ]
     }
   ],
   "nsis": {

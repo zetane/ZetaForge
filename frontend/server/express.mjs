@@ -14,6 +14,7 @@ import path from "path";
 import pg from "pg";
 import { fileExists, readJsonToObject, readSpecs } from "./fileSystem.js";
 import { copyPipeline, saveBlock } from "./pipelineSerialization.js";
+import {app} from 'electron'
 
 const { Client } = pg;
 
@@ -425,7 +426,12 @@ function startExpressServer() {
   
     try {
       // Path to the Python script
-      const scriptPath = "agents/" + agentName + "/generate/computations.py";
+      let agents = "agents"
+      if(app.isPackaged) {
+        agents = path.join(process.resourcesPath, "agents")
+      }
+
+      const scriptPath = path.join(agents, agentName, "generate", "computations.py")
       const pythonProcess = spawn("python", [scriptPath]);
 
       const inputData = { apiKey, userMessage, conversationHistory };
@@ -557,9 +563,14 @@ function startExpressServer() {
         res.status(500).send({ error: "Error writing data to file" });
         return;
       }
-
+      let agents = "agents"
+      if(app.isPackaged) {
+        agents = path.join(process.resourcesPath, "agents")
+      }
+      const computations = path.join(agents, data.agent_name, "compile", "computations.py")
+      
       let command =
-        `python -B "../agents/${data.agent_name}/compile/computations.py" ` +
+        `python -B "${computations}" ` +
         `--block_path "${data.blockPath}" ` +
         `--block_name "${data.block_name}" ` +
         `--block_user_name "${data.block_user_name}" `;
