@@ -5,7 +5,7 @@ import { HeaderMenuItem } from "@carbon/react";
 import { useAtom } from "jotai";
 import { trpc } from "@/utils/trpc"
 import { useImmerAtom } from 'jotai-immer'
-import Mixpanel from '@/components/mixpanel'
+import mixpanel from '@/components/mixpanel'
 
 export default function SavePipelineButton() {
   const [editor] = useAtom(drawflowEditorAtom);
@@ -71,7 +71,7 @@ export default function SavePipelineButton() {
 
     try {
       
-      Mixpanel.track('Save Pipeline', {
+      mixpanel.track('Save Pipeline', {
         'distinct_id': data,
       })
       

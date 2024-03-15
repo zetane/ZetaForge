@@ -8,7 +8,7 @@ import { getDirectoryPath } from "@/../utils/fileUtils";
 import { useImmerAtom } from "jotai-immer";
 import { genJSON } from "@/utils/blockUtils";
 import { trpc } from "@/utils/trpc";
-import Mixpanel from '@/components/mixpanel'
+import mixpanel from '@/components/mixpanel'
 
 export default function LoadPipelineButton() {
   const FILE_EXTENSION_REGEX = /\.[^/.]+$/;
@@ -42,7 +42,7 @@ export default function LoadPipelineButton() {
     }
 
     try {
-      Mixpanel.track('Load Pipeline', {
+      mixpanel.track('Load Pipeline', {
         'distinct_id': data,
       })
     } catch(error){

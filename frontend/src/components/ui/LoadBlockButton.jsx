@@ -9,7 +9,7 @@ import { distinctIdAtom } from "@/atoms/distinctIdAtom";
 import { useImmerAtom } from 'jotai-immer'
 import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
-import Mixpanel from '@/components/mixpanel'
+import mixpanel from '@/components/mixpanel'
 import {trpc} from "@/utils/trpc"
 
 export default function LoadBlockButton() {
@@ -58,7 +58,7 @@ export default function LoadBlockButton() {
     
     try {
       
-      Mixpanel.track('Load Block', {
+      mixpanel.track('Load Block', {
         'distinct_id': data,
       })
     } catch(error){

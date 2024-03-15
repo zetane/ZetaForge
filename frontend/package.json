@@ -37,6 +37,7 @@
     "@uiw/codemirror-extensions-langs": "^4.21.21",
     "@uiw/codemirror-theme-vscode": "^4.21.21",
     "@uiw/react-codemirror": "^4.21.21",
+    "@types/sha256": "^0.2.2",
     "ajax": "^0.0.4",
     "axios": "^1.6.7",
     "body-parser": "^1.20.2",
