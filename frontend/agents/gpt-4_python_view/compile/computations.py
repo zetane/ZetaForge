@@ -98,9 +98,10 @@ def extract_requirements_from_docstring(docstring, my_folder):
     requirements = match.group(1).strip().split("\n")
     requirements = [req.strip() for req in requirements if req.strip()]
 
-    with open(os.path.join(my_folder, "requirements.txt"), "w") as f:
-        for req in requirements:
-            f.write(req + "\n")
+    if len(requirements) > 0:
+        with open(os.path.join(my_folder, "requirements.txt"), "w") as f:
+            for req in requirements:
+                f.write(req + "\n")
 
     return "requirements.txt file generated."
 

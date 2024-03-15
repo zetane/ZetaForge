@@ -8,8 +8,6 @@ def compute(epoch):
         result (dict): A dictionary containing the validation accuracy.
 
     Requirements:
-        scikit-learn
-        torch
     """
     import time
 

@@ -10,7 +10,6 @@ def compute(in1, in2):
         out2 (all): Textual description of out2
 
     Requirements:
-
     """
     # some code
     out1 = 2 * in1

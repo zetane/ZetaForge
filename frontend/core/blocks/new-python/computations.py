@@ -12,7 +12,6 @@ def compute(in1, in2, in3):
         out2 (all): Textual description of out2
 
     Requirements:
-
     """
 
     # Your code

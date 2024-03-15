@@ -34,8 +34,6 @@ def compute(descriptions):
         courses_of_action (dict of str): A list of suggested courses of action and explanations for each description.
 
     Requirements:
-        openai
-        json
     """
     description_action_pairs = []
     description_list = []

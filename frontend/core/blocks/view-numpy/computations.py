@@ -42,9 +42,6 @@ def compute(my_numpy):
         dict: A dictionary with the key 'html' and the value being the name of the generated HTML file.
 
     Requirements:
-        numpy
-        string
-        uuid
     """
 
     data = np.load(my_numpy)
