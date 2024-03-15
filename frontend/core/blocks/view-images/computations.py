@@ -12,8 +12,6 @@ def compute(image_paths_view):
         dict: A dictionary with the key 'html' and the value being the name of the generated HTML file.
 
     Requirements:
-        json
-        uuid
     """
 
     html_template = """

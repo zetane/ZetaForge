@@ -18,8 +18,6 @@ def compute(image_path, range_min, range_max, step):
         ret (dict of str): dictionnary of file paths where the processed images are saved.
 
     Requirements:
-        cv2
-        PIL
     """
     print("Computing starting")
 

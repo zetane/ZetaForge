@@ -563,14 +563,9 @@ function startExpressServer() {
         res.status(500).send({ error: "Error writing data to file" });
         return;
       }
-      let agents = "agents"
-      if(app.isPackaged) {
-        agents = path.join(process.resourcesPath, "agents")
-      }
-      const computations = path.join(agents, data.agent_name, "compile", "computations.py")
       
       let command =
-        `python -B "${computations}" ` +
+        `python -B "agents/${data.agent_name}/compile/computations.py" ` +
         `--block_path "${data.blockPath}" ` +
         `--block_name "${data.block_name}" ` +
         `--block_user_name "${data.block_user_name}" `;

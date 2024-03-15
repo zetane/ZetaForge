@@ -12,8 +12,6 @@ def compute(num_cubes=3):
         dict: A dictionary with the key 'html' and the value being the name of the generated HTML file.
 
     Requirements:
-        uuid
-        string
     """
 
     html_template = Template(

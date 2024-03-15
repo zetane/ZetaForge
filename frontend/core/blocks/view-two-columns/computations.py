@@ -12,8 +12,6 @@ def compute(array_of_pairs):
         dict: A dictionary with the key 'html' and the value being the name of the generated HTML file.
 
     Requirements:
-        json
-        uuid
     """
 
     html_template = """<!DOCTYPE html>
