@@ -4,10 +4,16 @@ import { HeaderMenuItem } from "@carbon/react";
 import { useAtom } from "jotai";
 import { useImmerAtom } from 'jotai-immer'
 import { customAlphabet } from 'nanoid'
+import {trpc} from "@/utils/trpc"
+
 
 export default function SavePipelineButton() {
   const [editor] = useAtom(drawflowEditorAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
+  // trpc.getCachePath.useQuery();
+  const cacheQuery = trpc.getCachePath.useQuery();
+  const cachePath = cacheQuery?.data || ""
+  
 
   const handleClick = async (editor, pipeline) => {
     editor.clearModuleSelected()
@@ -16,7 +22,7 @@ export default function SavePipelineButton() {
     setPipeline((draft) => {
       draft.name = name,
       draft.saveTime = null,
-      draft.buffer = `${import.meta.env.VITE_CACHE_DIR}/${name}/`,
+      draft.buffer = `${cachePath}${name}`,
       draft.path = undefined,
       draft.data = {}
     })
