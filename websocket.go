@@ -20,7 +20,7 @@ type Client struct {
 }
 
 func (client *Client) Receive() {
-	client.Conn.SetReadLimit(512)
+	client.Conn.SetReadLimit(1024)
 	client.Conn.SetReadDeadline(time.Now().Add(pongWait))
 	client.Conn.SetPongHandler(func(string) error {
 		client.Conn.SetReadDeadline(time.Now().Add(pongWait))
@@ -152,7 +152,7 @@ func serveSocket(conn *websocket.Conn, room string, hub *Hub) HTTPError {
 	client := &Client{
 		Room:   room,
 		Conn:   conn,
-		ToSend: make(chan Message, 256),
+		ToSend: make(chan Message, 1024),
 		Hub:    hub,
 	}
 

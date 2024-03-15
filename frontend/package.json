@@ -12,7 +12,6 @@
     }
   },
   "type": "module",
-  
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build && electron-builder",
@@ -24,6 +23,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.525.0",
+    "@aws-sdk/logger": "^0.1.0-preview.1",
     "@aws-sdk/types": "^3.523.0",
     "@carbon/colors": "^11.20.0",
     "@carbon/react": "^1.42.0",
@@ -59,6 +59,7 @@
     "node-file-dialog": "^1.0.3",
     "openai": "^3.3.0",
     "pg": "^8.11.3",
+    "react-use-websocket": "^4.8.1",
     "zod": "^3.22.4",
     "sass": "^1.69.5",
     "sweetalert2": "^11.9.0",
@@ -67,7 +68,6 @@
     "mixpanel-browser": "^2.48.1",
     "bigint-buffer":"^1.1.5",
     "sha256": "^0.2.0"
-
   },
   "devDependencies": {
     "@playwright/test": "^1.37.1",

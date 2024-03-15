@@ -21,6 +21,7 @@ import RunPipelineButton from "./RunPipelineButton";
 import NewButton from "./NewButton";
 import ApiKeysModal from "./modal/ApiKeysModal";
 import ClosableModal from "./modal/ClosableModel";
+import { PipelineLogs } from "./PipelineLogs";
 
 export default function Navbar({ children }) {
   const [darkMode, setDarkMode] = useAtom(darkModeAtom);
@@ -33,6 +34,7 @@ export default function Navbar({ children }) {
       content: content,
     });
   };
+
 
   return (
     <Header aria-label="Zetaforge">
@@ -52,14 +54,14 @@ export default function Navbar({ children }) {
         </HeaderMenu>
         <HeaderMenu menuLinkName="Inspect">
           <HeaderMenuItem
-            label="Previous Run"
-            onClick={() => modalPopper(<ClosableModal />)}
+            label="Run Logs"
+            onClick={() => modalPopper(<PipelineLogs />)}
           >
-            Previous Run
+            Run Logs
           </HeaderMenuItem>
           <HeaderMenuItem
             label="Pipeline"
-            onClick={() => modalPopper(<ClosableModal />)}
+            onClick={() => modalPopper(<PipelineLogs />)}
           >
             Pipeline
           </HeaderMenuItem>

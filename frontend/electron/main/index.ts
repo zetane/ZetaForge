@@ -69,6 +69,9 @@ async function createWindow() {
       // Consider using contextBridge.exposeInMainWorld
       // Read more on https://www.electronjs.org/docs/latest/tutorial/context-isolation
       contextIsolation: true,
+      webSecurity: false,
+      allowRunningInsecureContent: true // Allow insecure content
+
     },
   })
 

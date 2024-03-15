@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Code, View } from "@carbon/icons-react"
 import { FileBlock } from "./FileBlock";
 
@@ -9,7 +9,7 @@ const isTypeDisabled = (action) => {
   return true
 }
 
-const BlockGenerator = ({ block, openView, id, editor}) => {
+const BlockGenerator = ({ block, openView, id, historySink, setPipeline }) => {
   const styles = {
     top: `${block.views.node.pos_y}px`, 
     left: `${block.views.node.pos_x}px`
@@ -17,26 +17,40 @@ const BlockGenerator = ({ block, openView, id, editor}) => {
   const disabled = isTypeDisabled(block.action)
   const preview = (block.views.node.preview?.active == "true")
 
-  let content = (<BlockContent html={block.views.node.html} />)
+  const handleInputChange = (name, value, parameterName) => {
+    const updatedBlock = {
+      ...block,
+      action: {
+        ...block.action,
+        parameters: {
+          ...block.action.parameters,
+          [parameterName]: {
+            ...block.action.parameters[parameterName],
+            value: value,
+          },
+        },
+      },
+    };
+
+    setPipeline((prevPipeline) => {
+      prevPipeline.data = ({
+          ...prevPipeline.data,
+          [id]: updatedBlock,
+      })
+    });
+  };
+
+  let content = (<BlockContent html={block.views.node.html} block={block} onInputChange={handleInputChange} />)
   if (block.action.parameters?.path?.type == "file") {
-    content = (<FileBlock blockId={id} />)
+    content = (<FileBlock blockId={id} block={block} setPipeline={setPipeline}  />)
   }
 
-  useEffect(() => {
-    let outputNames = block.outputs
-    for (const [outputKey, output] of Object.entries(outputNames)) {
-      let inputConnections = output.connections;
-      for (const input of inputConnections) {
-        editor.addConnection(id, input.block, outputKey, input.variable);
-      }
-    }
-  }, [])
 
   return (
     <div className="parent-node">
       <div className="drawflow-node" id={`node-${id}`} style={styles}>
         <div className="drawflow_content_node">
-          { preview && <BlockPreview id={id} />}
+          {preview && <BlockPreview id={id} block={block} historySink={historySink} />}
 
           <BlockTitle
             name={block.information.name}
@@ -57,18 +71,25 @@ const BlockGenerator = ({ block, openView, id, editor}) => {
   );
 };
 
-const BlockPreview = ({id, override}) => {
+const BlockPreview = ({id, block, historySink}) => {
+  const iframeRef = useRef(null)
+  if (block.events.outputs?.html) {
+    if (iframeRef.current) {
+      const fileUrl = `file://${historySink}/files/${block.events.outputs.html}`  
+      iframeRef.current.srcDoc = block.events.outputs.html 
+    }
+  }
+
   return (
     <div className="block-preview">
       <div>
-        <iframe class="iframe-preview" id={id} src=""></iframe>
+        <iframe className="iframe-preview" id={id} srcDoc="" ref={iframeRef}>
+        </iframe>
       </div>
     </div>
   )
-
 }
 
-// BlockTitle component with conditional rendering for buttons
 const BlockTitle = ({ name, id, openView, actions}) => {
   let actionContainer = (
     <div className="action-container">
@@ -77,22 +98,80 @@ const BlockTitle = ({ name, id, openView, actions}) => {
     </div>
   )
 
-  return (<div className="title-box">
-    <span>{name}</span>
-    { actions && actionContainer }
-  </div>)
-};
-
-// BlockContent component for parsing and injecting data
-const BlockContent = ({html, override}) => {
-  if (override) {
-    return ({override})
-  } return (
-    <div className="block-content" dangerouslySetInnerHTML={{ __html: html }}></div>
+  return (
+    <div className="title-box">
+      <span>{name}</span>
+      { actions && actionContainer }
+    </div>
   )
 };
 
-// BlockInputs component for rendering inputs
+const parseHtmlToInputs = (html) => {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  const inputElements = doc.querySelectorAll('input');
+
+  const inputs = Array.from(inputElements).map((input) => {
+    const parameterAttr = Array.from(input.attributes).find((attr) =>
+      attr.name.startsWith('parameters-')
+    );
+    const parameterName = parameterAttr ? parameterAttr.name.split('-')[1] : '';
+
+    return {
+      type: input.type,
+      value: input.value,
+      name: input.name,
+      step: input.step,
+      parameterName: parameterName,
+    };
+  });
+
+  return inputs;
+};
+
+const InputField = ({ type, value, name, step, parameterName, onChange }) => {
+  const handleChange = (event) => {
+    onChange(name, event.target.value, parameterName);
+  };
+
+  return (
+    <input
+      type={type}
+      value={value}
+      name={name}
+      step={step}
+      onChange={handleChange}
+      {...(parameterName && { [`parameters-${parameterName}`]: '' })}
+    />
+  );
+};
+
+const BlockContent = ({ html, block, onInputChange }) => {
+  const parsedInputs = parseHtmlToInputs(html);
+
+  return (
+    <div className="block-content">
+      {parsedInputs.map((input, index) => {
+        const parameterName = input.parameterName;
+        const value = block.action?.parameters[parameterName]?.value || '';
+        return (
+          <InputField
+            key={index}
+            type={input.type}
+            value={value}
+            name={input.name}
+            step={input.step}
+            parameterName={input.parameterName}
+            onChange={(name, value, parameterName) =>
+              onInputChange(name, value, parameterName)
+            }
+          />
+        )
+      })}
+    </div>
+  );
+};
+
 const BlockInputs = ({ inputs }) => (
   <div className="inputs">
     {Object.entries(inputs).map(([name, input]) => (
@@ -107,7 +186,6 @@ const BlockInputs = ({ inputs }) => (
   </div>
 );
 
-// BlockOutputs component for rendering outputs
 const BlockOutputs = ({ outputs }) => (
   <div className="outputs">
     {Object.entries(outputs).map(([name, output]) => (

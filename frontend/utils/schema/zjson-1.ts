@@ -1,4 +1,4 @@
-export interface Information {
+export interface BlockInformation {
   id: string;
   name: string;
   description: string;
@@ -38,6 +38,7 @@ export interface TitleBar {
 
 export interface Preview {
   active?: string;
+  content?: string;
 }
 
 export interface Node {
@@ -63,10 +64,11 @@ export interface Parameter {
 export interface Event {
   inputs?: {[key: string]: string};
   outputs?: {[key: string]: string};
+  log?: string[];
 }
 
 export interface Block {
-  information: Information;
+  information: BlockInformation;
   inputs: { [key: string]: Put };
   outputs: { [key: string]: Put };
   action: Action;
@@ -76,6 +78,7 @@ export interface Block {
 
 export interface Pipeline {
   id: string;
+  name: string;
   pipeline: { [key: string]: Block };
   sink: string;
   build: string;

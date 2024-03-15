@@ -131,6 +131,11 @@ func kanikoTemplate(block *zjson.Block, organization string, cfg Config) *wfv1.T
 			"--destination",
 			"registry:" + cfg.Local.RegistryPort + "/" + block.Action.Container.Image + ":" + block.Action.Container.Version,
 			"--insecure",
+			"--cache=true",
+			"--cache-dir=/cache",
+			"--compressed-caching=false",
+			"--snapshotMode=redo",
+			"--use-new-run",
 		}
 		artifact := wfv1.Artifact{
 			Name: "context",
@@ -160,6 +165,11 @@ func kanikoTemplate(block *zjson.Block, organization string, cfg Config) *wfv1.T
 			"tar:///workspace/context.tar.gz",
 			"--destination",
 			cfg.Cloud.RegistryAddr + ":" + name,
+			"--cache=true",
+			"--cache-dir=/cache",
+			"--compressed-caching=false",
+			"--snapshotMode=redo",
+			"--use-new-run",
 		}
 		return &wfv1.Template{
 			Name: name + "-build",

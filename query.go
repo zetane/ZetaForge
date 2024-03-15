@@ -52,7 +52,7 @@ func newResponseExecution(execution zdatabase.Execution, hash string) ResponseEx
 	if execution.Completed.Valid {
 		response.Completed = execution.Completed.Int64
 	}
-	
+
 	if execution.Json.Valid {
 		response.Json = execution.Json.String
 	}
@@ -191,9 +191,12 @@ func getPipeline(ctx context.Context, db *sql.DB, organization string, uuid stri
 	return res, nil
 }
 
-func createExecution(ctx context.Context, db *sql.DB, pipeline int64) (zdatabase.Execution, error) {
+func createExecution(ctx context.Context, db *sql.DB, pipeline int64, executionid string) (zdatabase.Execution, error) {
 	q := zdatabase.New(db)
-	return q.CreateExecution(ctx, pipeline)
+	return q.CreateExecution(ctx, zdatabase.CreateExecutionParams{
+		Pipeline:    pipeline,
+		Executionid: executionid,
+	})
 }
 
 func updateExecutionWorkflow(ctx context.Context, db *sql.DB, execution int64, workflow *wfv1.Workflow) error {
@@ -204,7 +207,7 @@ func updateExecutionWorkflow(ctx context.Context, db *sql.DB, execution int64, w
 	q := zdatabase.New(db)
 	_, err = q.AddExecutionWorkflow(ctx, zdatabase.AddExecutionWorkflowParams{
 		Json: jsonWorkflow,
-		ID:     execution,
+		ID:   execution,
 	})
 	return err
 }

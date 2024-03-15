@@ -24,7 +24,6 @@ export async function saveSpec(spec, writePath, pipelineName) {
 
 export async function saveBlock(blockKey, fromPath, toPath) {
   const newFolder = path.join(toPath, blockKey)
-  console.log(`saving ${blockKey} from ${fromPath} to ${newFolder}`)
 
   withFileSystemRollback([toPath], async () => {
     await fs.mkdir(newFolder, { recursive: true });
@@ -38,7 +37,6 @@ export async function copyPipeline(pipelineSpecs, pipelineName, fromDir, toDir) 
   const bufferPath = path.resolve(process.cwd(), fromDir)
 
   console.log(`supposed to be writing from ${fromDir} to ${toDir}`)
-  console.log(pipelineSpecs)
 
   // Takes existing pipeline + spec
   const writePipelineDirectory = toDir;
@@ -57,12 +55,7 @@ export async function copyPipeline(pipelineSpecs, pipelineName, fromDir, toDir) 
     ? await readPipelineBlocks(pipelineSpecsPath)
     : new Set();
 
-  console.log("new blocks: ", newPipelineBlocks)
-  console.log("existing blocks: ", existingPipelineBlocks)
   const blocksToRemove = setDifference(existingPipelineBlocks, newPipelineBlocks);
-  console.log("Removing: ", blocksToRemove)
-
-  console.log("Block index: ", fromBlockIndex)
 
   withFileSystemRollback([writePipelineDirectory], async () => {
     await fs.mkdir(writePipelineDirectory, { recursive: true });
@@ -85,7 +78,6 @@ export async function copyPipeline(pipelineSpecs, pipelineName, fromDir, toDir) 
         existingBlockPath = blockSpec.information.block_source
       }
 
-      console.log(`saving ${key} from ${existingBlockPath} to ${newBlockPath}`)
       if (existingBlockPath != newBlockPath) {
         // if it's the same folder, don't try to copy it
         await fs.cp(existingBlockPath, newBlockPath, {recursive: true})
@@ -130,10 +122,7 @@ async function getBlockIndex(blockDirectories) {
 function getPipelineBlocks(pipelineSpecs) {
   const blocks = new Set()
   const pipeline = pipelineSpecs.pipeline
-  console.log("WTF: ", pipeline)
   for (const [key, block] of Object.entries(pipeline)) {
-    console.log("KEY: ", key)
-    console.log("BLOCK: ", block)
     if (block.action.container || block.action.pipeline) {
       blocks.add(key)
     }

@@ -1,6 +1,7 @@
 # user data
 frontend/.cache/*
 !frontend/.cache/.gitkeep
+*.db
 
 # Node and npm related
 node_modules/
@@ -37,10 +38,6 @@ __pycache__/
 backend/db.sqlite3 # If you use SQLite
 venv
 build
-
-
-# Environment variables
-.env
 
 # Miscellaneous
 *.bak

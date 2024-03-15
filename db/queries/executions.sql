@@ -16,9 +16,9 @@ ORDER BY e.created DESC;
 
 -- name: CreateExecution :one
 INSERT INTO Executions(
-	pipeline, created
+	pipeline, executionid, created
 ) VALUES (
-	?, unixepoch('now')
+	?, ?, unixepoch('now')
 )
 RETURNING *;
 

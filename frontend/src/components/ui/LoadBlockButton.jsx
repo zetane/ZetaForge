@@ -30,8 +30,6 @@ export default function LoadBlockButton() {
     const nanoid = customAlphabet('1234567890abcedfghijklmnopqrstuvwxyz', 12)
     const newNanoid = nanoid()
     const id = `${block.information.id}-${newNanoid}`
-    const json = genJSON(block, id)
-    editor.addNode_from_JSON(json)
     setPipeline((draft) => {
       draft.data = {
         ...draft.data,

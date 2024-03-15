@@ -6,7 +6,9 @@ const pipelineAtom = atom({
   //buffer: `${import.meta.env.VITE_CACHE_DIR}/${name}/`,
   buffer: null,
   path: undefined,
-  data: {}
+  data: {},
+  log: [],
+  history: null
 });
 
 export { pipelineAtom };
