@@ -9,11 +9,17 @@ import LibrarySwitcher from '@/components/ui/library/LibrarySwitcher';
 import ModalWrapper from '@/components/ui/modal/ModalWrapper';
 import './styles/globals.scss';
 
+
 export default function App() {
+
+
+
+
+
   return (
       <ProviderInjector>
         <ForgeTheme>
-          <Navbar>
+          <Navbar >
             <LibraryFetcher />
           </Navbar>
           <LibrarySwitcher />

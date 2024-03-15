@@ -6,6 +6,9 @@ import { readSpecs } from "./fileSystem.js";
 import { copyPipeline, getBlockPath, removeBlock, saveBlock, saveSpec } from './pipelineSerialization.js';
 import { publicProcedure, router } from './trpc';
 import { fileURLToPath } from 'url';
+import sha256 from 'sha256'
+import {toBigIntBE} from 'bigint-buffer';
+import getMAC from "getmac"
 
 export const appRouter = router({
   getBlocks: publicProcedure
@@ -110,6 +113,44 @@ export const appRouter = router({
       const {blockId, pipelinePath} = input;
       removeBlock(blockId, pipelinePath);
     }),
+    getDistinctId: publicProcedure
+    .input(z.object({
+      distinctId: z.string()
+    }))
+    .mutation(async (opts) => {
+      function get_distinct_id() {
+
+        function getHardwareAddressAsInteger() {
+    
+          try {
+           const macAddress = getMAC();
+           
+           let macAsBigInt = toBigIntBE(Buffer.from(macAddress.split(':').join(''), 'hex'));
+         
+           // Check if the MAC address is universally administered
+           const isUniversallyAdministered = (macAsBigInt & BigInt(0x020000000000)) === BigInt(0);
+         
+           // If not universally administered, set the multicast bit
+           if (!isUniversallyAdministered) {
+             macAsBigInt |= BigInt(0x010000000000);
+           }
+       
+           return macAsBigInt;
+         } catch (error) {
+         console.log("Can't generate distinct_id for mixpanel. Using default distinct_id")
+         console.log(error)
+         console.log("error")
+         return BigInt(0);
+         }
+       }
+       
+       return getHardwareAddressAsInteger()
+    
+     }
+      const distinct_id = sha256(get_distinct_id().toString())
+      return {distinctId: distinct_id}
+    })
+
 });
  
 // Export type router type signature,

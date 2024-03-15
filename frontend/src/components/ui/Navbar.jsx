@@ -46,7 +46,7 @@ export default function Navbar({ children }) {
           <SavePipelineButton />
           <SaveAsPipelineButton />
           <HeaderMenu menuLinkName="Load" >
-            <LoadPipelineButton />
+            <LoadPipelineButton  />
             <LoadBlockButton />
           </HeaderMenu>
         </HeaderMenu>

@@ -601,7 +601,9 @@ function startExpressServer() {
       res.send({ message: `Python script executed with exit code: ${code}` });
     });
   });
-
+  
+  
+  
   app.get("/api/logs", (req, res) => {
     const filePath = req.query.filePath;
 
@@ -625,4 +627,6 @@ function startExpressServer() {
     console.log(`Server running at http://localhost:${port}`);
   });
 }
+
 export { startExpressServer };
+
