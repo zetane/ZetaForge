@@ -12,7 +12,7 @@
     "dist"
   ],
   "mac": {
-    "artifactName": "${productName}_${version}.${ext}",
+    "artifactName": "${productName}-${version}.${ext}",
     "target": [
       "dmg",
       "zip"
@@ -27,7 +27,7 @@
         ]
       }
     ],
-    "artifactName": "${productName}_${version}.${ext}"
+    "artifactName": "${productName}-${version}.${ext}"
   },
    "extraResources": [
     {
