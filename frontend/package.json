@@ -59,7 +59,15 @@
     "node-file-dialog": "^1.0.3",
     "openai": "^3.3.0",
     "pg": "^8.11.3",
-    "zod": "^3.22.4"
+    "zod": "^3.22.4",
+    "sass": "^1.69.5",
+    "sweetalert2": "^11.9.0",
+    "uuid": "^9.0.1",
+    "getmac": "^6.6.0",
+    "mixpanel-browser": "^2.48.1",
+    "bigint-buffer":"^1.1.5",
+    "sha256": "^0.2.0"
+
   },
   "devDependencies": {
     "@playwright/test": "^1.37.1",

@@ -37,6 +37,8 @@ __pycache__/
 backend/db.sqlite3 # If you use SQLite
 venv
 build
+
+
 # Environment variables
 .env
 

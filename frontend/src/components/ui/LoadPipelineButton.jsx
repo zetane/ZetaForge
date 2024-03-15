@@ -1,5 +1,6 @@
 import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
+import { distinctIdAtom } from "@/atoms/distinctIdAtom";
 import { HeaderMenuItem } from "@carbon/react";
 import { useAtom } from "jotai";
 import { useRef } from "react";
@@ -7,12 +8,18 @@ import { getDirectoryPath } from "@/../utils/fileUtils";
 import { useImmerAtom } from "jotai-immer";
 import { genJSON } from "@/utils/blockUtils";
 import { trpc } from "@/utils/trpc";
+import Mixpanel from '@/components/mixpanel'
 
 export default function LoadPipelineButton() {
   const FILE_EXTENSION_REGEX = /\.[^/.]+$/;
   const [editor] = useAtom(drawflowEditorAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
+  const [distinctId, setDistinctId] = useImmerAtom(distinctIdAtom)
+
   const fileInput = useRef();
+  
+
+  const getDistinctId = trpc.getDistinctId.useMutation();
 
   const savePipelineMutation = trpc.savePipeline.useMutation()
 
@@ -21,6 +28,26 @@ export default function LoadPipelineButton() {
   };
 
   const loadPipeline = async () => {
+    let data = distinctId?.distinctId
+
+    if(data === "0" || data === undefined) {
+        
+        const res = await getDistinctId.mutateAsync({distinctId: "0"})
+        
+        data = res.distinctId
+        
+        setDistinctId( (draft) =>{
+          draft.distinctId = data
+        })
+    }
+
+    try {
+      Mixpanel.track('Load Pipeline', {
+        'distinct_id': data,
+      })
+    } catch(error){
+      //ignore the error, no logs
+    }
     const files = fileInput.current.files
     for (const key in files) {
       const file = files[key]
@@ -33,7 +60,7 @@ export default function LoadPipelineButton() {
         // We don't need to purge the cache on disk
         // bc the savePipeline call below will 
         const data = JSON.parse(await (new Blob([file])).text())
-        console.log(data)
+        
         const folderPath = getDirectoryPath(file.path)
 
         const cacheData = {
