@@ -5,10 +5,11 @@ import {
   Close,
   Edit,
   Maximize,
+  Minimize,
   OperationsRecord,
   Run,
   Save,
-  Send,
+  Send
 } from "@carbon/icons-react";
 import {
   Button,
@@ -28,6 +29,8 @@ import TestLogs from "./TestLogs";
 
 export default function Editor() {
   const serverAddress = "http://localhost:3330";
+  const minizedStyles = "inset-y-16 right-8 w-1/3"
+  const maximizedStyles = "inset-y-11 right-0 w-full z-[9001]"
   const [blockPath] = useAtom(blockEditorRootAtom);
   const [blockFolderName, setBlockFolderName] = useState(null); //TODO check if still needed
   const setBlockEditorOpen = useSetAtom(isBlockEditorOpenAtom);
@@ -46,6 +49,7 @@ export default function Editor() {
   const [fileSystem, setFileSystem] = useState({});
   const [isRunButtonPressed, setIsRunButtonPressed] = useState(false);
   const [activeCodeMirror, setActiveCodeMirror] = useState(null);
+  const [isMaximized, setMaximized] = useState(false)
   const chatTextarea = useRef(null);
 
   useEffect(() => {
@@ -298,8 +302,12 @@ const textarea = document.querySelector(".textarea-input");
     setBlockEditorOpen(false);
   };
 
+  const toggleMaximize = () => {
+    setMaximized((prev) => !prev)
+  }
+
   return (
-    <div className="editor-block absolute inset-y-16 right-8 max-h-full w-1/3 overflow-y-scroll bg-carbonGray-900">
+    <div className={"editor-block absolute max-h-full overflow-y-scroll bg-carbonGray-900 " + (isMaximized? maximizedStyles : minizedStyles)}>
       <div className="flex flex-row items-center justify-between">
         <span className="p-4 text-lg italic">{blockFolderName}</span>
         <div className="flex flex-row items-center justify-end">
@@ -307,8 +315,8 @@ const textarea = document.querySelector(".textarea-input");
             <Bot size={24} className="mx-2 align-middle" />
             <span className="text-lg">{agentName}</span>
           </div>
-          <IconButton kind="ghost" size="lg" className="my-px-16">
-            <Maximize size={24} />
+          <IconButton kind="ghost" size="lg" className="my-px-16" onClick={toggleMaximize}>
+            {isMaximized? <Minimize size={24}/> : <Maximize size={24}/>}
           </IconButton>
           <IconButton kind="ghost" size="lg" onClick={handleClose}>
             <Close size={24} />
