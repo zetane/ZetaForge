@@ -14,21 +14,19 @@ import subprocess
 import shutil
 import os
 import platform
-"""
-if(platform.system() == "Darwin" or platform.system() == "Linux"):
-    if machine == 'x86_64' or machine == 'x86-64':
-        os.rename("server", "s2-v1.0.0-amd64")
-        shutil.move("s2-v1.0.0-amd64", "frontend/server2/s2-v1.0.0-amd64")
-"""
+import json
 
 
 def main():
-    compile_s2()
+    package_json = os.path.join("frontend", "package.json")
+    version = 'v1.0.0'
+   
+    compile_s2(version)
     res = subprocess.Popen(['npm','install'], cwd="frontend", stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     res.communicate()
     res = subprocess.Popen(['npm', 'run', 'build'], cwd="frontend", stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     res.communicate()
-def compile_s2(version='v1.0.0'):
+def compile_s2(version):
     s = subprocess.run("go build", shell=True)
     path = os.path.join("frontend", "server2")
     if os.path.exists(path):
@@ -36,7 +34,7 @@ def compile_s2(version='v1.0.0'):
     os.makedirs(path)
     filename = 's2-' + version
     os_ = platform.system()
-    machine = platform.system()
+    machine = platform.machine()
     if os_ == "Windows":
         filename += '.exe'
     else:
