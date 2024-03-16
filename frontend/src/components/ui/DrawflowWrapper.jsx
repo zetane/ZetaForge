@@ -70,31 +70,7 @@ export default function DrawflowWrapper() {
   }, []);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        if (Object.getOwnPropertyNames(pipeline.data).length !== 0) {
-          const pipelineSpecs = editor.convert_drawflow_to_block(pipeline.name);
-  
-          // note that we are writing to the buffer, not the load path
-          pipelineSpecs['sink'] = pipeline.buffer;
-          pipelineSpecs['build'] = pipeline.buffer;
-  
-          const saveData = {
-            specs: pipelineSpecs,
-            name: pipeline.name,
-            buffer: pipeline.buffer,
-            writePath: pipeline.buffer
-          };
-  
-          const response = await savePipeline.mutateAsync(saveData);
-          const { dirPath, specs } = response;
-        }
-      } catch (error) {
-        console.error("Error saving pipeline:", error);
-      }
-    };
-
-    fetchData();
+    
 
     const nodes = Object.entries(pipeline.data).map(([key, block]) => {
       return (<BlockGenerator key={key} block={block} openView={openView} id={key} historySink={pipeline.history} setPipeline={setPipeline} />)
@@ -122,6 +98,32 @@ export default function DrawflowWrapper() {
           }
         }
       }
+
+      const fetchData = async () => {
+        try {
+          if (Object.getOwnPropertyNames(pipeline.data).length !== 0) {
+            const pipelineSpecs = editor.convert_drawflow_to_block(pipeline.name);
+    
+            // note that we are writing to the buffer, not the load path
+            pipelineSpecs['sink'] = pipeline.buffer;
+            pipelineSpecs['build'] = pipeline.buffer;
+    
+            const saveData = {
+              specs: pipelineSpecs,
+              name: pipeline.name,
+              buffer: pipeline.buffer,
+              writePath: pipeline.buffer
+            };
+    
+            const response = await savePipeline.mutateAsync(saveData);
+            const { dirPath, specs } = response;
+          }
+        } catch (error) {
+          console.error("Error saving pipeline:", error);
+        }
+      };
+  
+      fetchData();
     } else {
       if (editor) {
         editor.clear()

@@ -57,7 +57,6 @@
     "monaco-editor": "^0.44.0",
     "multer": "^1.4.5-lts.1",
     "nanoid": "^5.0.5",
-    "node-file-dialog": "^1.0.3",
     "openai": "^3.3.0",
     "pg": "^8.11.3",
     "react-use-websocket": "^4.8.1",

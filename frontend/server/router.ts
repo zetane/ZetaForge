@@ -1,11 +1,10 @@
 import { dialog, app } from 'electron';
 import { z } from 'zod';
-import path, {dirname} from "path";
+import path from "path";
 import fs from "fs/promises";
-import { fileExists, readSpecs, s3Upload} from "./fileSystem.js";
+import { readSpecs, s3Upload} from "./fileSystem.js";
 import { copyPipeline, getBlockPath, removeBlock, saveBlock, saveSpec } from './pipelineSerialization.js';
 import { publicProcedure, router } from './trpc';
-import { fileURLToPath } from 'url';
 import sha256 from 'sha256'
 import {toBigIntBE} from 'bigint-buffer';
 import getMAC from "getmac"
