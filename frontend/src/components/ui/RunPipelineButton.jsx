@@ -80,7 +80,8 @@ export default function RunPipelineButton() {
           const param = parameters[paramKey];
 
           if (param.type === "file") {
-            const filePath = param.value;
+            let filePath = param.value;
+            filePath = filePath.replaceAll('\\', '/')
             const paths = filePath.split("/")
             const name = paths.at(-1)
             const awsKey = `files/${name}`

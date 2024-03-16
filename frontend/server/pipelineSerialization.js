@@ -44,9 +44,12 @@ export async function copyPipeline(pipelineSpecs, pipelineName, fromDir, toDir) 
 
   const fromBlockIndex = await getBlockIndex([bufferPath]);
 
-  const toBlockIndex = (await fileExists(writePipelineDirectory))
-    ? await getBlockIndex([writePipelineDirectory])
-    : {};
+  let toBlockIndex = {}
+  if (await fileExists(writePipelineDirectory)) {
+    toBlockIndex = await getBlockIndex([writePipelineDirectory])
+  } else {
+    await fs.mkdir(writePipelineDirectory, { recursive: true });
+  }
 
   // Gets pipeline specs from the specs coming from the graph
   // Submitted by the client
@@ -58,7 +61,6 @@ export async function copyPipeline(pipelineSpecs, pipelineName, fromDir, toDir) 
   const blocksToRemove = setDifference(existingPipelineBlocks, newPipelineBlocks);
 
   withFileSystemRollback([writePipelineDirectory], async () => {
-    await fs.mkdir(writePipelineDirectory, { recursive: true });
     for (const key of Array.from(newPipelineBlocks)) {
       const newBlockPath = path.join(writePipelineDirectory, key);
       let existingBlockPath = fromBlockIndex[key]

@@ -1,26 +1,18 @@
-import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
 import { HeaderMenuItem } from "@carbon/react";
-import { useAtom } from "jotai";
 import { useRef } from "react";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
-import { genJSON } from "@/utils/blockUtils";
 import { customAlphabet } from "nanoid";
 import { distinctIdAtom } from "@/atoms/distinctIdAtom";
 import { useImmerAtom } from 'jotai-immer'
-import { useMutation } from "@tanstack/react-query";
-import axios from "axios";
-import mixpanel from '@/components/mixpanel'
-import {trpc} from "@/utils/trpc"
+import { trpc } from "@/utils/trpc"
+//import mixpanel from '@/components/mixpanel'
 
 export default function LoadBlockButton() {
   const FILE_EXTENSION_REGEX = /\.[^/.]+$/;
-  const [editor] = useAtom(drawflowEditorAtom);
-  const [pipeline, setPipeline] = useAtom(pipelineAtom)
+  const [pipeline, setPipeline] = useImmerAtom(pipelineAtom)
   const [distinctId, setDistinctId] = useImmerAtom(distinctIdAtom)
 
   const fileInput = useRef();
-  
-
 
   const selectFile = () => {
     fileInput.current.click();
@@ -39,31 +31,26 @@ export default function LoadBlockButton() {
     return id;
   }
 
-  const saveBlock = trpc.saveBlock.useMutation();
   const getDistinctId = trpc.getDistinctId.useMutation();
-  
-    const loadBlock = async (pipeline) => {
-      let data = distinctId?.distinctId
-      
-      if(data === "0" || data === undefined) {
-          
-          const res = await getDistinctId.mutateAsync({distinctId: "0"}) //ignore the input, it'll just mutate the new distinct id
-          
-          data = res.distinctId
-          
-          setDistinctId( (draft) =>{
-            draft.distinctId = data
-          })
-      }
-    
-    try {
-      
-      mixpanel.track('Load Block', {
-        'distinct_id': data,
+
+  const loadBlock = async (pipeline) => {
+    let data = distinctId?.distinctId
+
+    if (data === "0" || data === undefined) {
+
+      const res = await getDistinctId.mutateAsync({ distinctId: "0" }) //ignore the input, it'll just mutate the new distinct id
+
+      data = res.distinctId
+
+      setDistinctId((draft) => {
+        draft.distinctId = data
       })
-    } catch(error){
+    } try {
+      //mixpanel.track('Load Block', {
+      //  'distinct_id': data,
+      //})
+    } catch (error) {
       //ignore the error, no logs
-      
     }
     const files = fileInput.current.files
     for (const key in files) {

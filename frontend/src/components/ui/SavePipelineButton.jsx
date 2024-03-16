@@ -5,21 +5,15 @@ import { HeaderMenuItem } from "@carbon/react";
 import { useAtom } from "jotai";
 import { trpc } from "@/utils/trpc"
 import { useImmerAtom } from 'jotai-immer'
-import mixpanel from '@/components/mixpanel'
+//import mixpanel from '@/components/mixpanel'
 
 export default function SavePipelineButton() {
   const [editor] = useAtom(drawflowEditorAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const [distinctId, setDistinctId] = useImmerAtom(distinctIdAtom)
-  
-  
-  const savePipeline = trpc.savePipeline.useMutation();
-  
-  const getDistinctId = trpc.getDistinctId.useMutation();
-  
- 
 
-  
+  const savePipeline = trpc.savePipeline.useMutation();
+  const getDistinctId = trpc.getDistinctId.useMutation();
 
   const handleClick = async (editor, pipeline) => {
     const pipelineSpecs = editor.convert_drawflow_to_block(pipeline.name);
@@ -32,33 +26,29 @@ export default function SavePipelineButton() {
     pipelineSpecs['build'] = pipeline.path ? pipeline.path : pipeline.buffer
     pipelineSpecs['name'] = pipeline.name
     const saveData = {
-      specs: pipelineSpecs, 
-      name: pipeline.name, 
+      specs: pipelineSpecs,
+      name: pipeline.name,
       buffer: pipeline.buffer,
       writePath: pipeline.path
     }
-    
+
     const response = await savePipeline.mutateAsync(saveData)
-    
+
     let data = distinctId?.distinctId
-    
-    if(data === "0" || data === undefined) {
-        
-        const res = await getDistinctId.mutateAsync({distinctId: "0"})
-        
-        data = res.distinctId
-        
-        setDistinctId( (draft) =>{
-          draft.distinctId = data
-        })
+
+    if (data === "0" || data === undefined) {
+
+      const res = await getDistinctId.mutateAsync({ distinctId: "0" })
+
+      data = res.distinctId
+
+      setDistinctId((draft) => {
+        draft.distinctId = data
+      })
     }
 
-    const {dirPath, specs} = response
-    
+    const { dirPath, specs } = response
 
-    
-    
-    
     setPipeline((draft) => {
       draft.saveTime = Date.now()
       if (specs) {
@@ -70,12 +60,10 @@ export default function SavePipelineButton() {
     })
 
     try {
-      
-      mixpanel.track('Save Pipeline', {
-        'distinct_id': data,
-      })
-      
-    } catch(error) {
+      //mixpanel.track('Save Pipeline', {
+      //  'distinct_id': data,
+      //})
+    } catch (error) {
       //no logs, just ignore
     }
   };

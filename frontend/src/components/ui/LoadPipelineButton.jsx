@@ -6,21 +6,17 @@ import { useAtom } from "jotai";
 import { useRef } from "react";
 import { getDirectoryPath } from "@/../utils/fileUtils";
 import { useImmerAtom } from "jotai-immer";
-import { genJSON } from "@/utils/blockUtils";
 import { trpc } from "@/utils/trpc";
-import mixpanel from '@/components/mixpanel'
+//import mixpanel from '@/components/mixpanel'
 
 export default function LoadPipelineButton() {
   const FILE_EXTENSION_REGEX = /\.[^/.]+$/;
   const [editor] = useAtom(drawflowEditorAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const [distinctId, setDistinctId] = useImmerAtom(distinctIdAtom)
-
   const fileInput = useRef();
-  
 
   const getDistinctId = trpc.getDistinctId.useMutation();
-
   const savePipelineMutation = trpc.savePipeline.useMutation()
 
   const selectFile = () => {
@@ -30,22 +26,20 @@ export default function LoadPipelineButton() {
   const loadPipeline = async () => {
     let data = distinctId?.distinctId
 
-    if(data === "0" || data === undefined) {
-        
-        const res = await getDistinctId.mutateAsync({distinctId: "0"})
-        
-        data = res.distinctId
-        
-        setDistinctId( (draft) =>{
-          draft.distinctId = data
-        })
-    }
+    if (data === "0" || data === undefined) {
+      const res = await getDistinctId.mutateAsync({ distinctId: "0" })
 
-    try {
-      mixpanel.track('Load Pipeline', {
-        'distinct_id': data,
+      data = res.distinctId
+
+      setDistinctId((draft) => {
+        draft.distinctId = data
       })
-    } catch(error){
+    }
+    try {
+      //mixpanel.track('Load Pipeline', {
+      //  'distinct_id': data,
+      //})
+    } catch (error) {
       //ignore the error, no logs
     }
     const files = fileInput.current.files
