@@ -2,7 +2,7 @@
   "information": {
     "id": "view-threejs",
     "name": "View Three.js",
-    "description": "description",
+    "description": "Generates an HTML file displaying a 3D scene with cubes using Three.js.",
     "block_version": "block version number",
     "block_source": "core/blocks/view-threejs",
     "block_type": "view",

@@ -2,7 +2,7 @@
   "information": {
     "id": "canny-edge",
     "name": "Canny Edge",
-    "description": "description",
+    "description": "Computes the Canny edge detection on an image at various thresholds and saves the results.",
     "block_version": "block version number",
     "block_source": "core/blocks/canny-edge",
     "block_type": "compute",

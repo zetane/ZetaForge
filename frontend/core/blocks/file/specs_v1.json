@@ -2,7 +2,7 @@
   "information": {
     "id": "file",
     "name": "File",
-    "description": "description",
+    "description": "File parameter input.",
     "block_version": "block version number",
     "block_source": "core/blocks",
     "block_type": "compute",

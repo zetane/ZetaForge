@@ -2,7 +2,7 @@
   "information": {
     "id": "training-iris",
     "name": "Train Iris",
-    "description": "description",
+    "description": "Trains and evaluates a neural network on the iris dataset.",
     "system_versions": [
       "0.1"
     ],

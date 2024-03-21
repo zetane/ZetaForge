@@ -2,7 +2,7 @@
   "information": {
     "id": "view-images",
     "name": "View Images",
-    "description": "description",
+    "description": "Generates an HTML file with a unique name and returns the file name.",
     "block_version": "block version number",
     "block_source": "core/blocks/view-images",
     "block_type": "view",
