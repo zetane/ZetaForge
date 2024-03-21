@@ -250,7 +250,7 @@ function DirectoryViewer({
       "Dockerfile",
     ];
     const isSpecialFile = specialFiles.includes(folder);
-    const textStyle = isSpecialFile ? { color: "yellow" } : {};
+    const textStyle = isSpecialFile ? { color: "darkorange" } : {};
 
     const handleFileClick = (filePath) => {
       // Check for unsaved changes as before
@@ -380,7 +380,7 @@ function DirectoryViewer({
         ) : null}
 
         <div className="w-64">
-          <TreeView selected={currentFile.file}>
+          <TreeView selected={currentFile.file} label="">
             {Object.entries(fileSystem).map(([folder, folderData]) =>
               renderTreeNodes(folder, folderData),
             )}

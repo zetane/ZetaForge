@@ -1,0 +1,37 @@
+@mixin light {
+  --beHeader: #e8e8e8;
+  --bePromptBackground: #c6c6c6;
+  --bePromptInputBackground: #f9f9f9;
+}
+
+@mixin dark {
+  --beHeader: #141414;
+  --bePromptBackground: #393939;
+  --bePromptInputBackground: #454545;
+}
+
+.editor-block {
+	background-color: var(--cds-background) !important;
+	height: 94%;
+	border: 1px solid var(--cds-border-subtle)
+}
+
+.block-editor-header {
+  @apply flex flex-row items-center justify-between sticky z-10 top-0;
+  background-color: var(--beHeader);
+}
+
+.block-editor-prompt {
+  @apply rounded p-2;
+  background-color: var(--bePromptBackground);
+}
+
+.block-editor-prompt-input {
+  @apply min-h-20 w-full rounded-lg border-purple-300 p-2 text-base placeholder-purple-300;
+  background-color: var(--bePromptInputBackground);
+}
+
+.block-editor-code-header{
+  @apply p-2;
+  background-color: var(--bePromptBackground);
+}

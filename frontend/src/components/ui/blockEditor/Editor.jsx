@@ -307,8 +307,8 @@ const textarea = document.querySelector(".textarea-input");
   }
 
   return (
-    <div className={"editor-block absolute max-h-full overflow-y-scroll bg-carbonGray-900 " + (isMaximized? maximizedStyles : minizedStyles)}>
-      <div className="flex flex-row items-center justify-between">
+    <div className={"editor-block absolute max-h-full overflow-y-scroll " + (isMaximized? maximizedStyles : minizedStyles)}>
+      <div className="block-editor-header">
         <span className="p-4 text-lg italic">{blockFolderName}</span>
         <div className="flex flex-row items-center justify-end">
           <div className="p-4">
@@ -341,22 +341,22 @@ const textarea = document.querySelector(".textarea-input");
               <div className="flex flex-col gap-y-8">
                 {queryAndResponses.map((item, index) => (
                   <Fragment key={index}>
-                    <span className="rounded bg-neutral-700 p-2">
+                    <span className="block-editor-prompt">
                       {item.prompt}
                     </span>
                     <div>
-                      Code #{index}
+                      <div className='block-editor-code-header'>Code #{index}</div>
                       <div
                         className="relative"
                         style={{
                           border:
                             activeCodeMirror === index
-                              ? "2px solid yellow"
+                              ? "2px solid darkorange"
                               : "none",
                         }}
                       >
                         <ViewerCodeMirror
-                          className="bg-carbonGray-600"
+                          className="code-block"
                           code={item.response}
                         />
                         <div className="absolute right-0 top-0">
@@ -395,7 +395,7 @@ const textarea = document.querySelector(".textarea-input");
                 {showEditor ? (
                   // Render EditorCodeMirror if showEditor is true
                   <div>
-                    {editorManualPrompt}
+                    <div className='block-editor-code-header'>{editorManualPrompt}</div>
                     <div className="relative">
                         <EditorCodeMirror
                           code={editorValue}
@@ -420,7 +420,7 @@ const textarea = document.querySelector(".textarea-input");
                     {openAIApiKey &&
                       <div className="relative">
                         <textarea
-                          className="min-h-20 w-full rounded-lg border-purple-300 bg-black p-2 text-base text-white placeholder-purple-300"
+                          className="block-editor-prompt-input"
                           ref={chatTextarea}
                           placeholder="Ask to generate code or modify last code"
                           onKeyDown={(e) => {
