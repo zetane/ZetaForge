@@ -1,5 +1,5 @@
 export default class Drawflow {
-  constructor(container, openViewCallback, precanvas = null, render = null, parent = null) {
+  constructor(container, pipeline, setPipeline, precanvas = null, render = null, parent = null) {
     this.events = {};
     this.container = container;
     this.precanvas = precanvas;
@@ -36,7 +36,7 @@ export default class Drawflow {
 
     this.noderegister = {};
     this.render = render;
-    this.drawflow = { "drawflow": { "Home": { "data": {} } } };
+    this.drawflow = {"drawflow": {"Home": {"data": {}} } };
     // Configurable options
     this.module = 'Home';
     this.editor_mode = 'edit';
@@ -53,8 +53,6 @@ export default class Drawflow {
     this.prevDiff = -1;
 
     this.removeNodeSubscribers = [];
-
-    this.openViewCallback = openViewCallback;
   }
 
   
@@ -85,8 +83,6 @@ export default class Drawflow {
     /* Zoom Mouse */
     this.container.addEventListener('wheel', this.zoom_enter.bind(this));
     /* Update data Nodes */
-    this.container.addEventListener('input', this.updateNodeValue.bind(this));
-
     this.container.addEventListener('dblclick', this.dblclick.bind(this));
     /* Mobile zoom */
     this.container.onpointerdown = this.pointerdown_handler.bind(this);
@@ -95,8 +91,6 @@ export default class Drawflow {
     this.container.onpointercancel = this.pointerup_handler.bind(this);
     this.container.onpointerout = this.pointerup_handler.bind(this);
     this.container.onpointerleave = this.pointerup_handler.bind(this);
-
-    this.load();
   }
 
   /* Mobile zoom */
@@ -147,34 +141,6 @@ export default class Drawflow {
     }
   }
   /* End Mobile Zoom */
-  // load() {
-  //   for (var key in this.drawflow.drawflow[this.module].data) {
-  //     console.log(this.drawflow.drawflow[this.module].data[key].block)
-  //     // this.addNodeImport(this.drawflow.drawflow[this.module].data[key], this.precanvas);
-  //     this.addNode_from_JSON(this.drawflow.drawflow[this.module].data[key].block,this.drawflow.drawflow[this.module].data[key].pos_x, this.drawflow.drawflow[this.module].data[key].pos_y);
-  //   }
-
-  //   if(this.reroute) {
-  //     for (var key in this.drawflow.drawflow[this.module].data) {
-  //       this.addRerouteImport(this.drawflow.drawflow[this.module].data[key]);
-  //     }
-  //   }
-
-  //   for (var key in this.drawflow.drawflow[this.module].data) {
-  //     this.updateConnectionNodes('node-'+key);
-  //   }
-
-  //   const editor = this.drawflow.drawflow;
-  //   let number = 1;
-  //   Object.keys(editor).map(function(moduleName, index) {
-  //     Object.keys(editor[moduleName].data).map(function(id, index2) {
-  //       if(parseInt(id) >= number) {
-  //         number = parseInt(id)+1;
-  //       }
-  //     });
-  //   });
-  //   this.nodeId = number;
-  // }
 
   load_block(node, notifi = true) {
     const id = this.addNode_from_JSON(node, node.views.node.pos_x, node.views.node.pos_y);
@@ -222,33 +188,6 @@ export default class Drawflow {
         }
       }
     }
-  }
-
-  load() {
-    for (var key in this.drawflow.drawflow[this.module].data) {
-      this.addNode_from_JSON(this.drawflow.drawflow[this.module].data[key].block, this.drawflow.drawflow[this.module].data[key].pos_x, this.drawflow.drawflow[this.module].data[key].pos_y);
-    }
-
-    // if(this.reroute) {
-    //   for (var key in this.drawflow.drawflow[this.module].data) {
-    //     this.addRerouteImport(this.drawflow.drawflow[this.module].data[key]);
-    //   }
-    // }
-
-    // for (var key in this.drawflow.drawflow[this.module].data) {
-    //   this.updateConnectionNodes('node-'+key);
-    // }
-
-    // const editor = this.drawflow.drawflow;
-    // let number = 1;
-    // Object.keys(editor).map(function(moduleName, index) {
-    //   Object.keys(editor[moduleName].data).map(function(id, index2) {
-    //     if(parseInt(id) >= number) {
-    //       number = parseInt(id)+1;
-    //     }
-    //   });
-    // });
-    // this.nodeId = number;
   }
 
   removeReouteConnectionSelected() {
@@ -573,6 +512,7 @@ export default class Drawflow {
             this.updateConnectionNodes('node-' + id_output);
             this.updateConnectionNodes('node-' + id_input);
             this.dispatch('connectionCreated', { output_id: id_output, input_id: id_input, output_class: output_class, input_class: input_class });
+            console.log(this.drawflow.drawflow[this.module].data)
           } else {
             this.dispatch('connectionCancel', true);
             this.connection_ele.remove();
@@ -1307,289 +1247,6 @@ export default class Drawflow {
     }
   }
 
-  defaultBlockProducer(block, pos_x, pos_y) {
-    var newNodeId = null;
-    if (this.useuuid) {
-      newNodeId = this.getUuid();
-    } else {
-      newNodeId = this.nodeId;
-    }
-
-    let html_str = ""
-    let params = block.action?.parameters;
-    let first_key;
-
-    if (block.views.node.html != "") {
-      for (let key in params) {
-        first_key = key;
-        break;
-      }
-
-      let parser = new DOMParser()
-      let doc = parser.parseFromString(block.views.node.html, 'text/html')
-      //NOT SURE WE NEED THIS LINE
-      doc.body.firstChild.setAttribute('value', params[first_key].value);
-      html_str = doc.body.firstChild.outerHTML;
-    }
-
-    var title_background_color = 'rgba(107, 43, 224, 1)';
-    if (block.views.node.title_bar && block.views.node.title_bar.background_color) {
-      title_background_color = block.views.node.title_bar.background_color;
-    }
-
-    var preview = "";
-    if (block.views.node.preview && block.views.node.preview.active && block.views.node.preview.active == 'true') {
-      preview =`
-      <style>
-        .iframe_preview {
-            transform: scale(0.5);
-            transform-origin: 0 0;
-            width: 200%; 
-            height: 200%;
-        }
-      </style>
-      <div style="position: absolute; top: -265px; left: 0; width: 300px; height: 250px; max-width: 800px; border: 2px solid #333; border-radius: 5px; overflow: hidden;">
-        <div>
-            <iframe class="iframe_preview" id="${newNodeId} "src="" style="border: none; position: absolute; top: 0; left: 0;"></iframe>
-        </div>
-      </div>  
-      `
-    }
-
-    var html_title = `
-    <div>    
-      <div class="title-box" style="display: flex; align-items: center;background-color:`+ title_background_color +`;"> 
-          ${block.information.name}
-          <div style="margin-left: auto; display: flex;">
-              <button id="btn_open_code" class="view-btn">
-                  <div>
-                      <svg class="mySvg" style="margin-bottom:15px" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="white" stroke="#5eb017" stroke-width="0.6" class="bi bi-eye" viewBox="0 0 16 16"> 
-                      <path d="M5.854 4.854a.5.5 0 1 0-.708-.708l-3.5 3.5a.5.5 0 0 0 0 .708l3.5 3.5a.5.5 0 0 0 .708-.708L2.707 8l3.147-3.146zm4.292 0a.5.5 0 0 1 .708-.708l3.5 3.5a.5.5 0 0 1 0 .708l-3.5 3.5a.5.5 0 0 1-.708-.708L13.293 8l-3.147-3.146z"/>
-                      </svg>
-                  </div>
-              </button>
-              <button id='btn_show_view' class="view-btn" style="visibility:visible;" onclick="openView(`+ newNodeId + `)">
-                  <div>
-                      <svg class="mySvg" style="margin-bottom:15px" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="white" stroke="#5eb017" stroke-width="0.6" class="bi bi-eye" viewBox="0 0 16 16"> 
-                      <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/> <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/> 
-                      </svg>
-                  </div>
-              </button>
-          </div>
-      </div>
-      <div class="box" style="position:relative;top:30px;">
-          ${html_str}
-      </div>
-      ${preview}
-    </div>
-    `;
-
-    const name = block.information.id.substring(0, block.information.id.lastIndexOf("-"));
-    // const num_in =10;
-    // const num_out=6;
-    const classoverride = block.information.id.substring(0, block.information.id.lastIndexOf("-"))
-    const data = {}
-    const html = html_title;
-
-
-    const input_variable_names = Object.keys(block.inputs);
-    const input_types = input_variable_names.map(v => block.inputs[v].type)
-
-    const output_variable_names = Object.keys(block.outputs);
-    const output_types = output_variable_names.map(v => block.outputs[v].type)
-
-    const typenode = false;
-    const parent = document.createElement('div');
-    parent.classList.add("parent-node");
-
-    const node = document.createElement('div');
-    node.innerHTML = "";
-    node.setAttribute("id", "node-" + newNodeId);
-    node.classList.add("drawflow-node");
-    if (classoverride != '') {
-      node.classList.add(...classoverride.split(' '));
-    }
-
-    const inputs = document.createElement('div');
-    inputs.classList.add("inputs");
-
-    const outputs = document.createElement('div');
-    outputs.classList.add("outputs");
-
-    const json_inputs = {}
-    let input_max = 0;
-    for (let x = 0; x < input_variable_names.length; x++) {
-      const input = document.createElement('div');
-      input.classList.add("input");
-      // input.classList.add("input_"+(x+1));
-      input.classList.add(input_variable_names[x]);
-
-
-      // Add the icon representing the type
-      const wrap = document.createElement('span');
-      wrap.classList.add("type-icon")
-      // wrap.innerHTML = '<i class="'+'fas fa-thin fa-images'+'"></i>';
-      wrap.innerHTML = '<i class="' + this.getIcon(input_types[x]) + '"></i>';
-      input.appendChild(wrap);
-
-      // Add the variable name
-      const label = document.createElement('span');
-      label.classList.add("variable-text")
-      // label.innerHTML = 'Input ' + (x + 1) + ': hello';
-      label.innerHTML = input_variable_names[x];
-      input.appendChild(label);
-      // json_inputs["input_"+(x+1)] = { "connections": []};
-      json_inputs[input_variable_names[x]] = { "connections": [] };
-      inputs.appendChild(input);
-
-      // Compute the width of the text by adding and removing it from the DOM
-      const label2 = document.createElement('span');
-      label2.classList.add("variable-text")
-      label2.innerHTML = input_variable_names[x];
-      document.body.appendChild(label2);
-      const width_of_input = label2.offsetWidth;
-      document.body.removeChild(label2);
-
-      if (width_of_input > input_max) {
-        input_max = width_of_input;
-      }
-    }
-
-    const json_outputs = {}
-    let output_max = 0;
-    for (let x = 0; x < output_variable_names.length; x++) {
-      const output = document.createElement('div');
-      output.classList.add("output");
-      // output.classList.add("output_"+(x+1));
-      output.classList.add(output_variable_names[x]);
-      output.style.left = 10 + 'px';
-
-      // Add the icon representing the type
-      const wrap = document.createElement('span');
-      wrap.classList.add("type-icon")
-      wrap.innerHTML = '<i class="' + this.getIcon(output_types[x]) + '"></i>';
-      wrap.style.left = (-60) + 'px';
-      output.appendChild(wrap);
-
-      // Add the variable name
-      const label = document.createElement('span');
-      label.classList.add("variable-text-output")
-
-      label.innerHTML = output_variable_names[x];
-
-      json_outputs[output_variable_names[x]] = { "connections": [] };
-
-
-
-      // Compute the width of the text by adding and removing it from the DOM
-      const label2 = document.createElement('span');
-      label2.classList.add("variable-text-output")
-      label2.innerHTML = output_variable_names[x];
-      document.body.appendChild(label2);
-      const width_of_output = label2.offsetWidth;
-      document.body.removeChild(label2);
-
-      label.style.left = (-width_of_output - 80) + 'px';
-      output.appendChild(label);
-
-      outputs.appendChild(output);
-
-      if (width_of_output > output_max) {
-        output_max = width_of_output;
-      }
-    }
-
-    // Set width of node
-    let min_width = 150;
-    if (first_key == 'text') {
-      min_width = 250;
-    }
-    const textWidth = input_max + output_max;
-    node.style.width = min_width + textWidth + 'px';
-
-    // TODO: Fix this. It's a hack because of the CSS
-    // Could either calculate the height of the injected HTML
-    // or attempt to make this (declarative) react code
-    const argMax = Math.max(output_variable_names.length, input_variable_names.length)
-    const height = (argMax * 20) + 100
-    node.style.height = height + 'px';
-
-    const content = document.createElement('div');
-    content.classList.add("drawflow_content_node");
-
-    content.innerHTML = html;
-
-    Object.entries(data).forEach(function (key, value) {
-      if (typeof key[1] === "object") {
-        insertObjectkeys(null, key[0], key[0]);
-      } else {
-        var elems = content.querySelectorAll('[parameters-' + key[0] + ']');
-        for (var i = 0; i < elems.length; i++) {
-          elems[i].value = key[1];
-          if (elems[i].isContentEditable) {
-            elems[i].innerText = key[1];
-          }
-        }
-      }
-    })
-
-    function insertObjectkeys(object, name, completname) {
-      if (object === null) {
-        var object = data[name];
-      } else {
-        var object = object[name]
-      }
-      if (object !== null) {
-        Object.entries(object).forEach(function (key, value) {
-          if (typeof key[1] === "object") {
-            insertObjectkeys(object, key[0], completname + '-' + key[0]);
-          } else {
-            var elems = content.querySelectorAll('[parameters-' + completname + '-' + key[0] + ']');
-            for (var i = 0; i < elems.length; i++) {
-              elems[i].value = key[1];
-              if (elems[i].isContentEditable) {
-                elems[i].innerText = key[1];
-              }
-            }
-          }
-        });
-      }
-    }
-
-    const openCodeButton = content.querySelector("#btn_open_code")
-    openCodeButton.addEventListener("click", () => {
-      this.openViewCallback(newNodeId)
-    })
-
-    node.appendChild(inputs);
-    node.appendChild(content);
-    node.appendChild(outputs);
-    node.style.top = pos_y + "px";
-    node.style.left = pos_x + "px";
-    parent.appendChild(node);
-    this.precanvas.appendChild(parent);
-    const json = {
-      id: newNodeId,
-      name: name,
-      block: block,
-      data: data,
-      class: classoverride,
-      html: html,
-      typenode: typenode,
-      inputs: json_inputs,
-      outputs: json_outputs,
-      pos_x: pos_x,
-      pos_y: pos_y,
-    }
-
-    return json
-  }
-
-  defaultNodeCreation(block, pos_x, pos_y) {
-    const node = this.defaultBlockProducer(block, pos_x, pos_y)
-    this.addNode_from_JSON(node)
-  }
-
   getNextId() {
     let ids = Object.keys(this.drawflow.drawflow[this.module].data)
     ids = ids.map((id) => (parseInt(id)))
@@ -1602,9 +1259,25 @@ export default class Drawflow {
   }
 
   addNode_from_JSON(json) {
-    this.drawflow.drawflow[this.module].data[json.id] = json;
+    const graph = this.drawflow.drawflow[this.module].data
+    const id = json.id
+    if (graph.hasOwnProperty(id)) {
+      // Inbound data from react managed inputs
+      // This happens because react re-renders twice
+      // And we have to make sure that if the user has mutated
+      // the DOM that we don't overwrite with unmanaged data,
+      // specifically dynamic graph connections are only stored 
+      // in the node.inputs and node.outputs json object,
+      // not the react data structure
+
+      // TODO: connections and svgs managed in react
+      // which essentially means a full port of drawflow
+      return id;
+    } else {
+      graph[id] = json
+    }
     this.dispatch('nodeCreated', json);
-    return json.id;
+    return id;
   }
 
   addNodeImport(dataNode, precanvas) {
@@ -2317,33 +1990,27 @@ export default class Drawflow {
   }
 
 
-  convert_drawflow_to_block(name) {
+  convert_drawflow_to_block(name, blockGraph) {
     const graph_with_connections = this.drawflow;
-
     const node_keys = Object.keys(graph_with_connections.drawflow.Home.data);
-
-    let blocks = {}
-
-    for (let i = 0; i < node_keys.length; i++) {
-      const node = graph_with_connections.drawflow.Home.data[node_keys[i]]
-      // deep copy
-      const block = JSON.parse(JSON.stringify(node.block))
-
-      block.views.node.pos_x = node.pos_x.toString()
-      block.views.node.pos_y = node.pos_y.toString()
-      
-      blocks[node_keys[i]] = (block)
-    }
-
-
     const newPipeline = {}
     for (let i = 0; i < node_keys.length; i++) {
-      const node = graph_with_connections.drawflow.Home.data[node_keys[i]]
+      const key = node_keys[i]
+      const node = graph_with_connections.drawflow.Home.data[key]
+      const reactBlock = blockGraph[key];
+      // deep copy
+      // TODO: can we use immer here?
+      // that would solve *all the problems*
+      const block = JSON.parse(JSON.stringify(reactBlock))
       const nodes_inputs = this.getChildrenAsArray(node, "inputs");
       const nodes_outputs = this.getChildrenAsArray(node, "outputs");
 
-      const block = JSON.parse(JSON.stringify(blocks[node_keys[i]]))
       block.events = {}
+      // get x,y from drawflow
+      block.views.node.pos_x = node.pos_x.toString()
+      block.views.node.pos_y = node.pos_y.toString()
+
+      // get inputs from drawflow
       const block_variable_keys_inputs = Object.keys(block.inputs);
       for (let j = 0; j < block_variable_keys_inputs.length; j++) {
         let block_output_connections = this.renameKeyInArrayOfObjects(nodes_inputs[j].connections, 'input', 'variable');        
@@ -2351,14 +2018,15 @@ export default class Drawflow {
         block.inputs[block_variable_keys_inputs[j]].connections = block_output_connections;
       }
       
+      // get outputs from drawflow
       const block_variable_keys_outputs = Object.keys(block.outputs);
       for (let j = 0; j < block_variable_keys_outputs.length; j++) {
         let block_input_connections = this.renameKeyInArrayOfObjects(nodes_outputs[j].connections, 'output', 'variable');        
         block_input_connections = this.renameKeyInArrayOfObjects(block_input_connections, 'node', 'block')
         block.outputs[block_variable_keys_outputs[j]].connections = block_input_connections;
       }
-      
-      newPipeline[node_keys[i]] = block
+
+      newPipeline[key] = block;
     }
     const pipeline = {
         id: name,

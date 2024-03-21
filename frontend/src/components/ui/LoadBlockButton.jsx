@@ -23,10 +23,7 @@ export default function LoadBlockButton() {
     const newNanoid = nanoid()
     const id = `${block.information.id}-${newNanoid}`
     setPipeline((draft) => {
-      draft.data = {
-        ...draft.data,
-        [id]: block
-      }
+      draft.data[id] = block;
     })
     return id;
   }

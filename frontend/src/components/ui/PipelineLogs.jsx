@@ -8,7 +8,7 @@ export const PipelineLogs = () => {
   return (
     <ClosableModal
       modalHeading="Pipeline Logs"
-      secondaryButtonText="Close">
+      passiveModal={true}>
     <div className="code-container centered-container">
       <div className="viewer-container">
         <div className="logs-viewer">

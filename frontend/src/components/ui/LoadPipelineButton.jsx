@@ -61,6 +61,12 @@ export default function LoadPipelineButton() {
         }
         const cacheResponse = await savePipelineMutation.mutateAsync(cacheData)
 
+        // We have to clear the pipeline object first
+        // Because otherwise we can have key collisions
+        setPipeline((draft) => {
+          draft.data = {}
+        })
+
         setPipeline((draft) => {
           draft.name = name
           draft.path = folderPath

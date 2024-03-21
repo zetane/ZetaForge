@@ -23,8 +23,17 @@ def main():
 
     params = list()
     inputs = dict()
+    debug_inputs = dict()
+
     for key in inspect.signature(compute).parameters.keys():
         value = os.getenv(key)
+        debug_inputs[key] = value
+    
+    print("debug|||", debug_inputs)
+
+    for key in inspect.signature(compute).parameters.keys():
+        value = os.getenv(key)
+        debug_inputs[key] = value
         params.append(ast.literal_eval(value))
         inputs[key] = value
     
@@ -49,13 +58,15 @@ def main():
     new_items = current_files_and_folders - initial_files_and_folders
 
     # 6. Copy any new files in the current execution directory to /files
-    for item in new_items:
-        src_path = os.path.join(os.getcwd(), item)
-        dst_path = os.path.join(files_dir, item)
-        if os.path.isdir(src_path):
-            shutil.copytree(src_path, dst_path, dirs_exist_ok=True)
-        else:
-            shutil.copy2(src_path, dst_path)
+    if os.path.exists(files_dir):
+        for item in new_items:
+            src_path = os.path.join(os.getcwd(), item)
+            dst_path = os.path.join(files_dir, item)
+            if os.path.isdir(src_path):
+                shutil.copytree(src_path, dst_path, dirs_exist_ok=True)
+            else:
+                shutil.copy2(src_path, dst_path)
+
 
 if __name__ == "__main__":
     main()

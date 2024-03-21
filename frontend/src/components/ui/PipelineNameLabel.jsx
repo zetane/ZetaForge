@@ -15,18 +15,22 @@ export default function PipelineNameLabel() {
   const cachePath = cacheQuery?.data || ""
 
   useEffect(() => {
-    setPipeline((draft) => {
-      const nanoid = customAlphabet('1234567890abcedfghijklmnopqrstuvwxyz', 12)
-      const name = `pipeline-${nanoid()}`
-      // Sending a path.sep from the server here
-      // TODO: This logic will change because authoritative history
-      // should be stored in the object store and we should
-      // fetch the history stored in sqlite
+    // TODO: Make this suck less
+    if (!pipeline.name && cachePath != "") {
+      setPipeline((draft) => {
+        const nanoid = customAlphabet('1234567890abcedfghijklmnopqrstuvwxyz', 12)
+        const name = `pipeline-${nanoid()}`
+        // Sending a path.sep from the server here
+        // TODO: This logic will change because authoritative history
+        // should be stored in the object store and we should
+        // fetch the history stored in sqlite
 
-      draft.buffer = `${cachePath}${name}`
-      draft.name = name
-    })
-  }, [cachePath])
+        draft.buffer = `${cachePath}${name}`
+        draft.name = name
+      })
+
+    }
+  }, [pipeline.name, cachePath])
 
   const updatePipeline = (e) => {
     setPipeline((draft) => {
@@ -43,16 +47,16 @@ export default function PipelineNameLabel() {
   };
 
   let saveIcon = null;
+  let saveStyles = { marginLeft: '5px;' }
   if (pipeline.saveTime) {
     const niceTime = new Date(pipeline.saveTime).toString()
-    saveIcon = (<Save className="pr-2" size={30} title={niceTime} />)
+    saveIcon = (<Save className="pl-2" size={30} title={niceTime} />)
   } else {
-    saveIcon = (<Unsaved className="pr-2" size={30} title="Not saved" />)
+    saveIcon = (<Unsaved className="pl-2" size={30} title="Not saved" />)
   }
 
   return (
     <>
-      {saveIcon}
       <div>
         <TextInput
           value={pipeline.name}

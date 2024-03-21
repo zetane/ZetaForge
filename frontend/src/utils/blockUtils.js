@@ -11,7 +11,6 @@ export const genJSON = (block, id) => {
     id: id,
     name: block.information.name,
     block: {...block},
-    data: {}, 
     class: block.information.id.substring(0, block.information.id.lastIndexOf("-")),
     html: block.views.node.html,
     typenode: false,
