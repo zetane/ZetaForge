@@ -1,13 +1,17 @@
-import { EditorView } from "@codemirror/view";
+import { darkModeAtom } from "@/atoms/themeAtom";
 import { loadLanguage } from "@uiw/codemirror-extensions-langs";
-import { vscodeDark } from "@uiw/codemirror-theme-vscode";
+import { basicDark, basicLight } from '@uiw/codemirror-theme-basic';
 import CodeMirror from "@uiw/react-codemirror";
+import { atom, useAtom } from "jotai";
+
+const themeAtom = atom((get) => get(darkModeAtom) ? basicDark : basicLight);
 
 export const ViewerCodeMirror = ({ code }) => {
+  const [theme] = useAtom(themeAtom);
   return (
     <CodeMirror
       value={code}
-      theme={vscodeDark}
+      theme={theme}
       extensions={[loadLanguage("python")]}
       readOnly={true}
       basicSetup={{
@@ -42,18 +46,7 @@ export const ViewerCodeMirror = ({ code }) => {
 };
 
 export const EditorCodeMirror = ({ code, onChange }) => {
-  let myTheme = EditorView.theme(
-    {
-      "&": {
-        // color: "white",
-        backgroundColor: "black",
-      },
-    },
-    { dark: true }
-  );
-
-  let combinedTheme = [myTheme, vscodeDark];
-
+  const [theme] = useAtom(themeAtom);
   return (
     <CodeMirror
       value={code}
@@ -62,18 +55,18 @@ export const EditorCodeMirror = ({ code, onChange }) => {
         tabSize: 2,
         highlightActiveLine: false,
       }}
-      theme={combinedTheme}
+      theme={theme}
       onChange={onChange}
     />
   );
 };
 
 export const LogsCodeMirror = ({ code }) => {
+  const [theme] = useAtom(themeAtom);
   return (
     <CodeMirror
       value={code}
-      theme={vscodeDark}
-      className="text-color"
+      theme={theme}
       readOnly={true}
       basicSetup={{
         lineNumbers: false,
