@@ -28,8 +28,7 @@ const uploadToS3 = async (key, file) => {
 }
 
 
-export const FileBlock = ({blockId, block, setPipeline}) => {
-  const [editor] = useAtom(drawflowEditorAtom);
+export const FileBlock = ({blockId, block, setFocusAction}) => {
   const fileInput = useRef();
 
   const loadFile = async (e) => {
@@ -37,27 +36,9 @@ export const FileBlock = ({blockId, block, setPipeline}) => {
     const file = files[0]
     const name = file.name
     const response = await uploadToS3(`files/${name.toString()}`, file)
+    const value = file.path.toString()
 
-    const updatedBlock = {
-      ...block,
-      action: {
-        ...block.action,
-        parameters: {
-          ...block.action.parameters,
-          path: {
-            ...block.action.parameters.path,
-            value: file.path.toString(),
-          },
-        },
-      },
-    };
-
-    setPipeline((prevPipeline) => {
-      prevPipeline.data = ({
-          ...prevPipeline.data,
-          [blockId]: updatedBlock,
-      })
-    });
+    setFocusAction((draft) => { draft.data[blockId].action.parameters['path'].value = value })
   }
 
   const path = block.action.parameters?.path?.value || '';
@@ -69,7 +50,7 @@ export const FileBlock = ({blockId, block, setPipeline}) => {
         type="file"
         ref={fileInput}
         onChange={(e) => { loadFile(e) }}
-        parameters-path
+        parameters-path="true"
       />
     </div>
   )

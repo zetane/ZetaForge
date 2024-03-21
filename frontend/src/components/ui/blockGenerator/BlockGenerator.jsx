@@ -1,6 +1,10 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { Code, View } from "@carbon/icons-react"
 import { FileBlock } from "./FileBlock";
+import { useImmerAtom } from "jotai-immer";
+import { useAtom } from "jotai";
+import { focusAtom } from "jotai-optics";
+
 
 const isTypeDisabled = (action) => {
   if (!action.parameters) {
@@ -9,42 +13,25 @@ const isTypeDisabled = (action) => {
   return true
 }
 
-const BlockGenerator = ({ block, openView, id, historySink, setPipeline }) => {
+const BlockGenerator = ({ block, openView, id, historySink, pipelineAtom}) => {
+  const [_, setFocusAction] = useImmerAtom(pipelineAtom)
+
   const styles = {
     top: `${block.views.node.pos_y}px`, 
     left: `${block.views.node.pos_x}px`
   }
+
   const disabled = isTypeDisabled(block.action)
   const preview = (block.views.node.preview?.active == "true")
 
-  const handleInputChange = (name, value, parameterName) => {
-    const updatedBlock = {
-      ...block,
-      action: {
-        ...block.action,
-        parameters: {
-          ...block.action.parameters,
-          [parameterName]: {
-            ...block.action.parameters[parameterName],
-            value: value,
-          },
-        },
-      },
-    };
-
-    setPipeline((prevPipeline) => {
-      prevPipeline.data = ({
-          ...prevPipeline.data,
-          [id]: updatedBlock,
-      })
-    });
-  };
+  const handleInputChange = useCallback((name, value, parameterName) => {
+    setFocusAction((draft) => { draft.data[id].action.parameters[parameterName].value = value })
+  }, [focus]);
 
   let content = (<BlockContent html={block.views.node.html} block={block} onInputChange={handleInputChange} />)
   if (block.action.parameters?.path?.type == "file") {
-    content = (<FileBlock blockId={id} block={block} setPipeline={setPipeline}  />)
+    content = (<FileBlock blockId={id} block={block} setFocusAction={setFocusAction}  />)
   }
-
 
   return (
     <div className="parent-node">

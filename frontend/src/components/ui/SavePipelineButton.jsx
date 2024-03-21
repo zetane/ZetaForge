@@ -16,7 +16,7 @@ export default function SavePipelineButton() {
   const getDistinctId = trpc.getDistinctId.useMutation();
 
   const handleClick = async (editor, pipeline) => {
-    const pipelineSpecs = editor.convert_drawflow_to_block(pipeline.name);
+    const pipelineSpecs = editor.convert_drawflow_to_block(pipeline.name, pipeline.data);
     // If a pipeline is loaded, pipeline.path will be set to the load path
     // If it isn't set, electron will pop a file picker window
     // The response from the server after saving will contain that new path

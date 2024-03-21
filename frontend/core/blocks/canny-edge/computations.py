@@ -36,7 +36,7 @@ def compute(image_path, range_min, range_max, step):
         edges = cv2.Canny(gray_image, 100, n)
 
         # Save the resulting image with edges
-        output_path = "files/edges_image" + image_name + str(n) + ".jpg"
+        output_path = "edges_image" + image_name + str(n) + ".jpg"
         cv2.imwrite(output_path, edges)
 
         path_array.append(output_path)

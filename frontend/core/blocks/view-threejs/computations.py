@@ -122,7 +122,7 @@ animate();
     # Generate a UUID
     unique_id = str(uuid.uuid4())
 
-    html_path = f"views/viz_{unique_id}.html"
+    html_path = f"viz_{unique_id}.html"
     html_code = html_template.substitute(num_cubes=num_cubes)
 
     # Write the file

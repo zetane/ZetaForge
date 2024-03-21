@@ -233,7 +233,7 @@ def compute(array_of_pairs):
     """
     unique_id = str(uuid.uuid4())
 
-    html_path = f"views/viz_{unique_id}.html"
+    html_path = f"viz_{unique_id}.html"
 
     image_paths_view_str = json.dumps(array_of_pairs)
 

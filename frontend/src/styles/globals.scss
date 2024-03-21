@@ -50,7 +50,9 @@ main {
 	@include drawflow-dark-theme.drawflow-dark;
 	@include block-editor.dark;
 }
-
+.cds--header__global {
+	justify-content: center;
+}
 .cds--header__action.cds--btn--icon-only {
 	background: none;
 	border: none;
@@ -79,6 +81,18 @@ main {
 
 .cds--header__global {
 	align-items: center;
+}
+
+.cds--btn--primary:focus {
+	border-color: var(--cds-button-primary) !important;
+	box-shadow: none;
+	background-color: var(--cds-button-primary-hover) !important;
+}
+
+.cds--btn--tertiary:focus {
+	border-color: var(--cds-button-tertiary) !important;
+	box-shadow: none;
+	background-color: var(--cds-button-primary-hover) !important;
 }
 
 [data-carbon-theme='g10'] {

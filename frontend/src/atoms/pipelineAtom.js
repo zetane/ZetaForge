@@ -8,7 +8,8 @@ const pipelineAtom = atom({
   path: undefined,
   data: {},
   log: [],
-  history: null
+  history: null,
+  socketUrl: null
 });
 
 export { pipelineAtom };
