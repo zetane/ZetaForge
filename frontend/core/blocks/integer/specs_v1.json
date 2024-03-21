@@ -2,7 +2,7 @@
   "information": {
     "id": "integer",
     "name": "Integer",
-    "description": "description",
+    "description": "Integer parameter input.",
     "block_version": "block version number",
     "block_source": "core/blocks",
     "block_type": "compute",

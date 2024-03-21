@@ -2,7 +2,7 @@
   "information": {
     "id": "text",
     "name": "Text",
-    "description": "description",
+    "description": "Text block parameter input.",
     "block_source": "core/blocks",
     "block_type": "compute",
     "system_versions": [

@@ -2,7 +2,7 @@
   "information": {
     "id": "string",
     "name": "String",
-    "description": "description",
+    "description": "String parameter input.",
     "block_version": "block version number",
     "block_source": "core/blocks",
     "block_type": "compute",

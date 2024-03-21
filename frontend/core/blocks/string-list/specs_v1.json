@@ -2,7 +2,7 @@
   "information": {
     "id": "string-list",
     "name": "String List",
-    "description": "description",
+    "description": "List of strings parameter input.",
     "block_version": "block version number",
     "block_source": "core/blocks",
     "block_type": "compute",

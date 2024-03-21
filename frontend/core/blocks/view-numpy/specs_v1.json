@@ -2,7 +2,7 @@
   "information": {
     "id": "view-numpy",
     "name": "View Numpy",
-    "description": "description",
+    "description": "Generates an HTML file displaying NumPy data and shape.",
     "block_version": "block version number",
     "block_source": "core/blocks/view-numpy",
     "block_type": "view",

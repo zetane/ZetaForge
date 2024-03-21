@@ -2,7 +2,7 @@
   "information": {
     "id": "float",
     "name": "Float",
-    "description": "description",
+    "description": "Float parameter input.",
     "block_version": "block version number",
     "block_source": "core/blocks",
     "block_type": "compute",

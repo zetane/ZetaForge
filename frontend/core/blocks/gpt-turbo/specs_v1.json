@@ -2,7 +2,7 @@
   "information": {
     "id": "gpt-turbo",
     "name": "GPT Course of actions",
-    "description": "description",
+    "description": "Processes a list of descriptions, each through the 'request_course_of_action' function, to generate courses of action.",
     "system_versions": [
       "0.1"
     ],

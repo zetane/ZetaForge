@@ -73,6 +73,11 @@ main {
 
 .cds--side-nav__items {
 	padding: 0px !important;
+	overflow: visible !important;
+}
+
+.cds--side-nav {
+	overflow: visible !important;
 }
 
 .cds--header__global {

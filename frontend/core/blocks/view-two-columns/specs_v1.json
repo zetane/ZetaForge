@@ -2,7 +2,7 @@
   "information": {
     "id": "view-two-columns",
     "name": " View Two Columns",
-    "description": "description",
+    "description": "Generates an HTML file displaying image and text pairs in columns.",
     "block_version": "block version number",
     "block_source": "core/blocks/view-two-columns",
     "block_type": "",

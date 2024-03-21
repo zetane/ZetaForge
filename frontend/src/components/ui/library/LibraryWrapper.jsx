@@ -1,22 +1,23 @@
-import { 
-  SideNav, 
-  SideNavItems, 
-  Tile,
+import { libraryAtom } from '@/atoms/libraryAtom';
+import { ArrowLeft, Information } from "@carbon/icons-react";
+import {
   ContainedList,
-  Search,
   FlexGrid,
-  Row,
   IconButton,
-  Tabs,
+  Row,
+  Search,
+  SideNav,
+  SideNavItems,
   Tab,
   TabList,
-  TabPanels,
   TabPanel,
+  TabPanels,
+  Tabs,
+  Tile,
+  Tooltip
 } from '@carbon/react';
-import { ArrowLeft } from "@carbon/icons-react"
-import { useState, useEffect } from 'react';
-import { libraryAtom } from '@/atoms/libraryAtom';
 import { useAtom } from 'jotai';
+import { useEffect, useState } from 'react';
 
 const dragStartHandler = (event, block) => {
   if (event.type === "touchstart") {
@@ -33,6 +34,7 @@ const dragStartHandler = (event, block) => {
 const tileBuilder = (block, index) => {
   const dataProps= {"data-node": block.information.id}
   const blockName = block.information.name
+  const blockDescription = block.information.description
   return (
       <Tile className="library-tile" 
         key={index} 
@@ -41,6 +43,12 @@ const tileBuilder = (block, index) => {
         <div className="library-header">
           {blockName}
         </div>
+        <Tooltip 
+          className="absolute bottom-1 left-1"
+          align="bottom-left" 
+          label={blockDescription}>
+          <Information size={20} />
+        </Tooltip>
       </Tile>
   )
 }

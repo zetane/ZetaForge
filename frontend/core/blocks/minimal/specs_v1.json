@@ -2,7 +2,7 @@
   "information": {
     "id": "minimal",
     "name": "Minimal Block",
-    "description": "description",
+    "description": "Template block for custom computations.",
     "system_versions": [
       "0.1"
     ],
