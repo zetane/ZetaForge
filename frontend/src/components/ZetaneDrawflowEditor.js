@@ -2029,7 +2029,6 @@ export default class Drawflow {
       newPipeline[key] = block;
     }
     const pipeline = {
-        id: name,
         pipeline: newPipeline,
         sink: "./history",
         build: "./my_pipelines"

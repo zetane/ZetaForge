@@ -1,10 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useRef } from "react";
 import { Code, View } from "@carbon/icons-react"
 import { FileBlock } from "./FileBlock";
 import { useImmerAtom } from "jotai-immer";
-import { useAtom } from "jotai";
-import { focusAtom } from "jotai-optics";
-
 
 const isTypeDisabled = (action) => {
   if (!action.parameters) {
@@ -92,23 +89,22 @@ const BlockTitle = ({ name, id, openView, actions}) => {
     </div>
   )
 };
-
 const parseHtmlToInputs = (html) => {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
-  const inputElements = doc.querySelectorAll('input');
+  const inputElements = doc.querySelectorAll('input, textarea');
 
-  const inputs = Array.from(inputElements).map((input) => {
-    const parameterAttr = Array.from(input.attributes).find((attr) =>
+  const inputs = Array.from(inputElements).map((element) => {
+    const parameterAttr = Array.from(element.attributes).find((attr) =>
       attr.name.startsWith('parameters-')
     );
     const parameterName = parameterAttr ? parameterAttr.name.split('-')[1] : '';
 
     return {
-      type: input.type,
-      value: input.value,
-      name: input.name,
-      step: input.step,
+      type: element.tagName.toLowerCase(),
+      value: element.value,
+      name: element.name,
+      step: element.step,
       parameterName: parameterName,
     };
   });
@@ -120,6 +116,17 @@ const InputField = ({ type, value, name, step, parameterName, onChange }) => {
   const handleChange = (event) => {
     onChange(name, event.target.value, parameterName);
   };
+
+  if (type === 'textarea') {
+    return (
+      <textarea
+        value={value}
+        name={name}
+        onChange={handleChange}
+        {...(parameterName && { [`parameters-${parameterName}`]: '' })}
+      />
+    );
+  }
 
   return (
     <input

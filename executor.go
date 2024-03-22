@@ -529,7 +529,7 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 				Content: fmt.Sprintf("[executor-%s]:::: %s", pipelineId, message),
 			}
 		}
-		fmt.Printf("[executor]:: %s", message)
+		//fmt.Printf("[executor]:: %s", message)
 	})
 	log.SetOutput(pipelineLogger)
 

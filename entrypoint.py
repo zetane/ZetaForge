@@ -48,7 +48,7 @@ def main():
 
     for key, value in outputs.items():
         with open(key + ".txt", "w") as file:
-            file.write(str(value))
+            file.write(json.dumps(value))
 
     # 4. Check the current execution directory for files and folders after the compute function executes
     current_files_and_folders = set(os.listdir())
