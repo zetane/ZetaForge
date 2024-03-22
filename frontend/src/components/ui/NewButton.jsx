@@ -17,8 +17,8 @@ export default function NewButton() {
     const nanoid = customAlphabet('1234567890abcedfghijklmnopqrstuvwxyz', 12)
     const name = `pipeline-${nanoid()}`
     const bufferPath = `${cachePath}${name}`
-    console.log("bufferPath: ", bufferPath)
     setPipeline((draft) => {
+      draft.id = name,
       draft.name = name,
       draft.saveTime = null,
       draft.buffer = bufferPath,

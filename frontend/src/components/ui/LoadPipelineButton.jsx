@@ -55,7 +55,7 @@ export default function LoadPipelineButton() {
 
         const cacheData = {
           specs: data,
-          name: pipeline.name,
+          name: data.name,
           buffer: folderPath,
           writePath: pipeline.buffer
         }
@@ -72,6 +72,7 @@ export default function LoadPipelineButton() {
           draft.path = folderPath
           draft.saveTime = Date.now()
           draft.data = data.pipeline
+          draft.id = data.id
         });
 
         fileInput.current.value = ''

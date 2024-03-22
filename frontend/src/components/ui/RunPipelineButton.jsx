@@ -103,7 +103,6 @@ export default function RunPipelineButton({modalPopper, children, action}) {
   const runPipeline = async (editor, pipeline) => {
     let pipelineSpecs = editor.convert_drawflow_to_block(pipeline.name, pipeline.data);
     pipelineSpecs = await processNodes(pipelineSpecs)
-    console.log("pipeline: ", pipeline)
 
     try {
       // tries to put history in a user path if it exists, if not
@@ -116,6 +115,7 @@ export default function RunPipelineButton({modalPopper, children, action}) {
       // and break the cache when user mods the canvas
       pipelineSpecs['build'] = pipeline.buffer
       pipelineSpecs['name'] = pipeline.name
+      pipelineSpecs['id'] = pipeline.id
       const res = await mutation.mutateAsync(pipelineSpecs)
       if (res.status == 201) {
         setPipeline((draft) => {
