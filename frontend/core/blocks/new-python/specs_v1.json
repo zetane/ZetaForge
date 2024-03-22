@@ -1,44 +1,63 @@
 {
   "information": {
     "id": "new-python",
-    "name": "New_Python",
-    "description": "",
-    "block_source": "core/blocks/new-python",
-    "block_type": "compute",
+    "name": "New Python",
+    "description": "Template block for custom computations.",
     "system_versions": [
       "0.1"
-    ]
+    ],
+    "block_version": "block version number",
+    "block_source": "core/blocks/new-python",
+    "block_type": "compute"
   },
   "inputs": {
-    "input1": {
-      "type": "all",
+    "in1": {
+      "type": "int",
+      "connections": [],
+      "relays": []
+    },
+    "in2": {
+      "type": "str",
       "connections": [],
       "relays": []
     }
   },
   "outputs": {
-    "output1": {
-      "type": "all",
+    "out1": {
+      "type": "int",
+      "connections": [],
+      "relays": []
+    },
+    "out2": {
+      "type": "str",
       "connections": [],
       "relays": []
     }
   },
   "action": {
-    "parameters": {
-      "text": {
-        "type": "",
-        "value": ""
-      }
+    "container": {
+      "image": "new-python",
+      "version": "latest",
+      "command_line": [
+        "python",
+        "entrypoint.py"
+      ]
     }
   },
   "views": {
     "node": {
-      "title_bar": {},
-      "preview": {},
+      "behavior": "modal",
+      "active": "True or False",
+      "title_bar": {
+        "background_color": "#D55908"
+      },
+      "preview": {
+        "active": "true"
+      },
       "html": "",
       "pos_x": "300",
       "pos_y": "200",
-      "pos_z": "999, this is the z-index for 2D canvas"
+      "pos_z": "999"
     }
   },
   "events": {}
