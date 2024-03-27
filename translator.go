@@ -72,7 +72,7 @@ func checkImage(ctx context.Context, tagName string, cfg Config) (bool, error) {
 	}
 }
 
-func blockTemplate(block *zjson.Block, blockKey string, organization string, cfg Config) *wfv1.Template {
+func blockTemplate(block *zjson.Block, blockKey string, organization string, cfg Config, key string) *wfv1.Template {
 	var image string
 	var computationName string
 	if cfg.IsLocal {
@@ -100,7 +100,7 @@ func blockTemplate(block *zjson.Block, blockKey string, organization string, cfg
 		Path: cfg.WorkDir + "/" + cfg.ComputationFile,
 		ArtifactLocation: wfv1.ArtifactLocation{
 			S3: &wfv1.S3Artifact{
-				Key: computationName,
+				Key: key + "/" + computationName,
 			},
 		},
 		Archive: &wfv1.ArchiveStrategy{
@@ -131,8 +131,6 @@ func kanikoTemplate(block *zjson.Block, organization string, cfg Config) *wfv1.T
 			"--destination",
 			"registry:" + cfg.Local.RegistryPort + "/" + block.Action.Container.Image + ":" + block.Action.Container.Version,
 			"--insecure",
-			"--cache=true",
-			"--cache-dir=/cache",
 			"--compressed-caching=false",
 			"--snapshotMode=redo",
 			"--use-new-run",
@@ -165,8 +163,6 @@ func kanikoTemplate(block *zjson.Block, organization string, cfg Config) *wfv1.T
 			"tar:///workspace/context.tar.gz",
 			"--destination",
 			cfg.Cloud.RegistryAddr + ":" + name,
-			"--cache=true",
-			"--cache-dir=/cache",
 			"--compressed-caching=false",
 			"--snapshotMode=redo",
 			"--use-new-run",
@@ -218,7 +214,7 @@ func kanikoTemplate(block *zjson.Block, organization string, cfg Config) *wfv1.T
 
 }
 
-func translate(ctx context.Context, pipeline *zjson.Pipeline, organization string, cfg Config) (*wfv1.Workflow, map[string]string, error) {
+func translate(ctx context.Context, pipeline *zjson.Pipeline, organization string, cfg Config, key string) (*wfv1.Workflow, map[string]string, error) {
 	workflow := wfv1.Workflow{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Workflow",
@@ -243,7 +239,7 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 	templates := make(map[string]*wfv1.Template)
 	for id, block := range pipeline.Pipeline {
 		blockKey := id
-		template := blockTemplate(&block, blockKey, organization, cfg)
+		template := blockTemplate(&block, blockKey, organization, cfg, key)
 		task := wfv1.DAGTask{Name: template.Name, Template: template.Name}
 
 		if len(block.Action.Container.Image) > 0 {
@@ -265,6 +261,8 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 
 		inputFile := false
 		outputFile := false
+		inputIsParam := false
+		outputIsParam := (len(block.Action.Parameters) > 0)
 		for name, input := range block.Inputs {
 			if input.Type == "file" || input.Type == "List[file]" {
 				inputFile = true
@@ -276,6 +274,7 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 					param, ok := inputBlock.Action.Parameters[connection.Variable]
 					// Parameter is in the graph
 					if ok {
+						inputIsParam = true
 						template.Container.Env = append(template.Container.Env, corev1.EnvVar{
 							Name:  name,
 							Value: param.Value,
@@ -317,7 +316,7 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 		if cfg.IsLocal {
 			filesName = "files"
 		} else {
-			filesName = organization + "-files"
+			filesName = organization + "/" + "files"
 			workflow.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
 				{
 					Name: cfg.Cloud.Registry,
@@ -326,6 +325,10 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 		}
 
 		if inputFile {
+			// if the file is a param, it comes directly from the user
+			if !inputIsParam {
+				filesName = key
+			}
 			template.Inputs.Artifacts = append(template.Inputs.Artifacts, wfv1.Artifact{
 				Name: "in",
 				Path: cfg.FileDir,
@@ -340,6 +343,10 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 			})
 		}
 		if outputFile {
+			// if the file is a param, it comes directly from the user
+			if !outputIsParam {
+				filesName = key
+			}
 			template.Outputs.Artifacts = append(template.Outputs.Artifacts, wfv1.Artifact{
 				Name: "out",
 				Path: cfg.FileDir,

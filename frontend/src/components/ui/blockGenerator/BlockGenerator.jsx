@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState, useEffect } from "react";
 import { Code, View } from "@carbon/icons-react"
 import { FileBlock } from "./FileBlock";
 import { useImmerAtom } from "jotai-immer";
@@ -18,6 +18,19 @@ const BlockGenerator = ({ block, openView, id, historySink, pipelineAtom}) => {
     left: `${block.views.node.pos_x}px`
   }
 
+  const [iframeSrc, setIframeSrc] = useState("")
+  useEffect(() => {
+    if (block.events.outputs?.html) {
+      const fileUrl = `${import.meta.env.VITE_S3_ENDPOINT}/zetaforge/${historySink}/${block.events.outputs.html}`
+      // there are so many reasons why this sucks
+      // TODO: make it suck less, if it's possible
+      // CORS makes this very difficult to use iFrames
+      setTimeout(() => setIframeSrc(fileUrl), 1500)
+    }
+  }, [block.events.outputs?.html])
+
+  console.log("src: ", iframeSrc)
+
   const disabled = isTypeDisabled(block.action)
   const preview = (block.views.node.preview?.active == "true")
 
@@ -27,20 +40,21 @@ const BlockGenerator = ({ block, openView, id, historySink, pipelineAtom}) => {
 
   let content = (<BlockContent html={block.views.node.html} block={block} onInputChange={handleInputChange} />)
   if (block.action.parameters?.path?.type == "file") {
-    content = (<FileBlock blockId={id} block={block} setFocusAction={setFocusAction}  />)
+    content = (<FileBlock blockId={id} block={block} setFocusAction={setFocusAction} />)
   }
 
   return (
     <div className="parent-node">
       <div className="drawflow-node" id={`node-${id}`} style={styles}>
         <div className="drawflow_content_node">
-          {preview && <BlockPreview id={id} block={block} historySink={historySink} />}
+          {preview && <BlockPreview id={id} src={iframeSrc} />}
 
           <BlockTitle
             name={block.information.name}
             id={id}
             openView={openView}
             actions={!disabled} 
+            src={iframeSrc}
           />
           <div className="block-body">
             <div className="block-io">
@@ -55,30 +69,24 @@ const BlockGenerator = ({ block, openView, id, historySink, pipelineAtom}) => {
   );
 };
 
-const BlockPreview = ({id, block, historySink}) => {
-  const iframeRef = useRef(null)
-  if (block.events.outputs?.html) {
-    if (iframeRef.current) {
-      const fileUrl = `file://${historySink}/files/${block.events.outputs.html}`  
-      iframeRef.current.srcDoc = block.events.outputs.html 
-    }
-  }
+const BlockPreview = ({id, src}) => {
+  console.log(src)
 
   return (
     <div className="block-preview">
       <div>
-        <iframe className="iframe-preview" id={id} srcDoc="" ref={iframeRef}>
+        <iframe className="iframe-preview" id={id} src={src}>
         </iframe>
       </div>
     </div>
   )
 }
 
-const BlockTitle = ({ name, id, openView, actions}) => {
+const BlockTitle = ({ name, id, openView, actions, src}) => {
   let actionContainer = (
     <div className="action-container">
       <button id="btn_open_code" className="view-btn" onClick={() => openView(id)}><Code size={20}/></button>
-      <button id="btn_show_view" className="view-btn" onClick={() => openView(id)}><View size={20}/></button>
+      <a href={src} target="_blank" rel="noopener noreferrer"><button id="btn_show_view" className="view-btn"><View size={20}/></button></a>
     </div>
   )
 

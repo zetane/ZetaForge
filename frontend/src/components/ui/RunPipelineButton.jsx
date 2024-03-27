@@ -8,7 +8,6 @@ import { useImmerAtom } from "jotai-immer";
 import { useState, useEffect, useRef } from "react";
 import { S3Client, HeadObjectCommand } from '@aws-sdk/client-s3'
 import { trpc } from "@/utils/trpc";
-import { PipelineLogs } from "./PipelineLogs";
 
 const BUCKET = import.meta.env.VITE_BUCKET
 
@@ -77,6 +76,7 @@ export default function RunPipelineButton({modalPopper, children, action}) {
           const param = parameters[paramKey];
 
           if (param.type === "file") {
+            const sysPath = param.value
             let filePath = param.value;
             filePath = filePath.replaceAll('\\', '/')
             const paths = filePath.split("/")
@@ -84,7 +84,7 @@ export default function RunPipelineButton({modalPopper, children, action}) {
             const awsKey = `files/${name}`
 
             if (filePath && filePath.trim() !== "") {
-              const res = await checkAndWriteToS3(awsKey, filePath);
+              const res = await checkAndWriteToS3(awsKey, sysPath);
               param.value = `"${name}"`
             }
           }
@@ -120,7 +120,7 @@ export default function RunPipelineButton({modalPopper, children, action}) {
       if (res.status == 201) {
         setPipeline((draft) => {
           draft.socketUrl = `ws://localhost:8080/ws/${pipelineSpecs.id}`;
-          draft.history = res.data.history
+          draft.history = pipeline.id + "/" + res.data.executionId
           draft.saveTime = Date.now()
           draft.log = []
         })

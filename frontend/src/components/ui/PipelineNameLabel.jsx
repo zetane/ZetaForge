@@ -18,15 +18,14 @@ export default function PipelineNameLabel() {
     // TODO: Make this suck less
     if (!pipeline.name && cachePath != "") {
       setPipeline((draft) => {
-        const nanoid = customAlphabet('1234567890abcedfghijklmnopqrstuvwxyz', 12)
-        const name = `pipeline-${nanoid()}`
         // Sending a path.sep from the server here
         // TODO: This logic will change because authoritative history
         // should be stored in the object store and we should
         // fetch the history stored in sqlite
 
-        draft.buffer = `${cachePath}${name}`
-        draft.name = name
+        const name = `${cachePath}${pipeline.id}`
+        draft.buffer = name
+        draft.name = pipeline.id
       })
 
     }

@@ -69,9 +69,6 @@ async function createWindow() {
       // Consider using contextBridge.exposeInMainWorld
       // Read more on https://www.electronjs.org/docs/latest/tutorial/context-isolation
       contextIsolation: true,
-      webSecurity: false,
-      allowRunningInsecureContent: true // Allow insecure content
-
     },
   })
 
@@ -92,7 +89,7 @@ async function createWindow() {
 
   // Make all links open with the browser, not with the application
   win.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.startsWith('https:')) shell.openExternal(url)
+    if (url.startsWith('https:') || url.startsWith('http:')) { shell.openExternal(url) }
     return { action: 'deny' }
   })
 

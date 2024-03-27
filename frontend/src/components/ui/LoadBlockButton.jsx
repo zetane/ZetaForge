@@ -1,10 +1,11 @@
 import { HeaderMenuItem } from "@carbon/react";
 import { useRef } from "react";
-import { pipelineAtom } from "@/atoms/pipelineAtom";
+import { pipelineAtom, getPipelineFormat } from "@/atoms/pipelineAtom";
 import { customAlphabet } from "nanoid";
 import { distinctIdAtom } from "@/atoms/distinctIdAtom";
 import { useImmerAtom } from 'jotai-immer'
 import { trpc } from "@/utils/trpc"
+import { getDirectoryPath } from "@/../utils/fileUtils";
 //import mixpanel from '@/components/mixpanel'
 
 export default function LoadBlockButton() {
@@ -18,10 +19,28 @@ export default function LoadBlockButton() {
     fileInput.current.click();
   };
 
-  const addBlockToPipeline = (block) => {
+  const saveBlockMutation = trpc.saveBlock.useMutation();
+
+  const addBlockToPipeline = async (block, path) => {
     const nanoid = customAlphabet('1234567890abcedfghijklmnopqrstuvwxyz', 12)
     const newNanoid = nanoid()
     const id = `${block.information.id}-${newNanoid}`
+
+    const newPipeline = getPipelineFormat(pipeline)
+    let newPipelineData = JSON.parse(JSON.stringify(pipeline.data))
+    newPipelineData[id] = block
+    newPipeline.pipeline = newPipelineData
+
+    const cacheData = {
+      pipelineSpec: newPipeline,
+      name: pipeline.name,
+      blockSpec: block,
+      blockId: id,
+      blockPath: path,
+      pipelinePath: pipeline.buffer
+    }
+    const res = await saveBlockMutation.mutateAsync(cacheData)
+
     setPipeline((draft) => {
       draft.data[id] = block;
     })
@@ -52,11 +71,17 @@ export default function LoadBlockButton() {
     const files = fileInput.current.files
     for (const key in files) {
       const file = files[key]
+      let relPath = file.webkitRelativePath
+      relPath = relPath.replaceAll('\\', '/')
       const name = removeFileExtension(file.name)
       if (name === "specs_v1") {
         const spec = JSON.parse(await (new Blob([file])).text())
-        addBlockToPipeline(spec)
+        let folderPath = getDirectoryPath(file.path)
+        folderPath = folderPath.replaceAll('\\', '/')
+        
+        await addBlockToPipeline(spec, folderPath)
 
+        fileInput.current.value = ''
         break;
       }
     }
