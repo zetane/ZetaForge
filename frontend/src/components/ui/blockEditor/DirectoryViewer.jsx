@@ -100,7 +100,8 @@ function DirectoryViewer({
     saveChanges(e);
     if (pendingFile) {
       // Split the path and navigate through the file system
-      const pathSegments = pendingFile.split("/");
+      const relPath = pendingFile.replaceAll('\\', '/')
+      const pathSegments = relPath.split("/");
       let fileContent = fileSystem;
 
       for (let i = 0; i < pathSegments.length; i++) {
@@ -170,8 +171,9 @@ function DirectoryViewer({
           };
         }
       };
+      let relPath = folderPath.replaceAll('\\', '/')
 
-      return toggleFolder(folderPath.split("/"), prevFileSystem);
+      return toggleFolder(relPath.split("/"), prevFileSystem);
     });
   };
 
@@ -186,7 +188,8 @@ function DirectoryViewer({
 
     // Update the fileSystem state to reflect the change in the file's content
     setFileSystem((prevFileSystem) => {
-      const pathSegments = currentFile.path.split("/");
+      const relPath = currentFile.path.replaceAll('\\', '/')
+      const pathSegments = relPath.split("/");
       let updatedFileSystem = { ...prevFileSystem };
 
       let currentLevel = updatedFileSystem;

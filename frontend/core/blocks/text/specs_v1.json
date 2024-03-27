@@ -3,6 +3,7 @@
     "id": "text",
     "name": "Text",
     "description": "Text block parameter input.",
+    "block_version": "0.1",
     "block_source": "core/blocks",
     "block_type": "compute",
     "system_versions": [
@@ -27,6 +28,7 @@
   },
   "views": {
     "node": {
+      "active": "true",
       "title_bar": {},
       "preview": {},
       "html": "<textarea style='width: 100%; height: 150px;' parameters-text></textarea>",

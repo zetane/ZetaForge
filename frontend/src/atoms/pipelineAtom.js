@@ -3,9 +3,10 @@ import { customAlphabet } from "nanoid";
 
 const nanoid = customAlphabet('1234567890abcedfghijklmnopqrstuvwxyz', 12)
 const newNanoid = nanoid()
+const id = `pipeline-${newNanoid}`
 
-const pipelineAtom = atom({
-  id: newNanoid,
+export const pipelineAtom = atom({
+  id: id,
   name: null, 
   saveTime: null,
   buffer: null,
@@ -16,4 +17,12 @@ const pipelineAtom = atom({
   socketUrl: null
 });
 
-export { pipelineAtom };
+export const getPipelineFormat = (pipeline) => {
+  return {
+    sink: pipeline.path ? pipeline.path : pipeline.buffer,
+    build: pipeline.buffer,
+    name: pipeline.name,
+    id: pipeline.id,
+    pipeline: pipeline.data
+  }
+}

@@ -23,7 +23,7 @@ export default function SavePipelineButton() {
     // TODO: the pipelineAtom data and these fields are redundant
     // They should be consolidated
     pipelineSpecs['sink'] = pipeline.path ? pipeline.path : pipeline.buffer
-    pipelineSpecs['build'] = pipeline.path ? pipeline.path : pipeline.buffer
+    pipelineSpecs['build'] = pipeline.buffer
     pipelineSpecs['name'] = pipeline.name
     const saveData = {
       specs: pipelineSpecs,

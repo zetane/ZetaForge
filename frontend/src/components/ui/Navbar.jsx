@@ -54,6 +54,35 @@ export default function Navbar({ children }) {
     if (lastMessage !== null) {
       setPipeline((draft) => {
         const mess = JSON.parse(lastMessage.data).content
+        const splitMess = mess.split("::::")
+        // slices off the []
+        const pod = splitMess[0].slice(1, -1)
+        const key = pod.split("-").slice(1,).join("-")
+        if (draft.data[key]) {
+          const node = draft.data[key]
+          const message = splitMess[1].trim()
+          const tagAndObject = message.split("|||")
+          const tag = tagAndObject[0].trim()
+          if (tag == "outputs") {
+            // attempt to parse the output
+            const outs = JSON.parse(tagAndObject[1])
+            for (const [key, value] of Object.entries(outs)) {
+              if (!node.events.outputs) {
+                node.events["outputs"] = {}
+              }
+              node.events.outputs[key] = value
+            }
+          }
+          if (tag == "inputs") {
+            const outs = JSON.parse(tagAndObject[1])
+            for (const [key, value] of Object.entries(outs)) {
+              if (!node.events.inputs) {
+                node.events["inputs"] = {}
+              }
+              node.events["inputs"][key] = value
+            }
+          }
+        }
         draft.log = draft.log.concat(`${mess}\n`)
       })
     }

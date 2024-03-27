@@ -545,7 +545,9 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 		return
 	}
 
-	workflow, blocks, err := translate(ctx, pipeline, "org", cfg)
+	s3key := pipeline.Id + "/" + executionId
+
+	workflow, blocks, err := translate(ctx, pipeline, "org", cfg, s3key)
 	if err != nil {
 		log.Printf("Failed to translate the pipeline; err=%v", err)
 		return
@@ -567,7 +569,7 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 		return
 	}
 
-	files := "files/"
+	files := executionId
 
 	uploadedFiles := []string{}
 	for path, image := range blocks {
@@ -580,7 +582,7 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 		}
 
 		if len(image) > 0 {
-			key := image + "-build.tar.gz"
+			key := pipeline.Id + "/" + image + "-build.tar.gz"
 			if err := uploadTar(ctx, path, key, cfg); err != nil {
 				deleteFiles(ctx, files, uploadedFiles, cfg)
 				log.Printf("Failed to upload build context; err=%v", err)
@@ -589,7 +591,7 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 			uploadedFiles = append(uploadedFiles, key)
 		}
 
-		name := filepath.Base(path) + ".py"
+		name := s3key + "/" + filepath.Base(path) + ".py"
 		if err := upload(ctx, filepath.Join(path, cfg.ComputationFile), name, cfg); err != nil {
 			deleteFiles(ctx, files, uploadedFiles, cfg)
 			log.Printf("Failed to upload computation file; err=%v", err)
@@ -603,24 +605,19 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 		defer deleteArgo(ctx, workflow.Name, client)
 	}
 	if err != nil {
-		deleteFiles(ctx, files, uploadedFiles, cfg)
 		log.Printf("Error during pipeline execution; err=%v", err)
 		return
 	}
 
 	if err := results(filepath.Join(pipeline.Sink, "results", "results.json"), pipeline, workflow); err != nil {
-		deleteFiles(ctx, files, uploadedFiles, cfg)
 		log.Printf("Failed to download results; err=%v", err)
 		return
 	}
 
 	if err := downloadFiles(ctx, pipeline.Sink, files, cfg); err != nil {
-		deleteFiles(ctx, files, uploadedFiles, cfg)
 		log.Printf("Failed to download files; err=%v", err)
 		return
 	}
-
-	deleteFiles(ctx, files, uploadedFiles, cfg)
 }
 
 func cloudExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Config, client clientcmd.ClientConfig, db *sql.DB, hub *Hub) {
@@ -640,7 +637,9 @@ func cloudExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 	}
 	defer hub.CloseRoom(pipeline.Id)
 
-	workflow, _, err := translate(ctx, pipeline, "org", cfg)
+	s3key := pipeline.Id + "/" + executionId
+
+	workflow, _, err := translate(ctx, pipeline, "org", cfg, s3key)
 	if err != nil {
 		log.Printf("Failed to translate the pipeline; err=%v", err)
 		return

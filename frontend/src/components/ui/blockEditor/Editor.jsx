@@ -55,7 +55,9 @@ export default function Editor() {
   useEffect(() => {
     const init = async () => {
       try {
-        const blockFolderName = blockPath.split("/").pop();
+        console.log(blockPath)
+        const relPath = blockPath.replaceAll('\\', '/')
+        const blockFolderName = relPath.split("/").pop();
         setBlockFolderName(blockFolderName);
         setBlockLogs(`${blockPath}/logs.txt`);
         setFileSystem({

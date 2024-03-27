@@ -7,6 +7,7 @@ import { useRef } from "react";
 import { getDirectoryPath } from "@/../utils/fileUtils";
 import { useImmerAtom } from "jotai-immer";
 import { trpc } from "@/utils/trpc";
+import { customAlphabet } from 'nanoid'
 //import mixpanel from '@/components/mixpanel'
 
 export default function LoadPipelineButton() {
@@ -18,26 +19,26 @@ export default function LoadPipelineButton() {
 
   const getDistinctId = trpc.getDistinctId.useMutation();
   const savePipelineMutation = trpc.savePipeline.useMutation()
+  const cacheQuery = trpc.getCachePath.useQuery();
+  const cachePath = cacheQuery?.data || ""
 
   const selectFile = () => {
     fileInput.current.click();
   };
 
   const loadPipeline = async () => {
-    let data = distinctId?.distinctId
-
-    if (data === "0" || data === undefined) {
+    let userId = distinctId?.distinctId
+    if (userId === "0" || userId === undefined) {
       const res = await getDistinctId.mutateAsync({ distinctId: "0" })
-
-      data = res.distinctId
+      userId = res.distinctId
 
       setDistinctId((draft) => {
-        draft.distinctId = data
+        draft.distinctId = userId
       })
     }
     try {
       //mixpanel.track('Load Pipeline', {
-      //  'distinct_id': data,
+      //  'distinct_id': userId,
       //})
     } catch (error) {
       //ignore the error, no logs
@@ -45,30 +46,40 @@ export default function LoadPipelineButton() {
     const files = fileInput.current.files
     for (const key in files) {
       const file = files[key]
-      const folder = file.webkitRelativePath.split("/")[0]
-      const name = removeFileExtension(file.name)
-      if (folder == name) {
+      let relPath = file.webkitRelativePath
+      relPath = relPath.replaceAll('\\', '/')
+      const folder = relPath.split("/")[0]
+      const pipelineName = removeFileExtension(file.name)
+      if (folder == pipelineName) {
         // We don't need to purge the cache on disk
         // bc the savePipeline call below will 
         const data = JSON.parse(await (new Blob([file])).text())
-
         const folderPath = getDirectoryPath(file.path)
+
+        // We have to clear the pipeline object first
+        // Because otherwise we can have key collisions
+        const nanoid = customAlphabet('1234567890abcedfghijklmnopqrstuvwxyz', 12)
+        const name = `pipeline-${nanoid()}`
+        const bufferPath = `${cachePath}${name}`
+        setPipeline((draft) => {
+          draft.id = name,
+          draft.name = name,
+          draft.saveTime = null,
+          draft.buffer = bufferPath,
+          draft.path = undefined,
+          draft.data = {}
+        })
+
         const cacheData = {
           specs: data,
           name: data.name,
           buffer: folderPath,
-          writePath: pipeline.buffer
+          writePath: bufferPath
         }
         const cacheResponse = await savePipelineMutation.mutateAsync(cacheData)
 
-        // We have to clear the pipeline object first
-        // Because otherwise we can have key collisions
         setPipeline((draft) => {
-          draft.data = {}
-        })
-
-        setPipeline((draft) => {
-          draft.name = name
+          draft.name = pipelineName
           draft.path = folderPath
           draft.saveTime = Date.now()
           draft.data = data.pipeline
