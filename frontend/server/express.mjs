@@ -321,6 +321,10 @@ function startExpressServer() {
 
   app.get('/blocks', async (req, res) => {
     const coreBlocks = "../core/blocks"
+    if(app.isPackaged){
+      coreBlocks = path.join(process.resourcesPath, "core", "blocks") 
+    }
+    
     try {
       const blocks = await readSpecs(coreBlocks)
       return res.status(200).json(blocks);
@@ -430,7 +434,6 @@ function startExpressServer() {
       if(app.isPackaged) {
         agents = path.join(process.resourcesPath, "agents")
       }
-
       const scriptPath = path.join(agents, agentName, "generate", "computations.py")
       const pythonProcess = spawn("python", [scriptPath]);
 
@@ -563,9 +566,16 @@ function startExpressServer() {
         res.status(500).send({ error: "Error writing data to file" });
         return;
       }
-      
+
+      let agents = "agents"
+      if(app.isPackaged) {
+        agents = path.join(process.resourcesPath, "agents")
+      }
+      const computations = path.join(agents, data.agent_name, "compile", "computations.py")
+      //"the below was previously ${agents}/${data.agent_name}/compile/computations.py", but I used path.join
+      //for windows compability. Let me know if you want it to keep it the old way. 
       let command =
-        `python -B "agents/${data.agent_name}/compile/computations.py" ` +
+        `python -B "${computations}" ` +
         `--block_path "${data.blockPath}" ` +
         `--block_name "${data.block_name}" ` +
         `--block_user_name "${data.block_user_name}" `;

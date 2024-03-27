@@ -35,6 +35,20 @@
       "to": "core",
       "filter": [
         "**/*"
+      ] 
+    },
+    {
+     "from": "./server2",
+      "to": "server2",
+      "filter": [
+        "**/*"
+      ]
+    },
+    {
+      "from": "./agents",
+      "to": "agents",
+      "filter": [
+        "**/*"
       ]
     },
     {

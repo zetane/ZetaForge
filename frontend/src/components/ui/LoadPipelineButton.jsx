@@ -51,8 +51,8 @@ export default function LoadPipelineButton() {
         // We don't need to purge the cache on disk
         // bc the savePipeline call below will 
         const data = JSON.parse(await (new Blob([file])).text())
-        const folderPath = getDirectoryPath(file.path)
 
+        const folderPath = getDirectoryPath(file.path)
         const cacheData = {
           specs: data,
           name: data.name,

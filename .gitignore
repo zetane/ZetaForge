@@ -34,13 +34,17 @@ __pycache__/
 *.pyo
 *.egg-info/
 *.egg
-*.venv/
+*.venv/*
 *.virtualenv/
 backend/db.sqlite3 # If you use SQLite
-venv
-build
+venv/
+build/
+# Environment variables
+.env
 
 # Miscellaneous
 *.bak
 *.tmp
 *.swp
+setup/*
+canny4/
