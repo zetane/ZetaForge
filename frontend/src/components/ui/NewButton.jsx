@@ -10,6 +10,9 @@ export default function NewButton() {
   const [editor] = useAtom(drawflowEditorAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   // trpc.getCachePath.useQuery();
+  
+  
+
   const cacheQuery = trpc.getCachePath.useQuery();
   const cachePath = cacheQuery?.data || ""
 

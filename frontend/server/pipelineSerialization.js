@@ -1,3 +1,4 @@
+import { app } from "electron";
 import fs from "fs/promises";
 import path from "path";
 import process from "process";
@@ -24,7 +25,7 @@ export async function saveSpec(spec, writePath, pipelineName) {
 
 export async function saveBlock(blockKey, fromPath, toPath) {
   const newFolder = path.join(toPath, blockKey)
-
+  console.log(`saving ${blockKey} from ${fromPath} to ${newFolder}`)
   withFileSystemRollback([toPath], async () => {
     await fs.mkdir(newFolder, { recursive: true });
     await fs.cp(fromPath, newFolder, { recursive: true });
@@ -78,8 +79,12 @@ export async function copyPipeline(pipelineSpecs, pipelineName, fromDir, toDir) 
         // we try to fall back to the block source path
         const blockSpec = pipelineSpecs.pipeline[key]
         existingBlockPath = blockSpec.information.block_source
+        if(app.isPackaged) {
+          existingBlockPath = path.join(process.resourcesPath, existingBlockPath)
+        }
       }
-
+      
+      console.log(`saving ${key} from ${existingBlockPath} to ${newBlockPath}`)
       if (existingBlockPath != newBlockPath) {
         // if it's the same folder, don't try to copy it
         await fs.cp(existingBlockPath, newBlockPath, {recursive: true})
