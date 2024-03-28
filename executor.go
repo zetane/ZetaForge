@@ -177,9 +177,11 @@ func downloadFiles(ctx context.Context, sink string, prefix string, cfg Config) 
 	})
 
 	for _, content := range res.Contents {
-		dir, filename := filepath.Split(*content.Key)
+		pathWithoutPrefix := strings.TrimPrefix(*content.Key, prefix)
+		dirPath, filename := filepath.Split(pathWithoutPrefix)
 
-		location := filepath.Join(sink, dir)
+		// note this is temporary, as this code will be moved to the frontend
+		location := filepath.Join(sink, "files", dirPath)
 		if err := os.MkdirAll(location, 0755); err != nil {
 			return err
 		}
@@ -248,7 +250,6 @@ func deleteFiles(ctx context.Context, prefix string, extraFiles []string, cfg Co
 }
 
 func history(sinkPath string) error {
-	log.Printf("sinkPath: %v", sinkPath)
 	if err := os.MkdirAll(sinkPath, 0755); err != nil {
 		return err
 	}
@@ -545,6 +546,8 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 		return
 	}
 
+	log.Printf("*** Writing pipeline history to: %v", pipeline.Sink)
+
 	s3key := pipeline.Id + "/" + executionId
 
 	workflow, blocks, err := translate(ctx, pipeline, "org", cfg, s3key)
@@ -569,14 +572,14 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 		return
 	}
 
-	files := executionId
+	executionFiles := s3key
 
 	uploadedFiles := []string{}
 	for path, image := range blocks {
 		log.Printf("Path: %s", path)
 		log.Printf("Image: %s", image)
 		if _, err := os.Stat(filepath.Join(path, cfg.ComputationFile)); err != nil {
-			deleteFiles(ctx, files, uploadedFiles, cfg)
+			deleteFiles(ctx, executionFiles, uploadedFiles, cfg)
 			log.Printf("Computation file does not exist; err=%v", err)
 			return
 		}
@@ -584,7 +587,7 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 		if len(image) > 0 {
 			buildFile := image + "-build.tar.gz"
 			if err := uploadTar(ctx, path, buildFile, buildFile, cfg); err != nil {
-				deleteFiles(ctx, files, uploadedFiles, cfg)
+				deleteFiles(ctx, executionFiles, uploadedFiles, cfg)
 				log.Printf("Failed to upload build context; err=%v", err)
 				return
 			}
@@ -593,7 +596,7 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 
 		name := s3key + "/" + filepath.Base(path) + ".py"
 		if err := upload(ctx, filepath.Join(path, cfg.ComputationFile), name, cfg); err != nil {
-			deleteFiles(ctx, files, uploadedFiles, cfg)
+			deleteFiles(ctx, executionFiles, uploadedFiles, cfg)
 			log.Printf("Failed to upload computation file; err=%v", err)
 			return
 		}
@@ -614,7 +617,7 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 		return
 	}
 
-	if err := downloadFiles(ctx, pipeline.Sink, files, cfg); err != nil {
+	if err := downloadFiles(ctx, pipeline.Sink, executionFiles, cfg); err != nil {
 		log.Printf("Failed to download files; err=%v", err)
 		return
 	}
