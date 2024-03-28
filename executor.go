@@ -152,13 +152,13 @@ func tarFile(source string, key string) error {
 	return err
 }
 
-func uploadTar(ctx context.Context, source string, key string, cfg Config) error {
-	if err := tarFile(source, key); err != nil {
+func uploadTar(ctx context.Context, source string, buildFile string, uploadKey string, cfg Config) error {
+	if err := tarFile(source, buildFile); err != nil {
 		return err
 	}
-	defer os.Remove(key)
+	defer os.Remove(buildFile)
 
-	if err := upload(ctx, key, key, cfg); err != nil {
+	if err := upload(ctx, buildFile, uploadKey, cfg); err != nil {
 		return err
 	}
 
@@ -582,13 +582,13 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 		}
 
 		if len(image) > 0 {
-			key := pipeline.Id + "/" + image + "-build.tar.gz"
-			if err := uploadTar(ctx, path, key, cfg); err != nil {
+			buildFile := image + "-build.tar.gz"
+			if err := uploadTar(ctx, path, buildFile, buildFile, cfg); err != nil {
 				deleteFiles(ctx, files, uploadedFiles, cfg)
 				log.Printf("Failed to upload build context; err=%v", err)
 				return
 			}
-			uploadedFiles = append(uploadedFiles, key)
+			uploadedFiles = append(uploadedFiles, buildFile)
 		}
 
 		name := s3key + "/" + filepath.Base(path) + ".py"
