@@ -40,7 +40,7 @@ export const appRouter = router({
       if (!writePath) {
         const savePath = await dialog.showSaveDialog({properties: ['createDirectory']})
         if (!savePath.canceled) {
-          const pathArr = savePath.filePath?.split("/")
+          const pathArr = savePath.filePath?.split(path.sep)
           name = pathArr ? pathArr[(pathArr.length - 1)] : name
           writePath = savePath.filePath
           specs['sink'] = writePath
