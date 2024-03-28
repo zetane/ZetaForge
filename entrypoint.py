@@ -10,7 +10,10 @@ def main():
     initial_files_and_folders = set(os.listdir())
 
     # 2. Check for all the files in the /files directory
-    files_dir = "/files"
+    files_dir = os.path.join("/files")
+    if not os.path.exists(files_dir):
+        os.makedirs(files_dir, exist_ok=True)
+
     if os.path.exists(files_dir):
         # 3. Copy any files and folders (recursively) in /files into the current execution directory
         for item in os.listdir(files_dir):
