@@ -1,11 +1,13 @@
 @mixin light {
   --beHeader: #e8e8e8;
+  --bePromptInputText: #000000;
   --bePromptBackground: #c6c6c6;
   --bePromptInputBackground: #f9f9f9;
 }
 
 @mixin dark {
   --beHeader: #141414;
+  --bePromptInputText: #ffffff;
   --bePromptBackground: #393939;
   --bePromptInputBackground: #454545;
 }
@@ -29,6 +31,7 @@
 .block-editor-prompt-input {
   @apply min-h-20 w-full rounded-lg border-purple-300 p-2 text-base placeholder-purple-300;
   background-color: var(--bePromptInputBackground);
+  color: var(--bePromptInputText)
 }
 
 .block-editor-code-header{
