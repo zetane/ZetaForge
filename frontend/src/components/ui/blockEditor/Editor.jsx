@@ -51,6 +51,7 @@ export default function Editor() {
   const [activeCodeMirror, setActiveCodeMirror] = useState(null);
   const [isMaximized, setMaximized] = useState(false)
   const chatTextarea = useRef(null);
+  const panel = useRef(null);
 
   useEffect(() => {
     const init = async () => {
@@ -105,6 +106,15 @@ export default function Editor() {
     fetchCodeTemplate();
   }, [blockPath]);
 
+  useEffect(() => {
+      // Hack. CodeMirror loads code asynchronously and doesn't assume its full size until it is done loading.
+      // There isn't a simple way to run code when CodeMirror is done loading. 
+      // We add a delay so that the scrolling happens when CodeMirror is at its full size. 
+      setTimeout(() => {
+        panel.current.scrollTo({lef: 0, top: panel.current.scrollHeight, behavior: "smooth"})
+      }, 100)
+  }, [queryAndResponses, showEditor])
+
   const recordCode = (promptToRecord, codeToRecord) => {
     const newQueriesAndResponses = [
       ...queryAndResponses,
@@ -126,11 +136,6 @@ export default function Editor() {
 
   const handleEditorChange = (value) => {
     setEditorValue(value);
-  };
-
-  const resizeTextarea = (textarea) => {
-    textarea.style.height = "auto";
-    textarea.style.height = `${textarea.scrollHeight}px`;
   };
 
   const handleTabClick = (e) => {
@@ -173,15 +178,6 @@ export default function Editor() {
       }
 
       chatTextarea.current.value = "";
-      setTimeout(() => {
-const textarea = document.querySelector(".textarea-input");
-        if (textarea) {
-          resizeTextarea(textarea);
-        }
-        setTimeout(() => {
-          window.scrollTo(0, document.body.scrollHeight);
-        }, 100);
-      }, 0);
     }
     setIsLoading(false);
   };
@@ -204,16 +200,6 @@ const textarea = document.querySelector(".textarea-input");
       setEditorManualPrompt("Manual edit of code #" + index);
       setShowEditor(true); // Show the EditorCodeMirror
     }
-
-    setTimeout(() => {
-      const textarea = document.querySelector(".textarea-input");
-      if (textarea) {
-        resizeTextarea(textarea);
-      }
-      setTimeout(() => {
-        window.scrollTo(0, document.body.scrollHeight);
-      }, 100);
-    }, 0);
     e.currentTarget.blur();
   };
 
@@ -309,7 +295,7 @@ const textarea = document.querySelector(".textarea-input");
   }
 
   return (
-    <div className={"editor-block absolute max-h-full overflow-y-scroll " + (isMaximized? maximizedStyles : minizedStyles)}>
+    <div ref={panel} className={"editor-block absolute max-h-full overflow-y-scroll " + (isMaximized? maximizedStyles : minizedStyles)}>
       <div className="block-editor-header">
         <span className="p-4 text-lg italic">{blockFolderName}</span>
         <div className="flex flex-row items-center justify-end">
