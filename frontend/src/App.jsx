@@ -7,6 +7,7 @@ import Navbar from '@/components/ui/Navbar';
 import LibraryFetcher from '@/components/ui/library/LibraryFetcher';
 import LibrarySwitcher from '@/components/ui/library/LibrarySwitcher';
 import ModalWrapper from '@/components/ui/modal/ModalWrapper';
+import ToastWrapper from './components/ui/ToastWrapper';
 import './styles/globals.scss';
 
 
@@ -17,18 +18,19 @@ export default function App() {
 
 
   return (
-      <ProviderInjector>
-        <ForgeTheme>
-          <Navbar >
-            <LibraryFetcher />
-          </Navbar>
-          <LibrarySwitcher />
-          <MainContent>
-            <DrawflowWrapper />
-            <BlockEditorPanel />
-          </MainContent>
-          <ModalWrapper />
-        </ForgeTheme>
-      </ProviderInjector>
+    <ProviderInjector>
+      <ForgeTheme>
+        <Navbar >
+          <LibraryFetcher />
+        </Navbar>
+        <LibrarySwitcher />
+        <MainContent>
+          <DrawflowWrapper />
+          <BlockEditorPanel />
+        </MainContent>
+        <ModalWrapper />
+        <ToastWrapper />
+      </ForgeTheme>
+    </ProviderInjector>
   );
 }

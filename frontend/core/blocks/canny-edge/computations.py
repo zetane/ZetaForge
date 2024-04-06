@@ -41,8 +41,7 @@ def compute(image_path, range_min, range_max, step):
 
         path_array.append(output_path)
 
-    ret = {"image_paths": path_array}
-    return ret
+    return {"image_paths": path_array}
 
 
 def test():

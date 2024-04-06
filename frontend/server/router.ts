@@ -1,13 +1,15 @@
-import { dialog, app } from 'electron';
-import { z } from 'zod';
-import path from "path";
+import { TRPCError } from "@trpc/server";
+import { toBigIntBE } from 'bigint-buffer';
+import { app, dialog } from 'electron';
 import fs from "fs/promises";
-import { readSpecs, s3Upload} from "./fileSystem.js";
+import getMAC from "getmac";
+import path from "path";
+import sha256 from 'sha256';
+import { z } from 'zod';
+import { compileComputation, saveBlockSpecs } from './blockSerialization.js';
+import { readSpecs, s3Upload } from "./fileSystem.js";
 import { copyPipeline, getBlockPath, removeBlock, saveBlock, saveSpec } from './pipelineSerialization.js';
 import { publicProcedure, router } from './trpc';
-import sha256 from 'sha256'
-import {toBigIntBE} from 'bigint-buffer';
-import getMAC from "getmac"
 
 export const appRouter = router({
   getBlocks: publicProcedure
@@ -158,6 +160,44 @@ export const appRouter = router({
      }
       const distinct_id = sha256(get_distinct_id().toString())
       return {distinctId: distinct_id}
+    }),
+  compileComputation: publicProcedure
+    .input(z.object({
+      blockPath: z.string(),
+    }))
+    .mutation(async (opts) => {
+      const {input} = opts;
+      const {blockPath} = input;
+      
+      try {
+        return await compileComputation(blockPath);
+      } catch (error) {
+        console.error(error)
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Could not compile.',
+        });
+      }
+      
+    }),
+  saveBlockSpecs: publicProcedure
+    .input(z.object({
+      blockPath: z.string(),
+      blockSpecs: z.any(),
+    }))
+    .mutation(async (opts) => {
+      const {input} = opts;
+      const {blockPath, blockSpecs} = input; 
+
+      try {
+        return await saveBlockSpecs(blockPath, blockSpecs);
+      } catch (error) {
+        console.error(error)
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Could not compile.',
+        });
+      }
     })
 
 });

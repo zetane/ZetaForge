@@ -20,25 +20,13 @@ By default, when requested to do change or add to the code, modify the latest co
 
 In the template, the function compute contains the code and the function test contains a series of call to compute that runs and prints multiple tests. 
 
-Also give requirements.txt file content in the docstring of the compute function. Don't give the version numbers and if opencv is needed, use opencv-python-headless. If there are no requirements, leave an empty line and do not write sentence like None or No special requirements. none.
-
 Don't insert a __main__ section.
 
 Template:
 from string import Template
 
 def compute(in1):
-    '''Generates an HTML file with a unique name and returns the file name.
-
-    Inputs:
-        None
-
-    Outputs:
-        dict: A dictionary with the key 'html' and the value being the name of the generated HTML file.
-
-    Requirements:
-        
-    '''
+    '''Generates an HTML file with a unique name and returns the file name.'''
 
     html_template = Template('''
 <!DOCTYPE html>

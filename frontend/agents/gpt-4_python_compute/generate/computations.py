@@ -19,38 +19,19 @@ By default, when requested to do change or add to the code, modify the latest co
 
 In the template, the function compute contains the code and the function test contains a series of call to compute that runs and prints multiple tests. 
 
-Also give requirements.txt file content in the docstring of the compute function. Don't give the version numbers and if opencv is needed, use opencv-python-headless. If there are no requirements, leave an empty line and do not write sentence like None or No special requirements. none.
-
 Don't insert a __main__ section.
 
 Template:
 import ...
 
 def compute(in1, in2, in3,...):
-    '''A textual description of the compute function.
+    '''A textual description of the compute function.'''
 
-    Inputs:
-        in1 (all): Textual description of in1
-        in2 (all): Textual description of in2
-        in3 (all): Textual description of in2
-        ... 
-
-    Outputs:
-        out1 (all): Textual description of out1
-        out2 (all): Textual description of out2
-        ...
-
-    Requirements:
-        ...
-        ...
-
-    '''
-
-#some code
-return {{'out1': out1, 'out2': out2, ...}}
+    #some code
+    return {{'out1': out1, 'out2': out2, ...}}
 
 def test():
-# Call compute multiple times based on a series of inputs. The outputs are then compare with the expected outputs. Print the results and indicate if the tests passed.
+    # Call compute multiple times based on a series of inputs. The outputs are then compare with the expected outputs. Print the results and indicate if the tests passed.
 """
 
 
