@@ -1,5 +1,10 @@
 import { openAIApiKeyAtom } from '@/atoms/apiKeysAtom';
+import { compilationErrorToastAtom } from '@/atoms/compilationErrorToast';
+import { drawflowEditorAtom } from '@/atoms/drawflowAtom';
 import { blockEditorRootAtom, isBlockEditorOpenAtom } from "@/atoms/editorAtom";
+import { pipelineAtom } from '@/atoms/pipelineAtom';
+import { updateSpecs } from '@/utils/specs';
+import { trpc } from '@/utils/trpc';
 import {
   Bot,
   Close,
@@ -22,6 +27,7 @@ import {
   Tabs,
 } from "@carbon/react";
 import { useAtom, useSetAtom } from "jotai";
+import { useImmerAtom } from 'jotai-immer';
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { EditorCodeMirror, ViewerCodeMirror } from "./CodeMirrorComponents";
 import DirectoryViewer from "./DirectoryViewer";
@@ -35,6 +41,9 @@ export default function Editor() {
   const [blockFolderName, setBlockFolderName] = useState(null); //TODO check if still needed
   const setBlockEditorOpen = useSetAtom(isBlockEditorOpenAtom);
   const [openAIApiKey] = useAtom(openAIApiKeyAtom);
+  const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
+  const [editor] = useAtom(drawflowEditorAtom);
+  const [compilationErrorToast, setCompilationErrorToast] = useAtom(compilationErrorToastAtom)
 
   // const [agentName, setAgentName] = useState('gpt-4_python_compute');
   const [agentName, setAgent] = useState("gpt-4_python_compute");
@@ -52,6 +61,9 @@ export default function Editor() {
   const [isMaximized, setMaximized] = useState(false)
   const chatTextarea = useRef(null);
   const panel = useRef(null);
+
+  const compileComputation = trpc.compileComputation.useMutation();
+  const saveBlockSpecs = trpc.saveBlockSpecs.useMutation();
 
   useEffect(() => {
     const init = async () => {
@@ -107,12 +119,12 @@ export default function Editor() {
   }, [blockPath]);
 
   useEffect(() => {
-      // Hack. CodeMirror loads code asynchronously and doesn't assume its full size until it is done loading.
-      // There isn't a simple way to run code when CodeMirror is done loading. 
-      // We add a delay so that the scrolling happens when CodeMirror is at its full size. 
-      setTimeout(() => {
-        panel.current.scrollTo({lef: 0, top: panel.current.scrollHeight, behavior: "smooth"})
-      }, 100)
+    // Hack. CodeMirror loads code asynchronously and doesn't assume its full size until it is done loading.
+    // There isn't a simple way to run code when CodeMirror is done loading. 
+    // We add a delay so that the scrolling happens when CodeMirror is at its full size. 
+    setTimeout(() => {
+      panel.current.scrollTo({ lef: 0, top: panel.current.scrollHeight, behavior: "smooth" })
+    }, 100)
   }, [queryAndResponses, showEditor])
 
   const recordCode = (promptToRecord, codeToRecord) => {
@@ -255,6 +267,19 @@ export default function Editor() {
     } catch (error) {
       console.error("Request failed: " + error.message);
     }
+
+    try {
+      const newSpecsIO = await compileComputation.mutateAsync({ blockPath: blockPath });
+      const newSpecs = await updateSpecs(blockFolderName, newSpecsIO, pipeline.data, editor);
+      setPipeline((draft) => {
+        draft.data[blockFolderName] = newSpecs;
+      })
+      await saveBlockSpecs.mutateAsync({ blockPath: blockPath, blockSpecs: newSpecs });
+    } catch (error) {
+      console.error(error)
+      setCompilationErrorToast(true);
+    }
+
     setActiveCodeMirror(index);
 
     fetchFileSystem(blockFolderName);
@@ -295,7 +320,7 @@ export default function Editor() {
   }
 
   return (
-    <div ref={panel} className={"editor-block absolute max-h-full overflow-y-scroll " + (isMaximized? maximizedStyles : minizedStyles)}>
+    <div ref={panel} className={"editor-block absolute max-h-full overflow-y-scroll " + (isMaximized ? maximizedStyles : minizedStyles)}>
       <div className="block-editor-header">
         <span className="p-4 text-lg italic">{blockFolderName}</span>
         <div className="flex flex-row items-center justify-end">
@@ -304,7 +329,7 @@ export default function Editor() {
             <span className="text-lg">{agentName}</span>
           </div>
           <IconButton kind="ghost" size="lg" className="my-px-16" onClick={toggleMaximize}>
-            {isMaximized? <Minimize size={24}/> : <Maximize size={24}/>}
+            {isMaximized ? <Minimize size={24} /> : <Maximize size={24} />}
           </IconButton>
           <IconButton kind="ghost" size="lg" onClick={handleClose}>
             <Close size={24} />
@@ -385,10 +410,10 @@ export default function Editor() {
                   <div>
                     <div className='block-editor-code-header'>{editorManualPrompt}</div>
                     <div className="relative">
-                        <EditorCodeMirror
-                          code={editorValue}
-                          onChange={handleEditorChange}
-                        />
+                      <EditorCodeMirror
+                        code={editorValue}
+                        onChange={handleEditorChange}
+                      />
                       <div className="absolute right-0 top-0">
                         <Button
                           renderIcon={Save}
@@ -449,6 +474,7 @@ export default function Editor() {
                 lastGeneratedIndex={lastGeneratedIndex}
                 handleDockerCommands={handleDockerCommands}
                 fetchFileSystem={fetchFileSystem}
+                blockFolderName={blockFolderName}
               />
             </TabPanel>
             <TabPanel className="remove-focus">

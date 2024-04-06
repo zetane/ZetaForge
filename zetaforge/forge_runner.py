@@ -355,7 +355,7 @@ def launch_forge(context, s2_version=None, dev_path=None, dev_flag=False, app_ve
     #init is called for collarama library, better logging.
     init()   
     # there's no direct way to check for kubernetes. So, I am warning them to check for their kubernetes.
-    answer = input(f"{Fore.BLUE}{Style.BRIGHT}Please check if docker desktop is running, and enable kubernetes before prooceeding. Click any button to continue")
+    answer = input(f"{Fore.BLUE}{Style.BRIGHT}Please check if docker desktop is running, and enable kubernetes before proceeding. Click any button to continue")
 
     docker_dektop = check_docker_desktop()
     if not docker_dektop:

@@ -1258,10 +1258,14 @@ export default class Drawflow {
     }
   }
 
+  ioChanged(graphIO, jsonIO) {
+    return JSON.stringify(graphIO) === JSON.stringify(jsonIO);
+  }
+
   addNode_from_JSON(json) {
-    const graph = this.drawflow.drawflow[this.module].data
-    const id = json.id
-    if (graph.hasOwnProperty(id)) {
+    const graph = this.drawflow.drawflow[this.module].data;
+    const id = json.id;
+    if (graph.hasOwnProperty(id) && this.ioChanged(graph[id].inputs, json.inputs) && this.ioChanged(graph[id].outputs, json.outputs)) {
       // Inbound data from react managed inputs
       // This happens because react re-renders twice
       // And we have to make sure that if the user has mutated
@@ -1615,6 +1619,20 @@ export default class Drawflow {
     this.updateConnectionNodes('node-' + id);
   }
 
+  removeNodeInputConnections(id, input_class) {
+    const infoNode = this.getNodeFromId(id)
+    const removeInputs = [];
+    Object.keys(infoNode.inputs[input_class].connections).map(function (key, index) {
+      const id_output = infoNode.inputs[input_class].connections[index].node;
+      const output_class = infoNode.inputs[input_class].connections[index].input;
+      removeInputs.push({ id_output, id, output_class, input_class })
+    })
+    // Remove connections
+    removeInputs.forEach((item, i) => {
+      this.removeSingleConnection(item.id_output, item.id, item.output_class, item.input_class);
+    });
+  }
+
   removeNodeOutput(id, output_class) {
     var moduleName = this.getModuleFromNodeId(id)
     const infoNode = this.getNodeFromId(id)
@@ -1688,6 +1706,21 @@ export default class Drawflow {
     });
 
     this.updateConnectionNodes('node-' + id);
+  }
+
+  removeNodeOutputConnections(id, output_class) {
+    const infoNode = this.getNodeFromId(id)
+    const removeOutputs = [];
+    Object.keys(infoNode.outputs[output_class].connections).map(function (key, index) {
+      const id_input = infoNode.outputs[output_class].connections[index].node;
+      const input_class = infoNode.outputs[output_class].connections[index].output;
+      removeOutputs.push({ id, id_input, output_class, input_class })
+    })
+    // Remove connections
+    removeOutputs.forEach((item, i) => {
+      this.removeSingleConnection(item.id, item.id_input, item.output_class, item.input_class);
+    });
+
   }
 
   updateNodeAfterSavingCode(blockName_base, code_content) {

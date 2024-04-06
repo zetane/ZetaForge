@@ -1,4 +1,8 @@
+import { compilationErrorToastAtom } from '@/atoms/compilationErrorToast';
+import { drawflowEditorAtom } from '@/atoms/drawflowAtom';
 import { pipelineAtom } from '@/atoms/pipelineAtom';
+import { updateSpecs } from '@/utils/specs';
+import { trpc } from '@/utils/trpc';
 import {
   Document,
   DocumentDownload,
@@ -8,6 +12,7 @@ import {
   Save,
 } from "@carbon/icons-react";
 import { Button, Modal, Tooltip, TreeNode, TreeView } from "@carbon/react";
+import { useAtom } from 'jotai';
 import { useImmerAtom } from 'jotai-immer';
 import { useCallback, useEffect, useRef, useState } from "react";
 import { EditorCodeMirror } from "./CodeMirrorComponents";
@@ -19,6 +24,7 @@ function DirectoryViewer({
   lastGeneratedIndex,
   handleDockerCommands,
   fetchFileSystem,
+  blockFolderName,
 }) {
   const serverAddress = "http://localhost:3330";
   const [fileSystem, setFileSystem] = useState({});
@@ -27,17 +33,20 @@ function DirectoryViewer({
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [pendingFile, setPendingFile] = useState(null);
-  const [pipeline] = useImmerAtom(pipelineAtom);
+  const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
+  const [editor] = useAtom(drawflowEditorAtom);
+  const [compilationErrorToast, setCompilationErrorToast] = useAtom(compilationErrorToastAtom)
 
   const fileInputRef = useRef(null);
   const folderInputRef = useRef(null);
+
+  const compileComputation = trpc.compileComputation.useMutation();
+  const saveBlockSpecs = trpc.saveBlockSpecs.useMutation();
 
   // let generated_from_index = '';
 
   useEffect(() => {
     setFileSystem(fileSystemProp);
-    setCurrentFile({}); // Clears the code editor
-    // generated_from_index = ' generated from ' + lastGeneratedIndex.toString();
   }, [fileSystemProp]);
 
   const handleFileImport = () => {
@@ -212,13 +221,17 @@ function DirectoryViewer({
     });
   };
 
+  const isComputation = (path) => {
+    return path.endsWith("computations.py")
+  }
+
   const saveChanges = (e) => {
     // Check if there is a current file selected
     if (!currentFile || !currentFile.path) {
       console.error("No file selected");
       return;
     }
-    
+
     const saveData = {
       pipelinePath: pipeline.buffer,
       filePath: currentFile.path,
@@ -233,8 +246,22 @@ function DirectoryViewer({
       body: JSON.stringify(saveData),
     })
       .then((response) => response.json())
-      .then((data) => {
+      .then(async (data) => {
         setUnsavedChanges(false);
+        if (isComputation(currentFile.path)) {
+          try {
+            const newSpecsIO = await compileComputation.mutateAsync({ blockPath: blockPath });
+            const newSpecs = await updateSpecs(blockFolderName, newSpecsIO, pipeline.data, editor);
+            setPipeline((draft) => {
+              draft.data[blockFolderName] = newSpecs;
+            })
+            await saveBlockSpecs.mutateAsync({ blockPath: blockPath, blockSpecs: newSpecs });
+            fetchFileSystem();
+          } catch (error) {
+            console.error(error)
+            setCompilationErrorToast(true);
+          }
+        }
       })
       .catch((error) => {
         console.error("Error saving file:", error);
@@ -248,10 +275,8 @@ function DirectoryViewer({
 
     const specialFiles = [
       "computations.py",
-      "specs.json",
-      "requirements.txt",
-      "Dockerfile",
     ];
+
     const isSpecialFile = specialFiles.includes(folder);
     const textStyle = isSpecialFile ? { color: "darkorange" } : {};
 
@@ -298,7 +323,7 @@ function DirectoryViewer({
           )}
       </TreeNode>
     );
-  };
+  }
 
   return (
     <div className="flex">
@@ -366,8 +391,8 @@ function DirectoryViewer({
           />
         </div>
         {lastGeneratedIndex !== undefined &&
-        lastGeneratedIndex !== null &&
-        lastGeneratedIndex.toString() !== "" ? (
+          lastGeneratedIndex !== null &&
+          lastGeneratedIndex.toString() !== "" ? (
           <div>
             <div
               style={{

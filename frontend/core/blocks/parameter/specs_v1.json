@@ -1,8 +1,8 @@
 {
   "information": {
-    "id": "string-list",
-    "name": "String List",
-    "description": "List of strings parameter input.",
+    "id": "parameter",
+    "name": "Parameter",
+    "description": "Parameter input.",
     "block_version": "block version number",
     "block_source": "core/blocks",
     "block_type": "compute",
@@ -12,26 +12,26 @@
   },
   "inputs": {},
   "outputs": {
-    "list[str]": {
-      "type": "List[str]",
+    "parameter": {
+      "type": "Any",
       "connections": [],
       "relays": []
     }
   },
   "action": {
     "parameters": {
-      "list[str]": {
-        "type": "List[str]",
+      "parameter": {
+        "type": "Any",
         "value": ""
       }
     }
   },
   "views": {
     "node": {
-      "active": "True or False",
+      "active": "true",
       "title_bar": {},
       "preview": {},
-      "html": "<input type='text' value='abcd' parameters-list[str]/>",
+      "html": "<input type='text' value='abcd' parameters-parameter/>",
       "pos_x": "300",
       "pos_y": "200",
       "pos_z": "999, this is the z-index for 2D canvas"

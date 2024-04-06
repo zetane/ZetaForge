@@ -14,7 +14,6 @@ import path from "path";
 import pg from "pg";
 import { fileExists, readJsonToObject, readSpecs } from "./fileSystem.js";
 import { copyPipeline, saveBlock } from "./pipelineSerialization.js";
-import {app} from 'electron'
 
 const { Client } = pg;
 
@@ -566,33 +565,7 @@ function startExpressServer() {
         res.status(500).send({ error: "Error writing data to file" });
         return;
       }
-
-      let agents = "agents"
-      if(app.isPackaged) {
-        agents = path.join(process.resourcesPath, "agents")
-      }
-      const computations = path.join(agents, data.agent_name, "compile", "computations.py")
-      //"the below was previously ${agents}/${data.agent_name}/compile/computations.py", but I used path.join
-      //for windows compability. Let me know if you want it to keep it the old way. 
-      let command =
-        `python -B "${computations}" ` +
-        `--block_path "${data.blockPath}" ` +
-        `--block_name "${data.block_name}" ` +
-        `--block_user_name "${data.block_user_name}" `;
-
-      exec(command, (error, stdout, stderr) => {
-        if (error) {
-          console.error(`exec error: ${error}`);
-          res.status(500).send({ error: error.message });
-          return;
-        }
-        res.send({
-          stdout: stdout,
-          stderr: stderr,
-          log: "Saved compute file to " + folderPath,
-        });
-        console.log("stdout", stdout, "stderr", stderr);
-      });
+      res.send({log: "Saved compute file to " + folderPath});
     });
   });
 
