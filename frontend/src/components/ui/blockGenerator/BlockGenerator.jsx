@@ -121,17 +121,73 @@ const parseHtmlToInputs = (html) => {
 };
 
 const InputField = ({ type, value, name, step, parameterName, onChange }) => {
-  const handleChange = (event) => {
-    onChange(name, event.target.value, parameterName);
+  const [currentValue, setCurrentValue] = useState("");
+  const inputRef = useRef(null);
+  const isTextBlock = type === 'textarea';
+  const setCursorPosition = (start, end) => {
+    if (!inputRef?.current) return;
+    inputRef.current.selectionStart = start;
+    inputRef.current.selectionEnd = end || start;
   };
 
-  if (type === 'textarea') {
+  useEffect(() => {
+    if (currentValue === "") {
+      onChange(name, "", parameterName)
+      setCurrentValue("")
+    }
+  }, [currentValue])
+
+  const preventQuotation = (event) => {
+    const quotations = ['"', "'", '`'];
+    const { key } = event;
+    
+    const { selectionStart, selectionEnd } = inputRef?.current;
+    const atBeginning = selectionStart === 0; // beginning of text, left of start quote
+    const atEnd = selectionEnd - 2 === currentValue.length; // end of text, right of end quote
+    const isRangedSelection = selectionStart !== selectionEnd; // substring is highlighted
+    const boundaries =
+      quotations.includes(key) ||
+      key === "Backspace" && (atBeginning || selectionStart === 1) && !isRangedSelection ||
+      key === "Delete" && (atEnd || selectionEnd - 1 === currentValue.length)  && !isRangedSelection ||
+      key === 'ArrowLeft' && atEnd ||
+      key === 'ArrowRight' && atBeginning;
+    
+    if (boundaries) event.preventDefault();
+
+    if (isRangedSelection) {
+      if (atBeginning && atEnd) {
+        setCursorPosition(1, selectionEnd - 1);
+      } else if (atBeginning) {
+        setCursorPosition(1, selectionEnd);
+      } else if (atEnd) {
+        setCursorPosition(selectionStart, selectionEnd - 1);
+      }
+    } else {
+      if (atEnd) {
+        setCursorPosition(selectionEnd - 1);
+      } else if (atBeginning) {
+        setCursorPosition(1);
+      }
+    }
+  }
+
+  const handleChange = (event) => {
+    const displayedValue = !isTextBlock ? event.target.value : event.target.value.replace(/['"]/g, '');
+    setCurrentValue(displayedValue);
+    const blockValue = !isTextBlock ? event.target.value : `'${event.target.value}'`
+    onChange(name, blockValue, parameterName);
+  };
+
+  if (isTextBlock) {
     return (
       <textarea
-        value={value}
+        value={value !== "" ? `"${currentValue}"` : currentValue}
         name={name}
         onChange={handleChange}
         {...(parameterName && { [`parameters-${parameterName}`]: '' })}
+        className="input-element"
+        onKeyDown={preventQuotation}
+        ref={inputRef}
       />
     );
   }
@@ -139,11 +195,12 @@ const InputField = ({ type, value, name, step, parameterName, onChange }) => {
   return (
     <input
       type={type}
-      value={value}
+      value={currentValue}
       name={name}
       step={step}
       onChange={handleChange}
       {...(parameterName && { [`parameters-${parameterName}`]: '' })}
+      className="input-element"
     />
   );
 };
