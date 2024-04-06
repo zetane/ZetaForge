@@ -1,4 +1,6 @@
-import { BrowserWindow, app, ipcMain, shell } from 'electron'
+// import { BrowserWindow, app, ipcMain, shell } from 'electron'
+import { BrowserWindow, app, ipcMain, shell, Menu } from 'electron';
+
 import { createIPCHandler } from 'electron-trpc/main'
 import { release } from 'node:os'
 import { dirname, join } from 'node:path'
@@ -57,6 +59,30 @@ const preload = join(__dirname, '../preload/index.mjs')
 const url = process.env.VITE_DEV_SERVER_URL
 const indexHtml = join(process.env.DIST, 'index.html')
 
+const menuTemplate: Electron.MenuItemConstructorOptions[] = [
+  {
+    label: 'View',
+    submenu: [
+      { role: 'reload' },
+      { role: 'forceReload' },
+      { role: 'toggleDevTools' },
+      { type: 'separator' },
+      { role: 'resetZoom' },
+      { role: 'zoomIn' },
+      { role: 'zoomOut' },
+      { type: 'separator' },
+      { role: 'togglefullscreen' },
+    ],
+  },
+  {
+    label: 'Window',
+    submenu: [
+      { role: 'minimize' },
+      { role: 'quit' },
+    ],
+  },
+];
+
 async function createWindow() {
   win = new BrowserWindow({
     title: 'ZetaForge',
@@ -73,6 +99,11 @@ async function createWindow() {
   })
 
   createIPCHandler({ router: appRouter, windows: [win] });
+ 
+  // Pass the menuTemplate
+  const menu = Menu.buildFromTemplate(menuTemplate);
+  Menu.setApplicationMenu(menu);
+
 
   if (url) { // electron-vite-vue#298
     win.loadURL(url)

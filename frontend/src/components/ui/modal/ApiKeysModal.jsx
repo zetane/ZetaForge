@@ -3,7 +3,7 @@ import { modalContentAtom } from "@/atoms/modalAtom";
 import { TextInput } from "@carbon/react";
 import { useAtom } from "jotai";
 import { useState } from "react";
-import ClosableModal from "./ClosableModel";
+import ClosableModal from "./ClosableModal";
 
 export default function ApiKeysModal() {
   const [modalContent, setModalContent] = useAtom(modalContentAtom);

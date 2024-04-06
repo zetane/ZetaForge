@@ -48,12 +48,8 @@
     "node": {
       "behavior": "modal",
       "active": "True or False",
-      "title_bar": {
-        "background_color": "#D55908"
-      },
-      "preview": {
-        "active": "true"
-      },
+      "title_bar": {},
+      "preview": {},
       "html": "",
       "pos_x": "300",
       "pos_y": "200",

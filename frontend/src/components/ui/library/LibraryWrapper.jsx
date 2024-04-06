@@ -1,5 +1,6 @@
 import { libraryAtom } from '@/atoms/libraryAtom';
-import { ArrowLeft, Information } from "@carbon/icons-react";
+import { ArrowLeft } from "@carbon/icons-react";
+import LibraryTile from './LibraryTile';
 import {
   ContainedList,
   FlexGrid,
@@ -12,46 +13,11 @@ import {
   TabList,
   TabPanel,
   TabPanels,
-  Tabs,
-  Tile,
-  Tooltip
+  Tabs
 } from '@carbon/react';
 import { useAtom } from 'jotai';
 import { useEffect, useState } from 'react';
 
-const dragStartHandler = (event, block) => {
-  if (event.type === "touchstart") {
-    // TODO: Handle mobile touchstarts
-    //mobile_item_selec = ev.target.closest(".drag-drawflow").getAttribute('data-node');
-  } else {
-    // Note: If this is too slow we need to pass a reference ID around
-    // And retrieve the block from a global block store 
-    let blockData = JSON.stringify(block)
-    event.dataTransfer.setData("block", blockData);
-  }
-}
-
-const tileBuilder = (block, index) => {
-  const dataProps= {"data-node": block.information.id}
-  const blockName = block.information.name
-  const blockDescription = block.information.description
-  return (
-      <Tile className="library-tile" 
-        key={index} 
-        draggable={true} 
-        onDragStart={(ev) => {dragStartHandler(ev, block)}} >
-        <div className="library-header">
-          {blockName}
-        </div>
-        <Tooltip 
-          className="absolute bottom-1 left-1"
-          align="bottom-left" 
-          label={blockDescription}>
-          <Information size={20} />
-        </Tooltip>
-      </Tile>
-  )
-}
 
 export default function LibraryWrapper({ specs }) {
   const [searchTerm, setSearchTerm] = useState("")
@@ -72,14 +38,15 @@ export default function LibraryWrapper({ specs }) {
   let rowGrid = []
 
   searchResults.forEach((spec, index) => {
-    let countIndex = index + 1
-    let tile = tileBuilder(spec, index)
-    rowGrid.push(tile)
-    if ((searchResults.length == countIndex)) {
+    let countIndex = index + 1;
+    let tile = <LibraryTile key={index} block={spec} index={index} />;
+    rowGrid.push(tile);
+    if (searchResults.length == countIndex) {
       // handle end of tiles when not divisible by the row length
-      tileGrid.push((<Row key={index}>{rowGrid}</Row>))
-    } 
-  })
+      tileGrid.push(<Row key={index}>{rowGrid}</Row>);
+    }
+  });
+  
 
   let searchTitle = (
     <div style={{display: "flex"}}>
@@ -114,7 +81,7 @@ export default function LibraryWrapper({ specs }) {
             </TabList>
             <TabPanels>
               <TabPanel className="library-tab">
-              <FlexGrid fullWidth={true} condensed={true} className="mt-2">
+              <FlexGrid fullWidth={true} condensed={true} className="mt-2 library-tile-container">
                 {tileGrid}
               </FlexGrid>
               </TabPanel>

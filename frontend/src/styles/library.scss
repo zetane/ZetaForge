@@ -1,6 +1,8 @@
 .library-tile {
-  height: 132px;
-  width: 132px;
+  height: 158px;
+  // height: 132px;
+  width: 128px;
+  // width: 132px;
   border-radius: 7px;
   padding: 0px !important;
   margin: 5px;
@@ -12,12 +14,32 @@
   background-clip: padding-box;
 }
 
+// .library-header {
+//   // background-color: var(--cds-button-primary);
+//   background-color: var(--title-background-color);
+//   // color: var(--cds-link-inverse);
+//   color: var(--ztn-white-0);
+//   height: 30px;
+//   padding: 5px;
+//   border-radius: 7px 7px 0px 0px;
+// }
+
 .library-header {
-  background-color: var(--cds-button-primary);
-  color: var(--cds-link-inverse);
+  background-color: var(--title-background-color);
+  color: var(--ztn-white-0);
   height: 30px;
   padding: 5px;
   border-radius: 7px 7px 0px 0px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-width: 100%; /* Adjust the max-width as needed */
+  z-index: 100;
+}
+
+.library-tile-container {
+  overflow-y: auto;
+  height: calc(100vh - 230px); /* Adjust the 150px based on the height of other elements */ 
 }
 
 .library-switcher {
@@ -39,4 +61,47 @@
 
 .cds--tabs .cds--tabs__nav-item-label-wrapper {
   justify-content: center;
+}
+
+.image-container {
+  position: relative;
+  border-bottom-left-radius: 7px;
+  border-bottom-right-radius: 7px;
+}
+
+.image-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  // background: linear-gradient(to bottom left, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.8)); /* Adjust the gradient colors */
+  z-index: 1;
+}
+
+#file-block {
+  color: var(--dfNodeTextColor);
+}
+
+.custom-modal-size .cds--modal-container {
+  display: flex;
+  flex-direction: column;
+  width: 90vw !important;
+  height: 90vh !important;
+  overflow: hidden !important;
+}
+
+.viewer-container {
+  flex-grow: 1;
+  height: calc(85vh - 120px);
+  overflow: auto;
+}
+
+.cds--modal-content .cds--modal-scroll-content {
+  overflow: hidden !important;
+}
+
+.custom-modal-size .cds--modal-content {
+  overflow: hidden !important;
 }
