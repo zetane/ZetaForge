@@ -210,6 +210,11 @@ export default function DrawflowWrapper() {
   const dropHandler = async (event, editor) => {
     // Loads block to graph
     event.preventDefault()
+
+    if (editor?.ele_selected?.classList[0] === 'input-element') {
+      return;
+    }
+
     const jsonData = event.dataTransfer.getData("block");
     const spec = JSON.parse(jsonData)
     const block = setBlockPos(editor, spec, event.clientX, event.clientY)

@@ -221,7 +221,9 @@ export default class Drawflow {
         this.contextmenuDel();
       }
 
-      if (e.target.classList[0] != "output" && e.target.closest(".drawflow-node") != null ) {
+      if (e.target.classList[0] == "input-element") {
+        this.ele_selected = e.target;
+      } else if (e.target.classList[0] != "output" && e.target.closest(".drawflow-node") != null ) {
         this.ele_selected = e.target.closest(".drawflow-node");
       }
     }
