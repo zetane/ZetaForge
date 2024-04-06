@@ -3,6 +3,7 @@ import { loadLanguage } from "@uiw/codemirror-extensions-langs";
 import { basicDark, basicLight } from '@uiw/codemirror-theme-basic';
 import CodeMirror from "@uiw/react-codemirror";
 import { atom, useAtom } from "jotai";
+import { EditorView } from "@codemirror/view"
 
 const themeAtom = atom((get) => get(darkModeAtom) ? basicDark : basicLight);
 
@@ -15,7 +16,7 @@ export const ViewerCodeMirror = ({ code }) => {
       extensions={[loadLanguage("python")]}
       readOnly={true}
       basicSetup={{
-        lineNumbers: false,
+        lineNumbers: true,
         highlightActiveLineGutter: false,
         highlightSpecialChar: false,
         history: false,
@@ -67,6 +68,7 @@ export const LogsCodeMirror = ({ code }) => {
     <CodeMirror
       value={code}
       theme={theme}
+      extensions={[EditorView.lineWrapping]}
       readOnly={true}
       basicSetup={{
         lineNumbers: false,
@@ -75,7 +77,7 @@ export const LogsCodeMirror = ({ code }) => {
         history: false,
         foldGutter: false,
         drawSelection: false,
-        dropCursor: false,
+        dropCursor: false, 
         allowMultipleSelections: false,
         indentOnInput: false,
         syntaxHighlighting: false,

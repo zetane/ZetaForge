@@ -101,12 +101,12 @@ export default function Navbar({ children }) {
   }, [readyState]);
 
   return (
-    <Header aria-label="Zetaforge">
+    <Header aria-label="ZetaForge">
       <SkipToContent />
       <HeaderName prefix="" className="select-none">
-        Zetaforge
+        ZetaForge
       </HeaderName>
-      <HeaderNavigation aria-label="Zetaforge">
+      <HeaderNavigation aria-label="ZetaForge">
         <HeaderMenu menuLinkName="File">
           <NewButton />
           <SavePipelineButton />
@@ -123,8 +123,19 @@ export default function Navbar({ children }) {
             <span>API Keys</span>
           </HeaderMenuItem>
           <HeaderMenuItem label="Theme" onClick={() => setDarkMode(!darkMode)}>
-            Theme
+            Toggle Theme
           </HeaderMenuItem>
+        </HeaderMenu>
+        <HeaderMenu menuLinkName="Help">
+        <HeaderMenuItem onClick={() => window.open('https://github.com/zetane/zetaforge')}>
+          GitHub
+        </HeaderMenuItem>
+        <HeaderMenuItem onClick={() => window.open('https://discord.gg/zetaforge')}>
+          Discord
+        </HeaderMenuItem>
+        <HeaderMenuItem onClick={() => window.open('https://zetane/docs/')}>
+          Docs
+        </HeaderMenuItem>
         </HeaderMenu>
       </HeaderNavigation>
       <HeaderGlobalBar>

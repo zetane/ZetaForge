@@ -28,6 +28,27 @@ export const appRouter = router({
         console.log(error)
       }
     }),
+    getBlockCoverImagePath: publicProcedure
+    .input(z.object({
+      blockId: z.string(),
+    }))
+    .query(async (opts) => {
+      const { input } = opts;
+      const { blockId } = input;
+      const resources = process.resourcesPath;
+      let blocksPath = "core/blocks";
+      if (app.isPackaged) {
+        blocksPath = path.join(resources, "core", "blocks");
+      }
+  
+      try {
+        const coverImagePath = path.join(blocksPath, blockId, "cover-image.png");
+        return { coverImagePath };
+      } catch (error) {
+        console.log(error);
+        return { coverImagePath: null };
+      }
+    }),  
   //TODO: load and validate schema
   savePipeline: publicProcedure
     .input(z.object({

@@ -26,7 +26,7 @@
   },
   "action": {
     "container": {
-      "image": "view_threejs",
+      "image": "view-threejs",
       "version": "latest",
       "command_line": [
         "python",

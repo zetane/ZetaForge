@@ -43,6 +43,8 @@ const BlockGenerator = ({ block, openView, id, historySink, pipelineAtom}) => {
     content = (<FileBlock blockId={id} block={block} setFocusAction={setFocusAction} />)
   }
 
+  const backgroundColor = block.views?.node?.title_bar?.background_color || 'var(--title-background-color)';
+
   return (
     <div className="parent-node">
       <div className="drawflow-node" id={`node-${id}`} style={styles}>
@@ -52,6 +54,7 @@ const BlockGenerator = ({ block, openView, id, historySink, pipelineAtom}) => {
           <BlockTitle
             name={block.information.name}
             id={id}
+            color={backgroundColor}
             openView={openView}
             actions={!disabled} 
             src={iframeSrc}
@@ -82,7 +85,7 @@ const BlockPreview = ({id, src}) => {
   )
 }
 
-const BlockTitle = ({ name, id, openView, actions, src}) => {
+const BlockTitle = ({ name, id, color, openView, actions, src}) => {
   let actionContainer = (
     <div className="action-container">
       <button id="btn_open_code" className="view-btn" onClick={() => openView(id)}><Code size={20}/></button>
@@ -91,7 +94,7 @@ const BlockTitle = ({ name, id, openView, actions, src}) => {
   )
 
   return (
-    <div className="title-box">
+    <div className="title-box" style={{ backgroundColor: color }}>
       <span>{name}</span>
       { actions && actionContainer }
     </div>

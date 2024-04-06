@@ -26,7 +26,7 @@
   },
   "action": {
     "container": {
-      "image": "view_numpy",
+      "image": "view-numpy",
       "version": "latest",
       "command_line": [
         "python",

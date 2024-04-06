@@ -19,6 +19,7 @@ export default function SaveAsPipelineButton() {
     pipelineSpecs['sink'] = pipeline.path ? pipeline.path : pipeline.buffer
     pipelineSpecs['build'] = pipeline.path ? pipeline.path : pipeline.buffer
     pipelineSpecs['name'] = pipeline.name
+    pipelineSpecs['id'] = pipeline.id
     const saveData = {
       specs: pipelineSpecs, 
       name: pipeline.name, 

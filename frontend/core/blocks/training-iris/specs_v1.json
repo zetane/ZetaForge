@@ -26,7 +26,7 @@
   },
   "action": {
     "container": {
-      "image": "training_iris",
+      "image": "training-iris",
       "version": "latest",
       "command_line": [
         "python",
