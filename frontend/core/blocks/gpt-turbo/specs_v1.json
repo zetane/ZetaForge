@@ -12,7 +12,7 @@
   },
   "inputs": {
     "descriptions": {
-      "type": "Any",
+      "type": "List[str]",
       "connections": [],
       "relays": []
     }
