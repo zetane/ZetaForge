@@ -1,11 +1,11 @@
-import openai
+from openai import OpenAI
 
-openai.api_key = "your_openai_key"
-import json
+api_key = "your_openai_key"
 
 
 def request_course_of_action(sentence):
-    completion = openai.ChatCompletion.create(
+    client = OpenAI(api_key=api_key)
+    completion = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
             {
@@ -48,8 +48,6 @@ def compute(descriptions):
             )
         if "Explanation:" in action:
             action = action.replace("Explanation:", "<strong>Explanation:</strong>")
-
-        print(action)
 
         description_action_pairs.append({"description": d, "action": action})
         description_list.append(d)
