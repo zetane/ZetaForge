@@ -1,5 +1,3 @@
-const local_postgresql_database = false;
-
 import bodyParser from "body-parser";
 import { exec, spawn } from "child_process";
 import compression from "compression";
@@ -11,11 +9,8 @@ import fsp from "fs/promises";
 import multer from "multer";
 import { Configuration, OpenAIApi } from "openai";
 import path from "path";
-import pg from "pg";
 import { fileExists, readJsonToObject, readSpecs } from "./fileSystem.js";
 import { copyPipeline, saveBlock } from "./pipelineSerialization.js";
-
-const { Client } = pg;
 
 function startExpressServer() {
   const app = express();
@@ -44,20 +39,6 @@ function startExpressServer() {
     apiKey: process.env.OPENAI_API_KEY,
   });
   const openai = new OpenAIApi(configuration);
-
-  if (local_postgresql_database){
-    // Initialize PostgreSQL client
-    const client = new Client({
-      user: process.env.DB_USER,
-      host: process.env.DB_HOST,
-      database: process.env.DB_NAME,
-      password: process.env.DB_PASSWORD,
-      port: process.env.DB_PORT || 5432,
-    });
-
-    // Connect to the database
-    client.connect();
-  }
 
   const upload = multer({ dest: "_temp_import" });
 
@@ -95,31 +76,6 @@ function startExpressServer() {
     });
   }
 
-  function get_graph(data, callback) {
-    dotenv.config();
-    const client = new Client({
-      user: process.env.DB_USER,
-      host: process.env.DB_HOST,
-      database: process.env.DB_NAME,
-      password: process.env.DB_PASSWORD,
-      port: process.env.DB_PORT || 5432,
-    });
-    async function query() {
-      try {
-        // Connect to the PostgreSQL database
-        await client.connect();
-        const res = await client.query('SELECT * FROM my_table WHERE id = (SELECT max(id) FROM my_table)');      
-        callback(null, res.rows);
-      } catch (err) {
-        console.error('Error:', err);
-        callback(err);
-      } finally {
-        // Close the database connection
-        await client.end();
-      }
-    }
-    query();
-  }
 
   app.get('/ruok', async (req, res) => {
     res.sendStatus(200)
