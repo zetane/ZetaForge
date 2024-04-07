@@ -8,13 +8,13 @@ kind: Role
 metadata:
   name: executor
 rules:
-  - apiGroups:
-      - argoproj.io
-    resources:
-      - workflowtaskresults
-    verbs:
-      - create
-      - patch
+- apiGroups:
+  - argoproj.io
+  resources:
+  - workflowtaskresults
+  verbs:
+  - create
+  - patch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -30,69 +30,40 @@ subjects:
 ---
 apiVersion: v1
 kind: Secret
-metadata: 
+metadata:
   name: ninja-secret
 stringData:
   accessKey: AKIAIOSFODNN7EXAMPLE
   secretKey: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 ---
 apiVersion: v1
+data:
+  default: "s3:\n  bucket: zetaforge\n  endpoint: weed:8333\n  region: us-east-1\n\
+    \  insecure: true\n  accessKeySecret:\n    name: ninja-secret\n    key: accessKey\n\
+    \  secretKeySecret:\n    name: ninja-secret\n    key: secretKey\n"
 kind: ConfigMap
 metadata:
   name: forge-bucket
-data:
-  default: |
-    s3:
-      bucket: zetaforge
-      endpoint: weed:8333
-      region: us-east-1
-      insecure: true
-      accessKeySecret:
-        name: ninja-secret
-        key: accessKey
-      secretKeySecret:
-        name: ninja-secret
-        key: secretKey
 ---
 apiVersion: v1
+data:
+  config.json: "{\n  \"identities\": [\n    {\n      \"name\": \"main\",\n      \"\
+    credentials\": [\n        {\n          \"accessKey\": \"AKIAIOSFODNN7EXAMPLE\"\
+    ,\n          \"secretKey\": \"wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY\"\n   \
+    \     }\n      ],\n      \"actions\": [\n        \"Read\",\n        \"List\",\n\
+    \        \"Write\"\n      ]\n    },\n    {\n      \"name\": \"anonymous\",\n \
+    \     \"actions\": [\n        \"Read\",\n        \"List\"\n      ]\n    }\n\n\
+    \  ]\n}"
 kind: ConfigMap
 metadata:
   name: seaweed-config
-data:
-  config.json: |-
-    {
-      "identities": [
-        {
-          "name": "main",
-          "credentials": [
-            {
-              "accessKey": "AKIAIOSFODNN7EXAMPLE",
-              "secretKey": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
-            }
-          ],
-          "actions": [
-            "Read",
-            "List",
-            "Write"
-          ]
-        },
-        {
-          "name": "anonymous",
-          "actions": [
-            "Read",
-            "List"
-          ]
-        }
-
-      ]
-    }
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: weed
   labels:
     app.kubernetes.io/name: weed
+  name: weed
 spec:
   replicas: 1
   selector:
@@ -104,38 +75,42 @@ spec:
         app.kubernetes.io/name: weed
     spec:
       containers:
-        - name: weed
-          image: chrislusf/seaweedfs
-          command: ["weed", "server", "-s3.config=/home/config.json", "-s3"]
-          ports:
-            - containerPort: 8333
-          volumeMounts:
-            - name: config
-              mountPath: /home
+      - command:
+        - weed
+        - server
+        - -s3.config=/home/config.json
+        - -s3
+        image: chrislusf/seaweedfs
+        name: weed
+        ports:
+        - containerPort: 8333
+        volumeMounts:
+        - mountPath: /home
+          name: config
       volumes:
-        - name: config
-          configMap:
-            name: seaweed-config
+      - configMap:
+          name: seaweed-config
+        name: config
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: weed
 spec:
-  type: LoadBalancer
-  loadBalancerIP: ~
+  loadBalancerIP: null
+  ports:
+  - port: 8333
+    targetPort: 8333
   selector:
     app.kubernetes.io/name: weed
-  ports:
-    - port: 8333
-      targetPort: 8333
+  type: LoadBalancer
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: registry
   labels:
     app.kubernetes.io/name: registry
+  name: registry
 spec:
   replicas: 1
   selector:
@@ -147,10 +122,10 @@ spec:
         app.kubernetes.io/name: registry
     spec:
       containers:
-        - name: registry
-          image: registry:2
-          ports:
-            - containerPort: 5000
+      - image: registry:2
+        name: registry
+        ports:
+        - containerPort: 5000
 ---
 apiVersion: v1
 kind: Service

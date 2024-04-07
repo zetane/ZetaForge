@@ -1,4 +1,3 @@
-
 import requests
 import platform
 import subprocess
@@ -6,27 +5,25 @@ import gzip
 import boto3
 import os
 import shutil
-from pkg_resources import resource_filename 
 from pathlib import Path
 from botocore.client import Config
 from botocore import UNSIGNED
 from pathlib import Path
-import time
 import ssl
-import progressbar
 import os
 import platform
 import sys
+from zipfile import ZipFile
+import tarfile
 
 # BACKEND = resource_filename("")
 EXECUTABLES_PATH = os.path.join(Path(__file__).parent, 'executables')
 ssl._create_default_https_context = ssl._create_unverified_context
 
 s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED), region_name='us-east-2')
-def install_kubectl():
-    
-    try:
 
+def install_kubectl():
+    try:
         stable_release_url = "https://dl.k8s.io/release/stable.txt"
         response = requests.get(stable_release_url)
         stable_release = None
@@ -83,7 +80,6 @@ def install_kubectl():
         raise Exception("EXCEPTION WHILE SETTING KUBECTL")
 
 def download_content(url, filename):
-    
     response = requests.get(url)
     if response.status_code == 200:
         with open(filename, "wb") as f:
@@ -93,6 +89,40 @@ def download_content(url, filename):
         print(f"Failed to download {filename} binary. Status code: {response.status_code}")
         raise Exception("Error while downloading kubectl")
 
+def extract_zip(zip_file, target_dir):
+    if platform.system() != "Darwin":
+        with ZipFile(zip_file, 'r') as f:
+            for file_info in f.infolist():
+                file_path = os.path.join(target_dir, file_info.filename)
+                print(".", end="")
+            
+                if file_info.is_dir():
+                    os.makedirs(file_path, exist_ok=True)
+                elif file_info.filename.endswith('/'):
+                    # Handle symbolic links
+                    link_name = os.path.basename(file_info.filename[:-1])
+                    link_target = zip_file.read(file_info).decode('utf-8')
+                    link_path = os.path.join(target_dir, link_name)
+                    os.symlink(link_target, link_path)
+                else:
+                    f.extract(file_info, target_dir)
+                    try:
+                        os.chmod(file_path, file_info.external_attr >> 16)
+                    except Exception as e:
+                        print(f"Failed to update permissions of {file_path}")
+                        print(e)
+
+    elif platform.system() == "Darwin":
+        unzip = subprocess.run(["unzip", zip_file], capture_output=True, text=True)
+        print(unzip.stdout)
+
+
+def extract_tar(tar_file, target_dir):
+    with tarfile.open(tar_file, 'r') as tar:
+        print(f"Extracting {tar_file} to {target_dir}")
+        tar.extractall(target_dir)
+        
+    print(f"\nExtraction completed.")
 
 def gunzip_file(in_file, out_file):
     with gzip.open(in_file, 'rb') as f_in:
@@ -100,11 +130,8 @@ def gunzip_file(in_file, out_file):
             shutil.copyfileobj(f_in, f_out)
 
 def get_s2_executable(filename):
-    
-
     chmod_flag = True
     bucket_name = 'forge-executables-test'
-     
     
     if platform.system() == 'Windows':
         chmod_flag = False
@@ -120,113 +147,141 @@ def get_s2_executable(filename):
         print(f"Error: {e}")
 
 
-def generate_file_names(app_version='0.0.1'):
-    bucket_key = "zetaforge-" + app_version
-    key_file = EXECUTABLES_PATH
-    platform_ = platform.system()
+def get_download_file(client_version):
+    bucket_key = "zetaforge-" + client_version
     machine = platform.machine()
-    zip_dir = os.path.join(EXECUTABLES_PATH, "zetaforge.zip")
-    unzip = ['unzip', 'zetaforge.zip']
-    if platform_ == 'Windows':
-        app_dir = os.path.join(EXECUTABLES_PATH, "zetaforge", "win-unpacked")
-
-        bucket_key += '-windows'
-        return f"{bucket_key}.zip", zip_dir, ['powershell', "expand-archive", "zetaforge.zip"], app_dir
-    elif platform_ == 'Linux':
-        app_dir = os.path.join(EXECUTABLES_PATH, "zetaforge", "linux-unpacked")
-
+    if platform.system() == 'Windows':
+        bucket_key += '-windows-x64'
+        bucket_key += ".tar.gz"
+        return bucket_key
+    elif platform.system() == 'Linux':
         bucket_key += '-linux'
         if machine == 'x86_64' or machine == 'x86-64':
-            bucket_key += '-amd64'
+            bucket_key += '-x64'
         else:
             bucket_key += '-arm64'
-        return f"{bucket_key}.zip", zip_dir, unzip, app_dir
+        bucket_key += ".tar.gz"
+        return bucket_key
     else:
-        app_dir = os.path.join(EXECUTABLES_PATH, "zetaforge.app")
-
         bucket_key += '-darwin'
         if machine == 'x86_64' or machine == 'x86-64':
-            bucket_key += '-amd64'
+            bucket_key += '-x64'
         else:
             bucket_key += '-arm64'
-        return f"{bucket_key}.zip", zip_dir, unzip, app_dir
+        bucket_key += ".tar.gz"
+        return bucket_key
+
+def get_server_executable(s2_version=None):
+    filename = f"s2-{s2_version}"
+    if platform.system() == 'Windows':
+        filename += '.exe'
+        return filename
+    else:
+        machine = platform.machine()
+        if machine == 'x86_64' or machine == 'x86-64':
+            filename += '-amd64'
+        else:
+            filename += '-arm64'
+    return filename
+
+def check_and_clean_files(directory, version):
+    for filename in os.listdir(directory):
+        file_parts = filename.split('-')
+        if len(file_parts) >= 2:
+            file_version = file_parts[1]
+            if file_version == version:
+                print(f"Found an existing install of version {version}")
+            else:
+                file_path = os.path.join(directory, filename)
+                if os.path.isfile(file_path):
+                    os.remove(file_path)
+                    print(f"Removed file: {filename}")
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path)
+                    print(f"Removed directory: {filename}")
+        
+        if filename == 'zetaforge.app':
+            _, server_path = get_launch_paths(version, version)
+            if os.path.exists(server_path):
+                print(f"Found existing version {version}")
+            else:
+                # did not find the correct version, reinstall it
+                print(f"Found zetaforge.app but did not find version {version}, removing previous app")
+                shutil.rmtree(os.path.join(EXECUTABLES_PATH, "zetaforge.app"))
+
+def check_version(server_version, client_version):
+    check_and_clean_files(EXECUTABLES_PATH, client_version)
+    check_and_clean_files(EXECUTABLES_PATH, server_version)
+
+def get_app_dir(client_version):
+    if platform.system() == 'Darwin':
+        app_dir = os.path.join(EXECUTABLES_PATH, "zetaforge.app")
+    elif platform.system() == 'Windows':
+        app_dir = os.path.join(EXECUTABLES_PATH, f"zetaforge-{client_version}-windows-x64")
+    else:
+        app_dir = os.path.join(EXECUTABLES_PATH, f"zetaforge-{client_version}-linux-arm64")
+        if platform.machine() == 'x86_64' or platform.machine() == 'x86-64':
+            app_dir = os.path.join(EXECUTABLES_PATH, f"zetaforge-{client_version}-linux-x64")
+
+    return app_dir
+
+def get_launch_paths(server_version, client_version):
+    server_name = get_server_executable(server_version) #need to change the function name
+    app_dir = get_app_dir(client_version)
+    
+    if platform.system() == 'Darwin':
+        client_path = os.path.join(app_dir, "Contents", "MacOS", "zetaforge")
+        server_dir = os.path.join(app_dir, "Contents" ,"Resources", "server2")
+    elif platform.system() == 'Windows':
+        client_path = os.path.join(app_dir, "zetaforge.exe")
+        server_dir = os.path.join(app_dir, "resources", "server2")
+    else:
+        client_path = os.path.join(app_dir, "zetaforge")
+        server_dir = os.path.join(app_dir, "resources", "server2")
+    
+    return client_path, os.path.join(server_dir, server_name)
 
 
-
-
-
-
-
-def install_frontend_dependencies(app_version="0.0.1"):
+def download_binary(bucket_key, destination):
     bucket = "forge-executables-test"
-
-    bucket_key, zip_dir, unzip, app_dir = generate_file_names(app_version=app_version)
-    if os.path.exists(app_dir) and os.path.isdir(app_dir):
-        print("Frontend exist")
-        return
+    print(f"Fetching executable: {bucket_key}")
     try:
         meta_data = s3.head_object(Bucket=bucket, Key=bucket_key)
-        total_length = int(meta_data.get('ContentLength', 0))
-        downloaded = 0
-        def progress(chunk):
-            nonlocal downloaded
-            downloaded += chunk
-            done = int(50 * downloaded / total_length)
-            sys.stdout.write("\r[%s%s]" % ('=' * done, ' ' * (50-done)) )
-            sys.stdout.flush()
-        print("DOWNLOADING APP")
-        s3.download_file(bucket, bucket_key, zip_dir, Callback=progress)
-        print("APP DOWNLOAD COMPLETED")
-    except Exception as err:
-        print(err)
+    except Exception as e:
+        raise Exception(f"Executable not found: {bucket_key}! There is no binary build for this version and platform, please log an issue at https://github.com/zetane/zetaforge")
+
+    total_length = int(meta_data.get('ContentLength', 0) / (1024 * 1024))
+    downloaded = 0
+    def progress(chunk):
+        nonlocal downloaded
+        downloaded += chunk
+        download_mb = int(downloaded / (1024*1024))
+        done = int((50 * downloaded / total_length) / (1024 * 1024))
+
+        sys.stdout.write("\r[%s%s] %s/%sMB" % ('=' * done, ' ' * (50-done), download_mb, total_length) )
+        sys.stdout.flush()
     
-    result = subprocess.Popen(unzip, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=EXECUTABLES_PATH)
-    result.communicate()
+    print(f"Downloading app {bucket_key} to {EXECUTABLES_PATH}")
+    s3.download_file(bucket, bucket_key, destination, Callback=progress)
+    print("\nCompleted app download..")
 
 
-            
+def install_frontend_dependencies(client_version, no_cache=True):
+    os.makedirs(EXECUTABLES_PATH, exist_ok=True)
 
-                
-
-        
-
-
-
-        
-
-
-#NOTE THAT THIS IS SUBJECT TO CHANGE, ONCE WE HAVE THE OPEN SOURCE CODE. FOR NOW, IT FETCHES FROM PRIVATE REPO(gitlab)
-# def init_git():
-#     front_end = os.path.join(EXECUTABLES_PATH, 'frontend')
-#     subprocess.run("git init", cwd=EXECUTABLES_PATH, shell=True)
-#     subprocess.run("git remote add origin https://gitlab.com/zetane/zetaforge.git", cwd=EXECUTABLES_PATH, shell=True)
-#     subprocess.run("git config core.sparseCheckout true", cwd=EXECUTABLES_PATH, shell=True)
-#     info = os.path.join(EXECUTABLES_PATH, ".git", "info")
-#     os.makedirs(os.path.join(EXECUTABLES_PATH, ".git", "info"), exist_ok=True)
-#     with open(os.path.join(EXECUTABLES_PATH , ".git", "info", "sparse-checkout"), "w") as f:
-#         f.write("frontend/\nblocks/\nhistory/\nmy_data\nmy_pipelines\npipelines\nmy_data\nmy_blocks\n") 
-#     subprocess.run("git pull origin master", cwd=EXECUTABLES_PATH, shell=True)
-#     subprocess.run("npm install", cwd=front_end, shell=True)
-#     env = os.path.join(front_end, '.env.development')
+    bucket_key = get_download_file(client_version)
+    app_dir = get_app_dir(client_version)
+    tar_file = os.path.join(EXECUTABLES_PATH, bucket_key)
+    if not os.path.exists(tar_file) or no_cache:
+        download_binary(bucket_key, tar_file)
     
+    print("Unzipping and installing app..")
 
-# def deinit_git():
-#     subprocess.run("rm -rf .git", cwd=EXECUTABLES_PATH, shell=True)
+    if os.path.exists(app_dir):
+        shutil.rmtree(app_dir)
 
+    extract_tar(tar_file, EXECUTABLES_PATH)
 
+    print(f"Zetaforge extracted and installed at {os.path.join(EXECUTABLES_PATH)}")
 
-
-
-
-
-
-            
-
-
-
-
-
-    
-
-
-        
+    return True

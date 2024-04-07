@@ -4,27 +4,19 @@ import platform
 import time
 import json
 from pkg_resources import resource_filename
-from .check_forge_dependencies import check_dependencies, check_docker_installed, check_s2_executable
+from .check_forge_dependencies import check_dependencies, check_running_kube, check_kube_pod
 from .install_forge_dependencies import *
-import webbrowser
 from pathlib import Path
-import docker
-from colorama import init, Fore, Style
+from colorama import init, Fore
 from datetime import datetime
 import mixpanel
-from cryptography.fernet import Fernet
-import socket
-import base64
+import socket, errno
 import uuid
 from hashlib import sha256
 import json
-import re
 import shutil
-import threading
-import queue
-import sys
 import yaml 
-
+import threading
 
 mixpanel_token = '4c09914a48f08de1dbe3dc4dd2dcf90d'
 mixpanel_instance = mixpanel.Mixpanel(mixpanel_token)
@@ -35,18 +27,48 @@ INSTALL_YAML = resource_filename("zetaforge", os.path.join('utils', 'install.yam
 EXECUTABLES_PATH = os.path.join(Path(__file__).parent, 'executables')
 FRONT_END = os.path.join(EXECUTABLES_PATH, "frontend")
 
+def write_json(server_version, client_version, context, registry_port):
+    _, server_path = get_launch_paths(server_version, client_version)
+    config = create_config_json(os.path.dirname(server_path), context, registry_port)
+    return config
+
+
+def check_for_container(name):
+    ls_cmd = subprocess.run(["docker", "container", "ls", '--format', 'json'], capture_output=True, text=True)
+    container_id = None
+
+    if ls_cmd.returncode == 0:
+        output_list = ls_cmd.stdout.splitlines()
+
+        for container_str in output_list:
+            if container_str.strip():
+                container = json.loads(container_str.strip())
+                if container['Names'].startswith(name):
+                    container_id = container['ID']
+                    break
+    else:
+        print(f"Error: {ls_cmd.stderr}")
+
+    if container_id:
+        print(f"Container ID: {container_id}")
+        return container_id
+    else:
+        print("No matching container found.")
+        return None
 
 
 def find_available_port(start_port, end_port):
-    for port in range(start_port, end_port + 1):
-        try:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    for port in range(start_port, end_port):
+        print(f"Trying {port}..")
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            try:
                 s.bind(('localhost', port))
-            return port
-        except OSError:
-            pass
+                s.close()  # Close the socket to release the port
+                print(f"Port {port} is open, setting this for the registry")
+                return port
+            except OSError:
+                pass
     return None
-
 
 def update_yaml(port):
     d = None
@@ -61,351 +83,301 @@ def update_yaml(port):
     with open(BUILD_YAML, "w") as f:
         yaml.dump_all(yaml_doc, f, default_flow_style=False)
 
-def setup(context):
-    print(platform.machine())
-    print(os.path.abspath(os.getcwd()))
-    kubectl_flag = check_dependencies()        
-    port = find_available_port(5000, 7000)
-    update_yaml(port)
+def get_kubectl_contexts():
+    # Get the list of kubectl contexts
+    result = subprocess.run(["kubectl", "config", "get-contexts"], capture_output=True, text=True)
+    lines = result.stdout.strip().split("\n")[1:]  # Skip the header line
 
+    contexts = []
+    for line in lines:
+        parts = line.split()
+        if len(parts) >= 3:
+            context_name = parts[2]
+            if context_name.startswith("*"):
+                context_name = context_name[1:]
+            contexts.append(context_name)
+
+    # Print the contexts for the user
+    print("Available kubectl contexts:")
+    for i, context in enumerate(contexts, start=1):
+        if context.startswith("*"):
+            print(f"{i}. {context[1:]} (current)")
+        else:
+            print(f"{i}. {context}")
+    
+    return contexts
+
+def select_kubectl_context():
+    # Get the list of kubectl contexts
+    contexts = get_kubectl_contexts()
+
+    # Prompt the user to select a context
+    while True:
+        try:
+            choice = int(input("Enter the number of the context you want to use: "))
+            if 1 <= choice <= len(contexts):
+                break
+            else:
+                print("Invalid choice. Please try again.")
+        except ValueError:
+            print("Invalid input. Please enter a valid number.")
+
+    selected_context = contexts[choice - 1].strip("* ")
+
+    # Confirm the selected context with the user
+    confirmation = input(f"You have selected the context: {selected_context}. Is this correct? (y/n): ")
+    if confirmation.lower() != "y":
+        print("Context selection canceled.")
+        return None
+
+    return selected_context
+
+def setup(server_version, client_version, build_flag = True, install_flag = True):
+    print("Platform: ", platform.machine())
+    print("CWD: ", os.path.abspath(os.getcwd()))
+    context = select_kubectl_context()
+
+    kubectl_flag = check_dependencies()        
+
+    registry_port = 5000
+    print(f"Setting registry port: {registry_port}")
+    update_yaml(int(registry_port))
         
     switch_context = None
     if kubectl_flag:
-        switch_context = subprocess.run(f"kubectl config use-context {context}", shell=True)
+        switch_context = subprocess.run(["kubectl", "config", "use-context", f"{context}"], capture_output=True, text=True)
     else:
-        install_kubectl()
-        switch_context = subprocess.run(f"./kubectl config use-context {context}", shell=True, cwd=EXECUTABLES_PATH)
+        print("Kubectl not found. Please install docker-desktop and enable kubernetes, or ensure that kubectl installed and is able to connect to a working kubernetes cluster.")
+        raise EnvironmentError("Kubectl not found!")
+        #install_kubectl()
+        #switch_context = subprocess.run(f"./kubectl config use-context {context}", shell=True, cwd=EXECUTABLES_PATH)
 
+    in_context = (switch_context.returncode == 0)
         
-    if switch_context.returncode != 0:
+    if not in_context:
         print(f"Cannot find the context {context} for kubernetes. Please double check that you have entered the correct context.")        
-        subprocess.run("kubectl config get-contexts", shell=True)
+        subprocess.run(["kubectl", "config", "get-contexts"], capture_output=True, text=True)
         raise Exception("Exception while setting the context")
+    
+    running_kube = check_running_kube(context)
+    if not running_kube:
+        raise Exception("Kubernetes is not running, please start kubernetes and ensure that you are able to connect to the kube context.")
 
         
-        
-    build = None
-    install = None
-    if kubectl_flag:
-        build = subprocess.run(f"kubectl apply -f {BUILD_YAML}", shell=True)
-        install = subprocess.run(f"kubectl apply -f {INSTALL_YAML}", shell=True)
-    else:
-        build = subprocess.run(f"./kubectl apply -f {BUILD_YAML}", shell=True, cwd=EXECUTABLES_PATH)
-        install = subprocess.run(f"./kubectl apply -f {INSTALL_YAML}", shell=True, cwd=EXECUTABLES_PATH)
-
+    build = subprocess.run(["kubectl", "apply", "-f", f"{BUILD_YAML}"], capture_output=True, text=True)
+    install = subprocess.run(["kubectl", "apply", "-f", f"{INSTALL_YAML}"], capture_output=True, text=True)
 
     if build.returncode != 0 or install.returncode != 0:
         raise Exception("Error while building")
         
-        
-        
-        
+    time.sleep(3)
     name = "k8s_registry"
-    container_id = ""
-    while True:
-            
-        ls_cmd = subprocess.Popen(["docker", "container", "ls",'--format', 'json'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-           
-            
-        output, stderr = ls_cmd.communicate()
+    container_id = check_for_container(name)
 
-        if output:
-            output_str = output
-            output_list = output_str.splitlines()
-                
-            for container_str in output_list:
-                if container_str.strip():
-                    container = json.loads(container_str.strip())
-                if container['Names'].startswith(name):
-                    container_id = container['ID']
-                    break
-            if container_id:
+    if not container_id:
+        print("Registry is not running, please verify that docker and kubernetes are running and re-run the setup process.")
+        raise Exception("Error detecting container registry")
+        
+    if context == "docker-desktop":
+        ins_cmd = subprocess.run(["docker", "inspect", str(container_id)], capture_output=True, text=True)
+
+        json_data = json.loads(ins_cmd.stdout)[0]
+        volumename = ""
+        for item in json_data.get("Mounts", []):
+            volumetype = item.get("Type", "")
+            if volumetype == 'volume':
+                volumename = item.get("Name", "")
+        print("Volume: ", volumename)
+            
+        print("Binding k8s registry to registry pod")
+        regcmd = subprocess.Popen(["docker", "run", "--rm", "--name", "registry", "-p", f"{registry_port}:5000", "-v", f"{volumename}:/var/lib/registry", "registry:2"],  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        while True:
+            checkcmd = subprocess.run(["docker", "inspect", "registry"], capture_output=True)  
+            
+            if checkcmd.stdout:
                 break
             
-        if container_id: #sanity check
-            break
-        time.sleep(1)
-        
-    container_id = container_id
-        
-    ins_cmd = subprocess.Popen(["docker", "inspect", container_id], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = ins_cmd.communicate()
-        
-    json_data = json.loads(stdout.decode('utf-8'))[0]
-    volumename = ""
-    for item in json_data.get("Mounts", []):
-        volumetype = item.get("Type", "")
-        if volumetype == 'volume':
-            volumename = item.get("Name", "")
-        
-    register_cmd = subprocess.Popen(["docker", "run", "--rm", "--name", "registry", "-p", f"{port}:5000", "-v", f"{volumename}:/var/lib/registry", "registry:2"])
+            time.sleep(1)
+
+        regcmd.terminate()
+        print("Completed binding pods")
     
-    return kubectl_flag, port
+    install_frontend_dependencies(client_version=client_version)
+
+    config_path = write_json(server_version, client_version, context, registry_port)
+
+    print(f"Setup complete, wrote config to {config_path}.")
+        
+    return config_path
 
 
-def run_forge(context, s2_version=None, dev_path=None, dev_flag=None, app_version='0.0.1', s2_path=None, frontend_path=None):
-    
-    doc = check_docker_installed()
-    if doc != 0:
-        raise Exception("Docker not found! Please install docker.")
+#dev version is only passed, when a developer wants to pass a local version(for e.g. dev_path=./s2-v2.3.5-amd64)
+def run_forge(server_version=None, client_version=None, server_path=None, client_path=None):
+    global time_start
+    time_start = datetime.now()
 
-    
+    #init is called for collarama library, better logging.
+    init()   
+
+    reg = check_kube_pod("registry")
+    if not reg:
+        print("Registry container not found, restarting..")
+        setup(server_version, client_version)
+        raise Exception("Container registry is not running, please ensure kubernetes is running or re-run `zetaforge setup`.")
+    weed = check_kube_pod("weed")
+    if not weed:
+        raise Exception("SeaweedFS is not running, please ensure kubernetes is running or re-run `zetaforge setup`.")
+
     #mixpanel_instance.track(distinct_id,'Initial Launch')
     distinct_id = generate_distinct_id()
     #added this for funnel reviews(for e.g., user Launched and after created a run, loaded a pipeline etc.)
     mixpanel_instance.track(distinct_id, "Initial Launch", {})
 
-    kubectl_flag, port = setup(context)
-    print(f"REGISTRY CONTAINER USES PORT {port}")
+    if server_path is None:
+        _, server_path = get_launch_paths(server_version, client_version)
+
+    if client_path is None:
+        client_path, _ = get_launch_paths(server_version, client_version)
+
     try:
-
-        while True:
-            
-            check_command = subprocess.Popen(["docker", "inspect", "registry"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            check_command.wait()
-            if len(check_command.stdout.read()) > 0:
-                break
-            time.sleep(1)
-
-        #STEP 1: CHECK IF A DEV INSTANCE IS PASSED
-        s2 = None
-        app = None
-        if s2_path:
-            print("RUNNING LOCAL SERVER2")
-            s2 = subprocess.Popen([s2_path],stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.dirname(s2_path))
-        #STEP 2: IF NOT, CHECK IF THE COMPATIBLE VERSION ALREADY EXISTS LOCALLY
-
-        if frontend_path:
-            print("RUNNING LOCAL FRONTEND")
-            app = subprocess.Popen([frontend_path],stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.dirname(frontend_path))
-
-        
-            #NOTE: server2 is now embedded within frontend, keeping the commented section as a reference, in case we ever decide to rollback to the older approach
-            # file_exist, filename = check_s2_executable(s2_version=s2_version)
-            # if file_exist:
-            #     print("FILE ALREADY EXIST. RUNNING FROM EXISTING EXECUTABLE")
-                
-            #     print(filename)
-            #     s2 = subprocess.Popen([filename],stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=EXECUTABLES_PATH, shell=True)
-            # else:
-            #     get_s2_executable(filename)
-            #     print(filename)
-            #     print("THIS IS EXECUTABLES PATH")
-            #     s2 = subprocess.Popen([filename],stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=EXECUTABLES_PATH, shell=True)
-                  
-        filename = check_s2_executable(s2_version) #need to change the function name
-        
-        if platform.system() == 'Darwin':
-            app_dir = os.path.join(EXECUTABLES_PATH, "zetaforge.app", "Contents", "MacOS")
-            app_path = os.path.join(app_dir, "zetaforge")
-            s2_path = os.path.join(EXECUTABLES_PATH, "zetaforge.app", "Contents" ,"Resources", "server2")
-            create_config_json(s2_path, port)
-
-            if app == None:
-                app = subprocess.Popen(app_path, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=app_dir)
-            time.sleep(5)
-            if s2 == None:
-                s2 = subprocess.Popen([filename],stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=s2_path, shell=True)
-        elif platform.system() == 'Windows':
-            app_path = os.path.join(EXECUTABLES_PATH, "zetaforge", "win-unpacked", "zetaforge.exe")
-            app_dir = os.path.join(EXECUTABLES_PATH, "zetaforge", "win-unpacked")
-            
-            s2_path = os.path.join(app_dir, "resources", "server2")
-            create_config_json(s2_path, port)
-            if app == None:
-                app = subprocess.Popen(app_path, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=EXECUTABLES_PATH, shell=True)
-            time.sleep(5)
-            if s2 == None:
-                s2 =  subprocess.Popen([os.path.join(s2_path, filename)],stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=s2_path, shell=True)
+        server = None
+        client = None
+        print(f"Launching execution server {server_path}..")
+        server_executable = os.path.basename(server_path)
+        if platform.system() != 'Windows':
+            server_executable = f"./{server_executable}"
         else:
-            app_path = os.path.join(EXECUTABLES_PATH, "zetaforge", "linux-unpacked", "zetaforge.exe")
-            app_dir = os.path.join(EXECUTABLES_PATH, "zetaforge", "linux-unpacked")
-            s2_path = os.path.join(app_dir, "resources", "server2")
-            create_config_json(s2_path, port)
-            if app == None:
-                app = subprocess.Popen(app_path, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=EXECUTABLES_PATH, shell=True)
-            if s2 == None:
-                s2 =  subprocess.Popen([filename],stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=s2_path, shell=True)
+            server_executable = server_path
 
+        server = subprocess.Popen([server_executable],stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.dirname(server_path))
 
+        print(f"Launching client {client_path}..")
+        client_executable = os.path.basename(client_path)
+        if platform.system() == 'Darwin':
+            client_executable = [f"./{client_executable}"]
+        elif platform.system() == 'Windows':
+            client_executable = [client_path]
+        else: 
+            client_executable = [f"./{client_executable}"]
 
-        
+        client = subprocess.Popen(client_executable, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.dirname(client_path))
 
+        def read_output(process, name):
+            for line in process.stdout:
+                print(f"{name}: {line.decode('utf-8')}", end='')
 
-        def enqueue_output(out, queue):
-            for line in iter(out.readline, b''):
-                queue.put(line)
-                
+        def read_error(process, name):
+            for line in process.stderr:
+                print(f"{name} (stderr): {line.decode('utf-8')}", end='')
 
-        s2_queue = queue.Queue()
-        app_queue = queue.Queue() 
+        # Create threads to read the outputs concurrently
+        server_stdout_thread = threading.Thread(target=read_output, args=(server, '[server]'))
+        server_stderr_thread = threading.Thread(target=read_error, args=(server, '[server]'))
+        client_stdout_thread = threading.Thread(target=read_output, args=(client, '[client]'))
+        client_stderr_thread = threading.Thread(target=read_error, args=(client, '[client]'))
 
-        #using threading to prevent deadlocks
-        s2_thread = threading.Thread(target=enqueue_output, args=(s2.stdout, s2_queue))
-        app_thread = threading.Thread(target=enqueue_output, args=(app.stdout, app_queue))
+        # Start the threads
+        server_stdout_thread.start()
+        server_stderr_thread.start()
+        client_stdout_thread.start()
+        client_stderr_thread.start()
 
-        s2_thread.start()
-        app_thread.start()
-        app_open = False
-        while True:
-        # Check if there is any output from s2 subprocess
-            while not s2_queue.empty():
-                line = s2_queue.get()
-                if not line.decode('utf-8') == '\n':
-                    print(f"{Fore.BLUE}[s2] {line.decode('utf-8')}")
-                    time.sleep(0.5)
-            time.sleep(1)
-        # Check if there is any output from app subprocess
-            while not app_queue.empty():
-                line = app_queue.get()
-                if not line.decode('utf-8') == '\n':
-                    pattern = re.compile(r'localhost:(\d+)')
-                    match = pattern.findall(line.decode('utf-8'))
-                    if match and not app_open:
-                        port_number = int(match[0])
-                        app_open=True
-                    print(f"{Fore.YELLOW}[app] {line.decode('utf-8')}")
-                    time.sleep(0.5)
-            time.sleep(1)
-        
-            
-            time.sleep(5)
-        s2.wait()
+        # Wait for the threads to finish
+        server_stdout_thread.join()
+        server_stderr_thread.join()
+        client_stdout_thread.join()
+        client_stderr_thread.join()
+
     except KeyboardInterrupt: 
-        
-        print(f"{Style.RESET_ALL}Teardown Process will start now")
-        
+        print("Terminating servers..")
+
+    finally:
         total_time = (datetime.now() - time_start).total_seconds()
         distinct_id = generate_distinct_id()
 
-
         try:
             mixpanel_instance.track(distinct_id,'Full Launch', {'Duration(seconds)': total_time})
-            time.sleep(5) # mixpanel instance is asynch, so making sure that it completes the call before tear down
+            time.sleep(2) # mixpanel instance is asynch, so making sure that it completes the call before tear down
         except:
             print("Mixpanel cannot track")
-    finally:
-        teardown = input("Do you wish to teardown your containers?[Y/N]")
-        if teardown.lower() == 'y':
 
+        server.kill()
+        client.kill()
 
-        
-        
-            subprocess.Popen(["docker", "stop", "registry"])
-            # subprocess.Popen(["docker", "stop", "forgeDB"])
-            if kubectl_flag:
-                subprocess.run(f"kubectl delete -f {INSTALL_YAML}", shell=True)
-                subprocess.run(f"kubectl delete -f {BUILD_YAML}", shell=True)
-            else:
-                subprocess.run(f"./kubectl delete -f {INSTALL_YAML}", shell=True)
-                subprocess.run(f"./kubectl delete -f {BUILD_YAML}", shell=True)
-        else:
-            print("Containers won't be teared down. Please run zetaforge teardown for deleting your containers")
 
 #purge executables, and upload them from the scratch
 def purge():
     shutil.rmtree(EXECUTABLES_PATH)
     os.makedirs(EXECUTABLES_PATH)
 
-
 def teardown():
-    subprocess.Popen(["docker", "stop", "registry"])
-        # subprocess.Popen(["docker", "stop", "forgeDB"])
-    kubectl_flag = check_dependencies()
-    if kubectl_flag:
-        subprocess.run(f"kubectl delete -f {INSTALL_YAML}", shell=True)
-        subprocess.run(f"kubectl delete -f {BUILD_YAML}", shell=True)
-    else:
-        subprocess.run(f"./kubectl delete -f {INSTALL_YAML}", shell=True)
-        subprocess.run(f"./kubectl delete -f {BUILD_YAML}", shell=True)
-
-
-
-def add_psql():
-    check_cmd = "docker ps -a --filter name=forgeDB --format '{{.Names}}'"
-    result = subprocess.run(check_cmd, shell=True, capture_output=True, text=True)
+    contexts = get_kubectl_contexts()
+    default = None
+    for i, context in enumerate(contexts, start=1):
+        if context.startswith("*"):
+            default = context[1:]
     
+    print("Tearing down services..")
+    if default and default == "docker-desktop":
+        stop = subprocess.run(["kubectl", "stop", "registry"], capture_output=True, text=True)
+        print(stop.stdout)
+
+    install = subprocess.run(["kubectl", "delete", "-f", INSTALL_YAML], capture_output=True, text=True)
+    print ("Removing install: ", {install.stdout})
+    build = subprocess.run(["kubectl", "delete", "-f", BUILD_YAML], capture_output=True, text=True)
+    print("Removing build: ", {build.stdout})
+    print("Completed teardown!")
+
+def check_expected_services(config):
+    is_local = config["IsLocal"]
+    print(config)
+    if is_local:
+        local = config["Local"]
+        ports = [local["RegistryPort"]]
     
+        for port in ports:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(1)  # Set a timeout of 1 second
+            
+            try:
+                sock.bind(('localhost', int(port)))
+
+                raise Exception(f"Was able to bind to {port}, which means kube services are nto running correctly. Please re-run `zetaforge setup`.")
+            except socket.error as e:
+                if e.errno == errno.EADDRINUSE:
+                    print(f"Service running at port {port}")
+            finally:
+                sock.close()
     
-    if result.stdout.strip().replace("'", "") == 'forgeDB': 
-        
-        restart_cmd = "docker restart forgeDB"
-        subprocess.run(restart_cmd, shell=True)
-    else:
-        subprocess.run("docker pull postgres", shell=True)
-        subprocess.run("docker run -d --name forgeDB -p 5432:5432 -e POSTGRES_PASSWORD=pass123 -v forge_data:/var/lib/postgresql/data postgres", shell=True)
+    return True 
 
-
-
-
-
-
-
-
-#dev version is only passed, when a developer wants to pass a local version(for e.g. dev_path=./s2-v2.3.5-amd64)
-
-
-
-# all the optional parameters must be passed in _init_.py.
-def launch_forge(context, s2_version=None, dev_path=None, dev_flag=False, app_version=None, s2_path=None, app_path=None):
-    global time_start
-    time_start = datetime.now()
-    os.makedirs(EXECUTABLES_PATH, exist_ok=True)
-    
-    #init is called for collarama library, better logging.
-    init()   
-    # there's no direct way to check for kubernetes. So, I am warning them to check for their kubernetes.
-    answer = input(f"{Fore.BLUE}{Style.BRIGHT}Please check if docker desktop is running, and enable kubernetes before proceeding. Click any button to continue")
-
-    docker_dektop = check_docker_desktop()
-    if not docker_dektop:
-        Exception("Docker Desktop is not running. Please launch docker desktop and enable kubernetes.")
-    
-    #if the app_path is defined, we're bypassing installation.
-    if app_path == None:
-        install_frontend_dependencies(app_version=app_version)
-    
-    run_forge(context, s2_version=s2_version, dev_path=dev_path, dev_flag=dev_flag, app_version=app_version, s2_path=s2_path, frontend_path=app_path)
-    
-
-def check_docker_desktop():
-    
-    try:
-        client = docker.from_env()
-        client.ping()
-        return True
-    except docker.errors.DockerException:
-        return False
-
-
-#method for creating config.json file
-def create_config_json(s2_path, port=5000):
+def create_config_json(s2_path, context, registry_port=5000):
     config = {
-	"IsLocal":True,
-	"ServerPort":"8080",
-	"KanikoImage":"gcr.io/kaniko-project/executor:latest",
-	"WorkDir":"/app",
-	"FileDir":"/files",
-	"ComputationFile":"computations.py",
-	"EntrypointFile":"entrypoint.py",
-	"ServiceAccount":"executor",
-	"Bucket":"forge-bucket",
-	"Database":"./zetaforge.db",
+        "IsLocal":True,
+        "ServerPort":"8080",
+        "KanikoImage":"gcr.io/kaniko-project/executor:latest",
+        "WorkDir":"/app",
+        "FileDir":"/files",
+        "ComputationFile":"computations.py",
+        "EntrypointFile":"entrypoint.py",
+        "ServiceAccount":"executor",
+        "Bucket":"forge-bucket",
+        "Database":"./zetaforge.db",
+        "KubeContext": context,
+        "Local": {
+            "BucketPort":"8333",
+            "RegistryPort": str(registry_port)
+        }
+    } 
 
-	"Local": {
-		"BucketPort":"8333",
-		"RegistryPort": str(port)
-	}
-} 
-
-
-    file = os.path.join(s2_path, "config.json")
-    with open(file, "w") as outfile: 
+    file_path = os.path.join(s2_path, "config.json")
+    with open(file_path, "w") as outfile: 
         json.dump(config, outfile)
 
+    return file_path
 
 def generate_distinct_id():
-    
     seed = 0
     try:
         seed = uuid.getnode()

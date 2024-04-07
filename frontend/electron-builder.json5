@@ -2,7 +2,8 @@
  * @see https://www.electron.build/configuration/configuration
  */
 {
-  "appId": "YourAppID",
+  "appId": "com.zetane.zetaforge",
+  "productName": "zetaforge",
   "asar": true,
   "directories": {
     "output": "release/${version}"
@@ -12,22 +13,22 @@
     "dist"
   ],
   "mac": {
-    "artifactName": "${productName}-${version}.${ext}",
+    "artifactName": "${productName}-${version}-darwin-${arch}.${ext}",
     "target": [
-      "dmg",
-      "zip"
+      "tar.gz"
     ]
   },
   "win": {
     "target": [
-      {
-        "target": "nsis",
-        "arch": [
-          "x64"
-        ]
-      }
+      "tar.gz"
     ],
-    "artifactName": "${productName}-${version}.${ext}"
+    "artifactName": "${productName}-${version}-windows-${arch}.${ext}"
+  },
+  "linux": {
+    "target": [
+      "tar.gz"
+    ],
+    "artifactName": "${productName}-${version}-linux-${arch}.${ext}"
   },
    "extraResources": [
     {

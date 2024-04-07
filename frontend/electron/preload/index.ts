@@ -1,5 +1,9 @@
 import { ipcRenderer, contextBridge } from 'electron'
 import { exposeElectronTRPC } from 'electron-trpc/main';
+import * as Sentry from "@sentry/electron";
+
+Sentry.init({ dsn: "https://7fb18e8e487455a950298625457264f3@o1096443.ingest.us.sentry.io/4507031960223744" });
+
 
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld('ipcRenderer', withPrototype(ipcRenderer))
