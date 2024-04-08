@@ -1,0 +1,106 @@
+site_name: Documentation
+
+use_directory_urls: false
+
+theme:
+  name: material
+  # custom_dir: docs/templates
+  social:
+    - icon: fontawesome/brands/discord
+      link: https://discord.gg/zetaforge
+  logo: assets/Group9.png
+  favicon: assets/fav2.png
+  icon:
+    repo: fontawesome/brands/github
+  features:
+    - content.code.copy
+    - navigation.footer
+    - content.action.view
+    - content.action.edit
+    - navigation.expand
+    # - navigation.sections # To make into non-collapsible sections
+  palette: 
+    # Palette toggle for dark mode
+    - scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+    # Palette toggle for light mode
+    - scheme: default
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+  
+    # # Palette toggle for light mode
+    # - media: "(prefers-color-scheme: light)"
+    #   scheme: default
+    #   toggle:
+    #     icon: material/toggle-switch
+    #     name: Switch to dark mode
+
+    # # Palette toggle for dark mode
+    # - media: "(prefers-color-scheme: dark)"
+    #   scheme: slate
+    #   toggle:
+    #     icon: material/toggle-switch-off-outline
+    #     name: Switch to light mode
+
+repo_url: https://github.com/zetane/zetaforge
+repo_name: zetane/zetaforge
+edit_uri: blob/main/docs/
+
+
+nav:
+  - Get Started: 
+    - Introduction: introduction.md
+    - Installation: installation.md
+    - Run Your First Pipeline: run-your-first-pipeline.md
+  - Tutorials:
+    - User Interface: user-interface.md
+    - Create Blocks: create-blocks.md
+    - Assemble a Pipeline: assemble-a-pipeline.md
+    - Run a Pipeline: run-a-pipeline.md
+    - Share a Pipeline: share-a-pipeline.md
+    - Deploy a Pipeline: deploy-a-pipeline.md
+    # - GitHub Repo to Block: github-repo-to-block.md
+  - Gallery: gallery.md
+  - Contribute: contribute.md
+  - Chat on Discord: https://discord.gg/zetaforge
+
+# markdown_extensions:
+#   - codehilite:
+#       guess_lang: false
+#       pygments: true
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+
+extra_css:
+- custom/custom.css
+
+extra_javascript:
+  - custom/custom.js
+
+extra:
+  generator: false
+  social:
+    - icon: fontawesome/brands/github 
+      link: https://github.com/zetane/zetaforge
+    - icon: fontawesome/brands/discord
+      link: https://discord.gg/zetaforge
+  # consent:
+  #   title: Cookie consent
+  #   description: >- 
+  #     We use cookies to recognize your repeated visits and preferences, as well
+  #     as to measure the effectiveness of our documentation and whether users
+  #     find what they're searching for. With your consent, you're helping us to
+  #     make our documentation better.
+
+copyright: Copyright &copy; 2024 Zetane
+
