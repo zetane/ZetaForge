@@ -68,6 +68,26 @@ You will need to [enable Kubernetes](https://docs.docker.com/desktop/kubernetes/
 
 > Note: We recommend [OrbStack](https://orbstack.dev/download) to macOS users for efficiency and performance reasons.
 
+## Launch ZetaForge
+
+After installing via pip
+
+```
+zetaforge launch
+```
+
+This will setup the correct services in Kubernetes, check that they are running, and then launch ZetaForge. If something goes wrong, you can run:
+
+```
+zetaforge setup
+```
+
+To reconfigure the container services. To teardown and remove the kubernetes services, you can run:
+
+```
+zetaforge teardown
+```
+
 
 ## Run your First Pipeline
 
