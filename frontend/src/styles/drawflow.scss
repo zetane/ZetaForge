@@ -1,0 +1,129 @@
+.parent-drawflow {
+  display: flex;
+  overflow: hidden;
+  touch-action: none;
+  outline:none;
+}
+
+.drawflow {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  user-select: none;
+  perspective: 0;
+}
+
+.drawflow .fa {
+  font-family: var(--fa-style-family,"Font Awesome 6 Free") !important;
+  font-weight: var(--fa-style,900);
+}
+
+.drawflow .parent-node {
+  position: relative;
+}
+
+.drawflow .drawflow-node .outputs,
+.drawflow .drawflow-node .inputs {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.block-preview {
+  position: absolute;
+  top: -265px;
+  left: 0;
+  width: 300px;
+  height: 250px;
+  max-width: 800px;
+  border: 2px solid #333;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.iframe-preview {
+  transform: scale(0.5);
+  transform-origin: 0 0;
+  width: 200%;
+  height: 200%;
+  border: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.drawflow .drawflow-node .drawflow_content_node {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.drawflow svg {
+  z-index: 0;
+  position: absolute;
+  overflow: visible !important;
+}
+.drawflow .connection {
+  position: absolute;
+  pointer-events: none;
+  aspect-ratio: 1 / 1;
+}
+.drawflow .connection .main-path {
+  fill: none;
+  stroke-width: 5px;
+  stroke: steelblue;
+  pointer-events: all;
+}
+.drawflow .connection .main-path:hover {
+  stroke: #1266ab;
+  cursor: pointer;
+}
+
+.drawflow .connection .main-path.selected {
+  stroke: #43b993;
+}
+
+.drawflow .connection .point {
+  cursor: move;
+  stroke: black;
+  stroke-width: 2;
+  fill: white;
+  pointer-events: all;
+}
+
+.drawflow .connection .point.selected, .drawflow .connection .point:hover {
+  fill: #1266ab;
+}
+
+.drawflow .main-path {
+  fill: none;
+  stroke-width: 5px;
+  stroke: steelblue;
+}
+
+.drawflow-delete {
+  position: absolute;
+  display: block;
+  width: 30px;
+  height: 30px;
+  background: black;
+  color: white;
+  z-index: 4;
+  border: 2px solid white;
+  /* line-height: 30px; */
+  line-height: 25px;
+  font-weight: bold;
+  text-align: center;
+  border-radius: 50%;
+  font-family: monospace;
+  cursor: pointer;
+}
+.drawflow > .drawflow-delete {
+  margin-left: -15px;
+  margin-top: 15px;
+}
+
+.parent-node .drawflow-delete {
+  right: -15px;
+  top: -15px;
+}

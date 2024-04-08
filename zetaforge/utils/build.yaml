@@ -1,0 +1,139 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: executor
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: executor
+rules:
+- apiGroups:
+  - argoproj.io
+  resources:
+  - workflowtaskresults
+  verbs:
+  - create
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: executor-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: executor
+subjects:
+- kind: ServiceAccount
+  name: executor
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ninja-secret
+stringData:
+  accessKey: AKIAIOSFODNN7EXAMPLE
+  secretKey: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+---
+apiVersion: v1
+data:
+  default: "s3:\n  bucket: zetaforge\n  endpoint: weed:8333\n  region: us-east-1\n\
+    \  insecure: true\n  accessKeySecret:\n    name: ninja-secret\n    key: accessKey\n\
+    \  secretKeySecret:\n    name: ninja-secret\n    key: secretKey\n"
+kind: ConfigMap
+metadata:
+  name: forge-bucket
+---
+apiVersion: v1
+data:
+  config.json: "{\n  \"identities\": [\n    {\n      \"name\": \"main\",\n      \"\
+    credentials\": [\n        {\n          \"accessKey\": \"AKIAIOSFODNN7EXAMPLE\"\
+    ,\n          \"secretKey\": \"wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY\"\n   \
+    \     }\n      ],\n      \"actions\": [\n        \"Read\",\n        \"List\",\n\
+    \        \"Write\"\n      ]\n    },\n    {\n      \"name\": \"anonymous\",\n \
+    \     \"actions\": [\n        \"Read\",\n        \"List\"\n      ]\n    }\n\n\
+    \  ]\n}"
+kind: ConfigMap
+metadata:
+  name: seaweed-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/name: weed
+  name: weed
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: weed
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: weed
+    spec:
+      containers:
+      - command:
+        - weed
+        - server
+        - -s3.config=/home/config.json
+        - -s3
+        image: chrislusf/seaweedfs
+        name: weed
+        ports:
+        - containerPort: 8333
+        volumeMounts:
+        - mountPath: /home
+          name: config
+      volumes:
+      - configMap:
+          name: seaweed-config
+        name: config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: weed
+spec:
+  loadBalancerIP: null
+  ports:
+  - port: 8333
+    targetPort: 8333
+  selector:
+    app.kubernetes.io/name: weed
+  type: LoadBalancer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/name: registry
+  name: registry
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: registry
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: registry
+    spec:
+      containers:
+      - image: registry:2
+        name: registry
+        ports:
+        - containerPort: 5000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: registry
+spec:
+  ports:
+  - port: 5000
+    targetPort: 5000
+  selector:
+    app.kubernetes.io/name: registry

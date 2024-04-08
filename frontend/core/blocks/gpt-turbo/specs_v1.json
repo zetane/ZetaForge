@@ -1,0 +1,60 @@
+{
+  "information": {
+    "id": "gpt-turbo",
+    "name": "GPT Course of actions",
+    "description": "Processes a list of descriptions, each through the 'request_course_of_action' function, to generate courses of action.",
+    "system_versions": [
+      "0.1"
+    ],
+    "block_version": "block version number",
+    "block_source": "core/blocks/gpt-turbo",
+    "block_type": "compute"
+  },
+  "inputs": {
+    "descriptions": {
+      "type": "List[str]",
+      "connections": [],
+      "relays": []
+    }
+  },
+  "outputs": {
+    "pairs": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    },
+    "descriptions": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    },
+    "actions": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    }
+  },
+  "action": {
+    "container": {
+      "image": "gpt-turbo",
+      "version": "latest",
+      "command_line": [
+        "python",
+        "entrypoint.py"
+      ]
+    }
+  },
+  "views": {
+    "node": {
+      "behavior": "modal",
+      "active": "True or False",
+      "title_bar": {},
+      "preview": {},
+      "html": "",
+      "pos_x": "300",
+      "pos_y": "200",
+      "pos_z": "999"
+    }
+  },
+  "events": {}
+}

@@ -1,0 +1,54 @@
+{
+  "information": {
+    "id": "view-numpy",
+    "name": "View Numpy",
+    "description": "Generates an HTML file displaying NumPy data and shape.",
+    "block_version": "block version number",
+    "block_source": "core/blocks/view-numpy",
+    "block_type": "view",
+    "system_versions": [
+      "0.1"
+    ]
+  },
+  "inputs": {
+    "my_numpy": {
+      "type": "file",
+      "connections": [],
+      "relays": []
+    }
+  },
+  "outputs": {
+    "html": {
+      "type": "file",
+      "connections": [],
+      "relays": []
+    }
+  },
+  "action": {
+    "container": {
+      "image": "view-numpy",
+      "version": "latest",
+      "command_line": [
+        "python",
+        "entrypoint.py"
+      ]
+    }
+  },
+  "views": {
+    "node": {
+      "behavior": "modal",
+      "active": "True or False",
+      "title_bar": {
+        "background_color": "#D55908"
+      },
+      "preview": {
+        "active": "true"
+      },
+      "html": "",
+      "pos_x": "300",
+      "pos_y": "200",
+      "pos_z": "999, this is the z-index for 2D canvas"
+    }
+  },
+  "events": {}
+}
