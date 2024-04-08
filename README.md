@@ -98,7 +98,7 @@ To experience ZetaForge in action, start by dragging and dropping a core pipelin
 
 ## Documentation
 
-Explore our [official documentation](https://zetane.com/docs) for a guide on using ZetaForge. Learn how to create your own ZetaForge blocks, assemble custom pipelines, and more. You'll also find tutorials and best practices to enhance your ZetaForge experience.
+Explore our [official documentation](https://zetane.com/docs/) for a guide on using ZetaForge. Learn how to create your own ZetaForge blocks, assemble custom pipelines, and more. You'll also find tutorials and best practices to enhance your ZetaForge experience.
 
 
 ## Pipeline Gallery
