@@ -140,6 +140,12 @@ git clone https://github.com/zetane/zetaforge
 cd zetaforge
 pip install .
 ```
+Then, apply the Kubernetes configurations using the following commands:
+
+```
+kubectl -f zetaforge/utils/install.yaml
+kubectl -f zetaforge/utils/build.yaml
+```
 
 Having Kubernetes up and running, start the go server by running the following command:
 
