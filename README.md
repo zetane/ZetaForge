@@ -70,19 +70,22 @@ You will need to [enable Kubernetes](https://docs.docker.com/desktop/kubernetes/
 
 ## Launch ZetaForge
 
-After installing via pip
-
+To launch ZetaForge, run the following command after installing via pip:
 ```
 zetaforge launch
 ```
 
-This will setup the correct services in Kubernetes, check that they are running, and then launch ZetaForge. If something goes wrong, you can run:
+This will set up the correct services in Kubernetes, check that they are running, and then launch ZetaForge. 
+
+If something goes wrong, you can run:
 
 ```
 zetaforge setup
 ```
 
-To reconfigure the container services. To teardown and remove the kubernetes services, you can run:
+to reconfigure the container services. 
+
+To teardown and remove the Kubernetes services, you can run:
 
 ```
 zetaforge teardown
@@ -126,6 +129,15 @@ To share a pipeline with your team, follow these steps:
 3. **Load and Run:** Team members can unzip the folder, load the pipeline via `File` -> `Load` -> `Pipeline`, and click `Run` to replicate the results.
 
 This streamlined process ensures easy sharing and consistent results across your team.
+
+
+## Contributing
+
+ZetaForge is under active development. We welcome contributions from the community to make our project even better! 
+
+Before contributing, please take a moment to review our [Contribution Guide](CONTRIBUTING.md) to see our guidelines.
+Whether it's improving documentations, reporting bugs, suggesting new features, or submitting code changes, 
+your contributions help us improve the project for everyone. 
 
 ## License
 

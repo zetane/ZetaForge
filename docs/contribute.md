@@ -1,3 +1,3 @@
 # Contribute
 
-Get in touch with us on Discord: [https://discord.gg/zetaforge](https://discord.gg/zetaforge)
+Please refer to our [Contributing Guide](https://github.com/zetane/ZetaForge/blob/main/CONTRIBUTING.md) for detailed information.
