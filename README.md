@@ -133,27 +133,30 @@ This streamlined process ensures easy sharing and consistent results across your
 This package is under active development. We welcome any contributions that are made according to our 
 [Contributing Guide](contribute.md). 
 
-To run ZetaForge in developer mode, clone the repository and install the requirements:
+To run ZetaForge in developer mode, follow these steps: 
+
+1) Clone the repository and install the requirements:
 
 ```
 git clone https://github.com/zetane/zetaforge
 cd zetaforge
 pip install .
 ```
-Then, apply the Kubernetes configurations using the following commands:
+
+2) Apply the Kubernetes configurations using the following commands:
 
 ```
 kubectl -f zetaforge/utils/install.yaml
 kubectl -f zetaforge/utils/build.yaml
 ```
 
-Having Kubernetes up and running, start the go server by running the following command:
+3) Ensure Kubernetes is up and running, then start the Go server:
 
 ```
 go run .
 ```
 
-To start the frontend, open another terminal window and run the following commands:
+4) To start the frontend, open another terminal window and run:
 ```
 cd frontend
 npm install
