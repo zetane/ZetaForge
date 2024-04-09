@@ -4,8 +4,8 @@ Thank you for your interest in contributing to ZetaForge! There are many ways yo
 
 - contributing to ZetaForge documentations, 
 - reporting bugs by creating Issues,
-- submitting a Pull Request (PR),
 - helping us improve the code and fix bugs,
+- submitting a Pull Request (PR),
 - answering usage questions and discussing issues with other users,
 - and, sharing your ZetaForge Pipelines and Blocks with the community through ZetaForge Discord channel.
 
@@ -44,6 +44,44 @@ If you want to work on an existing issue, please assign it to yourself.
 
 We use labels to organize issues; filter issues by labels to quickly find what you are looking for. Please
 add labels to your issues when you create one to help us organize issues more effectively.
+
+## Development
+
+To run ZetaForge in developer mode, follow these steps: 
+
+1) Clone the repository and install the requirements:
+
+```
+git clone https://github.com/zetane/zetaforge
+cd zetaforge
+pip install .
+```
+
+2) Set up the necessary Kubernetes configurations:
+
+```
+python -m zetaforge.forge_cli setup
+```
+
+3) Start the Go server:
+
+```
+go run .
+```
+
+4) Open another terminal window and run the following commands to start the frontend:
+```
+cd frontend
+npm install
+npm run dev
+```
+
+If you wish to teardown your containers, run the following command:
+
+```
+python -m zetaforge.forge_cli teardown
+```
+
 
 ## Submitting a Pull Request (PR)
 

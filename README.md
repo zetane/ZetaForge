@@ -131,45 +131,13 @@ To share a pipeline with your team, follow these steps:
 This streamlined process ensures easy sharing and consistent results across your team.
 
 
-## Development
+## Contributing
 
-This package is under active development. We welcome any contributions that are made according to our 
-[Contributing Guide](contribute.md). 
+ZetaForge is under active development. We welcome contributions from the community to make our project even better! 
 
-To run ZetaForge in developer mode, follow these steps: 
-
-1) Clone the repository and install the requirements:
-
-```
-git clone https://github.com/zetane/zetaforge
-cd zetaforge
-pip install .
-```
-
-2) Set up the necessary Kubernetes configurations:
-
-```
-python -m zetaforge.forge_cli setup
-```
-
-3) Start the Go server:
-
-```
-go run .
-```
-
-4) Open another terminal window and run the following commands to start the frontend:
-```
-cd frontend
-npm install
-npm run dev
-```
-
-If you wish to teardown your containers, run the following command:
-
-```
-python -m zetaforge.forge_cli teardown
-```
+Before contributing, please take a moment to review our [Contribution Guide](CONTRIBUTING.md) to see our guidelines.
+Whether it's improving documentations, reporting bugs, suggesting new features, or submitting code changes, 
+your contributions help us improve the project for everyone. 
 
 ## License
 
