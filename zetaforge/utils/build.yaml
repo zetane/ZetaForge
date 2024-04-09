@@ -132,8 +132,10 @@ kind: Service
 metadata:
   name: registry
 spec:
+  loadBalancerIP: null
   ports:
   - port: 5000
     targetPort: 5000
   selector:
     app.kubernetes.io/name: registry
+  type: LoadBalancer
