@@ -77,7 +77,7 @@ def compile_app(version, goos, archs = ['amd64', 'arm64']):
                     raise Exception(f"Failed to build go server: {s.stderr}")
                 print(s)
             else:
-                s = subprocess.run(["env", f"GOOS={goos}", f"GOARCH={arch}", "go", "build"], capture_output=True, text=True)
+                s = subprocess.run(["env", f"GOOS={goos}", f"GOARCH={arch}", "CGO_ENABLED=1", "go", "build"], capture_output=True, text=True)
                 if s.returncode != 0:
                     raise Exception(f"Failed to build go server: {s.stderr}")
                 print(s)
