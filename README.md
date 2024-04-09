@@ -127,6 +127,34 @@ To share a pipeline with your team, follow these steps:
 
 This streamlined process ensures easy sharing and consistent results across your team.
 
+
+## Development
+
+This package is under active development. We welcome any contributions that are made according to our 
+[Contributing Guide](contribute.md). 
+
+To run ZetaForge in developer mode, clone the repository and install the requirements:
+
+```
+git clone https://github.com/zetane/zetaforge
+cd zetaforge
+pip install .
+```
+
+Having Kubernetes up and running, start the go server by running the following command:
+
+```
+go run .
+```
+
+To start the frontend, open another terminal window and run the following commands:
+```
+cd frontend
+npm install
+npm run dev
+```
+
+
 ## License
 
 - **[AGPL license](https://opensource.org/license/agpl-v3/)**
