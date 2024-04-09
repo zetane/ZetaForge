@@ -70,19 +70,22 @@ You will need to [enable Kubernetes](https://docs.docker.com/desktop/kubernetes/
 
 ## Launch ZetaForge
 
-After installing via pip
-
+To launch ZetaForge, run the following command after installing via pip:
 ```
 zetaforge launch
 ```
 
-This will setup the correct services in Kubernetes, check that they are running, and then launch ZetaForge. If something goes wrong, you can run:
+This will set up the correct services in Kubernetes, check that they are running, and then launch ZetaForge. 
+
+If something goes wrong, you can run:
 
 ```
 zetaforge setup
 ```
 
-To reconfigure the container services. To teardown and remove the kubernetes services, you can run:
+to reconfigure the container services. 
+
+To teardown and remove the Kubernetes services, you can run:
 
 ```
 zetaforge teardown
@@ -143,26 +146,30 @@ cd zetaforge
 pip install .
 ```
 
-2) Apply the Kubernetes configurations using the following commands:
+2) Set up the necessary Kubernetes configurations:
 
 ```
-kubectl -f zetaforge/utils/install.yaml
-kubectl -f zetaforge/utils/build.yaml
+python -m zetaforge.forge_cli setup
 ```
 
-3) Ensure Kubernetes is up and running, then start the Go server:
+3) Start the Go server:
 
 ```
 go run .
 ```
 
-4) To start the frontend, open another terminal window and run:
+4) Open another terminal window and run the following commands to start the frontend:
 ```
 cd frontend
 npm install
 npm run dev
 ```
 
+If you wish to teardown your containers, run the following command:
+
+```
+python -m zetaforge.forge_cli teardown
+```
 
 ## License
 
