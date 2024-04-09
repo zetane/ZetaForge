@@ -22,10 +22,9 @@ To install the `pip` package, run the following command:
 pip install mkdocs-material
 ```
 The Material for MKDocs package comes with a live preview sever that allows you to preview your changes as you make 
-modifications. To start the live preview server, run the following commands in your terminal:
+modifications. To start the live preview server, run the following command in your terminal:
 
 ```
-cd to docs
 mkdocs serve
 ```
 
