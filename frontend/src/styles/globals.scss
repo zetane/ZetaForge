@@ -64,6 +64,7 @@ main {
 
 .cds--side-nav {
 	max-inline-size: 30rem !important;
+	overflow: visible !important;
 }
 
 .cds--side-nav--expanded {
@@ -72,10 +73,6 @@ main {
 
 .cds--side-nav__items {
 	padding: 0px !important;
-	overflow: visible !important;
-}
-
-.cds--side-nav {
 	overflow: visible !important;
 }
 
