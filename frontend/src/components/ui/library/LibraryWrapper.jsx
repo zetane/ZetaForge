@@ -64,11 +64,11 @@ export default function LibraryWrapper({ specs, pipelines }) {
   });
 
   let searchTitle = (
-    <div style={{ display: "flex" }}>
-      <IconButton label="Close" kind="ghost" onClick={() => { setShowLibrary(false) }}>
-        <ArrowLeft />
+    <div style={{display: "flex"}}>
+      <IconButton label="Close" kind="ghost" onClick={() => {setShowLibrary(false)}}>
+        <ArrowLeft/>
       </IconButton>
-      <div style={{ alignItems: "center", display: "flex" }}>
+      <div style={{alignItems: "center", display: "flex"}}>
         Block Library
       </div>
     </div>
@@ -77,7 +77,7 @@ export default function LibraryWrapper({ specs, pipelines }) {
   return (
     <SideNav
       aria-label="Side navigation"
-      expanded={showLibrary}
+      expanded={showLibrary} 
       isFixedNav>
       <SideNavItems>
         <ContainedList label={searchTitle} kind="on-page" action={''}>
@@ -96,9 +96,9 @@ export default function LibraryWrapper({ specs, pipelines }) {
             </TabList>
             <TabPanels>
               <TabPanel className="library-tab">
-                <FlexGrid fullWidth={true} condensed={true} className="mt-2">
-                  {tileGrid}
-                </FlexGrid>
+              <FlexGrid fullWidth={true} condensed={true} className="mt-2">
+                {tileGrid}
+              </FlexGrid>
               </TabPanel>
               <TabPanel className="library-tab">
                 <FlexGrid fullWidth={true} condensed={true} className="mt-2 library-tile-container">
