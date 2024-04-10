@@ -11,11 +11,7 @@ import {
   PlayFilled,
   Save,
 } from "@carbon/icons-react";
-<<<<<<< HEAD
 import { Button, Modal, TreeNode, TreeView } from "@carbon/react";
-=======
-import { Button, Modal, Tooltip, TreeNode, TreeView } from "@carbon/react";
->>>>>>> main
 import { useAtom } from 'jotai';
 import { useImmerAtom } from 'jotai-immer';
 import { useCallback, useEffect, useRef, useState } from "react";
