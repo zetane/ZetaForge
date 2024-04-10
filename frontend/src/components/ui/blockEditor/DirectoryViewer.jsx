@@ -416,7 +416,7 @@ function DirectoryViewer({
         ) : (
           currentFile &&
           currentFile.path && (
-            <div className="relative overflow-y-auto grow">
+            <div className="relative overflow-y-auto">
               <EditorCodeMirror
                 key={currentFile.path}
                 code={currentFile.content || ""}
