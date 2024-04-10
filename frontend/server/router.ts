@@ -7,11 +7,7 @@ import path from "path";
 import sha256 from 'sha256';
 import { z } from 'zod';
 import { compileComputation, saveBlockSpecs } from './blockSerialization.js';
-<<<<<<< HEAD
-import { readSpecs, s3Upload } from "./fileSystem.js";
-=======
 import { readSpecs, readPipelines, s3Upload } from "./fileSystem.js";
->>>>>>> main
 import { copyPipeline, getBlockPath, removeBlock, saveBlock, saveSpec } from './pipelineSerialization.js';
 import { publicProcedure, router } from './trpc';
 
@@ -32,11 +28,7 @@ export const appRouter = router({
         console.log(error)
       }
     }),
-<<<<<<< HEAD
-    getBlockCoverImagePath: publicProcedure
-=======
   getBlockCoverImagePath: publicProcedure
->>>>>>> main
     .input(z.object({
       blockId: z.string(),
     }))
