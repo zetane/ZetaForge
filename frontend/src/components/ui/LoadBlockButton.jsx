@@ -2,16 +2,16 @@ import { HeaderMenuItem } from "@carbon/react";
 import { useRef } from "react";
 import { pipelineAtom, getPipelineFormat } from "@/atoms/pipelineAtom";
 import { customAlphabet } from "nanoid";
-import { distinctIdAtom } from "@/atoms/distinctIdAtom";
 import { useImmerAtom } from 'jotai-immer'
+import { useAtom } from "jotai";
 import { trpc } from "@/utils/trpc"
 import { getDirectoryPath } from "@/../utils/fileUtils";
-//import mixpanel from '@/components/mixpanel'
+import { mixpanelAtom } from "@/atoms/mixpanelAtom";
 
 export default function LoadBlockButton() {
   const FILE_EXTENSION_REGEX = /\.[^/.]+$/;
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom)
-  const [distinctId, setDistinctId] = useImmerAtom(distinctIdAtom)
+  const [mixpanelService] = useAtom(mixpanelAtom)
 
   const fileInput = useRef();
 
@@ -50,23 +50,10 @@ export default function LoadBlockButton() {
   const getDistinctId = trpc.getDistinctId.useMutation();
 
   const loadBlock = async (pipeline) => {
-    let data = distinctId?.distinctId
-
-    if (data === "0" || data === undefined) {
-
-      const res = await getDistinctId.mutateAsync({ distinctId: "0" }) //ignore the input, it'll just mutate the new distinct id
-
-      data = res.distinctId
-
-      setDistinctId((draft) => {
-        draft.distinctId = data
-      })
-    } try {
-      //mixpanel.track('Load Block', {
-      //  'distinct_id': data,
-      //})
-    } catch (error) {
-      //ignore the error, no logs
+    try {
+      await mixpanelService.trackEvent('Load Block')
+    } catch(err){
+        
     }
     const files = fileInput.current.files
     for (const key in files) {
