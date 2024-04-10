@@ -16,7 +16,7 @@ export default function SavePipelineButton() {
 
   const handleClick = async (editor, pipeline) => {
     try {
-      await mixpanelService.trackEvent('Save Pipeline')
+      mixpanelService.trackEvent('Save Pipeline')
       } catch(err) {
   
       }

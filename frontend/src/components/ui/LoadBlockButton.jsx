@@ -51,7 +51,7 @@ export default function LoadBlockButton() {
 
   const loadBlock = async (pipeline) => {
     try {
-      await mixpanelService.trackEvent('Load Block')
+      mixpanelService.trackEvent('Load Block')
     } catch(err){
         
     }
