@@ -21,8 +21,8 @@ class MixpanelClient:
     def set_people(self):
         if self.enabled:
             try:
-                user = {"$first_name": self.distinct_id, '$last_name': self.distinct_id}
-                self.mp.people_set(self.distinct_id, user, meta={})
+                # user = {"$first_name": self.distinct_id, '$last_name': self.distinct_id}
+                self.mp.people_set(self.distinct_id, {}, meta={})
             except Exception as err:
                 print("Error happened while setting user profile. Disabling mixpanel")
                 print(err)
