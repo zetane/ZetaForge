@@ -3,20 +3,20 @@
  */
 {
   "appId": "com.zetane.zetaforge",
-  "productName": "zetaforge",
+  "productName": "ZetaForge",
   "asar": true,
   "directories": {
     "output": "release/${version}"
   },
   "files": [
     "dist-electron",
-    "dist"
+    "dist",
   ],
   "mac": {
     "artifactName": "${productName}-${version}-darwin-${arch}.${ext}",
     "target": [
       "tar.gz"
-    ]
+    ],
   },
   "win": {
     "target": [

@@ -6,7 +6,7 @@ export async function updateSpecs(blockFolderName, newSpecsIO, pipelineSpecs, ed
 
 function updateSepcsIO(specs, IO) {
   const newSpecs = structuredClone(specs)
-  newSpecs.description = IO.description
+  newSpecs.information.description = IO.description
 
   const newInputs = mergeIO(newSpecs.inputs, IO.inputs)
   newSpecs.inputs = newInputs

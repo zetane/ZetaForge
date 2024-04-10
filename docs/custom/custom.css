@@ -1,0 +1,97 @@
+:root {
+    --top-padding: 40px;
+
+    /* --md-code-bg-color: black;
+    --md-default-fg-color--light: orange;
+    --md-code-fg-color: lightblue; */
+
+    /* --md-primary-fg-color:        #EE0F0F;
+    --md-primary-fg-color--light: #ECB7B7;
+    --md-primary-fg-color--dark:  #90030C; */
+}
+
+/* For light theme (default) */
+/* [data-md-color-scheme="default"] .highlight{
+    --md-code-bg-color: #000000;
+    --md-code-fg-color: lightblue;
+    --md-default-fg-color--light: orange !important; */
+    /* --md-code-hl-operator-color
+    --md-code-hl-punctuation-color
+    --md-code-hl-comment-color */
+    
+/* } */
+
+/* For dark theme (slate) */
+/* [data-md-color-scheme="slate"] .highlight{
+    --md-code-bg-color: #000000;
+    --md-code-fg-color: lightblue;
+    --md-default-fg-color--light: orange  !important;
+} */
+
+
+.md-header {
+    background-color: #0F132C !important;
+}
+
+.md-footer {
+    background-color: #0F132C;
+}
+
+.md-header {
+    position: fixed;
+}
+
+.md-container {
+    padding-top: 0px;
+}
+
+.md-content {
+    padding-top: var(--top-padding);
+}
+
+.md-sidebar--primary {
+    padding-top: var(--top-padding);
+}
+
+.md-sidebar--secondary {
+    padding-top: var(--top-padding);
+}
+
+
+.code-container {
+    position: relative;
+    margin: 20px 0;
+    background-color: black;
+}
+
+.copy-button {
+    position: absolute;
+    padding: 2px;
+    top: 10px;
+    right: 10px;
+    background-color: lightgray;
+    border-radius: 2px;
+    border: none;
+    cursor: pointer;
+    outline: none;
+}
+
+.copy-button img {
+    width: 20px;
+    height: 20px;
+}
+
+.md-nav__link {
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.md-nav__link--active {
+    background-color: #f2f4fc;
+    padding-left: 5px;
+    padding-right: 5px;
+    border-radius: 3px;
+}
+
+
+

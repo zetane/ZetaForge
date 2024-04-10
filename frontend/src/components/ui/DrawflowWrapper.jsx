@@ -10,6 +10,8 @@ import BlockGenerator from '@/components/ui/blockGenerator/BlockGenerator';
 import { useImmerAtom } from 'jotai-immer';
 import { genJSON } from '@/utils/blockUtils';
 import { customAlphabet } from 'nanoid';
+import { useLoadPipeline } from "./useLoadPipeline";
+
 
 const launchDrawflow = (parentDomRef, canvasDomRef, pipeline, setPipeline) => {
   if (parentDomRef.className != "parent-drawflow") {
@@ -45,7 +47,7 @@ export default function DrawflowWrapper() {
   const getBlockPath = trpc.getBlockPath.useMutation();
 
   const createConnection = (connection, pipeline) => {
-    const {output_id, input_id, output_class, input_class} = connection;
+    const { output_id, input_id, output_class, input_class } = connection;
     const outputBlock = pipeline.data[output_id]
     const inputBlock = pipeline.data[input_id]
     if (outputBlock && inputBlock) {
@@ -70,8 +72,8 @@ export default function DrawflowWrapper() {
         if (!outputHasInput) {
           setPipeline((draft) => {
             draft.data[output_id].outputs[output_class].connections.push({
-             variable: input_class,
-             block: input_id
+              variable: input_class,
+              block: input_id
             })
           })
         }
@@ -80,7 +82,7 @@ export default function DrawflowWrapper() {
   }
 
   const removeConnection = (connection, pipeline) => {
-    const {output_id, input_id, output_class, input_class} = connection;
+    const { output_id, input_id, output_class, input_class } = connection;
     const outputBlock = pipeline.data[output_id]
     const inputBlock = pipeline.data[input_id]
     if (outputBlock && inputBlock) {
@@ -127,13 +129,13 @@ export default function DrawflowWrapper() {
 
   useEffect(() => {
     const nodes = Object.entries(pipeline.data).map(([key, block]) => {
-      return (<BlockGenerator key={key} 
-                block={block} 
-                openView={openView} 
-                id={key} 
-                historySink={pipeline.history} 
-                pipelineAtom={pipelineAtom}
-                />)
+      return (<BlockGenerator key={key}
+        block={block}
+        openView={openView}
+        id={key}
+        historySink={pipeline.history}
+        pipelineAtom={pipelineAtom}
+      />)
     })
     setRenderNodes(nodes)
   }, [pipeline.data])
@@ -169,18 +171,18 @@ export default function DrawflowWrapper() {
         try {
           if (Object.getOwnPropertyNames(pipeline.data).length !== 0) {
             const pipelineSpecs = editor.convert_drawflow_to_block(pipeline.name, pipeline.data);
-    
+
             // note that we are writing to the buffer, not the load path
             pipelineSpecs['sink'] = pipeline.buffer;
             pipelineSpecs['build'] = pipeline.buffer;
-    
+
             const saveData = {
               specs: pipelineSpecs,
               name: pipeline.name,
               buffer: pipeline.buffer,
               writePath: pipeline.buffer
             };
-    
+
             const response = await savePipeline.mutateAsync(saveData);
             const { dirPath, specs } = response;
           }
@@ -188,7 +190,7 @@ export default function DrawflowWrapper() {
           console.error("Error saving pipeline:", error);
         }
       };
-  
+
       fetchData();
     } else {
       if (editor) {
@@ -227,18 +229,18 @@ export default function DrawflowWrapper() {
     }
     block.views.node.pos_x =
       posX *
-        (editor.precanvas.clientWidth /
-          (editor.precanvas.clientWidth * editor.zoom)) -
+      (editor.precanvas.clientWidth /
+        (editor.precanvas.clientWidth * editor.zoom)) -
       editor.precanvas.getBoundingClientRect().x *
-        (editor.precanvas.clientWidth /
-          (editor.precanvas.clientWidth * editor.zoom));
+      (editor.precanvas.clientWidth /
+        (editor.precanvas.clientWidth * editor.zoom));
     block.views.node.pos_y =
       posY *
-        (editor.precanvas.clientHeight /
-          (editor.precanvas.clientHeight * editor.zoom)) -
+      (editor.precanvas.clientHeight /
+        (editor.precanvas.clientHeight * editor.zoom)) -
       editor.precanvas.getBoundingClientRect().y *
-        (editor.precanvas.clientHeight /
-          (editor.precanvas.clientHeight * editor.zoom));
+      (editor.precanvas.clientHeight /
+        (editor.precanvas.clientHeight * editor.zoom));
 
     return block
   }
@@ -257,21 +259,54 @@ export default function DrawflowWrapper() {
 
   const openView = async (id) => {
     const root = await getBlockPath.mutateAsync({
-      blockId: id, 
+      blockId: id,
       pipelinePath: pipeline.buffer
     });
     setBlockEditorRoot(root);
     setEditorOpen(true);
   };
 
+
+  const loadPipeline = useLoadPipeline();
+
+  // Similar to LoadPipelineButton.jsx
+  const handleFileChange = async (event, editor) => {
+    const file = event.target.files[0];
+    if (file) {
+      await loadPipeline(file);
+      event.target.value = ''; // Reset the file input
+    }
+  };
+
+  const fileInput = useRef();
+
   return (
     <div id="drawflow" ref={handleDrawflow}
-      onDrop={(ev) => { dropHandler(ev, editor) }}
+      onDrop={(ev) => {
+        const blockData = ev.dataTransfer.getData("block");
+        const pipelineData = ev.dataTransfer.getData("pipeline");
+        if (blockData) {
+          dropHandler(ev, editor);
+        } else if (pipelineData) {
+          const pipelineJson = JSON.parse(pipelineData);
+          const file = new File([JSON.stringify(pipelineJson)], pipelineJson.name, {
+            type: "application/json",
+          });
+          loadPipeline(file);
+        }
+      }}
       onDragOver={(ev) => { dragOverHandler(ev) }}
     >
       <div ref={drawflowCanvas}>
         {renderNodes}
       </div>
+      <input
+        type="file"
+        ref={fileInput}
+        onChange={(event) => handleFileChange(event, editor)}
+        style={{ display: 'none' }}
+      />
+
     </div>
-  )
+  );
 }

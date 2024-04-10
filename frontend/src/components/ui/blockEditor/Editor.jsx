@@ -36,7 +36,11 @@ import TestLogs from "./TestLogs";
 export default function Editor() {
   const serverAddress = "http://localhost:3330";
   const minizedStyles = "inset-y-16 right-8 w-1/3"
+<<<<<<< HEAD
   const maximizedStyles = "inset-y-11 right-0 w-full"
+=======
+  const maximizedStyles = "inset-y-11 right-0 w-full z-[9001]"
+>>>>>>> main
   const [blockPath] = useAtom(blockEditorRootAtom);
   const [blockFolderName, setBlockFolderName] = useState(null); //TODO check if still needed
   const setBlockEditorOpen = useSetAtom(isBlockEditorOpenAtom);

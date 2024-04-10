@@ -7,7 +7,11 @@ import path from "path";
 import sha256 from 'sha256';
 import { z } from 'zod';
 import { compileComputation, saveBlockSpecs } from './blockSerialization.js';
+<<<<<<< HEAD
 import { readSpecs, s3Upload } from "./fileSystem.js";
+=======
+import { readSpecs, readPipelines, s3Upload } from "./fileSystem.js";
+>>>>>>> main
 import { copyPipeline, getBlockPath, removeBlock, saveBlock, saveSpec } from './pipelineSerialization.js';
 import { publicProcedure, router } from './trpc';
 
@@ -28,7 +32,11 @@ export const appRouter = router({
         console.log(error)
       }
     }),
+<<<<<<< HEAD
     getBlockCoverImagePath: publicProcedure
+=======
+  getBlockCoverImagePath: publicProcedure
+>>>>>>> main
     .input(z.object({
       blockId: z.string(),
     }))
@@ -49,6 +57,49 @@ export const appRouter = router({
         return { coverImagePath: null };
       }
     }),  
+  getPipelines: publicProcedure
+    .query(async () => {
+      const resources = process.resourcesPath;
+      let corePipelines = "core/pipelines";
+      if (app.isPackaged) {
+        corePipelines = path.join(resources, "core", "pipelines");
+      }
+  
+      try {
+        const pipelines = await readPipelines(corePipelines);
+        return pipelines;
+      } catch (error) {
+        console.log(error);
+        return [];
+      }
+    }), 
+  getPipelineCoverImagePath: publicProcedure
+  .input(z.object({
+    pipelineId: z.string(),
+  }))
+  .query(async (opts) => {
+    const { input } = opts;
+    const { pipelineId } = input;
+    const resources = process.resourcesPath;
+    let pipelinesPath = "core/pipelines";
+    if (app.isPackaged) {
+      pipelinesPath = path.join(resources, "core", "pipelines");
+    }
+
+    try {
+      const pipelines = await readPipelines(pipelinesPath);
+      const pipeline = pipelines.find(p => p.id === pipelineId);
+      if (!pipeline) {
+        throw new Error(`Pipeline with ID ${pipelineId} not found`);
+      }
+      const coverImagePath = path.join(pipelinesPath, pipeline.folderName, 'cover-image.png');
+      return { coverImagePath };
+    } catch (error) {
+      console.log(error);
+      return { coverImagePath: null };
+    }
+  }),
+  
   //TODO: load and validate schema
   savePipeline: publicProcedure
     .input(z.object({

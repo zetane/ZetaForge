@@ -148,7 +148,7 @@ def get_s2_executable(filename):
 
 
 def get_download_file(client_version):
-    bucket_key = "zetaforge-" + client_version
+    bucket_key = "ZetaForge-" + client_version
     machine = platform.machine()
     if platform.system() == 'Windows':
         bucket_key += '-windows-x64'
@@ -200,14 +200,24 @@ def check_and_clean_files(directory, version):
                     shutil.rmtree(file_path)
                     print(f"Removed directory: {filename}")
         
+        if filename == 'ZetaForge.app':
+            _, server_path = get_launch_paths(version, version)
+            if os.path.exists(server_path):
+                print(f"Found existing version {version}")
+            else:
+                # did not find the correct version, reinstall it
+                print(f"Found ZetaForge.app but did not find version {version}, removing previous app")
+                shutil.rmtree(os.path.join(EXECUTABLES_PATH, "ZetaForge.app"))
+
         if filename == 'zetaforge.app':
             _, server_path = get_launch_paths(version, version)
             if os.path.exists(server_path):
                 print(f"Found existing version {version}")
             else:
                 # did not find the correct version, reinstall it
-                print(f"Found zetaforge.app but did not find version {version}, removing previous app")
+                print(f"Found ZetaForge.app but did not find version {version}, removing previous app")
                 shutil.rmtree(os.path.join(EXECUTABLES_PATH, "zetaforge.app"))
+
 
 def check_version(server_version, client_version):
     check_and_clean_files(EXECUTABLES_PATH, client_version)
@@ -215,13 +225,13 @@ def check_version(server_version, client_version):
 
 def get_app_dir(client_version):
     if platform.system() == 'Darwin':
-        app_dir = os.path.join(EXECUTABLES_PATH, "zetaforge.app")
+        app_dir = os.path.join(EXECUTABLES_PATH, "ZetaForge.app")
     elif platform.system() == 'Windows':
-        app_dir = os.path.join(EXECUTABLES_PATH, f"zetaforge-{client_version}-windows-x64")
+        app_dir = os.path.join(EXECUTABLES_PATH, f"ZetaForge-{client_version}-windows-x64")
     else:
-        app_dir = os.path.join(EXECUTABLES_PATH, f"zetaforge-{client_version}-linux-arm64")
+        app_dir = os.path.join(EXECUTABLES_PATH, f"ZetaForge-{client_version}-linux-arm64")
         if platform.machine() == 'x86_64' or platform.machine() == 'x86-64':
-            app_dir = os.path.join(EXECUTABLES_PATH, f"zetaforge-{client_version}-linux-x64")
+            app_dir = os.path.join(EXECUTABLES_PATH, f"ZetaForge-{client_version}-linux-x64")
 
     return app_dir
 
@@ -230,10 +240,10 @@ def get_launch_paths(server_version, client_version):
     app_dir = get_app_dir(client_version)
     
     if platform.system() == 'Darwin':
-        client_path = os.path.join(app_dir, "Contents", "MacOS", "zetaforge")
+        client_path = os.path.join(app_dir, "Contents", "MacOS", "ZetaForge")
         server_dir = os.path.join(app_dir, "Contents" ,"Resources", "server2")
     elif platform.system() == 'Windows':
-        client_path = os.path.join(app_dir, "zetaforge.exe")
+        client_path = os.path.join(app_dir, "ZetaForge.exe")
         server_dir = os.path.join(app_dir, "resources", "server2")
     else:
         client_path = os.path.join(app_dir, "zetaforge")

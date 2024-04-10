@@ -34,6 +34,39 @@ export const s3Upload = async (filePath) => {
   }
 }
 
+export const readPipelines = async (dir) => {
+  const items = await fs.readdir(dir);
+  return pipelineSpecBuilder(items, dir);
+}
+
+const pipelineSpecBuilder = async (items, dir) => {
+  const pipelinesData = [];
+
+  for (const item of items) {
+    try {
+      const itemPath = path.join(dir, item);
+      const stat = await fs.stat(itemPath);
+
+      if (stat.isDirectory()) {
+        const pipelineSpecFile = path.join(itemPath, `${item}.json`);
+        try {
+          await fs.stat(pipelineSpecFile);
+          const pipelineData = await fs.readFile(pipelineSpecFile, 'utf8');
+          const parsedPipelineData = JSON.parse(pipelineData);
+          parsedPipelineData.folderName = item; // Add the folder name to the pipeline data
+          pipelinesData.push(parsedPipelineData);
+        } catch (error) {
+          console.log("ERROR: ", error);
+        }
+      }
+    } catch (error) {
+      console.log("ERROR: ", error);
+    }
+  }
+
+  return pipelinesData;
+}
+
 export const readSpecs = async (dir) => {
   const items = await fs.readdir(dir);
   //const pipelines = await fs.readdir("../pipelines");

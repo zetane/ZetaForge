@@ -10,11 +10,30 @@ const isTypeDisabled = (action) => {
   return true
 }
 
-const BlockGenerator = ({ block, openView, id, historySink, pipelineAtom}) => {
+const checkPath = async (path, count, setIframeSrc) => {
+  fetch(path)
+    .then(response => {
+      if (response.status === 404) {
+        console.log('Path not found. Retrying in 1 second...');
+        if (count < 15) {
+          setTimeout(() => {
+            checkPath(path, count + 1, setIframeSrc);
+          }, 1000);
+        }
+      } else {
+        setIframeSrc(path)
+      }
+    })
+    .catch(error => {
+      console.log('Error:', error);
+    });
+}
+
+const BlockGenerator = ({ block, openView, id, historySink, pipelineAtom }) => {
   const [_, setFocusAction] = useImmerAtom(pipelineAtom)
 
   const styles = {
-    top: `${block.views.node.pos_y}px`, 
+    top: `${block.views.node.pos_y}px`,
     left: `${block.views.node.pos_x}px`
   }
 
@@ -22,14 +41,9 @@ const BlockGenerator = ({ block, openView, id, historySink, pipelineAtom}) => {
   useEffect(() => {
     if (block.events.outputs?.html) {
       const fileUrl = `${import.meta.env.VITE_S3_ENDPOINT}/zetaforge/${historySink}/${block.events.outputs.html}`
-      // there are so many reasons why this sucks
-      // TODO: make it suck less, if it's possible
-      // CORS makes this very difficult to use iFrames
-      setTimeout(() => setIframeSrc(fileUrl), 1500)
+      checkPath(fileUrl, 0, setIframeSrc)
     }
   }, [block.events.outputs?.html])
-
-  console.log("src: ", iframeSrc)
 
   const disabled = isTypeDisabled(block.action)
   const preview = (block.views.node.preview?.active == "true")
@@ -56,7 +70,7 @@ const BlockGenerator = ({ block, openView, id, historySink, pipelineAtom}) => {
             id={id}
             color={backgroundColor}
             openView={openView}
-            actions={!disabled} 
+            actions={!disabled}
             src={iframeSrc}
           />
           <div className="block-body">
@@ -64,7 +78,7 @@ const BlockGenerator = ({ block, openView, id, historySink, pipelineAtom}) => {
               <BlockInputs inputs={block.inputs} />
               <BlockOutputs outputs={block.outputs} />
             </div>
-            { content }
+            {content}
           </div>
         </div>
       </div>
@@ -72,7 +86,7 @@ const BlockGenerator = ({ block, openView, id, historySink, pipelineAtom}) => {
   );
 };
 
-const BlockPreview = ({id, src}) => {
+const BlockPreview = ({ id, src }) => {
   console.log(src)
 
   return (
@@ -85,18 +99,18 @@ const BlockPreview = ({id, src}) => {
   )
 }
 
-const BlockTitle = ({ name, id, color, openView, actions, src}) => {
+const BlockTitle = ({ name, id, color, openView, actions, src }) => {
   let actionContainer = (
     <div className="action-container">
-      <button id="btn_open_code" className="view-btn" onClick={() => openView(id)}><Code size={20}/></button>
-      <a href={src} target="_blank" rel="noopener noreferrer"><button id="btn_show_view" className="view-btn"><View size={20}/></button></a>
+      <button id="btn_open_code" className="view-btn" onClick={() => openView(id)}><Code size={20} /></button>
+      <a href={src} target="_blank" rel="noopener noreferrer"><button id="btn_show_view" className="view-btn"><View size={20} /></button></a>
     </div>
   )
 
   return (
     <div className="title-box" style={{ backgroundColor: color }}>
       <span>{name}</span>
-      { actions && actionContainer }
+      {actions && actionContainer}
     </div>
   )
 };
@@ -143,7 +157,7 @@ const InputField = ({ type, value, name, step, parameterName, onChange }) => {
   const preventQuotation = (event) => {
     const quotations = ['"', "'", '`'];
     const { key } = event;
-    
+
     const { selectionStart, selectionEnd } = inputRef?.current;
     const atBeginning = selectionStart === 0; // beginning of text, left of start quote
     const atEnd = selectionEnd - 2 === currentValue.length; // end of text, right of end quote
@@ -151,10 +165,10 @@ const InputField = ({ type, value, name, step, parameterName, onChange }) => {
     const boundaries =
       quotations.includes(key) ||
       key === "Backspace" && (atBeginning || selectionStart === 1) && !isRangedSelection ||
-      key === "Delete" && (atEnd || selectionEnd - 1 === currentValue.length)  && !isRangedSelection ||
+      key === "Delete" && (atEnd || selectionEnd - 1 === currentValue.length) && !isRangedSelection ||
       key === 'ArrowLeft' && atEnd ||
       key === 'ArrowRight' && atBeginning;
-    
+
     if (boundaries) event.preventDefault();
 
     if (isRangedSelection) {

@@ -1,162 +1,164 @@
-# ZetaForge
 
-## Description
-ZetaForge is an AI platform for rapid development and deployment of advanced safe AI solutions. Easilly assemble reusable, customizable and containerized blocks into highly visual AI pipelines.
 
-## Visuals
-TBD
+<div align="center">
+<img src="assets/ZetaForge-Logo-White-Background.png" alt="ZetaForge Logo" style="width:400px;padding-bottom: 15px"/>
 
-## Installation
-1- Install Docker
-    [Get Docker here](https://docs.docker.com/get-docker/)
-2- Verify Docker is correctly installed
-    ```docker --version```
-3- Install the Python packages
-    ```pip install -r requirements.txt```
-4- `cd` to `\backend\nodejs` and install the packages
-    ```npm install```
-5- `cd` to `\frontend` and install the packages
-    ```npm install```
+
+[![PyPI version](https://badge.fury.io/py/zetaforge.svg)](https://badge.fury.io/py/zetaforge)
+[![Discord](https://img.shields.io/discord/1196886318035255296?label=Discord&logo=discord)](https://discord.gg/zetaforge)
+[![X Badge](https://img.shields.io/static/v1?label=&message=Follow&color=blue&logo=x)](https://twitter.com/ZetaneSystems)
+[![YouTube Channel](https://img.shields.io/static/v1?label=YouTube&message=Subscribe&color=red&logo=YouTube)](https://www.youtube.com/channel/UCGDwKqB1HPjEdw97jm4wTFA)
+
+
+<h3 style="padding-bottom: 15px">
+Open source AI platform for rapid development of advanced AI and AGI pipelines.
+</h3>
+</div>
+
+
+![Project Image](assets/Screenshot.png)
+
+
+
+<a id="why-zetaforge"></a>
+## 🔥 Why ZetaForge?
+
+ZetaForge is an AI platform designed to accelerate the development and deployment of advanced AI solutions. It allows users to assemble reusable, customizable, and containerized Blocks into highly visual AI Pipelines, enabling rapid experimentation and collaboration.
+
+- **Language Agnostic:** Work with AI technologies in any programming language.
+- **Dynamic:** Easily modify and update AI pipelines with new or improved components.
+- **Full Code Accessibility:** Dive into the code whenever needed while enjoying a user-friendly interface.
+- **Community and Sharing:** Utilize community-driven blocks and pipelines, and share your own creations.
+
+
+> ⭐ Support us by starring this repo.
+
+
+## 📰 Breaking News
+We've launched the first release of ZetaForge! Start building AI pipelines with our core features. 
+
+Expect regular updates with new enhancements.
+
+
+>👁 Watch this repo to stay in the loop about changes and updates.
 
 ## Getting Started
-Use the following command to launch Forge in your localhost. 
-`cd` to `\backend\nodejs`
-`node server.js`
 
-Examples of Pipeline of Block are provided in the `pipelines` folder. They can be loaded and run using the `Load` and `Run` top menu buttons.
+**Installation**
+You can install ZetaForge Python Package through pip by running the following command in your terminal:
 
-## Videos
+```
+pip install zetaforge
+```
 
-Zetaforge demo and code overview
-https://drive.google.com/drive/folders/1oeX6Sd8sic1cw4WSUk_JJ7jDuMhKvNqY?usp=sharing
+Or, you can clone the ZetaForge GitHub repository and install from source by running:
+
+```
+git clone https://github.com/zetane/zetaforge
+cd zetaforge
+pip install .
+```
+
+
+**Install Docker Desktop and Enable Kubernetes**
+
+You need to install Docker Desktop or any other container runtime that includes Kubernetes integration.
+Follow the instructions to [install Docker Desktop](https://docs.docker.com/desktop/) from their official website.
+You will need to [enable Kubernetes](https://docs.docker.com/desktop/kubernetes/) to use ZetaForge.
+
+> Note: We recommend [OrbStack](https://orbstack.dev/download) to macOS users for efficiency and performance reasons.
+
+## Launch ZetaForge
+
+To launch ZetaForge, run the following command after installing via pip:
+```
+zetaforge launch
+```
+
+This will set up the correct services in Kubernetes, check that they are running, and then launch ZetaForge. 
+
+If something goes wrong, you can run:
+
+```
+zetaforge setup
+```
+
+to reconfigure the container services. 
+
+To teardown and remove the Kubernetes services, you can run:
+
+```
+zetaforge teardown
+```
+
+
+## Run your First Pipeline
+
+![Demo Pipeline](assets/quick-start.gif)
+
+To experience ZetaForge in action, start by dragging and dropping a core pipeline, such as the "Canny Edge Pipeline," from the Core Pipelines Library into your workspace. Once the pipeline is loaded, click the "Run" button to see the magic happen!
+
 
 ## Documentation
-Each block (Python) is compose of a `computations.py`, `requirements.txt`, `Dockerfile` and `specs.json` file which follows the templates below. In a block folder wrapping up a full ML repo, there can be any nescessary files as long the compute function from computations.py follows the interface below.
 
-Specs.json files will have the same template for all programming languages and blocks will follow a similar layout.
+Explore our [official documentation](https://zetane.com/docs/) for a guide on using ZetaForge. Learn how to create your own ZetaForge blocks, assemble custom pipelines, and more. You'll also find tutorials and best practices to enhance your ZetaForge experience.
 
-`specs.json`
-```
-{
-    "block": {
-        "information": {
-            "id": "minimal",
-            "name": "Minimal Block",
-            "description": "description",
-            "system_versions": [],
-            "block_version": "block version number"
-        },
 
-        "inputs": {
-            "in1": {
-                "type": "int",
-                "connections": [],
-                "relay_connections": []
-            },
-            "in2": {
-                "type": "str",
-                "connections": [],
-                "relay_connections": []
-            }
-        },
-        "outputs": {
-            "out1": {
-                "type": "int",
-                "connections": [],
-                "relay_connections": []
-            },
-            "out2": {
-                "type": "str",
-                "connections": [],
-                "relay_connections": []
-            }
-        },
-        "parameters": {},
-        "action": {
-            "container_uuid": "minimal",
-            "container_image_uuid": "minimal",
-            "block_source": "blocks/minimal",
-            "version": "latest"
-        },
-        "views":{
-            "mode": "modal",
-            "node": {
-                "active": "True or False",
-                "title_bar": {
-                    "background_color": "#D55908"
-                },
-                "preview": {
-                    "active": "false"
-                },
-                "html": "",
-                "pos_x": "300",
-                "pos_y": "200",
-                "pos_z": "999"
-            }
-        },
-        "events": []
-    }
-}
-```
-Note that for preview to display when set to true, it need to be a view block that has an html output variable.
+## Pipeline Gallery
 
-`computations.py`
-```
-# Python block template
-compute(in1, in2, in3,...):
-    '''A textual description of the compute function.
+**Visualize Multidimensional Numpy Arrays**
 
-    Inputs:
-    in1 (all): Textual description of in1
-    in2 (all): Textual description of in2
-    in3 (all): Textual description of in2
-     
-    Outputs:
-    out1 (all): Textual description of out1
-    out2 (all): Textual description of out2
-    '''
+![Pipeline Screenshot Numpy](assets/numpy-visualization.png)
 
-    #Your code
+**Integrate Popular GitHub Repos in AI Pipeline**
+(LAVIS and Open-CD)
 
-    return {'out1': out1, 'out2': out2, ...}
-```
+![Pipeline Screenshot GitHub](assets/popular-repos-pipeline.png)
 
-## New Blocks
-To create a new block, drag and drop the `New_Python` sidebar library block. Insert your code or ask GPT to generate code based on your prompt. Please, ensure you follow the provided template. After you save the block a new block will be created in the folder `my_blocks`. Using the `Load` button, you can load previously created blocks by selecting the block's `specs.json` file. 
+**Use Three.js Visualization Blocks**
 
-You can also copy the folder `blocks/minimal` into the `my_blocks` folder and manually edit files.
+![Pipeline Screenshot Three.js](assets/threejs.png)
 
-## Optional: PostgreSQL
-In `manager.py` there is a flag `save_graph_to_database = False`. To record each run in the database and access the result events from each block set it to `True`. In `index.html`, you can comment and uncomment the history sections.
 
-You can call your PostgreSQL database `graph_db1` and use credentials like in `manager.py` after the `save_graph_to_database` flag.
-In your database, make a table called my_table with columns id (serial, primary key) and data (json)
+## Share a Pipeline
 
-## Support
-See Zetane Docs (TBD)
+To share a pipeline with your team, follow these steps:
 
-From the folder `backend/python`, the following command with launch only the pipeline computing for testing and debugging.
-`python ../python/manager.py`
+1. **Save:** Go to `File` -> `Save` or `Save As`, choose a target folder, and name your pipeline.
+2. **Package and Send:** Zip the saved folder, which contains all necessary files, and share it with your team.
+3. **Load and Run:** Team members can unzip the folder, load the pipeline via `File` -> `Load` -> `Pipeline`, and click `Run` to replicate the results.
 
-## Roadmap
-TBD
-
-## To-Do
-### Tasks
-- [ ] Need to add a stop button to cancel computations and reset the server
-- [ ] blocks to blocks
-- [ ] Reset colors when rerunning graph
-- [ ] Versioning
-- [ ] Fix index.html console errors
-- [ ] Add font awesome icons in specs.json
-- [ ] Test Kubernetes
+This streamlined process ensures easy sharing and consistent results across your team.
 
 
 ## Contributing
-TBD
+
+ZetaForge is under active development. We welcome contributions from the community to make our project even better! 
+
+Before contributing, please take a moment to review our [Contribution Guide](CONTRIBUTING.md) to see our guidelines.
+Whether it's improving documentations, reporting bugs, suggesting new features, or submitting code changes, 
+your contributions help us improve the project for everyone. 
 
 ## License
-TBD
 
-## Project status
-Version 0.1 (internal alpha)
+- **[AGPL license](https://opensource.org/license/agpl-v3/)**
+- If you need another type of license please contact us [here](https://zetane.com/contact-us).
+
+## Contact
+
+- Reach out to us on [Discord](https://discord.gg/zetaforge) if you have any questions or issues.
+- ZetaForge Homepage: [https://www.zetaforge.com/](https://www.zetaforge.com/)
+
+
+<!-- ## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=zetane/viewer&type=Date)](https://star-history.com/#zetane/viewer&Date)
+
+
+## Contributors
+
+Thanks go to these awesome contributors
+
+<a href="https://github.com/zetane/viewer/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=zetane/viewer" />
+</a> -->

@@ -40,7 +40,8 @@ backend/db.sqlite3 # If you use SQLite
 venv/
 build/
 # Environment variables
-.env
+# see https://vitejs.dev/guide/env-and-mode
+*.local
 
 # Miscellaneous
 *.bak
