@@ -1,15 +1,17 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"net/http"
 	"path/filepath"
 
 	"server/zjson"
 
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/client"
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
@@ -23,13 +25,11 @@ type Catalog struct {
 
 func checkImage(ctx context.Context, tagName string, cfg Config) (bool, error) {
 	if cfg.IsLocal {
-		apiClient, err := client.NewClientWithOpts(
-			client.WithAPIVersionNegotiation(),
-		)
-		defer apiClient.Close()
+		resp, err := http.Get(fmt.Sprintf("http://localhost:%d/v2/_catalog", cfg.Local.RegistryPort))
 		if err != nil {
 			return false, err
 		}
+		defer resp.Body.Close()
 
 		imageList, err := apiClient.ImageList(ctx, types.ImageListOptions{})
 		if err != nil {
@@ -42,7 +42,6 @@ func checkImage(ctx context.Context, tagName string, cfg Config) (bool, error) {
 					return true, nil
 				}
 			}
-
 		}
 
 		return false, nil

@@ -129,8 +129,11 @@ metadata:
   name: weed
   namespace: default
 spec:
+<<<<<<< HEAD
   type: LoadBalancer
   loadBalancerIP: ~
+=======
+>>>>>>> ae59fc7 (Switch to minikube)
   selector:
     app.kubernetes.io/name: weed
   ports:
@@ -176,8 +179,11 @@ metadata:
   name: registry
   namespace: kube-system
 spec:
+<<<<<<< HEAD
   type: LoadBalancer
   loadBalancerIP: ~
+=======
+>>>>>>> ae59fc7 (Switch to minikube)
   ports:
   - port: 80
     targetPort: 5000

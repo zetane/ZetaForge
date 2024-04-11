@@ -13,7 +13,6 @@
 	"Local": {
 		"BucketPort": 8333,
 		"RegistryPort": 5000,
-		"RegistryDomain":"example.org",
 		"Driver": "minikube"
 	}
 } 
