@@ -41,11 +41,11 @@ const BUCKET = "zetaforge"
 
 type Endpoint struct {
 	Bucket string
-	S3Port string
+	S3Port int
 }
 
 func (endpoint *Endpoint) ResolveEndpoint(ctx context.Context, params s3.EndpointParameters) (endpoints.Endpoint, error) {
-	uri, err := url.Parse("http://localhost:" + endpoint.S3Port + "/" + endpoint.Bucket)
+	uri, err := url.Parse(fmt.Sprintf("http://localhost:%d/%s", endpoint.S3Port, endpoint.Bucket))
 	return endpoints.Endpoint{URI: *uri}, err
 }
 

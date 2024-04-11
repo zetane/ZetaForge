@@ -1,15 +1,17 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"net/http"
 	"path/filepath"
 
 	"server/zjson"
 
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/client"
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
@@ -17,36 +19,39 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func checkImage(ctx context.Context, tagName string, cfg Config) (bool, error) {
+type Catalog struct {
+	Repositories []string `json:"repositories"`
+}
+
+func checkImage(tagName string, cfg Config) (bool, error) {
 	if cfg.IsLocal {
 		apiClient, err := client.NewClientWithOpts(
 			client.WithAPIVersionNegotiation(),
 		)
 		if err != nil {
-			return true, err
+			return false, err
 		}
 		defer apiClient.Close()
 
-		imageList, err := apiClient.ImageList(ctx, types.ImageListOptions{})
-		if err != nil {
-			return true, err
+		buffer := new(bytes.Buffer)
+		buffer.ReadFrom(resp.Body)
+
+		var catalog Catalog
+		if err := json.Unmarshal(buffer.Bytes(), &catalog); err != nil {
+			return false, err
 		}
 
-		for _, image := range imageList {
-			for _, tag := range image.RepoTags {
-				if tagName == tag {
-					return false, nil
-				}
+		for _, image := range catalog.Repositories {
+			if cfg.Local.RegistryDomain+"/"+image+":latest" == tagName {
+				return true, nil
 			}
-
 		}
 
-		return true, nil
-
+		return false, nil
 	} else {
 		repo, err := name.NewRepository(cfg.Cloud.RegistryAddr)
 		if err != nil {
-			return true, err
+			return false, err
 		}
 
 		auth := authn.FromConfig(
@@ -59,16 +64,16 @@ func checkImage(ctx context.Context, tagName string, cfg Config) (bool, error) {
 		data, err := remote.List(repo, remote.WithAuth(auth))
 
 		if err != nil {
-			return true, err
+			return false, err
 		}
 
 		for _, tag := range data {
 			if tagName == cfg.Cloud.RegistryAddr+":"+tag {
-				return false, nil
+				return true, nil
 			}
 		}
 
-		return true, nil
+		return false, nil
 	}
 }
 
@@ -212,7 +217,7 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 
 		if len(block.Action.Container.Image) > 0 {
 			kaniko := kanikoTemplate(&block, organization, cfg)
-			toBuild, err := checkImage(ctx, template.Container.Image, cfg)
+			built, err := checkImage(template.Container.Image, cfg)
 			if err != nil {
 				return &workflow, blocks, err
 			}

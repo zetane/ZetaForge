@@ -1,6 +1,6 @@
 {
 	"IsLocal":true,
-	"ServerPort":"8080",
+	"ServerPort": 8080,
 	"KanikoImage":"gcr.io/kaniko-project/executor:latest",
 	"WorkDir":"/app",
 	"FileDir":"/files",
@@ -11,7 +11,8 @@
 	"Database":"./zetaforge.db",
 
 	"Local": {
-		"BucketPort":"8333",
-		"RegistryPort":"5000"
+		"BucketPort": 8333,
+		"RegistryPort": 5000,
+		"RegistryDomain":"example.org"
 	}
 } 
