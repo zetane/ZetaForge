@@ -26,11 +26,19 @@ import useWebSocket, {ReadyState} from "react-use-websocket";
 import { useEffect } from "react";
 import { useImmerAtom } from "jotai-immer";
 import { PipelineLogs } from "./PipelineLogs";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
 
 export default function Navbar({ children }) {
   const [darkMode, setDarkMode] = useAtom(darkModeAtom);
   const [modalContent, setModalContent] = useAtom(modalContentAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
+
+  const {pending, error, data }  = useQuery({
+    queryKey: ['rooms'],
+    queryFn: async () => { return axios.get(`${import.meta.env.VITE_EXECUTOR}/rooms`)}
+  })
+  console.log(data)
 
   const modalPopper = (content) => {
     setModalContent({

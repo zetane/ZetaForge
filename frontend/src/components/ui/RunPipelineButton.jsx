@@ -2,7 +2,7 @@ import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
 import { Button, HeaderGlobalAction } from "@carbon/react";
 import { useAtom } from "jotai";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { useImmerAtom } from "jotai-immer";
 import { useState, useEffect, useRef } from "react";
@@ -19,6 +19,7 @@ export default function RunPipelineButton({modalPopper, children, action}) {
   const velocityRef = useRef({ x: 2, y: 2 });
 
   const s3Uploader = trpc.uploadToS3.useMutation()
+  const queryClient = useQueryClient()
 
   const checkFileExistsInS3 = async (key) => {
     const creds = {
@@ -94,6 +95,7 @@ export default function RunPipelineButton({modalPopper, children, action}) {
     return pipeline
   }
 
+
   const mutation = useMutation({
     mutationFn: async (pipeline) => {
       return axios.post(`${import.meta.env.VITE_EXECUTOR}/execute`, pipeline)
@@ -117,9 +119,10 @@ export default function RunPipelineButton({modalPopper, children, action}) {
       pipelineSpecs['name'] = pipeline.name
       pipelineSpecs['id'] = pipeline.id
       const res = await mutation.mutateAsync(pipelineSpecs)
+      queryClient.invalidateQueries({queryKey: ['rooms']})
       if (res.status == 201) {
         setPipeline((draft) => {
-          draft.socketUrl = `ws://localhost:8080/ws/${pipelineSpecs.id}`;
+          draft.socketUrl = `${import.meta.env.VITE_WS_EXECUTOR}/ws/${pipelineSpecs.id}`;
           draft.history = pipeline.id + "/" + res.data.executionId
           draft.saveTime = Date.now()
           draft.log = []

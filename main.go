@@ -294,13 +294,17 @@ func main() {
 		newRes["pipeline"] = res
 		ctx.JSON(http.StatusCreated, newRes)
 	})
+	router.GET("/rooms", func(ctx *gin.Context) {
+		rooms := hub.GetRooms()
+		ctx.JSON(http.StatusOK, rooms)
+	})
 	router.GET("/ws/:room", func(ctx *gin.Context) {
 		room := ctx.Param("room")
 		upgrader := websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
 				// Allow specific origin
 				origin := r.Header.Get("Origin")
-				return strings.HasPrefix(origin, "http://localhost") || strings.HasPrefix(origin, "http://127.0.0.1") || strings.HasPrefix(origin, "file://") 
+				return strings.HasPrefix(origin, "http://localhost") || strings.HasPrefix(origin, "http://127.0.0.1") || strings.HasPrefix(origin, "file://")
 			},
 
 			ReadBufferSize:  1024,
