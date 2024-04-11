@@ -18,6 +18,7 @@ def main():
     parser.add_argument("command", choices=["launch", "teardown", "purge", "setup", "version"], help=help_)
     parser.add_argument("--s2_path", "-s2",  help="Full path to local execution server. Note that this is an option for zetaforge developers, or advanced zetaforge users. If not passed, zetaforge will use the deployed application", default=None)
     parser.add_argument("--app_path", "-path",  help="Full path to local electron executable. Note that this is an option for zetaforge developers, or advanced zetaforge users. If not passed, zetaforge will use the deployed application", default=None)
+    parser.add_argument("--run_only_s2", action="store_true", help="If passed, pip package will only run server2, without the client")
     args = parser.parse_args()
 
     init()  # Initialize colorama
@@ -40,7 +41,7 @@ def main():
             config = load_config(config_file)
 
         if config is not None:
-            run_forge(server_version=server_versions[-1], client_version=client_versions[-1], server_path=args.s2_path, client_path=args.app_path)
+            run_forge(server_version=server_versions[-1], client_version=client_versions[-1], server_path=args.s2_path, client_path=args.app_path, only_s2=args.run_only_s2)
         else:
             raise Exception("Config failed to load, please re-run `zetaforge setup`.")
     elif args.command == "teardown":

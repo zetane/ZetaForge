@@ -211,8 +211,32 @@ def setup(server_version, client_version, build_flag = True, install_flag = True
     return config_path
 
 
+def run_server(server_path):
+    print(f"Launching execution server {server_path}..")
+    server_executable = os.path.basename(server_path)
+    if platform.system() != 'Windows':
+        server_executable = f"./{server_executable}"
+    else:
+        server_executable = server_path
+
+    server = subprocess.Popen([server_executable],stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.dirname(server_path))
+    return server
+
+def run_client(client_path):
+    print(f"Launching client {client_path}..")
+    client_executable = os.path.basename(client_path)
+    if platform.system() == 'Darwin':
+        client_executable = [f"./{client_executable}"]
+    elif platform.system() == 'Windows':
+        client_executable = [client_path]
+    else: 
+        client_executable = [f"./{client_executable}"]
+
+    client = subprocess.Popen(client_executable, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.dirname(client_path))
+    return client
+
 #dev version is only passed, when a developer wants to pass a local version(for e.g. dev_path=./s2-v2.3.5-amd64)
-def run_forge(server_version=None, client_version=None, server_path=None, client_path=None):
+def run_forge(server_version=None, client_version=None, server_path=None, client_path=None, only_s2=False):
     global time_start
     time_start = datetime.now()
 
@@ -237,27 +261,10 @@ def run_forge(server_version=None, client_version=None, server_path=None, client
         client_path, _ = get_launch_paths(server_version, client_version)
 
     try:
-        server = None
+        server = run_server(server_path)
         client = None
-        print(f"Launching execution server {server_path}..")
-        server_executable = os.path.basename(server_path)
-        if platform.system() != 'Windows':
-            server_executable = f"./{server_executable}"
-        else:
-            server_executable = server_path
-
-        server = subprocess.Popen([server_executable],stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.dirname(server_path))
-
-        print(f"Launching client {client_path}..")
-        client_executable = os.path.basename(client_path)
-        if platform.system() == 'Darwin':
-            client_executable = [f"./{client_executable}"]
-        elif platform.system() == 'Windows':
-            client_executable = [client_path]
-        else: 
-            client_executable = [f"./{client_executable}"]
-
-        client = subprocess.Popen(client_executable, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.dirname(client_path))
+        if not only_s2:
+            client = run_client(client_path)
 
         def read_output(process, name):
             for line in process.stdout:
@@ -270,20 +277,26 @@ def run_forge(server_version=None, client_version=None, server_path=None, client
         # Create threads to read the outputs concurrently
         server_stdout_thread = threading.Thread(target=read_output, args=(server, '[server]'))
         server_stderr_thread = threading.Thread(target=read_error, args=(server, '[server]'))
-        client_stdout_thread = threading.Thread(target=read_output, args=(client, '[client]'))
-        client_stderr_thread = threading.Thread(target=read_error, args=(client, '[client]'))
+        
+        client_stdout_thread = None
+        client_stderr_thread = None
+        if not only_s2:
+            client_stdout_thread = threading.Thread(target=read_output, args=(client, '[client]'))
+            client_stderr_thread = threading.Thread(target=read_error, args=(client, '[client]'))
 
         # Start the threads
         server_stdout_thread.start()
         server_stderr_thread.start()
-        client_stdout_thread.start()
-        client_stderr_thread.start()
+        if not only_s2:
+            client_stdout_thread.start()
+            client_stderr_thread.start()
 
         # Wait for the threads to finish
         server_stdout_thread.join()
         server_stderr_thread.join()
-        client_stdout_thread.join()
-        client_stderr_thread.join()
+        if not only_s2:
+            client_stdout_thread.join()
+            client_stderr_thread.join()
 
     except KeyboardInterrupt: 
         print("Terminating servers..")
@@ -299,7 +312,8 @@ def run_forge(server_version=None, client_version=None, server_path=None, client
             print("Mixpanel cannot track")
 
         server.kill()
-        client.kill()
+        if not only_s2:
+            client.kill()
 
 
 #purge executables, and upload them from the scratch
