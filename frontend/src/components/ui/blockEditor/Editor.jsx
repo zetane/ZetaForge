@@ -36,7 +36,7 @@ import TestLogs from "./TestLogs";
 export default function Editor() {
   const serverAddress = "http://localhost:3330";
   const minizedStyles = "inset-y-16 right-8 w-1/3"
-  const maximizedStyles = "inset-y-11 right-0 w-full z-[9001]"
+  const maximizedStyles = "inset-y-11 right-0 w-full"
   const [blockPath] = useAtom(blockEditorRootAtom);
   const [blockFolderName, setBlockFolderName] = useState(null); //TODO check if still needed
   const setBlockEditorOpen = useSetAtom(isBlockEditorOpenAtom);
@@ -320,7 +320,7 @@ export default function Editor() {
   }
 
   return (
-    <div ref={panel} className={"editor-block absolute max-h-full overflow-y-scroll " + (isMaximized ? maximizedStyles : minizedStyles)}>
+    <div ref={panel} className={"editor-block absolute overflow-y-scroll z-[8000] " + (isMaximized ? maximizedStyles : minizedStyles)}>
       <div className="block-editor-header">
         <span className="p-4 text-lg italic">{blockFolderName}</span>
         <div className="flex flex-row items-center justify-end">
