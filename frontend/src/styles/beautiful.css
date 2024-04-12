@@ -197,7 +197,6 @@ header a {
 	height: calc(100dvh - 3rem);
 	/* background: var(--background-color); */
 	background-size: 25px 25px;
-	right: 0px;
 	margin-left: auto;
 	/* background-image:
    linear-gradient(to right, #f1f1f1 1px, transparent 1px),
