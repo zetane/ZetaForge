@@ -7,29 +7,24 @@ import {
   fileExists,
   filterDirectories,
   readJsonToObject,
-  withFileSystemRollback,
 } from "./fileSystem.js";
 
 const BLOCK_SPECS = "specs_v1.json";
 
 export async function saveSpec(spec, writePath, pipelineName) {
   const pipelineSpecsPath = path.join(writePath, pipelineName)
-  withFileSystemRollback([writePath], async () => {
-    await fs.mkdir(writePath, { recursive: true });
-    await fs.writeFile(
-      pipelineSpecsPath,
-      JSON.stringify(spec, null, 2)
-    );
-  })
+  await fs.mkdir(writePath, { recursive: true });
+  await fs.writeFile(
+    pipelineSpecsPath,
+    JSON.stringify(spec, null, 2)
+  );
 }
 
 export async function saveBlock(blockKey, fromPath, toPath) {
   const newFolder = path.join(toPath, blockKey)
   console.log(`saving ${blockKey} from ${fromPath} to ${newFolder}`)
-  withFileSystemRollback([toPath], async () => {
-    await fs.mkdir(newFolder, { recursive: true });
-    await fs.cp(fromPath, newFolder, { recursive: true });
-  })
+  await fs.mkdir(newFolder, { recursive: true });
+  await fs.cp(fromPath, newFolder, { recursive: true });
   return newFolder;
 }
 
@@ -61,45 +56,43 @@ export async function copyPipeline(pipelineSpecs, pipelineName, fromDir, toDir) 
 
   const blocksToRemove = setDifference(existingPipelineBlocks, newPipelineBlocks);
 
-  withFileSystemRollback([writePipelineDirectory], async () => {
-    for (const key of Array.from(newPipelineBlocks)) {
-      const newBlockPath = path.join(writePipelineDirectory, key);
-      let existingBlockPath = fromBlockIndex[key]
-      if (!existingBlockPath) {
-        // NOTE: BAD KEY
-        // At a certain point we serialized non unique keys 
-        // for folder names so there's a chance that we will
-        // fail to find the correct key and need to fall back
-        // to fetching a common folder name
-        const blockSpec = pipelineSpecs.pipeline[key]
-        existingBlockPath = fromBlockIndex[blockSpec.information.id]
-      }
-      if (!existingBlockPath) {
-        // If we still can't find a path
-        // we try to fall back to the block source path
-        const blockSpec = pipelineSpecs.pipeline[key]
-        existingBlockPath = blockSpec.information.block_source
-        if(app.isPackaged) {
-          existingBlockPath = path.join(process.resourcesPath, existingBlockPath)
-        }
-      }
-      
-      console.log(`saving ${key} from ${existingBlockPath} to ${newBlockPath}`)
-      if (existingBlockPath != newBlockPath) {
-        // if it's the same folder, don't try to copy it
-        await fs.cp(existingBlockPath, newBlockPath, {recursive: true})
+  for (const key of Array.from(newPipelineBlocks)) {
+    const newBlockPath = path.join(writePipelineDirectory, key);
+    let existingBlockPath = fromBlockIndex[key]
+    if (!existingBlockPath) {
+      // NOTE: BAD KEY
+      // At a certain point we serialized non unique keys 
+      // for folder names so there's a chance that we will
+      // fail to find the correct key and need to fall back
+      // to fetching a common folder name
+      const blockSpec = pipelineSpecs.pipeline[key]
+      existingBlockPath = fromBlockIndex[blockSpec.information.id]
+    }
+    if (!existingBlockPath) {
+      // If we still can't find a path
+      // we try to fall back to the block source path
+      const blockSpec = pipelineSpecs.pipeline[key]
+      existingBlockPath = blockSpec.information.block_source
+      if(app.isPackaged) {
+        existingBlockPath = path.join(process.resourcesPath, existingBlockPath)
       }
     }
-
-    for (const block of Array.from(blocksToRemove)) {
-      await fs.rm(toBlockIndex[block], { recursive: true });
+    
+    console.log(`saving ${key} from ${existingBlockPath} to ${newBlockPath}`)
+    if (existingBlockPath != newBlockPath) {
+      // if it's the same folder, don't try to copy it
+      await fs.cp(existingBlockPath, newBlockPath, {recursive: true})
     }
+  }
 
-    await fs.writeFile(
-      pipelineSpecsPath,
-      JSON.stringify(pipelineSpecs, null, 2)
-    );
-  });
+  for (const block of Array.from(blocksToRemove)) {
+    await fs.rm(toBlockIndex[block], { recursive: true });
+  }
+
+  await fs.writeFile(
+    pipelineSpecsPath,
+    JSON.stringify(pipelineSpecs, null, 2)
+  );
 
   return {specs: pipeline_specs, dirPath: writePipelineDirectory}
 }
@@ -153,9 +146,7 @@ async function readPipelineBlocks(specsPath) {
 
 export async function removeBlock(blockId, pipelinePath) {
   const blockPath = await getPipelineBlockPath(pipelinePath, blockId);
-  withFileSystemRollback([blockPath], () => {
-    fs.rm(blockPath, { recursive: true });
-  });
+  fs.rm(blockPath, { recursive: true });
 }
 
 export async function getBlockPath(blockId, pipelinePath) {
