@@ -3,8 +3,6 @@ import os
 import subprocess
 import sys
 
-from numpy import block
-
 # Change standard output encoding to UTF-8
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
@@ -25,7 +23,7 @@ def main(block_dir):
     commands = [
         "docker rm -f test_container",
         "docker rmi test_block_image",
-        "docker build -t test_block_image .",
+        f"docker build -t test_block_image {block_dir}",
         f"docker run --name test_container -v \"{block_dir}\":\"{container_dir}\" test_block_image python -B -c \"from computations import test; test()\""
     ]
     
@@ -38,5 +36,5 @@ def main(block_dir):
         run_command(command, log_file)
 
 if __name__ == "__main__":
-    block_dir = sys.stdin.read()
+    block_dir = sys.argv[1]
     main(block_dir)

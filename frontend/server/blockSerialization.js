@@ -1,8 +1,10 @@
-import { spawnSync } from "child_process";
+import { execFile, spawnSync } from "child_process";
 import { app } from "electron";
 import fs from "fs/promises";
-import path from "path";
+import path, { resolve } from "path";
 import { fileExists } from "./fileSystem";
+
+// const exec = promisify(require("child_process").exec)
 
 export async function compileComputation(blockPath) {
   const sourcePath = path.join(blockPath, "computations.py")
@@ -46,9 +48,16 @@ export async function runTest(blockPath) {
   if (!(await fileExists(scriptPath))) {
     throw new Error(`Could not find script for running tests: ${scriptPath}`)
   }
+  
+  return new Promise(() => {
+    execFile("python", [scriptPath, blockPath], (error, stdout, stderr) => {
+      if (error) {
+        rejects(error);
+      }
 
-  spawnSync("python", [scriptPath], {
-    input: blockPath,
-    encoding: 'utf8'
+      console.log(stdout);
+      console.error(stderr);
+      resolve();
+    })
   })
 }

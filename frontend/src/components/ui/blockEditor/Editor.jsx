@@ -288,8 +288,8 @@ export default function Editor() {
 
   const handleDockerCommands = useCallback(async () => {
     setIsRunButtonPressed(true);
-    await runTest.mutateAsync();
-    fetchFileSystem(blockFolderName);
+    runTest.mutateAsync({ blockPath: blockPath });
+    await fetchFileSystem(blockFolderName);
   }, [blockFolderName, blockPath, fetchFileSystem]);
 
   const handleSequentialExecution = async (e, index) => {

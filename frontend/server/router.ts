@@ -272,7 +272,7 @@ export const appRouter = router({
       const {blockPath} = input; 
 
       try {
-        runTest(blockPath);
+        await runTest(blockPath);
       } catch(error) {
         console.log(error);
         throw new TRPCError({
