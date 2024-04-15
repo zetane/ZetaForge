@@ -40,3 +40,15 @@ function removeConnections(io) {
   
   return io;
 }
+
+export async function runTest(blockPath) {
+  const scriptPath = app.isPackaged? path.join(process.resourcesPath, "resources", "run_test.py") : path.join("resources", "run_test.py");
+  if (!(await fileExists(scriptPath))) {
+    throw new Error(`Could not find script for running tests: ${scriptPath}`)
+  }
+
+  spawnSync("python", [scriptPath], {
+    input: blockPath,
+    encoding: 'utf8'
+  })
+}
