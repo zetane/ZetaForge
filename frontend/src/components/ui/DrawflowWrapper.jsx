@@ -146,8 +146,10 @@ export default function DrawflowWrapper() {
     if (pipeline.data && Object.keys(pipeline.data).length) {
       const schema = generateSchema(pipeline.data);
       setPipelineSchema(schema);
+    } else {
+      setPipelineSchema({});
     }
-}, [Object.keys(pipeline.data).length])
+  }, [Object.keys(pipeline.data).length])
 
   useEffect(() => {
     if (renderNodes.length) {
