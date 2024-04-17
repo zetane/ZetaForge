@@ -36,7 +36,7 @@ import TestLogs from "./TestLogs";
 export default function Editor() {
   const serverAddress = "http://localhost:3330";
   const minizedStyles = "inset-y-16 right-8 w-1/3"
-  const maximizedStyles = "inset-y-11 right-0 w-full z-[9001]"
+  const maximizedStyles = "inset-y-11 right-0 w-full"
   const [blockPath] = useAtom(blockEditorRootAtom);
   const [blockFolderName, setBlockFolderName] = useState(null); //TODO check if still needed
   const setBlockEditorOpen = useSetAtom(isBlockEditorOpenAtom);
@@ -320,7 +320,7 @@ export default function Editor() {
   }
 
   return (
-    <div ref={panel} className={"editor-block absolute max-h-full overflow-y-scroll " + (isMaximized ? maximizedStyles : minizedStyles)}>
+    <div ref={panel} className={"editor-block absolute overflow-y-scroll z-[8000] " + (isMaximized ? maximizedStyles : minizedStyles)}>
       <div className="block-editor-header">
         <span className="p-4 text-lg italic">{blockFolderName}</span>
         <div className="flex flex-row items-center justify-end">
@@ -328,166 +328,163 @@ export default function Editor() {
             <Bot size={24} className="mx-2 align-middle" />
             <span className="text-lg">{agentName}</span>
           </div>
-          <IconButton kind="ghost" size="lg" className="my-px-16" onClick={toggleMaximize}>
+          <IconButton kind="ghost" size="lg" className="my-px-16" onClick={toggleMaximize} label="Maximize">
             {isMaximized ? <Minimize size={24} /> : <Maximize size={24} />}
           </IconButton>
-          <IconButton kind="ghost" size="lg" onClick={handleClose}>
+          <IconButton kind="ghost" size="lg" onClick={handleClose} label="Close">
             <Close size={24} />
           </IconButton>
         </div>
       </div>
-      <div className="m-4">
-        <Tabs>
-          <TabList className="tab-list">
-            <Tab className="tab-button" onClick={handleTabClick}>
-              Workspace
-            </Tab>
-            <Tab className="tab-button" onClick={handleTabClick}>
-              Files
-            </Tab>
-            <Tab className="tab-button" onClick={handleTabClick}>
-              Logs
-            </Tab>
-          </TabList>
-          <TabPanels>
-            <TabPanel>
-              <div className="flex flex-col gap-y-8">
-                {queryAndResponses.map((item, index) => (
-                  <Fragment key={index}>
-                    <span className="block-editor-prompt">
-                      {item.prompt}
-                    </span>
-                    <div>
-                      <div className='block-editor-code-header'>Code #{index}</div>
-                      <div
-                        className="relative"
-                        style={{
-                          border:
-                            activeCodeMirror === index
-                              ? "2px solid darkorange"
-                              : "none",
-                        }}
-                      >
-                        <ViewerCodeMirror
-                          className="code-block"
-                          code={item.response}
-                        />
-                        <div className="absolute right-0 top-0">
-                          <Button
-                            id={`edit-button-${index}`}
-                            renderIcon={Edit}
-                            iconDescription="Edit code"
-                            hasIconOnly
-                            size="md"
-                            kind="ghost"
-                            onClick={handleEdit}
-                          />
-                          <Button
-                            id={`generate-button-${index}`}
-                            renderIcon={OperationsRecord}
-                            iconDescription="Compile block files"
-                            hasIconOnly
-                            size="md"
-                            kind="ghost"
-                            onClick={(e) => handleGenerate(e, index)}
-                          />
-                          <Button
-                            id={`execute-button-${index}`}
-                            renderIcon={Run}
-                            iconDescription="Compile files and run block test"
-                            hasIconOnly
-                            size="md"
-                            kind="ghost"
-                            onClick={(e) => handleSequentialExecution(e, index)}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </Fragment>
-                ))}
-                {showEditor ? (
-                  // Render EditorCodeMirror if showEditor is true
+      <Tabs>
+        <div></div>
+        <TabList fullWidth className='shrink-0 max-w-[40rem] mx-auto'>
+          <Tab onClick={handleTabClick}>
+            Workspace
+          </Tab>
+          <Tab onClick={handleTabClick}>
+            Files
+          </Tab>
+          <Tab onClick={handleTabClick}>
+            Logs
+          </Tab>
+        </TabList>
+        <TabPanels>
+          <TabPanel className="overflow-y-scroll">
+            <div className="flex flex-col gap-y-8">
+              {queryAndResponses.map((item, index) => (
+                <Fragment key={index}>
+                  <span className="block-editor-prompt">
+                    {item.prompt}
+                  </span>
                   <div>
-                    <div className='block-editor-code-header'>{editorManualPrompt}</div>
-                    <div className="relative">
-                      <EditorCodeMirror
-                        code={editorValue}
-                        onChange={handleEditorChange}
+                    <div className='block-editor-code-header'>Code #{index}</div>
+                    <div
+                      className="relative"
+                      style={{
+                        border:
+                          activeCodeMirror === index
+                            ? "2px solid darkorange"
+                            : "none",
+                      }}
+                    >
+                      <ViewerCodeMirror
+                        className="code-block"
+                        code={item.response}
                       />
                       <div className="absolute right-0 top-0">
                         <Button
-                          renderIcon={Save}
-                          iconDescription="Save code"
+                          id={`edit-button-${index}`}
+                          renderIcon={Edit}
+                          iconDescription="Edit code"
                           hasIconOnly
                           size="md"
                           kind="ghost"
-                          className="edit-button"
-                          onClick={handleSave}
+                          onClick={handleEdit}
+                        />
+                        <Button
+                          id={`generate-button-${index}`}
+                          renderIcon={OperationsRecord}
+                          iconDescription="Compile block files"
+                          hasIconOnly
+                          size="md"
+                          kind="ghost"
+                          onClick={(e) => handleGenerate(e, index)}
+                        />
+                        <Button
+                          id={`execute-button-${index}`}
+                          renderIcon={Run}
+                          iconDescription="Compile files and run block test"
+                          hasIconOnly
+                          size="md"
+                          kind="ghost"
+                          onClick={(e) => handleSequentialExecution(e, index)}
                         />
                       </div>
                     </div>
                   </div>
-                ) : (
-                  // Render input group if showEditor is false
-                  <>
-                    {openAIApiKey &&
-                      <div className="relative">
-                        <textarea
-                          className="block-editor-prompt-input"
-                          ref={chatTextarea}
-                          placeholder="Ask to generate code or modify last code"
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" && !e.shiftKey) {
-                              e.preventDefault();
-                              handleSubmit(e);
-                            }
-                          }}
-                        />
-                        <div className="absolute bottom-2 right-1">
-                          <IconButton
-                            iconDescription="Send"
-                            size="md"
-                            kind="ghost"
-                            onClick={handleSubmit}
-                          >
-                            <Send size={24}></Send>
-                          </IconButton>
-                        </div>
-                      </div>
-                    }
-                    {isLoading && (
-                      <Loading
-                        active={true}
-                        className="send-spinner"
-                        description="Loading"
-                        withOverlay={false}
+                </Fragment>
+              ))}
+              {showEditor ? (
+                // Render EditorCodeMirror if showEditor is true
+                <div>
+                  <div className='block-editor-code-header'>{editorManualPrompt}</div>
+                  <div className="relative">
+                    <EditorCodeMirror
+                      code={editorValue}
+                      onChange={handleEditorChange}
+                    />
+                    <div className="absolute right-0 top-0">
+                      <Button
+                        renderIcon={Save}
+                        iconDescription="Save code"
+                        hasIconOnly
+                        size="md"
+                        kind="ghost"
+                        className="edit-button"
+                        onClick={handleSave}
                       />
-                    )}
-                  </>
-                )}
-              </div>
-            </TabPanel>
-            <TabPanel className="remove-focus">
-              <DirectoryViewer
-                fileSystemProp={fileSystem}
-                blockPath={blockPath}
-                lastGeneratedIndex={lastGeneratedIndex}
-                handleDockerCommands={handleDockerCommands}
-                fetchFileSystem={fetchFileSystem}
-                blockFolderName={blockFolderName}
-              />
-            </TabPanel>
-            <TabPanel className="remove-focus">
-              <div className="content">
-                <TestLogs
-                  filePath={blockLogs}
-                  startFetching={isRunButtonPressed}
-                />
-              </div>
-            </TabPanel>
-          </TabPanels>
-        </Tabs>
-      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                // Render input group if showEditor is false
+                <>
+                  {openAIApiKey &&
+                    <div className="relative">
+                      <textarea
+                        className="block-editor-prompt-input"
+                        ref={chatTextarea}
+                        placeholder="Ask to generate code or modify last code"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSubmit(e);
+                          }
+                        }}
+                      />
+                      <div className="absolute bottom-2 right-1">
+                        <IconButton
+                          iconDescription="Send"
+                          size="md"
+                          kind="ghost"
+                          onClick={handleSubmit}
+                        >
+                          <Send size={24}></Send>
+                        </IconButton>
+                      </div>
+                    </div>
+                  }
+                  {isLoading && (
+                    <Loading
+                      active={true}
+                      className="send-spinner"
+                      description="Loading"
+                      withOverlay={false}
+                    />
+                  )}
+                </>
+              )}
+            </div>
+          </TabPanel>
+          <TabPanel className="overflow-hidden">
+            <DirectoryViewer
+              fileSystemProp={fileSystem}
+              blockPath={blockPath}
+              lastGeneratedIndex={lastGeneratedIndex}
+              handleDockerCommands={handleDockerCommands}
+              fetchFileSystem={fetchFileSystem}
+              blockFolderName={blockFolderName}
+            />
+          </TabPanel>
+          <TabPanel className="overflow-hidden">
+            <TestLogs
+              filePath={blockLogs}
+              startFetching={isRunButtonPressed}
+            />
+          </TabPanel>
+        </TabPanels>
+      </Tabs>
     </div>
   );
 }

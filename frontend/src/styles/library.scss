@@ -38,7 +38,7 @@
 }
 
 .library-tile-container {
-  overflow-y: auto;
+  overflow-y: visible;
   height: calc(100vh - 230px); /* Adjust the 150px based on the height of other elements */ 
 }
 
@@ -47,7 +47,7 @@
   left: 0px;
   top: 48px;
   border-radius: 2px;
-  z-index: 9000;
+  z-index: 7000;
 }
 
 .library-tab {

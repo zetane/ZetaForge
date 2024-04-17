@@ -58,6 +58,13 @@
       "filter": [
         "**/*"
       ]
+    },
+    {
+      "from": "./resources",
+      "to": "resources",
+      "filter": [
+        "**/*"
+      ]
     }
   ],
   "nsis": {

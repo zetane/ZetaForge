@@ -131,7 +131,7 @@ func tarFile(source string, key string) error {
 			return err
 		}
 
-		header.Name = strings.TrimPrefix(strings.Replace(path, source, "", -1), string(filepath.Separator))
+		header.Name = filepath.ToSlash(strings.TrimPrefix(strings.Replace(path, source, "", -1), string(filepath.Separator)))
 
 		if err := tw.WriteHeader(header); err != nil {
 			return err
@@ -175,6 +175,10 @@ func downloadFiles(ctx context.Context, sink string, prefix string, cfg Config) 
 		Bucket: aws.String(BUCKET),
 		Prefix: aws.String(prefix),
 	})
+
+	if err != nil {
+		return err
+	}
 
 	for _, content := range res.Contents {
 		pathWithoutPrefix := strings.TrimPrefix(*content.Key, prefix)

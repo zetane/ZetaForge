@@ -11,7 +11,7 @@ import {
   PlayFilled,
   Save,
 } from "@carbon/icons-react";
-import { Button, Modal, Tooltip, TreeNode, TreeView } from "@carbon/react";
+import { Button, Modal, TreeNode, TreeView } from "@carbon/react";
 import { useAtom } from 'jotai';
 import { useImmerAtom } from 'jotai-immer';
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -326,52 +326,43 @@ function DirectoryViewer({
   }
 
   return (
-    <div className="flex">
+    <div className="flex h-full">
       <div className="flex flex-col">
         <div className="flex gap-x-1">
-          <Tooltip>
-            <Button
-              renderIcon={FolderOpen}
-              size="sm"
-              iconDescription="Import folder"
-              tooltipAlignment="start"
-              tooltipPosition="bottom"
-              hasIconOnly
-              onClick={handleFolderImport}
-              title="Import folder into your block folder"
-            >
-              Import Folder
-            </Button>
-          </Tooltip>
-          <Tooltip>
-            <Button
-              renderIcon={DocumentDownload}
-              size="sm"
-              iconDescription="Import files"
-              // tooltipAlignment="start"
-              tooltipPosition="bottom"
-              hasIconOnly
-              onClick={handleFileImport}
-              title="Import files into your block folder"
-            >
-              Import Files
-            </Button>
-          </Tooltip>
+          <Button
+            renderIcon={FolderOpen}
+            size="sm"
+            iconDescription="Import folder"
+            tooltipPosition="bottom"
+            hasIconOnly
+            onClick={handleFolderImport}
+            title="Import folder into your block folder"
+          >
+            Import Folder
+          </Button>
+          <Button
+            renderIcon={DocumentDownload}
+            size="sm"
+            iconDescription="Import files"
+            tooltipPosition="bottom"
+            hasIconOnly
+            onClick={handleFileImport}
+            title="Import files into your block folder"
+          >
+            Import Files
+          </Button>
 
-          <Tooltip>
-            <Button
-              renderIcon={PlayFilled}
-              iconDescription="Run test"
-              // tooltipAlignment="end"
-              tooltipPosition="bottom"
-              hasIconOnly
-              size="sm"
-              onClick={handleDockerCommands}
-              title="Run test from this block folder"
-            >
-              Run
-            </Button>
-          </Tooltip>
+          <Button
+            renderIcon={PlayFilled}
+            iconDescription="Run test"
+            tooltipPosition="bottom"
+            hasIconOnly
+            size="sm"
+            onClick={handleDockerCommands}
+            title="Run test from this block folder"
+          >
+            Run
+          </Button>
 
           <input
             type="file"
@@ -416,7 +407,7 @@ function DirectoryViewer({
         </div>
       </div>
       <Splitter onDrag={handleDrag} />
-      <div className="w-full min-w-0">
+      <div className="w-full min-w-0 flex flex-col">
         <span className="text-xl text-gray-30">
           {currentFile.path ? <span>{currentFile.path}</span> : null}
         </span>
@@ -425,7 +416,7 @@ function DirectoryViewer({
         ) : (
           currentFile &&
           currentFile.path && (
-            <div className="relative">
+            <div className="relative overflow-y-auto">
               <EditorCodeMirror
                 key={currentFile.path}
                 code={currentFile.content || ""}

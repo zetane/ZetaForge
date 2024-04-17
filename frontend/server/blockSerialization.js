@@ -1,18 +1,24 @@
 import { spawnSync } from "child_process";
+import { app } from "electron";
 import fs from "fs/promises";
 import path from "path";
+import { fileExists } from "./fileSystem";
 
 export async function compileComputation(blockPath) {
   const sourcePath = path.join(blockPath, "computations.py")
   const source = await fs.readFile(sourcePath, { encoding: 'utf8' })
 
-  const scriptPath = path.join("server", "compileComputation.py")
+  const scriptPath = app.isPackaged? path.join(process.resourcesPath, "resources", "compileComputation.py") : path.join("resources", "compileComputation.py");
+  if (!(await fileExists(scriptPath))) {
+    throw new Error(`Could not find script for compilation: ${scriptPath}`);
+  }
+
   const {stdout} = spawnSync("python", [scriptPath], {
     input: source,
     encoding: 'utf8'
   });
-  const io = JSON.parse(stdout)
-  return io
+  const io = JSON.parse(stdout);
+  return io;
 }
 
 export async function saveBlockSpecs(blockPath, specs) {

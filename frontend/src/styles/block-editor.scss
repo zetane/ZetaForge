@@ -14,12 +14,12 @@
 
 .editor-block {
 	background-color: var(--cds-background) !important;
-	height: 94%;
+	height: 94dvh;
 	border: 1px solid var(--cds-border-subtle)
 }
 
 .block-editor-header {
-  @apply flex flex-row items-center justify-between sticky z-10 top-0;
+  @apply flex flex-row items-center justify-between shrink-0;
   background-color: var(--beHeader);
 }
 

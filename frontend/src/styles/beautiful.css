@@ -193,10 +193,11 @@ header a {
 
 #drawflow {
 	position: relative;
-	width: 100%;
-	height: calc(100dvh - 7rem);
+	width: calc(100% - 3rem);
+	height: calc(100dvh - 3rem);
 	/* background: var(--background-color); */
 	background-size: 25px 25px;
+	margin-left: auto;
 	/* background-image:
    linear-gradient(to right, #f1f1f1 1px, transparent 1px),
    linear-gradient(to bottom, #f1f1f1 1px, transparent 1px); */
