@@ -1,13 +1,13 @@
 // import { BrowserWindow, app, ipcMain, shell } from 'electron'
-import { BrowserWindow, app, ipcMain, shell, Menu } from 'electron';
+import { BrowserWindow, Menu, MenuItemConstructorOptions, app, ipcMain, shell } from 'electron';
 
-import { createIPCHandler } from 'electron-trpc/main'
-import { release } from 'node:os'
-import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { startExpressServer } from "../../server/express.mjs"
-import { update } from './update'
 import * as Sentry from "@sentry/electron";
+import { createIPCHandler } from 'electron-trpc/main';
+import { release } from 'node:os';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { startExpressServer } from "../../server/express.mjs";
+import { update } from './update';
 
 Sentry.init({ dsn: "https://7fb18e8e487455a950298625457264f3@o1096443.ingest.us.sentry.io/4507031960223744" });
 
@@ -15,7 +15,7 @@ Sentry.init({ dsn: "https://7fb18e8e487455a950298625457264f3@o1096443.ingest.us.
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-import { appRouter } from "../../server/router"
+import { appRouter } from "../../server/router";
 
 // The built directory structure
 //
@@ -56,7 +56,32 @@ const preload = join(__dirname, '../preload/index.mjs')
 const url = process.env.VITE_DEV_SERVER_URL
 const indexHtml = join(process.env.DIST, 'index.html')
 
+const isMac = process.platform === 'darwin'
 const menuTemplate: Electron.MenuItemConstructorOptions[] = [
+  ...(isMac? 
+    [{
+      label: app.name,
+      submenu: [
+        { role: 'about' },
+        { type: 'separator' },
+        { role: 'services' },
+        { type: 'separator' },
+        { role: 'hide' },
+        { role: 'hideOthers' },
+        { role: 'unhide' },
+        { type: 'separator' },
+      ] as MenuItemConstructorOptions[]
+    }]
+    : []
+  ),
+  {
+    label: 'Edit',
+    submenu: [
+      { role: 'cut' },
+      { role: 'copy' },
+      { role: 'paste' },
+    ]
+  },
   {
     label: 'View',
     submenu: [
