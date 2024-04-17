@@ -4,8 +4,6 @@ import fs from "fs/promises";
 import path, { resolve } from "path";
 import { fileExists } from "./fileSystem";
 
-// const exec = promisify(require("child_process").exec)
-
 export async function compileComputation(blockPath) {
   const sourcePath = path.join(blockPath, "computations.py")
   const source = await fs.readFile(sourcePath, { encoding: 'utf8' })
