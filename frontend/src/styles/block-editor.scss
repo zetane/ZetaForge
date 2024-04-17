@@ -19,7 +19,7 @@
 }
 
 .block-editor-header {
-  @apply flex flex-row items-center justify-between sticky z-10 top-0;
+  @apply flex flex-row items-center justify-between shrink-0;
   background-color: var(--beHeader);
 }
 

@@ -1,15 +1,10 @@
 import json
-import os
 import re
 import sys
 import traceback
 
-from dotenv import load_dotenv
-from langchain.chat_models import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate
-
-# Load environment variables from .env file
-load_dotenv()
+from langchain_openai import ChatOpenAI
 
 # Define system context
 openaiSystemContent = """You are an assistant that generates python code and returns it in a way that must follow the template below. Your goal is to generate a view.html file that satisfy the user requirement.

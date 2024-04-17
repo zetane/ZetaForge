@@ -25,12 +25,8 @@ const LogsViewer = ({ filePath, startFetching }) => {
   }, [filePath, startFetching]);
 
   return (
-    <div className="code-container centered-container">
-      <div className="viewer-container">
-        <div className="logs-viewer">
-          <LogsCodeMirror code={logs} />
-        </div>
-      </div>
+    <div className="overflow-y-auto h-full">
+      <LogsCodeMirror code={logs} />
     </div>
   );
 };
