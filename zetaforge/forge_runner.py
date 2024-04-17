@@ -9,17 +9,16 @@ from .install_forge_dependencies import *
 from pathlib import Path
 from colorama import init, Fore
 from datetime import datetime
-import mixpanel
 import socket, errno
-import uuid
-from hashlib import sha256
 import json
 import shutil
 import yaml 
 import threading
+from .mixpanel_client import MixpanelClient
 
-mixpanel_token = '4c09914a48f08de1dbe3dc4dd2dcf90d'
-mixpanel_instance = mixpanel.Mixpanel(mixpanel_token)
+
+mixpanel_client = MixpanelClient('4c09914a48f08de1dbe3dc4dd2dcf90d')
+
 
 BUILD_YAML = resource_filename("zetaforge", os.path.join('utils', 'build.yaml'))
 INSTALL_YAML = resource_filename("zetaforge", os.path.join('utils', 'install.yaml'))
@@ -229,10 +228,7 @@ def run_forge(server_version=None, client_version=None, server_path=None, client
     if not weed:
         raise Exception("SeaweedFS is not running, please ensure kubernetes is running or re-run `zetaforge setup`.")
 
-    #mixpanel_instance.track(distinct_id,'Initial Launch')
-    distinct_id = generate_distinct_id()
-    #added this for funnel reviews(for e.g., user Launched and after created a run, loaded a pipeline etc.)
-    mixpanel_instance.track(distinct_id, "Initial Launch", {})
+    mixpanel_client.track_event('Initial Launch')
 
     if server_path is None:
         _, server_path = get_launch_paths(server_version, client_version)
@@ -294,10 +290,10 @@ def run_forge(server_version=None, client_version=None, server_path=None, client
 
     finally:
         total_time = (datetime.now() - time_start).total_seconds()
-        distinct_id = generate_distinct_id()
+       
 
         try:
-            mixpanel_instance.track(distinct_id,'Full Launch', {'Duration(seconds)': total_time})
+            mixpanel_client.track_event('Full Launch', props={'Duration(seconds)': total_time})
             time.sleep(2) # mixpanel instance is asynch, so making sure that it completes the call before tear down
         except:
             print("Mixpanel cannot track")
@@ -376,13 +372,3 @@ def create_config_json(s2_path, context, registry_port=5000):
         json.dump(config, outfile)
 
     return file_path
-
-def generate_distinct_id():
-    seed = 0
-    try:
-        seed = uuid.getnode()
-    except:
-        seed = 0
-        
-    distinct_id = sha256(str(seed).encode('utf-8')).hexdigest()
-    return distinct_id
