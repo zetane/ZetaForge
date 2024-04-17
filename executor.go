@@ -131,7 +131,7 @@ func tarFile(source string, key string) error {
 			return err
 		}
 
-		header.Name = strings.TrimPrefix(strings.Replace(path, source, "", -1), string(filepath.Separator))
+		header.Name = filepath.ToSlash(strings.TrimPrefix(strings.Replace(path, source, "", -1), string(filepath.Separator)))
 
 		if err := tw.WriteHeader(header); err != nil {
 			return err
@@ -175,6 +175,10 @@ func downloadFiles(ctx context.Context, sink string, prefix string, cfg Config) 
 		Bucket: aws.String(BUCKET),
 		Prefix: aws.String(prefix),
 	})
+
+	if err != nil {
+		return err
+	}
 
 	for _, content := range res.Contents {
 		pathWithoutPrefix := strings.TrimPrefix(*content.Key, prefix)
@@ -584,7 +588,7 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 
 	s3key := pipeline.Id + "/" + executionId
 
-	workflow, blocks, err := translate(ctx, pipeline, "org", cfg, s3key)
+	workflow, blocks, err := translate(ctx, pipeline, "org", s3key, cfg)
 	if err != nil {
 		log.Printf("Failed to translate the pipeline; err=%v", err)
 		return
@@ -677,7 +681,7 @@ func cloudExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 
 	s3key := pipeline.Id + "/" + executionId
 
-	workflow, _, err := translate(ctx, pipeline, "org", cfg, s3key)
+	workflow, _, err := translate(ctx, pipeline, "org", s3key, cfg)
 	if err != nil {
 		log.Printf("Failed to translate the pipeline; err=%v", err)
 		return

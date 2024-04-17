@@ -22,11 +22,11 @@ export default function App() {
       <ForgeTheme>
         <Navbar >
           <LibraryFetcher />
+          <BlockEditorPanel />
         </Navbar>
         <LibrarySwitcher />
         <MainContent>
           <DrawflowWrapper />
-          <BlockEditorPanel />
         </MainContent>
         <ModalWrapper />
         <ToastWrapper />

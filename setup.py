@@ -1,6 +1,7 @@
-from setuptools import setup, find_packages
-import os
 import json
+import os
+
+from setuptools import find_packages, setup
 
 version = {}
 with open("zetaforge/__init__.py") as fp:
@@ -47,13 +48,12 @@ setup(
     packages=find_packages(include=('zetaforge',)),
     python_requires='>=3.7',
     install_requires = [
-        'setuptools',
-        'requests', 
-        'boto3', 
-        'colorama', 
+        'setuptools==69.0.2',
+        'requests==2.31.0', 
+        'boto3==1.34.79', 
+        'colorama==0.4.6', 
         'mixpanel==4.10.1', 
-        "langchain", 
-        "openai", 
-        "pyyaml"],
+        "langchain==0.1.15", 
+        "langchain-openai==0.1.2"],
     include_package_data=True,
     package_data={'zetaforge': ['utils/*.yaml', 'executables/*'],},)
