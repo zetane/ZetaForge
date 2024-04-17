@@ -140,7 +140,8 @@ const parseHtmlToInputs = (html) => {
 const InputField = ({ type, value, name, step, parameterName, onChange }) => {
   const [currentValue, setCurrentValue] = useState("");
   const inputRef = useRef(null);
-  const isTextBlock = type === 'textarea';
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+
   const setCursorPosition = (start, end) => {
     if (!inputRef?.current) return;
     inputRef.current.selectionStart = start;
@@ -188,6 +189,22 @@ const InputField = ({ type, value, name, step, parameterName, onChange }) => {
     }
   }
 
+  const EyeOpenIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="gray" class="bi bi-eye-fill" viewBox="0 0 16 16">
+    <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0"/>
+    <path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7"/>
+  </svg>
+  );
+
+  const EyeClosedIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="gray" class="bi bi-eye-slash-fill" viewBox="0 0 16 16">
+    <path d="m10.79 12.912-1.614-1.615a3.5 3.5 0 0 1-4.474-4.474l-2.06-2.06C.938 6.278 0 8 0 8s3 5.5 8 5.5a7 7 0 0 0 2.79-.588M5.21 3.088A7 7 0 0 1 8 2.5c5 0 8 5.5 8 5.5s-.939 1.721-2.641 3.238l-2.062-2.062a3.5 3.5 0 0 0-4.474-4.474z"/>
+    <path d="M5.525 7.646a2.5 2.5 0 0 0 2.829 2.829zm4.95.708-2.829-2.83a2.5 2.5 0 0 1 2.829 2.829zm3.171 6-12-12 .708-.708 12 12z"/>
+  </svg>
+  );
+
+  const isTextBlock = name === 'text';
+
   const handleChange = (event) => {
     const displayedValue = !isTextBlock ? event.target.value : event.target.value.replace(/['"]/g, '');
     setCurrentValue(displayedValue);
@@ -195,31 +212,81 @@ const InputField = ({ type, value, name, step, parameterName, onChange }) => {
     onChange(name, blockValue, parameterName);
   };
 
-  if (isTextBlock) {
-    return (
-      <textarea
-        value={value !== "" ? `"${currentValue}"` : currentValue}
-        name={name}
-        onChange={handleChange}
-        {...(parameterName && { [`parameters-${parameterName}`]: '' })}
-        className="input-element"
-        onKeyDown={preventQuotation}
-        ref={inputRef}
-      />
-    );
-  }
+  console.log("Name", name)
+  switch (name) {
+    case 'text':
+      return (
+        <textarea
+          value={value !== "" ? `"${currentValue}"` : currentValue}
+          name={name}
+          onChange={handleChange}
+          {...(parameterName && { [`parameters-${parameterName}`]: '' })}
+          className="input-element textarea-node"
+          onKeyDown={preventQuotation}
+          ref={inputRef}
+          style={{
+            resize: "both",
+            overflow: "auto",
+            height: "100px",
+            minHeight: "100px",
+            width: "250px",
+            minWidth: "250px"
+          }}
+        />
+      );
 
-  return (
-    <input
-      type={type}
-      value={currentValue}
-      name={name}
-      step={step}
-      onChange={handleChange}
-      {...(parameterName && { [`parameters-${parameterName}`]: '' })}
-      className="input-element"
-    />
-  );
+    case 'password':
+      return (
+        <div style={{ position: 'relative' }}>
+          <input
+            type={isPasswordVisible ? 'text' : 'password'}
+            value={currentValue}
+            name={name}
+            onChange={handleChange}
+            className="input-element"
+            style={{
+              minWidth: '200px', // Set the minimum width
+              padding: '10px',
+              paddingRight: '28px' // Make room for the toggle icon
+            }}
+          />
+          <button
+            onClick={() => setIsPasswordVisible(!isPasswordVisible)}
+            style={{
+              position: 'absolute',
+              right: '16px',
+              top: '25%',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            {isPasswordVisible ? <EyeOpenIcon /> : <EyeClosedIcon />}
+          </button>
+        </div>
+      );
+
+      default:
+        return (
+          <textarea
+          value={currentValue}
+          name={name}
+          onChange={handleChange}
+          {...(parameterName && { [`parameters-${parameterName}`]: '' })}
+          className="input-element textarea-node"
+          rows="1"
+          ref={inputRef}
+          style={{
+            resize: "both",
+            overflow: "auto",
+            height: "30px",
+            minHeight: "30px",
+            width: "250px",
+            minWidth: "250px" 
+          }}
+        />
+        );
+    }
 };
 
 const BlockContent = ({ html, block, onInputChange }) => {
@@ -230,12 +297,15 @@ const BlockContent = ({ html, block, onInputChange }) => {
       {parsedInputs.map((input, index) => {
         const parameterName = input.parameterName;
         const value = block.action?.parameters[parameterName]?.value || '';
+        console.log(block)
+        console.log("parameter Name", parameterName)
+        console.log(parsedInputs)
         return (
           <InputField
             key={index}
             type={input.type}
             value={value}
-            name={input.name}
+            name={parameterName}
             step={input.step}
             parameterName={input.parameterName}
             onChange={(name, value, parameterName) =>

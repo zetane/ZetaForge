@@ -63,25 +63,38 @@ export default function Navbar({ children }) {
           const message = splitMess[1].trim()
           const tagAndObject = message.split("|||")
           const tag = tagAndObject[0].trim()
+          
           if (tag == "outputs") {
-            // attempt to parse the output
-            const outs = JSON.parse(tagAndObject[1])
-            for (const [key, value] of Object.entries(outs)) {
-              if (!node.events.outputs) {
-                node.events["outputs"] = {}
+            try {
+              const outs = JSON.parse(tagAndObject[1]);
+              if (outs && typeof outs === 'object') { // Ensure outs is an object
+                for (const [key, value] of Object.entries(outs)) {
+                  if (!node.events.outputs) {
+                    node.events["outputs"] = {};
+                  }
+                  node.events.outputs[key] = value;
+                }
               }
-              node.events.outputs[key] = value
+            } catch (err) {
+              console.error('Failed to parse outputs:', err);
             }
           }
           if (tag == "inputs") {
-            const outs = JSON.parse(tagAndObject[1])
-            for (const [key, value] of Object.entries(outs)) {
-              if (!node.events.inputs) {
-                node.events["inputs"] = {}
+            try {
+              const outs = JSON.parse(tagAndObject[1]);
+              if (outs && typeof outs === 'object') { // Ensure outs is an object
+                for (const [key, value] of Object.entries(outs)) {
+                  if (!node.events.inputs) {
+                    node.events["inputs"] = {};
+                  }
+                  node.events["inputs"][key] = value;
+                }
               }
-              node.events["inputs"][key] = value
+            } catch (err) {
+              console.error('Failed to parse inputs:', err);
             }
           }
+
         }
         draft.log = draft.log.concat(`${mess}\n`)
       })
@@ -111,10 +124,8 @@ export default function Navbar({ children }) {
           <NewButton />
           <SavePipelineButton />
           <SaveAsPipelineButton />
-          <HeaderMenu menuLinkName="Load" >
             <LoadPipelineButton  />
             <LoadBlockButton />
-          </HeaderMenu>
         </HeaderMenu>
         <HeaderMenu menuLinkName="Settings">
           <HeaderMenuItem 

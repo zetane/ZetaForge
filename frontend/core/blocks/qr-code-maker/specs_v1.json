@@ -1,42 +1,32 @@
 {
   "information": {
-    "id": "gpt-turbo",
-    "name": "GPT Course of actions",
-    "description": "Processes a list of descriptions, each through the 'request_course_of_action' function, to generate courses of action.",
+    "id": "qr-code-maker",
+    "name": "QR Code Maker",
+    "description": "Template block for custom computations.",
     "system_versions": [
       "0.1"
     ],
     "block_version": "block version number",
-    "block_source": "core/blocks/gpt-turbo",
+    "block_source": "core/blocks/qr-code-maker",
     "block_type": "compute"
   },
   "inputs": {
-    "descriptions": {
-      "type": "List[str]",
+    "url": {
+      "type": "Any",
       "connections": [],
       "relays": []
     }
   },
   "outputs": {
-    "pairs": {
-      "type": "Any",
-      "connections": [],
-      "relays": []
-    },
-    "descriptions": {
-      "type": "Any",
-      "connections": [],
-      "relays": []
-    },
-    "actions": {
-      "type": "Any",
+    "qr_code_path": {
+      "type": "file",
       "connections": [],
       "relays": []
     }
   },
   "action": {
     "container": {
-      "image": "gpt-turbo",
+      "image": "qr-code-maker",
       "version": "latest",
       "command_line": [
         "python",
