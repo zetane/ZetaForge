@@ -1,11 +1,10 @@
 import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
-import { Button, HeaderGlobalAction } from "@carbon/react";
+import { Button } from "@carbon/react";
 import { useAtom } from "jotai";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { useImmerAtom } from "jotai-immer";
-import { useState, useEffect, useRef } from "react";
 import { S3Client, HeadObjectCommand } from '@aws-sdk/client-s3'
 import { trpc } from "@/utils/trpc";
 
@@ -14,9 +13,6 @@ const BUCKET = import.meta.env.VITE_BUCKET
 export default function RunPipelineButton({modalPopper, children, action}) {
   const [editor] = useAtom(drawflowEditorAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
-  const [angle, setAngle] = useState(0)
-  const posRef = useRef({ x: 0, y: 0 });
-  const velocityRef = useRef({ x: 2, y: 2 });
 
   const s3Uploader = trpc.uploadToS3.useMutation()
   const queryClient = useQueryClient()
@@ -121,9 +117,10 @@ export default function RunPipelineButton({modalPopper, children, action}) {
       const res = await mutation.mutateAsync(pipelineSpecs)
       queryClient.invalidateQueries({queryKey: ['rooms']})
       if (res.status == 201) {
+        const executionId = res.data?.executionId
         setPipeline((draft) => {
-          draft.socketUrl = `${import.meta.env.VITE_WS_EXECUTOR}/ws/${pipelineSpecs.id}`;
-          draft.history = pipeline.id + "/" + res.data.executionId
+          draft.socketUrl = `${import.meta.env.VITE_WS_EXECUTOR}/ws/${executionId}`;
+          draft.history = pipeline.id + "/" + executionId
           draft.saveTime = Date.now()
           draft.log = []
         })

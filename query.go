@@ -85,6 +85,7 @@ func createPipeline(ctx context.Context, db *sql.DB, organization string, pipeli
 	}
 
 	hash := fmt.Sprintf("%x", sha1.Sum([]byte(jsonData)))
+	log.Printf("Hash %v", hash)
 
 	tx, err := db.Begin()
 	if err != nil {

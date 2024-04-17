@@ -409,16 +409,19 @@ func runArgo(ctx context.Context, workflow *wfv1.Workflow, sink string, pipeline
 		return nil, err
 	}
 
+	log.Printf("Workflow Name: %v", workflow.Name)
 	serviceClient := cli.NewWorkflowServiceClient()
 	workflow, err = serviceClient.CreateWorkflow(ctx, &workflowpkg.WorkflowCreateRequest{
 		Namespace: namespace,
 		Workflow:  workflow,
 	})
+	log.Printf("Workflow Name: %v", workflow.Name)
 
 	if err != nil {
 		return workflow, err
 	}
 
+	// streams to websocket
 	go streaming(ctx, sink, workflow.Name, pipeline, client, hub)
 	status := string(workflow.Status.Phase)
 
@@ -432,11 +435,12 @@ func runArgo(ctx context.Context, workflow *wfv1.Workflow, sink string, pipeline
 			return workflow, err
 		}
 
-		log.Printf("Status: %s", status)
-
 		if string(workflow.Status.Phase) != status {
 			status = string(workflow.Status.Phase)
 			updateExecutionStatus(ctx, db, execution, status)
+			log.Printf("Status Updated: %s", status)
+		} else {
+			fmt.Printf(".")
 		}
 
 		if workflow.Status.Phase.Completed() {
@@ -490,6 +494,37 @@ func deleteArgo(ctx context.Context, name string, client clientcmd.ClientConfig)
 	}
 }
 
+func stopArgo(ctx context.Context, uuid string, client clientcmd.ClientConfig) error {
+	ctx, cli, err := apiclient.NewClientFromOpts(
+		apiclient.Opts{
+			ClientConfigSupplier: func() clientcmd.ClientConfig {
+				return client
+			},
+			Context: ctx,
+		},
+	)
+
+	namespace, _, err := client.Namespace()
+
+	if err != nil {
+		log.Printf("Failed to stop workflow %s; err=%v", uuid, err)
+		return err
+	}
+
+	serviceClient := cli.NewWorkflowServiceClient()
+	_, err = serviceClient.StopWorkflow(ctx, &workflowpkg.WorkflowStopRequest{
+		Name:      name,
+		Namespace: namespace,
+	})
+
+	if err != nil {
+		log.Printf("Failed to stop workflow %s; err=%v", uuid, err)
+		return err
+	}
+
+	return nil
+}
+
 func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Config, client clientcmd.ClientConfig, db *sql.DB, hub *Hub) {
 	ctx := context.Background()
 	defer log.Printf("Completed")
@@ -501,12 +536,11 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 	}
 	defer completeExecution(ctx, db, execution.ID)
 
-	if err := hub.OpenRoom(pipeline.Id); err != nil {
+	if err := hub.OpenRoom(executionId); err != nil {
 		log.Printf("Failed to open log room; err=%v", err)
 		return
 	}
-
-	defer hub.CloseRoom(pipeline.Id)
+	defer hub.CloseRoom(executionId)
 
 	if err := upload(ctx, cfg.EntrypointFile, cfg.EntrypointFile, cfg); err != nil { // should never fail
 		log.Printf("Failed to upload entrypoint file; err=%v", err)
@@ -523,11 +557,11 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 		log.Printf("Error creating pipeline log: %v", err)
 	}
 
-	pipelineLogger := createLogger(pipeline.Id, file, func(message string, pipelineId string) {
+	pipelineLogger := createLogger(executionId, file, func(message string, pipelineId string) {
 		if pipelineId != "" {
 			hub.Broadcast <- Message{
 				Room:    pipelineId,
-				Content: fmt.Sprintf("[executor-%s]:::: %s", pipelineId, message),
+				Content: fmt.Sprintf("[%s]:::: %s", pipelineId, message),
 			}
 		}
 		//fmt.Printf("[executor]:: %s", message)
@@ -604,6 +638,7 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 	}
 
 	workflow, err = runArgo(ctx, workflow, pipeline.Sink, pipeline.Id, execution.ID, client, db, hub)
+	log.Printf("Name: %v", workflow.Name)
 	if workflow != nil {
 		defer deleteArgo(ctx, workflow.Name, client)
 	}

@@ -12,7 +12,9 @@ export default function PipelineNameLabel() {
   const [editing, setEditing] = useState(false);
 
   const cacheQuery = trpc.getCachePath.useQuery();
+  console.log(cacheQuery);
   const cachePath = cacheQuery?.data || ""
+  console.log("cache: ", cachePath)
 
   useEffect(() => {
     // TODO: Make this suck less

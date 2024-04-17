@@ -277,6 +277,7 @@ func main() {
 		if uuidErr != nil {
 			log.Printf("uuid generation failed; err=%v", uuidErr)
 			ctx.String(500, fmt.Sprintf("%v", uuidErr))
+			return
 		}
 
 		// TODO: client needs to handle file uploading to S3
@@ -432,12 +433,28 @@ func main() {
 
 		ctx.JSON(http.StatusOK, response)
 	})
+	pipeline.POST("/:uuid/:hash/stop", func(ctx *gin.Context) {
+		paramUuid := ctx.Param("uuid")
+		hash := ctx.Param("hash")
+		res, err := getPipeline(ctx.Request.Context(), db, "org", paramUuid, hash)
+		if err != nil {
+			log.Printf("Failed to get pipeline; err=%v", err)
+			ctx.String(err.Status(), err.Error())
+			return
+		}
+		argoErr := stopArgo(ctx, res.Uuid, client)
+		if argoErr != nil {
+			ctx.String(500, fmt.Sprintf("%v", argoErr))
+			return
+		}
+		ctx.Status(http.StatusOK)
+	})
 	pipeline.POST("/:uuid/:hash/execute", func(ctx *gin.Context) {
 		paramUuid := ctx.Param("uuid")
 		hash := ctx.Param("hash")
 		res, err := getPipeline(ctx.Request.Context(), db, "org", paramUuid, hash)
 		if err != nil {
-			log.Printf("Failed to execute pipeline; err=%v", err)
+			log.Printf("Failed to get pipeline; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
@@ -452,6 +469,7 @@ func main() {
 		if uuidErr != nil {
 			log.Printf("uuid generation failed; err=%v", uuidErr)
 			ctx.String(500, fmt.Sprintf("%v", uuidErr))
+			return
 		}
 
 		// TODO: client needs to handle file uploading to S3

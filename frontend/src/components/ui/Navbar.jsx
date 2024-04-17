@@ -28,6 +28,7 @@ import { useImmerAtom } from "jotai-immer";
 import { PipelineLogs } from "./PipelineLogs";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
+import StopPipelineButton from "./StopPipelineButton";
 
 export default function Navbar({ children }) {
   const [darkMode, setDarkMode] = useAtom(darkModeAtom);
@@ -38,7 +39,15 @@ export default function Navbar({ children }) {
     queryKey: ['rooms'],
     queryFn: async () => { return axios.get(`${import.meta.env.VITE_EXECUTOR}/rooms`)}
   })
-  console.log(data)
+  const rooms = data?.data
+  console.log(rooms)
+  useEffect(() => {
+    if (!pipeline.socketUrl && rooms?.length > 0) {
+      setPipeline((draft) => {
+        draft.socketUrl = `${import.meta.env.VITE_WS_EXECUTOR}/ws/${rooms[0]}`;
+      })
+    }
+  }, [rooms])
 
   const modalPopper = (content) => {
     setModalContent({
@@ -108,6 +117,18 @@ export default function Navbar({ children }) {
     }
   }, [readyState]);
 
+  let runButton =  (
+    <RunPipelineButton modalPopper={modalPopper} action="Run">
+      <Play size={20} style={svgOverride} />
+    </RunPipelineButton>
+  )
+
+  if (pipeline.socketUrl) {
+    runButton = (
+      <StopPipelineButton />
+    )
+  }
+
   return (
     <Header aria-label="ZetaForge">
       <SkipToContent />
@@ -147,10 +168,7 @@ export default function Navbar({ children }) {
         </HeaderMenu>
       </HeaderNavigation>
       <HeaderGlobalBar>
-        <RunPipelineButton modalPopper={modalPopper} action="Run">
-          <Play size={20} style={svgOverride} />
-        </RunPipelineButton>
-
+        { runButton }
         <RunPipelineButton modalPopper={modalPopper} action="Rebuild">
           <Renew size={20} style={svgOverride} />
         </RunPipelineButton>
