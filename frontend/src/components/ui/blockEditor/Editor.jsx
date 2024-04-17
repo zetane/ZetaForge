@@ -320,7 +320,7 @@ export default function Editor() {
   }
 
   return (
-    <div ref={panel} className={"editor-block absolute flex flex-col z-[9001] " + (isMaximized ? maximizedStyles : minizedStyles)}>
+    <div ref={panel} className={"editor-block absolute overflow-y-scroll z-[8000] " + (isMaximized ? maximizedStyles : minizedStyles)}>
       <div className="block-editor-header">
         <span className="p-4 text-lg italic">{blockFolderName}</span>
         <div className="flex flex-row items-center justify-end">
