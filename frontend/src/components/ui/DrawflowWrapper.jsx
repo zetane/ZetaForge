@@ -48,6 +48,25 @@ export default function DrawflowWrapper() {
   const savePipeline = trpc.savePipeline.useMutation();
   const getBlockPath = trpc.getBlockPath.useMutation();
   
+  // Redraw the connections when resizing textarea
+  useEffect(() => {
+    if (!editor) return;
+
+    const resizeObserver = new ResizeObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.target.classList.contains('textarea-node')) {
+                editor.updateAllConnections();
+            }
+        });
+    });
+
+    const textareas = document.querySelectorAll('.textarea-node');
+    textareas.forEach(textarea => resizeObserver.observe(textarea));
+
+    return () => resizeObserver.disconnect();
+  }, [editor, renderNodes]);
+
+
   const createConnection = (connection, pipeline) => {
     const {output_id, input_id, output_class, input_class} = connection;
     const outputBlock = pipeline.data[output_id]

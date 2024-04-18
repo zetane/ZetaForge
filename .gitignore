@@ -3,6 +3,10 @@ frontend/.cache/*
 !frontend/.cache/.gitkeep
 *.db
 
+# Executables
+zetaforge/executables
+!zetaforge/executables/README.md
+
 # Node and npm related
 node_modules/
 npm-debug.log
