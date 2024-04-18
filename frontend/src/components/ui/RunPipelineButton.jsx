@@ -2,10 +2,12 @@ import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
 import { Button, HeaderGlobalAction } from "@carbon/react";
 import { useAtom } from "jotai";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
+import { pipelineSchemaAtom } from "@/atoms/pipelineSchemaAtom";
 import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import { useImmerAtom } from "jotai-immer";
 import { useState, useEffect, useRef } from "react";
+import ClosableModal from "./modal/ClosableModal";
 import { S3Client, HeadObjectCommand } from '@aws-sdk/client-s3'
 import { trpc } from "@/utils/trpc";
 
@@ -14,6 +16,9 @@ const BUCKET = import.meta.env.VITE_BUCKET
 export default function RunPipelineButton({modalPopper, children, action}) {
   const [editor] = useAtom(drawflowEditorAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
+  const [validationErrorMsg, setValidationErrorMsg] = useState([]);
+  const [pipelineSchema, _] = useAtom(pipelineSchemaAtom);
+  const [isOpen, setIsOpen] = useState(false);
   const [angle, setAngle] = useState(0)
   const posRef = useRef({ x: 0, y: 0 });
   const velocityRef = useRef({ x: 2, y: 2 });
@@ -101,6 +106,20 @@ export default function RunPipelineButton({modalPopper, children, action}) {
   })
 
   const runPipeline = async (editor, pipeline) => {
+    // check if pipeline structure exists
+    if (!pipeline.data || !Object.keys(pipeline.data).length) return null;
+    const results = pipelineSchema.safeParse(pipeline.data);
+
+    if (!results.success) {
+      setValidationErrorMsg(prev => {
+        return results.error.issues.map(block => `${block.path[0]}: ${block.message}`)
+      })
+      setIsOpen(true)
+      return null;
+    } else {
+      setValidationErrorMsg([]);
+    }
+
     let pipelineSpecs = editor.convert_drawflow_to_block(pipeline.name, pipeline.data);
     pipelineSpecs = await processNodes(pipelineSpecs)
 
@@ -135,9 +154,26 @@ export default function RunPipelineButton({modalPopper, children, action}) {
   };
 
   return (
+    <>
       <Button style={styles} size="sm" onClick={() => { runPipeline(editor, pipeline) }}>
         <span>{ action }</span>
         { children }
       </Button>
+
+      <ClosableModal
+        modalHeading="The following error(s) occurred:"
+        passiveModal={true}
+        open={isOpen}
+        onRequestClose={() => setIsOpen(false)}
+      >
+        <div className="flex flex-col gap-4 p-3">
+          {validationErrorMsg.map((error, i) => {
+            return (
+              <p key={"error-msg-"+i}>{error}</p>
+            )
+          })}
+        </div>
+      </ClosableModal>
+    </>
   );
 }

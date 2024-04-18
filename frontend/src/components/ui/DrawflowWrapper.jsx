@@ -1,6 +1,7 @@
 import { drawflowEditorAtom } from '@/atoms/drawflowAtom';
 import { blockEditorRootAtom, isBlockEditorOpenAtom } from '@/atoms/editorAtom';
 import { pipelineAtom } from "@/atoms/pipelineAtom";
+import { pipelineSchemaAtom } from "@/atoms/pipelineSchemaAtom";
 import Drawflow from '@/components/ZetaneDrawflowEditor';
 import { trpc } from "@/utils/trpc";
 import '@fortawesome/fontawesome-free/css/all.min.css';
@@ -11,7 +12,7 @@ import { useImmerAtom } from 'jotai-immer';
 import { genJSON } from '@/utils/blockUtils';
 import { customAlphabet } from 'nanoid';
 import { useLoadPipeline } from "./useLoadPipeline";
-
+import generateSchema from '@/utils/schemaValidation';
 
 const launchDrawflow = (parentDomRef, canvasDomRef, pipeline, setPipeline) => {
   if (parentDomRef.className != "parent-drawflow") {
@@ -35,6 +36,7 @@ const dragOverHandler = (event) => {
 
 export default function DrawflowWrapper() {
   const [editor, setEditor] = useAtom(drawflowEditorAtom);
+  const [, setPipelineSchema] = useAtom(pipelineSchemaAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const setBlockEditorRoot = useSetAtom(blockEditorRootAtom);
   const setEditorOpen = useSetAtom(isBlockEditorOpenAtom);
@@ -139,6 +141,15 @@ export default function DrawflowWrapper() {
     })
     setRenderNodes(nodes)
   }, [pipeline.data])
+
+  useEffect(() => {
+    if (pipeline.data && Object.keys(pipeline.data).length) {
+      const schema = generateSchema(pipeline.data);
+      setPipelineSchema(schema);
+    } else {
+      setPipelineSchema({});
+    }
+  }, [Object.keys(pipeline.data).length])
 
   useEffect(() => {
     if (renderNodes.length) {
