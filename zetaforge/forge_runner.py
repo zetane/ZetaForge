@@ -4,7 +4,7 @@ import platform
 import time
 import json
 from pkg_resources import resource_filename
-from .check_forge_dependencies import check_dependencies, check_running_kube, check_kube_pod
+from .check_forge_dependencies import check_dependencies, check_running_kube, check_kube_pod, check_minikube
 from .install_forge_dependencies import *
 from pathlib import Path
 from colorama import init, Fore
@@ -131,14 +131,36 @@ def select_kubectl_context():
 
     return selected_context
 
-def setup(server_version, client_version, build_flag = True, install_flag = True):
+def setup_minikube( client_version, server_version, context, registry_port, user_path=None):
+    minikube_cmd = subprocess.run(['minikube', 'start', f'--mount-string={user_path}:/host', '--mount', '-p', 'zetaforge'])
+    install_frontend_dependencies(client_version=client_version)
+
+    config_path = write_json(server_version, client_version, context, registry_port)
+
+    print(f"Setup complete, wrote config to {config_path}.")
+    if minikube_cmd.returncode == 0:
+        return config_path
+    else:
+        raise Exception("Error while setting minikube. Please check if your minikube is set.")
+
+
+def setup(server_version, client_version, build_flag = True, install_flag = True, is_minikube=False):
     print("Platform: ", platform.machine())
     print("CWD: ", os.path.abspath(os.getcwd()))
+    if is_minikube:
+        
+        if not check_minikube():
+            raise Exception("Minikube not found. Please install minikube or run zetaforge on a different kube context")
+        if setup_minikube(client_version, server_version, 'minikube', user_path='/') != 0:
+            raise Exception("Cannot setup minikube.") 
+        return config_path
     context = select_kubectl_context()
+    registry_port = 5000
+
 
     kubectl_flag = check_dependencies()        
 
-    registry_port = 5000
+    
     print(f"Setting registry port: {registry_port}")
     update_yaml(int(registry_port))
         
@@ -211,20 +233,44 @@ def setup(server_version, client_version, build_flag = True, install_flag = True
     return config_path
 
 
+def run_server(server_path):
+    print(f"Launching execution server {server_path}..")
+    server_executable = os.path.basename(server_path)
+    if platform.system() != 'Windows':
+        server_executable = f"./{server_executable}"
+    else:
+        server_executable = server_path
+
+    server = subprocess.Popen([server_executable],stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.dirname(server_path))
+    return server
+
+def run_client(client_path):
+    print(f"Launching client {client_path}..")
+    client_executable = os.path.basename(client_path)
+    if platform.system() == 'Darwin':
+        client_executable = [f"./{client_executable}"]
+    elif platform.system() == 'Windows':
+        client_executable = [client_path, '--no-sandbox']
+    else: 
+        client_executable = [f"./{client_executable}"]
+
+    client = subprocess.Popen(client_executable, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.dirname(client_path))
+    return client
+
 #dev version is only passed, when a developer wants to pass a local version(for e.g. dev_path=./s2-v2.3.5-amd64)
-def run_forge(server_version=None, client_version=None, server_path=None, client_path=None):
+def run_forge(server_version=None, client_version=None, server_path=None, client_path=None, only_s2=False, is_minikube=False):
     global time_start
     time_start = datetime.now()
 
     #init is called for collarama library, better logging.
     init()   
 
-    reg = check_kube_pod("registry")
+    reg = check_kube_pod("registry", is_minikube=is_minikube)
     if not reg:
         print("Registry container not found, restarting..")
-        setup(server_version, client_version)
+        setup(server_version, client_version, is_minikube=is_minikube)
         raise Exception("Container registry is not running, please ensure kubernetes is running or re-run `zetaforge setup`.")
-    weed = check_kube_pod("weed")
+    weed = check_kube_pod("weed", is_minikube=is_minikube)
     if not weed:
         raise Exception("SeaweedFS is not running, please ensure kubernetes is running or re-run `zetaforge setup`.")
 
@@ -237,27 +283,10 @@ def run_forge(server_version=None, client_version=None, server_path=None, client
         client_path, _ = get_launch_paths(server_version, client_version)
 
     try:
-        server = None
+        server = run_server(server_path)
         client = None
-        print(f"Launching execution server {server_path}..")
-        server_executable = os.path.basename(server_path)
-        if platform.system() != 'Windows':
-            server_executable = f"./{server_executable}"
-        else:
-            server_executable = server_path
-        
-        server = subprocess.Popen([server_executable],stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.dirname(server_path))
-
-        print(f"Launching client {client_path}..")
-        client_executable = os.path.basename(client_path)
-        if platform.system() == 'Darwin':
-            client_executable = [f"./{client_executable}"]
-        elif platform.system() == 'Windows':
-            client_executable = [client_path, '--no-sandbox']
-        else: 
-            client_executable = [f"./{client_executable}"]
-
-        client = subprocess.Popen(client_executable, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.dirname(client_path))
+        if not only_s2:
+            client = run_client(client_path)
 
         def read_output(process, name):
             for line in process.stdout:
@@ -270,20 +299,26 @@ def run_forge(server_version=None, client_version=None, server_path=None, client
         # Create threads to read the outputs concurrently
         server_stdout_thread = threading.Thread(target=read_output, args=(server, '[server]'))
         server_stderr_thread = threading.Thread(target=read_error, args=(server, '[server]'))
-        client_stdout_thread = threading.Thread(target=read_output, args=(client, '[client]'))
-        client_stderr_thread = threading.Thread(target=read_error, args=(client, '[client]'))
+        
+        client_stdout_thread = None
+        client_stderr_thread = None
+        if not only_s2:
+            client_stdout_thread = threading.Thread(target=read_output, args=(client, '[client]'))
+            client_stderr_thread = threading.Thread(target=read_error, args=(client, '[client]'))
 
         # Start the threads
         server_stdout_thread.start()
         server_stderr_thread.start()
-        client_stdout_thread.start()
-        client_stderr_thread.start()
+        if not only_s2:
+            client_stdout_thread.start()
+            client_stderr_thread.start()
 
         # Wait for the threads to finish
         server_stdout_thread.join()
         server_stderr_thread.join()
-        client_stdout_thread.join()
-        client_stderr_thread.join()
+        if not only_s2:
+            client_stdout_thread.join()
+            client_stderr_thread.join()
 
     except KeyboardInterrupt: 
         print("Terminating servers..")
@@ -299,7 +334,8 @@ def run_forge(server_version=None, client_version=None, server_path=None, client
             print("Mixpanel cannot track")
 
         server.kill()
-        client.kill()
+        if not only_s2:
+            client.kill()
 
 
 #purge executables, and upload them from the scratch
@@ -307,7 +343,9 @@ def purge():
     shutil.rmtree(EXECUTABLES_PATH)
     os.makedirs(EXECUTABLES_PATH)
 
-def teardown():
+def teardown(is_minikube=False):
+    if is_minikube:
+        subprocess.run(["minikube", "stop", "-p", "zetaforge"])
     contexts = get_kubectl_contexts()
     default = None
     for i, context in enumerate(contexts, start=1):

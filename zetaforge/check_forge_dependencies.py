@@ -4,6 +4,12 @@ from pathlib import Path
 import os
 EXECUTABLES_PATH = os.path.join(Path(__file__).parent, 'executables')
 
+
+def check_minikube():
+    check_ctl = subprocess.run(["minikube", "version"], capture_output=True, text=True)
+    return check_ctl.returncode == 0
+
+
 def check_kubectl():
     check_ctl = subprocess.run(["kubectl", "version", "--client"], capture_output=True, text=True)
     return check_ctl.returncode == 0
@@ -18,8 +24,12 @@ def check_running_kube(context):
         print(check_kube.stderr)
         return False
 
-def check_kube_pod(name):
-    check_kube = subprocess.run(["kubectl", "get", "pods"], capture_output=True, text=True)
+def check_kube_pod(name, is_minikube=False):
+    check_kube = None
+    if is_minikube:
+        check_kube = subprocess.run(["minikube", "kubectl", "--" "get", "pods"], capture_output=True, text=True)
+    else:
+        check_kube = subprocess.run(["kubectl", "get", "pods"], capture_output=True, text=True)
     lines = check_kube.stdout.strip().split("\n")[1:]  # Skip the header line
     for line in lines:
         parts = line.split("-")
