@@ -12,6 +12,11 @@ export default function SaveAsPipelineButton() {
   const savePipeline = trpc.savePipeline.useMutation();
 
   const handleClick = async (editor, pipeline) => {
+    try {
+      mixpanelService.trackEvent('Save Pipeline')
+      } catch(err) {
+  
+      }
     const pipelineSpecs = editor.convert_drawflow_to_block(pipeline.name, pipeline.data);
     // If a pipeline is loaded, pipeline.path will be set to the load path
     // If it isn't set, electron will pop a file picker window

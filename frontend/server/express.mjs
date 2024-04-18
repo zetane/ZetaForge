@@ -13,7 +13,6 @@ import { fileExists, readJsonToObject, readSpecs } from "./fileSystem.js";
 import { copyPipeline, saveBlock } from "./pipelineSerialization.js";
 import {app} from 'electron'
 import sha256 from 'sha256'
-import {toBigIntBE} from 'bigint-buffer';
 import getMAC from "getmac"
 
 
@@ -295,40 +294,27 @@ function startExpressServer() {
 
   app.get('/distinct-id', async(req, res) => {
 
-    function get_distinct_id() {
+    try {
+      const macAddress = getMAC();
+      let macAsBigInt = BigInt(`0x${macAddress.split(':').join('')}`);
+      
+      // Check if the MAC address is universally administered
+      const isUniversallyAdministered = (macAsBigInt & BigInt(0x020000000000)) === BigInt(0);
+      
+      // If not universally administered, set the multicast bit
+      if (!isUniversallyAdministered) {
+          macAsBigInt |= BigInt(0x010000000000);
+      }
+      const distinctId = sha256(macAsBigInt.toString());
+      return res.send(distinctId);
+    } catch (error) {
+      console.log("Can't generate distinct_id for mixpanel. Using default distinct_id");
+      console.log(error);
+      return res.send(sha256(BigInt(0).toString())); // Sending default distinct_id
+    }
+});
 
-      function getHardwareAddressAsInteger() {
-  
-        try {
-         const macAddress = getMAC();
-         
-         let macAsBigInt = toBigIntBE(Buffer.from(macAddress.split(':').join(''), 'hex'));
-       
-         // Check if the MAC address is universally administered
-         const isUniversallyAdministered = (macAsBigInt & BigInt(0x020000000000)) === BigInt(0);
-       
-         // If not universally administered, set the multicast bit
-         if (!isUniversallyAdministered) {
-           macAsBigInt |= BigInt(0x010000000000);
-         }
-     
-         return macAsBigInt;
-       } catch (error) {
-       console.log("Can't generate distinct_id for mixpanel. Using default distinct_id")
-       console.log(error)
-       console.log("error")
-       return BigInt(0);
-       }
-     }
-     
-     return getHardwareAddressAsInteger()
-  
-   }
-
-   const distinctId = sha256(get_distinct_id().toString())
-   return res.send(distinctId)
-
-  })
+   
   
 
   app.post("/import-files", upload.array("files"), (req, res) => {
