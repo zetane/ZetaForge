@@ -245,7 +245,7 @@ def run_forge(server_version=None, client_version=None, server_path=None, client
             server_executable = f"./{server_executable}"
         else:
             server_executable = server_path
-
+        
         server = subprocess.Popen([server_executable],stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.dirname(server_path))
 
         print(f"Launching client {client_path}..")
@@ -253,7 +253,7 @@ def run_forge(server_version=None, client_version=None, server_path=None, client
         if platform.system() == 'Darwin':
             client_executable = [f"./{client_executable}"]
         elif platform.system() == 'Windows':
-            client_executable = [client_path]
+            client_executable = [client_path, '--no-sandbox']
         else: 
             client_executable = [f"./{client_executable}"]
 
