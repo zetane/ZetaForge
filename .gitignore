@@ -4,7 +4,8 @@ frontend/.cache/*
 *.db
 
 # Executables
-zetaforge/executables/
+zetaforge/executables
+!zetaforge/executables/README.md
 
 # Node and npm related
 node_modules/

@@ -87,8 +87,6 @@ const BlockGenerator = ({ block, openView, id, historySink, pipelineAtom}) => {
 };
 
 const BlockPreview = ({id, src}) => {
-  console.log(src)
-
   return (
     <div className="block-preview">
       <div>
@@ -212,7 +210,6 @@ const InputField = ({ type, value, name, step, parameterName, onChange }) => {
     onChange(name, blockValue, parameterName);
   };
 
-  console.log("Name", name)
   switch (name) {
     case 'text':
       return (
@@ -297,9 +294,6 @@ const BlockContent = ({ html, block, onInputChange }) => {
       {parsedInputs.map((input, index) => {
         const parameterName = input.parameterName;
         const value = block.action?.parameters[parameterName]?.value || '';
-        console.log(block)
-        console.log("parameter Name", parameterName)
-        console.log(parsedInputs)
         return (
           <InputField
             key={index}
