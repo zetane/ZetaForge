@@ -61,7 +61,7 @@ def main():
 def compile_app(version, goos, archs = ['amd64', 'arm64']):
     for goarch in archs:
         print(f"Compiling {goarch}..")
-        if goarch == 'arm64' and goos == 'windows':
+        if goarch == 'arm64' and (goos == 'windows' or goos == 'linux'):
             continue
 
         frontend = os.path.join("frontend", "server2")
@@ -73,6 +73,11 @@ def compile_app(version, goos, archs = ['amd64', 'arm64']):
             if goos == 'windows':
                 arch = 'amd64'
                 s = subprocess.run(["env", f"GOOS={goos}", f"GOARCH={arch}", "CGO_ENABLED=1", "CC=x86_64-w64-mingw32-gcc", "go", "build"], capture_output=True, text=True)
+                if s.returncode != 0:
+                    raise Exception(f"Failed to build go server: {s.stderr}")
+                print(s)
+            elif goos == 'linux':
+                s = subprocess.run(["env", f"GOOS={goos}", f"GOARCH={arch}", "CGO_ENABLED=1", "CC=x86_64-linux-musl-gcc", "go", "build", "-trimpath", "-ldflags", "-extldflags -static"], capture_output=True, text=True)
                 if s.returncode != 0:
                     raise Exception(f"Failed to build go server: {s.stderr}")
                 print(s)
