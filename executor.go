@@ -554,7 +554,7 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 
 	s3key := pipeline.Id + "/" + executionId
 
-	workflow, blocks, err := translate(ctx, pipeline, "org", s3key, cfg)
+	workflow, blocks, err := translate(ctx, pipeline, "org", cfg, s3key)
 	if err != nil {
 		log.Printf("Failed to translate the pipeline; err=%v", err)
 		return
@@ -646,7 +646,7 @@ func cloudExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 
 	s3key := pipeline.Id + "/" + executionId
 
-	workflow, _, err := translate(ctx, pipeline, "org", s3key, cfg)
+	workflow, _, err := translate(ctx, pipeline, "org", cfg, s3key)
 	if err != nil {
 		log.Printf("Failed to translate the pipeline; err=%v", err)
 		return

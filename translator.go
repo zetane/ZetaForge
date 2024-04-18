@@ -214,7 +214,7 @@ func kanikoTemplate(block *zjson.Block, organization string, cfg Config) *wfv1.T
 
 }
 
-func translate(ctx context.Context, pipeline *zjson.Pipeline, organization string, key string, cfg Config) (*wfv1.Workflow, map[string]string, error) {
+func translate(ctx context.Context, pipeline *zjson.Pipeline, organization string, cfg Config, key string) (*wfv1.Workflow, map[string]string, error) {
 	workflow := wfv1.Workflow{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Workflow",
@@ -259,9 +259,14 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 			}
 		}
 
+		inputFile := false
+		outputFile := false
 		inputIsParam := false
 		outputIsParam := (len(block.Action.Parameters) > 0)
 		for name, input := range block.Inputs {
+			if input.Type == "file" || input.Type == "List[file]" {
+				inputFile = true
+			}
 			if len(input.Connections) > 0 {
 				if len(input.Connections) == 1 {
 					connection := input.Connections[0]
@@ -297,7 +302,10 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 			}
 		}
 
-		for name := range block.Outputs {
+		for name, output := range block.Outputs {
+			if output.Type == "file" || output.Type == "List[file]" {
+				outputFile = true
+			}
 			template.Outputs.Parameters = append(template.Outputs.Parameters, wfv1.Parameter{
 				Name:      name,
 				ValueFrom: &wfv1.ValueFrom{Path: name + ".txt"},
@@ -316,39 +324,42 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 			}
 		}
 
-		// if the file is a param, it comes directly from the user
-		if !inputIsParam {
-			filesName = key
-		}
-		template.Inputs.Artifacts = append(template.Inputs.Artifacts, wfv1.Artifact{
-			Name: "in",
-			Path: cfg.FileDir,
-			ArtifactLocation: wfv1.ArtifactLocation{
-				S3: &wfv1.S3Artifact{
-					Key: filesName,
+		if inputFile {
+			// if the file is a param, it comes directly from the user
+			if !inputIsParam {
+				filesName = key
+			}
+			template.Inputs.Artifacts = append(template.Inputs.Artifacts, wfv1.Artifact{
+				Name: "in",
+				Path: cfg.FileDir,
+				ArtifactLocation: wfv1.ArtifactLocation{
+					S3: &wfv1.S3Artifact{
+						Key: filesName,
+					},
 				},
-			},
-			Archive: &wfv1.ArchiveStrategy{
-				None: &wfv1.NoneStrategy{},
-			},
-		})
-
-		// if the file is a param, it comes directly from the user
-		if !outputIsParam {
-			filesName = key
-		}
-		template.Outputs.Artifacts = append(template.Outputs.Artifacts, wfv1.Artifact{
-			Name: "out",
-			Path: cfg.FileDir,
-			ArtifactLocation: wfv1.ArtifactLocation{
-				S3: &wfv1.S3Artifact{
-					Key: filesName,
+				Archive: &wfv1.ArchiveStrategy{
+					None: &wfv1.NoneStrategy{},
 				},
-			},
-			Archive: &wfv1.ArchiveStrategy{
-				None: &wfv1.NoneStrategy{},
-			},
-		})
+			})
+		}
+		if outputFile {
+			// if the file is a param, it comes directly from the user
+			if !outputIsParam {
+				filesName = key
+			}
+			template.Outputs.Artifacts = append(template.Outputs.Artifacts, wfv1.Artifact{
+				Name: "out",
+				Path: cfg.FileDir,
+				ArtifactLocation: wfv1.ArtifactLocation{
+					S3: &wfv1.S3Artifact{
+						Key: filesName,
+					},
+				},
+				Archive: &wfv1.ArchiveStrategy{
+					None: &wfv1.NoneStrategy{},
+				},
+			})
+		}
 
 		tasks[task.Name] = &task
 		templates[template.Name] = template
