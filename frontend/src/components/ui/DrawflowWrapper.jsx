@@ -12,7 +12,7 @@ import { useImmerAtom } from 'jotai-immer';
 import { genJSON } from '@/utils/blockUtils';
 import { customAlphabet } from 'nanoid';
 import { useLoadPipeline } from "./useLoadPipeline";
-import generateSchema from '../../../utils/schemaValidation';
+import generateSchema from '@/utils/schemaValidation';
 
 const launchDrawflow = (parentDomRef, canvasDomRef, pipeline, setPipeline) => {
   if (parentDomRef.className != "parent-drawflow") {
