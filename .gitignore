@@ -3,9 +3,11 @@ frontend/.cache/*
 !frontend/.cache/.gitkeep
 *.db
 
-# Executables
+# Executables / Builds
 zetaforge/executables
 !zetaforge/executables/README.md
+frontend/server2
+!frontend/server2/entrypoint.py
 
 # Node and npm related
 node_modules/
