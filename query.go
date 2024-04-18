@@ -200,13 +200,13 @@ func createExecution(ctx context.Context, db *sql.DB, pipeline int64, executioni
 	})
 }
 
-func updateExecutionWorkflow(ctx context.Context, db *sql.DB, execution int64, workflow *wfv1.Workflow) error {
+func updateExecutionJson(ctx context.Context, db *sql.DB, execution int64, workflow *wfv1.Workflow) error {
 	jsonWorkflow, err := json.Marshal(workflow)
 	if err != nil {
 		return err
 	}
 	q := zdatabase.New(db)
-	_, err = q.AddExecutionWorkflow(ctx, zdatabase.AddExecutionWorkflowParams{
+	_, err = q.AddExecutionJson(ctx, zdatabase.AddExecutionJsonParams{
 		Json: jsonWorkflow,
 		ID:   execution,
 	})

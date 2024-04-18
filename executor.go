@@ -425,6 +425,11 @@ func runArgo(ctx context.Context, workflow *wfv1.Workflow, sink string, pipeline
 		return workflow, err
 	}
 
+	if err := updateExecutionWorkflow(ctx, db, execution, workflow); err != nil {
+		log.Printf("Failed to write workflow id to database; err=%v", err)
+		return
+	}
+
 	// streams to websocket
 	go streaming(ctx, sink, workflow.Name, pipeline, client, hub)
 	status := string(workflow.Status.Phase)
@@ -498,7 +503,7 @@ func deleteArgo(ctx context.Context, name string, client clientcmd.ClientConfig)
 	}
 }
 
-func stopArgo(ctx context.Context, uuid string, client clientcmd.ClientConfig) error {
+func stopArgo(ctx context.Context, name string, client clientcmd.ClientConfig) error {
 	ctx, cli, err := apiclient.NewClientFromOpts(
 		apiclient.Opts{
 			ClientConfigSupplier: func() clientcmd.ClientConfig {
@@ -511,7 +516,7 @@ func stopArgo(ctx context.Context, uuid string, client clientcmd.ClientConfig) e
 	namespace, _, err := client.Namespace()
 
 	if err != nil {
-		log.Printf("Failed to stop workflow %s; err=%v", uuid, err)
+		log.Printf("Failed to stop workflow %s; err=%v", name, err)
 		return err
 	}
 
@@ -522,7 +527,7 @@ func stopArgo(ctx context.Context, uuid string, client clientcmd.ClientConfig) e
 	})
 
 	if err != nil {
-		log.Printf("Failed to stop workflow %s; err=%v", uuid, err)
+		log.Printf("Failed to stop workflow %s; err=%v", name, err)
 		return err
 	}
 
@@ -605,7 +610,7 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 		return
 	}
 
-	if err := updateExecutionWorkflow(ctx, db, execution.ID, workflow); err != nil {
+	if err := updateExecutionJson(ctx, db, execution.ID, workflow); err != nil {
 		log.Printf("Failed to write workflow to database; err=%v", err)
 		return
 	}
@@ -687,7 +692,7 @@ func cloudExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 		return
 	}
 
-	if err := updateExecutionWorkflow(ctx, db, execution.ID, workflow); err != nil {
+	if err := updateExecutionJson(ctx, db, execution.ID, workflow); err != nil {
 		log.Printf("Failed to write workflow to database; err=%v", err)
 		return
 	}

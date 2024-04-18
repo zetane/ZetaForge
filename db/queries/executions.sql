@@ -8,6 +8,12 @@ INNER JOIN Pipelines p ON p.id = e.pipeline
 WHERE organization = ? AND uuid = ? AND e.deleted = FALSE AND p.deleted = FALSE
 ORDER BY e.created DESC;
 
+-- name: ListRunningExecutions :many
+SELECT e.* FROM Executions e
+INNER JOIN Pipelines p ON p.id = e.pipeline
+WHERE organization = ? AND uuid = ? AND e.deleted = FALSE AND p.deleted = FALSE AND e.status = 'Running' AND e.workflow IS NOT NULL
+ORDER BY e.created DESC;
+
 -- name: ListPipelineExecutions :many
 SELECT e.* FROM Executions e
 INNER JOIN Pipelines p ON p.id = e.pipeline
@@ -22,7 +28,7 @@ INSERT INTO Executions(
 )
 RETURNING *;
 
--- name: AddExecutionWorkflow :one
+-- name: AddExecutionJson :one
 UPDATE Executions
 SET json = json(?)
 WHERE id = ?
@@ -39,6 +45,13 @@ UPDATE Executions
 SET status = ?
 WHERE id = ?
 RETURNING *;
+
+-- name: AddExecutionWorkflow :one
+UPDATE Executions
+SET workflow = ?
+WHERE id = ?
+RETURNING *;
+
 
 -- name: SoftDeleteExecution :one
 UPDATE Executions
