@@ -1,6 +1,7 @@
 import { modalContentAtom } from "@/atoms/modalAtom";
 import { darkModeAtom } from "@/atoms/themeAtom";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
+import { executionAtom } from "@/atoms/executionAtom";
 import { Play, Password, Renew } from "@carbon/icons-react";
 import {
   Header,
@@ -40,7 +41,6 @@ export default function Navbar({ children }) {
     queryFn: async () => { return axios.get(`${import.meta.env.VITE_EXECUTOR}/rooms`)}
   })
   const rooms = data?.data
-  console.log(rooms)
   useEffect(() => {
     if (!pipeline.socketUrl && rooms?.length > 0) {
       setPipeline((draft) => {

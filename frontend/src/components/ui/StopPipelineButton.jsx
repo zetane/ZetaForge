@@ -7,16 +7,14 @@ import { Button } from "@carbon/react";
 export default function StopPipelineButton() {
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
 
-
   const mutation = useMutation({
-    mutationFn: async (pipeline, hash) => {
-      return axios.post(`${import.meta.env.VITE_EXECUTOR}/pipeline/${pipeline.id}/${hash}/stop`, pipeline)
+    mutationFn: async (pipeline, executionId) => {
+      return axios.post(`${import.meta.env.VITE_EXECUTOR}/pipeline/${pipeline.id}/${executionId}/stop`, pipeline)
     },
   })
 
-  const stopPipeline = async (pipeline) => {
-    const hash = ""
-    const res = await mutation.mutateAsync(pipeline, hash)
+  const stopPipeline = async (pipeline, executionId) => {
+    const res = await mutation.mutateAsync(pipeline, executionId)
   }
 
   const styles = {

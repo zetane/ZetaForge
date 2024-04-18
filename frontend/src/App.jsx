@@ -12,24 +12,21 @@ import './styles/globals.scss';
 
 
 export default function App() {
-
-
-
-
-
   return (
     <ProviderInjector>
       <ForgeTheme>
-        <Navbar >
-          <LibraryFetcher />
-          <BlockEditorPanel />
-        </Navbar>
-        <LibrarySwitcher />
-        <MainContent>
-          <DrawflowWrapper />
-        </MainContent>
-        <ModalWrapper />
-        <ToastWrapper />
+        <DataWrapper>
+          <Navbar >
+            <LibraryFetcher />
+            <BlockEditorPanel />
+          </Navbar>
+          <LibrarySwitcher />
+          <MainContent>
+            <DrawflowWrapper />
+          </MainContent>
+          <ModalWrapper />
+          <ToastWrapper />
+        </DataWrapper>
       </ForgeTheme>
     </ProviderInjector>
   );
