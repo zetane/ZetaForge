@@ -213,6 +213,18 @@ func updateExecutionJson(ctx context.Context, db *sql.DB, execution int64, workf
 	return err
 }
 
+func addExecutionWorkflow(ctx context.Context, db *sql.DB, execution int64, workflow string) error {
+	q := zdatabase.New(db)
+	_, err := q.AddExecutionWorkflow(ctx, zdatabase.AddExecutionWorkflowParams{
+		ID: execution,
+		Workflow: sql.NullString{
+			String: workflow,
+			Valid:  true,
+		},
+	})
+	return err
+}
+
 func completeExecution(ctx context.Context, db *sql.DB, execution int64) error {
 	q := zdatabase.New(db)
 	_, err := q.CompleteExecution(ctx, execution)

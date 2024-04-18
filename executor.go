@@ -425,9 +425,9 @@ func runArgo(ctx context.Context, workflow *wfv1.Workflow, sink string, pipeline
 		return workflow, err
 	}
 
-	if err := updateExecutionWorkflow(ctx, db, execution, workflow); err != nil {
+	if err := addExecutionWorkflow(ctx, db, execution, workflow.Name); err != nil {
 		log.Printf("Failed to write workflow id to database; err=%v", err)
-		return
+		return workflow, err
 	}
 
 	// streams to websocket
