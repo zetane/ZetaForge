@@ -4,12 +4,6 @@ from pathlib import Path
 import os
 EXECUTABLES_PATH = os.path.join(Path(__file__).parent, 'executables')
 
-
-def check_minikube():
-    check_ctl = subprocess.run(["minikube", "version"], capture_output=True, text=True)
-    return check_ctl.returncode == 0
-
-
 def check_kubectl():
     check_ctl = subprocess.run(["kubectl", "version", "--client"], capture_output=True, text=True)
     return check_ctl.returncode == 0
@@ -50,5 +44,3 @@ def check_docker_installed():
             print("https://docs.docker.com/desktop/install/linux-install/")
         return -1
     return 0
-    
-
