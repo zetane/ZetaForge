@@ -17,14 +17,15 @@ def run_command(command, log_file):
                 print(f"Command '{command}' failed with error")
 
 
-def main(block_dir):
+def main(block_dir, block_key):
     container_dir = '/app'  # The directory inside the container where you want to mount
-
+    image_name = container_name = block_key
+    
     commands = [
-        "docker rm -f test_container",
-        "docker rmi test_block_image",
-        f"docker build -t test_block_image {block_dir}",
-        f"docker run --name test_container -v \"{block_dir}\":\"{container_dir}\" test_block_image python -B -c \"from computations import test; test()\""
+        f"docker rm -f {container_name}",
+        f"docker rmi {image_name}",
+        f"docker build -t {image_name} {block_dir}",
+        f"docker run --name {container_name} -v \"{block_dir}\":\"{container_dir}\" {image_name} python -B -c \"from computations import test; test()\""
     ]
     
     log_file = os.path.join(block_dir, 'logs.txt')
@@ -37,4 +38,5 @@ def main(block_dir):
 
 if __name__ == "__main__":
     block_dir = sys.argv[1]
-    main(block_dir)
+    block_key = sys.argv[2]
+    main(block_dir, block_key)

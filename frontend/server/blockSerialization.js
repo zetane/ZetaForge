@@ -41,14 +41,14 @@ function removeConnections(io) {
   return io;
 }
 
-export async function runTest(blockPath) {
+export async function runTest(blockPath, blockKey) {
   const scriptPath = app.isPackaged? path.join(process.resourcesPath, "resources", "run_test.py") : path.join("resources", "run_test.py");
   if (!(await fileExists(scriptPath))) {
     throw new Error(`Could not find script for running tests: ${scriptPath}`)
   }
   
   return new Promise(() => {
-    execFile("python", [scriptPath, blockPath], (error, stdout, stderr) => {
+    execFile("python", [scriptPath, blockPath, blockKey], (error, stdout, stderr) => {
       if (error) {
         rejects(error);
       }

@@ -288,7 +288,7 @@ export default function Editor() {
 
   const handleDockerCommands = useCallback(async () => {
     setIsRunButtonPressed(true);
-    runTest.mutateAsync({ blockPath: blockPath });
+    runTest.mutateAsync({ blockPath: blockPath, blockKey: blockFolderName });
     await fetchFileSystem(blockFolderName);
   }, [blockFolderName, blockPath, fetchFileSystem]);
 

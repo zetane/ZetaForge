@@ -265,14 +265,15 @@ export const appRouter = router({
     }),
   runTest: publicProcedure
     .input(z.object({
-      blockPath: z.string()
+      blockPath: z.string(),
+      blockKey: z.string(),
     }))
     .mutation(async (opts) => {
       const {input} = opts;
-      const {blockPath} = input; 
+      const {blockPath, blockKey} = input; 
 
       try {
-        await runTest(blockPath);
+        await runTest(blockPath, blockKey);
       } catch(error) {
         console.log(error);
         throw new TRPCError({
