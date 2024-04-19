@@ -515,6 +515,8 @@ export default class Drawflow {
             this.updateConnectionNodes('node-' + id_input);
             this.dispatch('connectionCreated', { output_id: id_output, input_id: id_input, output_class: output_class, input_class: input_class });
             console.log(this.drawflow.drawflow[this.module].data)
+            this.connection_ele.remove();
+            this.connection_ele = null;
           } else {
             this.dispatch('connectionCancel', true);
             this.connection_ele.remove();

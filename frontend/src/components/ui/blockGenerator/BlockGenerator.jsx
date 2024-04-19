@@ -103,7 +103,7 @@ const BlockTitle = ({ name, id, color, openView, actions, src}) => {
   let actionContainer = (
     <div className="action-container">
       <button id="btn_open_code" className="view-btn" onClick={() => openView(id)}><Code size={20}/></button>
-      <a href={src} target="_blank" rel="noopener noreferrer"><button id="btn_show_view" className="view-btn"><View size={20}/></button></a>
+      <a href={src} target="_blank" rel="noopener noreferrer" className="flex"><button id="btn_show_view" className="view-btn"><View size={20}/></button></a>
     </div>
   )
 
