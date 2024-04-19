@@ -554,30 +554,6 @@ function startExpressServer() {
     });
   });
 
-  app.post("/run-docker-commands", (req, res) => {
-    const { blockPath: blockPath } = req.body;
-
-    // Execute the Python script
-    const pythonProcess = spawn("python", ["run_test.py"], {
-      cwd: blockPath,
-    });
-
-    pythonProcess.stdout.on("data", (data) => {
-      console.log(data.toString());
-    });
-
-    pythonProcess.stderr.on("data", (data) => {
-      console.error(data.toString());
-    });
-
-    pythonProcess.on("exit", (code) => {
-      console.log(`Child exited with code ${code}`);
-      res.send({ message: `Python script executed with exit code: ${code}` });
-    });
-  });
-  
-  
-  
   app.get("/api/logs", (req, res) => {
     const filePath = req.query.filePath;
 

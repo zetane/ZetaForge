@@ -64,6 +64,7 @@ export default function Editor() {
 
   const compileComputation = trpc.compileComputation.useMutation();
   const saveBlockSpecs = trpc.saveBlockSpecs.useMutation();
+  const runTest = trpc.runTest.useMutation();
 
   useEffect(() => {
     const init = async () => {
@@ -287,23 +288,8 @@ export default function Editor() {
 
   const handleDockerCommands = useCallback(async () => {
     setIsRunButtonPressed(true);
-    try {
-      const response = await fetch(`${serverAddress}/run-docker-commands`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ blockPath: blockPath }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-    } catch (error) {
-      console.error("Request failed: " + error.message);
-    }
-
-    fetchFileSystem(blockFolderName);
+    runTest.mutateAsync({ blockPath: blockPath, blockKey: blockFolderName });
+    await fetchFileSystem(blockFolderName);
   }, [blockFolderName, blockPath, fetchFileSystem]);
 
   const handleSequentialExecution = async (e, index) => {
