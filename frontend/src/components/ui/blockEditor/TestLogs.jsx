@@ -34,7 +34,6 @@ const LogsViewer = ({ filePath, startFetching }) => {
   }
 
   const scrollToBottom = () => {
-    console.log(stickBottom)
     if (stickBottom) {
       logsDiv.current.scrollTo({ lef: 0, top: logsDiv.current.scrollHeight, behavior: "smooth" });
     }
