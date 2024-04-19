@@ -3,17 +3,17 @@ import { exec, spawn } from "child_process";
 import compression from "compression";
 import cors from "cors";
 import 'dotenv/config';
+import { app as electronApp } from 'electron';
 import express from "express";
 import fs, { access, constants, readFile, readFileSync, writeFile } from "fs";
 import fsp from "fs/promises";
+import getMAC from "getmac";
 import multer from "multer";
 import { Configuration, OpenAIApi } from "openai";
 import path from "path";
+import sha256 from 'sha256';
 import { fileExists, readJsonToObject, readSpecs } from "./fileSystem.js";
 import { copyPipeline, saveBlock } from "./pipelineSerialization.js";
-import {app} from 'electron'
-import sha256 from 'sha256'
-import getMAC from "getmac"
 
 
 function startExpressServer() {
@@ -280,7 +280,7 @@ function startExpressServer() {
 
   app.get('/blocks', async (req, res) => {
     const coreBlocks = "../core/blocks"
-    if(app.isPackaged){
+    if(electronApp.isPackaged){
       coreBlocks = path.join(process.resourcesPath, "core", "blocks") 
     }
     
@@ -415,7 +415,7 @@ function startExpressServer() {
     try {
       // Path to the Python script
       let agents = "agents"
-      if(app.isPackaged) {
+      if(electronApp.isPackaged) {
         agents = path.join(process.resourcesPath, "agents")
       }
       const scriptPath = path.join(agents, agentName, "generate", "computations.py")
