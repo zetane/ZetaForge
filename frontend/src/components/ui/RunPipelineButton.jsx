@@ -160,6 +160,7 @@ export default function RunPipelineButton({modalPopper, children, action}) {
         { children }
       </Button>
 
+    {action === "Run" &&
       <ClosableModal
         modalHeading="The following error(s) occurred:"
         passiveModal={true}
@@ -174,6 +175,7 @@ export default function RunPipelineButton({modalPopper, children, action}) {
           })}
         </div>
       </ClosableModal>
+    }
     </>
   );
 }
