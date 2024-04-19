@@ -22,10 +22,10 @@ def main(block_dir, block_key):
     image_name = container_name = block_key
     
     commands = [
-        ["docker", "rm", "-f", container_name],
+        ["docker", "rm", container_name],
         ["docker", "rmi", image_name],
         ["docker", "build", "-t", image_name, block_dir],
-        ["docker", "run", "--name", container_name, "-v", "\"{block_dir}\":\"{container_dir}\"", image_name, "python", "-B", "-c", "\"from computations import test; test()\""],
+        ["docker", "run", "--name", container_name, "-v", f"{block_dir}:{container_dir}", image_name, "python", "-B", "-c", "from computations import test; test()"],
     ]
     
     log_file = os.path.join(block_dir, 'logs.txt')
