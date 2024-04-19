@@ -7,7 +7,7 @@ import sys
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 def run_command(command, log_file):
-    with subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT) as process:
+    with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT) as process:
         with open(log_file, "ab") as f:  # Open in binary append mode
             for line in iter(lambda: process.stdout.readline(), b''):
                 print(line.decode('utf-8', errors='replace'), end='')  # Decode for printing
