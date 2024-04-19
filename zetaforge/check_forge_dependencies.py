@@ -44,5 +44,3 @@ def check_docker_installed():
             print("https://docs.docker.com/desktop/install/linux-install/")
         return -1
     return 0
-    
-

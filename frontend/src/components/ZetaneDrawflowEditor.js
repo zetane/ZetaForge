@@ -766,6 +766,15 @@ export default class Drawflow {
     }
   }
 
+  updateAllConnections() {
+    // Get all nodes from the drawflow canvas
+    const nodes = this.drawflow.drawflow[this.module].data;
+    Object.keys(nodes).forEach(nodeId => {
+      // Update connections for each node
+      this.updateConnectionNodes('node-' + nodeId);
+    });
+  }  
+
   updateConnectionNodes(id) {
 
     // Aquí nos quedamos;

@@ -66,4 +66,3 @@ def load_config(config_file):
 
 if __name__ == "__main__":
     main()
-

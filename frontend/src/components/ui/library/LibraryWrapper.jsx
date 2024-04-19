@@ -95,18 +95,13 @@ export default function LibraryWrapper({ specs, pipelines }) {
               <Tab>Core Pipelines ({filteredPipelines.length})</Tab>
             </TabList>
             <TabPanels>
-              <TabPanel className="library-tab">
+              <TabPanel className="library-tab library-tile-container">
               <FlexGrid fullWidth={true} condensed={true} className="mt-2">
                 {tileGrid}
               </FlexGrid>
               </TabPanel>
-              <TabPanel className="library-tab">
-                <FlexGrid fullWidth={true} condensed={true} className="mt-2 library-tile-container">
-                  {pipelineGrid}
-                </FlexGrid>
-              </TabPanel>
-              <TabPanel className="library-tab">
-                <FlexGrid fullWidth={true} condensed={true} className="mt-2 library-tile-container">
+              <TabPanel className="library-tab library-tile-container">
+                <FlexGrid fullWidth={true} condensed={true} className="mt-2">
                   {pipelineGrid}
                 </FlexGrid>
               </TabPanel>
