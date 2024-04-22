@@ -3,17 +3,17 @@ import { exec, spawn } from "child_process";
 import compression from "compression";
 import cors from "cors";
 import 'dotenv/config';
+import { app as electronApp } from 'electron';
 import express from "express";
 import fs, { access, constants, readFile, readFileSync, writeFile } from "fs";
 import fsp from "fs/promises";
+import getMAC from "getmac";
 import multer from "multer";
 import { Configuration, OpenAIApi } from "openai";
 import path from "path";
+import sha256 from 'sha256';
 import { fileExists, readJsonToObject, readSpecs } from "./fileSystem.js";
 import { copyPipeline, saveBlock } from "./pipelineSerialization.js";
-import {app as electronApp} from 'electron'
-import sha256 from 'sha256'
-import getMAC from "getmac"
 
 
 function startExpressServer() {
@@ -293,28 +293,26 @@ function startExpressServer() {
   })
 
   app.get('/distinct-id', async(req, res) => {
-    let distinctId = BigInt(0)
     try {
       const macAddress = getMAC();
-
-      let macAsBigInt = BigInt(`0x${macAddress.split(':').join('')}`)
-
+      let macAsBigInt = BigInt(`0x${macAddress.split(':').join('')}`);
+      
       // Check if the MAC address is universally administered
       const isUniversallyAdministered = (macAsBigInt & BigInt(0x020000000000)) === BigInt(0);
-
+      
       // If not universally administered, set the multicast bit
       if (!isUniversallyAdministered) {
-        macAsBigInt |= BigInt(0x010000000000);
+          macAsBigInt |= BigInt(0x010000000000);
       }
-
-      distinctId = macAsBigInt;
+      const distinctId = sha256(macAsBigInt.toString());
+      return res.send(distinctId);
     } catch (error) {
-      console.log("Can't generate distinct_id for mixpanel. Using default distinct_id")
-      console.log(error)
+      console.log("Can't generate distinct_id for mixpanel. Using default distinct_id");
+      console.log(error);
+      return res.send(sha256(BigInt(0).toString())); // Sending default distinct_id
     }
-    distinctId = sha256(distinctId.toString())
-    return res.send(distinctId)
-  })
+  });
+  
 
 app.post("/import-files", upload.array("files"), (req, res) => {
   const files = req.files;
@@ -553,30 +551,6 @@ app.post("/import-files", upload.array("files"), (req, res) => {
     });
   });
 
-  app.post("/run-docker-commands", (req, res) => {
-    const { blockPath: blockPath } = req.body;
-
-    // Execute the Python script
-    const pythonProcess = spawn("python", ["run_test.py"], {
-      cwd: blockPath,
-    });
-
-    pythonProcess.stdout.on("data", (data) => {
-      console.log(data.toString());
-    });
-
-    pythonProcess.stderr.on("data", (data) => {
-      console.error(data.toString());
-    });
-
-    pythonProcess.on("exit", (code) => {
-      console.log(`Child exited with code ${code}`);
-      res.send({ message: `Python script executed with exit code: ${code}` });
-    });
-  });
-  
-  
-  
   app.get("/api/logs", (req, res) => {
     const filePath = req.query.filePath;
 

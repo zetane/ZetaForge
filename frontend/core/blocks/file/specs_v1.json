@@ -29,7 +29,9 @@
   "views": {
     "node": {
       "active": "True or False",
-      "title_bar": {},
+      "title_bar": {
+        "background_color": "#909090"
+      },
       "preview": {},
       "html": "<input type='file' name='fileInput' parameters-file/>",
       "pos_x": "300",

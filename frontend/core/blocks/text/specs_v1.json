@@ -29,7 +29,9 @@
   "views": {
     "node": {
       "active": "true",
-      "title_bar": {},
+      "title_bar": {
+        "background_color": "#909090"
+      },
       "preview": {},
       "html": "<textarea style='width: 100%; height: 150px;' parameters-text></textarea>",
       "pos_x": "300",

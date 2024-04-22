@@ -8,6 +8,7 @@ from computations import compute
 def main():
     # 1. Make a list of all the files in the current execution directory and store it
     initial_files_and_folders = set(os.listdir())
+    original_path = os.getcwd()
 
     # 2. Check for all the files in the /files directory
     files_dir = os.path.join("/files")
@@ -49,6 +50,7 @@ def main():
     json_outputs = json.dumps(outputs)
     print("outputs|||", json_outputs)
 
+    os.chdir(original_path)
     for key, value in outputs.items():
         with open(key + ".txt", "w") as file:
             file.write(json.dumps(value))

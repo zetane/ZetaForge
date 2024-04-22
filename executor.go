@@ -332,64 +332,66 @@ func streaming(ctx context.Context, sink string, name string, room string, clien
 	}
 
 	serviceClient := cli.NewWorkflowServiceClient()
-	stream, err := serviceClient.WorkflowLogs(ctx, &workflowpkg.WorkflowLogRequest{
-		Namespace: namespace,
-		Name:      name,
-		LogOptions: &corev1.PodLogOptions{
-			Container: "main", // TODO expand logs
-			Follow:    true,
-		},
-	})
+	containerStream := func(containerName string) {
+		stream, err := serviceClient.WorkflowLogs(ctx, &workflowpkg.WorkflowLogRequest{
+			Namespace: namespace,
+			Name:      name,
+			LogOptions: &corev1.PodLogOptions{
+				Container: containerName,
+				Follow:    true,
+			},
+		})
 
-	if err != nil {
-		log.Printf("Log stream error; err=%v", err)
-		return
-	}
-
-	logMap := make(map[string][]string)
-
-	for {
-		event, err := stream.Recv()
-
-		if err == io.EOF {
-			break
-		} else if err != nil {
+		if err != nil {
 			log.Printf("Log stream error; err=%v", err)
-			break
-		}
-		// Remove the square brackets from the string
-		blockId := ""
-		blockId = strings.TrimPrefix(event.PodName, "[")
-		blockId = strings.TrimSuffix(blockId, "]")
-
-		parts := strings.Split(blockId, "-")
-
-		// Extract the desired parts
-		if len(parts) >= 4 {
-			blockId = strings.Join(parts[2:len(parts)-1], "-")
-		} else {
-			fmt.Println("Invalid input string format")
+			return
 		}
 
-		hub.Broadcast <- Message{
-			Room:    room,
-			Content: fmt.Sprintf("[%s]:::: %s", blockId, event.Content),
-		}
+		logMap := make(map[string][]string)
 
-		if _, ok := logMap[blockId]; ok {
-			logMap[blockId] = append(logMap[blockId], event.Content)
-		} else {
-			logMap[blockId] = []string{event.Content}
-		}
-	}
+		for {
+			event, err := stream.Recv()
 
-	if sink != "" {
-		for podname, logs := range logMap {
-			path := filepath.Join(sink, "logs", podname+".log")
-			if err := writeFile(path, strings.Join(logs, "\n")); err != nil {
+			if err == io.EOF {
+				break
+			} else if err != nil {
 				log.Printf("Log stream error; err=%v", err)
+				break
+			}
+			// Remove the square brackets from the string
+			blockId := ""
+			blockId = strings.TrimPrefix(event.PodName, "[")
+			blockId = strings.TrimSuffix(blockId, "]")
+
+			parts := strings.Split(blockId, "-")
+
+			// Extract the desired parts
+			if len(parts) >= 4 {
+				blockId = strings.Join(parts[2:len(parts)-1], "-")
+			} else {
+				fmt.Println("Invalid input string format")
+			}
+
+			hub.Broadcast <- Message{
+				Room:    room,
+				Content: fmt.Sprintf("[%s]:::: %s", blockId, event.Content),
+			}
+
+			logMap[blockId] = append(logMap[blockId], event.Content)
+		}
+
+		if sink != "" {
+			for podname, logs := range logMap {
+				path := filepath.Join(sink, "logs", podname+"-"+containerName+".log")
+				if err := writeFile(path, strings.Join(logs, "\n")); err != nil {
+					log.Printf("Log stream error; err=%v", err)
+				}
 			}
 		}
+	}
+
+	for _, container := range []string{"init", "wait", "main"} {
+		go containerStream(container)
 	}
 }
 

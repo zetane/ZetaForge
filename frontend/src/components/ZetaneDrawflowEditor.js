@@ -724,14 +724,13 @@ export default class Drawflow {
   }
 
   addConnection(id_output, id_input, output_class, input_class) {
-    var nodeOneModule = this.getModuleFromNodeId(id_output);
-    var nodeTwoModule = this.getModuleFromNodeId(id_input);
+    const nodeOneModule = this.getModuleFromNodeId(id_output);
+    const nodeTwoModule = this.getModuleFromNodeId(id_input);
     if (nodeOneModule === nodeTwoModule) {
-
-      var dataNode = this.getNodeFromId(id_output);
-      var exist = false;
-      for (var checkOutput in dataNode.outputs[output_class].connections) {
-        var connectionSearch = dataNode.outputs[output_class].connections[checkOutput]
+      const dataNode = this.drawflow.drawflow[nodeOneModule].data[id_output];
+      let exist = false;
+      for (const checkOutput in dataNode.outputs[output_class].connections) {
+        const connectionSearch = dataNode.outputs[output_class].connections[checkOutput]
         if (connectionSearch.node == id_input && connectionSearch.output == input_class) {
           exist = true;
         }
@@ -744,8 +743,8 @@ export default class Drawflow {
 
         if (this.module === nodeOneModule) {
           //Draw connection
-          var connection = document.createElementNS('http://www.w3.org/2000/svg', "svg");
-          var path = document.createElementNS('http://www.w3.org/2000/svg', "path");
+          const connection = document.createElementNS('http://www.w3.org/2000/svg', "svg");
+          const path = document.createElementNS('http://www.w3.org/2000/svg', "path");
           path.classList.add("main-path");
           path.setAttributeNS(null, 'd', '');
           // path.innerHTML = 'a';
@@ -763,6 +762,15 @@ export default class Drawflow {
       }
     }
   }
+
+  updateAllConnections() {
+    // Get all nodes from the drawflow canvas
+    const nodes = this.drawflow.drawflow[this.module].data;
+    Object.keys(nodes).forEach(nodeId => {
+      // Update connections for each node
+      this.updateConnectionNodes('node-' + nodeId);
+    });
+  }  
 
   updateConnectionNodes(id) {
 
@@ -1261,13 +1269,23 @@ export default class Drawflow {
   }
 
   ioChanged(graphIO, jsonIO) {
-    return JSON.stringify(graphIO) === JSON.stringify(jsonIO);
+    for (const key in graphIO) {
+      if (!jsonIO.hasOwnProperty(key)) {
+        return true
+      }
+    }
+    return false
   }
 
   addNode_from_JSON(json) {
     const graph = this.drawflow.drawflow[this.module].data;
     const id = json.id;
-    if (graph.hasOwnProperty(id) && this.ioChanged(graph[id].inputs, json.inputs) && this.ioChanged(graph[id].outputs, json.outputs)) {
+    if (graph.hasOwnProperty(id)) {
+      const inputChanged = this.ioChanged(graph[id].inputs, json.inputs)
+      const outputChanged = this.ioChanged(graph[id].outputs, json.outputs)
+      if (inputChanged || outputChanged) {
+        graph[id] = json
+      }
       // Inbound data from react managed inputs
       // This happens because react re-renders twice
       // And we have to make sure that if the user has mutated

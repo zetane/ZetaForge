@@ -64,6 +64,7 @@ export default function Editor() {
 
   const compileComputation = trpc.compileComputation.useMutation();
   const saveBlockSpecs = trpc.saveBlockSpecs.useMutation();
+  const runTest = trpc.runTest.useMutation();
 
   useEffect(() => {
     const init = async () => {
@@ -287,23 +288,8 @@ export default function Editor() {
 
   const handleDockerCommands = useCallback(async () => {
     setIsRunButtonPressed(true);
-    try {
-      const response = await fetch(`${serverAddress}/run-docker-commands`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ blockPath: blockPath }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-    } catch (error) {
-      console.error("Request failed: " + error.message);
-    }
-
-    fetchFileSystem(blockFolderName);
+    runTest.mutateAsync({ blockPath: blockPath, blockKey: blockFolderName });
+    await fetchFileSystem(blockFolderName);
   }, [blockFolderName, blockPath, fetchFileSystem]);
 
   const handleSequentialExecution = async (e, index) => {
@@ -320,7 +306,7 @@ export default function Editor() {
   }
 
   return (
-    <div ref={panel} className={"editor-block absolute overflow-y-scroll z-[8000] " + (isMaximized ? maximizedStyles : minizedStyles)}>
+    <div className={"editor-block absolute flex flex-col z-[8000] " + (isMaximized ? maximizedStyles : minizedStyles)}>
       <div className="block-editor-header">
         <span className="p-4 text-lg italic">{blockFolderName}</span>
         <div className="flex flex-row items-center justify-end">
@@ -337,7 +323,6 @@ export default function Editor() {
         </div>
       </div>
       <Tabs>
-        <div></div>
         <TabList fullWidth className='shrink-0 max-w-[40rem] mx-auto'>
           <Tab onClick={handleTabClick}>
             Workspace
@@ -350,7 +335,7 @@ export default function Editor() {
           </Tab>
         </TabList>
         <TabPanels>
-          <TabPanel className="overflow-y-scroll">
+          <TabPanel ref={panel} className="overflow-y-scroll">
             <div className="flex flex-col gap-y-8">
               {queryAndResponses.map((item, index) => (
                 <Fragment key={index}>

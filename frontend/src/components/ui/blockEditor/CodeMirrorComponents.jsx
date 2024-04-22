@@ -1,9 +1,9 @@
 import { darkModeAtom } from "@/atoms/themeAtom";
+import { EditorView } from "@codemirror/view";
 import { loadLanguage } from "@uiw/codemirror-extensions-langs";
 import { basicDark, basicLight } from '@uiw/codemirror-theme-basic';
 import CodeMirror from "@uiw/react-codemirror";
 import { atom, useAtom } from "jotai";
-import { EditorView } from "@codemirror/view"
 
 const themeAtom = atom((get) => get(darkModeAtom) ? basicDark : basicLight);
 
@@ -62,7 +62,7 @@ export const EditorCodeMirror = ({ code, onChange }) => {
   );
 };
 
-export const LogsCodeMirror = ({ code }) => {
+export const LogsCodeMirror = ({ code, onUpdate }) => {
   const [theme] = useAtom(themeAtom);
   return (
     <CodeMirror
@@ -77,7 +77,7 @@ export const LogsCodeMirror = ({ code }) => {
         history: false,
         foldGutter: false,
         drawSelection: false,
-        dropCursor: false, 
+        dropCursor: false,
         allowMultipleSelections: false,
         indentOnInput: false,
         syntaxHighlighting: false,
@@ -97,6 +97,7 @@ export const LogsCodeMirror = ({ code }) => {
         lintKeymap: false,
         tabSize: 2,
       }}
+      onUpdate={onUpdate}
     />
   );
 };

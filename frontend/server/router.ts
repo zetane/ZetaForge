@@ -3,8 +3,8 @@ import { app, dialog } from 'electron';
 import fs from "fs/promises";
 import path from "path";
 import { z } from 'zod';
-import { compileComputation, saveBlockSpecs } from './blockSerialization.js';
-import { readSpecs, readPipelines, s3Upload } from "./fileSystem.js";
+import { compileComputation, runTest, saveBlockSpecs } from './blockSerialization.js';
+import { readPipelines, readSpecs, s3Upload } from "./fileSystem.js";
 import { copyPipeline, getBlockPath, removeBlock, saveBlock, saveSpec } from './pipelineSerialization.js';
 import { publicProcedure, router } from './trpc';
 
@@ -222,8 +222,26 @@ export const appRouter = router({
           message: 'Could not compile.',
         });
       }
-    })
+    }),
+  runTest: publicProcedure
+    .input(z.object({
+      blockPath: z.string(),
+      blockKey: z.string(),
+    }))
+    .mutation(async (opts) => {
+      const {input} = opts;
+      const {blockPath, blockKey} = input; 
 
+      try {
+        await runTest(blockPath, blockKey);
+      } catch(error) {
+        console.log(error);
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Could not run test'
+        })
+      }
+    })
 });
  
 // Export type router type signature,
