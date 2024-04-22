@@ -50,8 +50,6 @@ export default function LoadBlockButton() {
     return id;
   }
 
-  const getDistinctId = trpc.getDistinctId.useMutation();
-
   const loadBlock = async (pipeline) => {
     try {
       mixpanelService.trackEvent('Load Block')

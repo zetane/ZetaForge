@@ -40,6 +40,8 @@ type ResponseExecution struct {
 	Created   int64
 	Completed int64
 	Json      string
+	Workflow  string
+	Execution string
 }
 
 func newResponseExecution(execution zdatabase.Execution, hash string) ResponseExecution {
@@ -75,6 +77,23 @@ func newResponseExecutionRow(execution zdatabase.ListExecutionsRow) ResponseExec
 		response.Json = execution.Json.String
 	}
 
+	return response
+}
+
+func newResponseExecutionsRow(execution zdatabase.Execution) ResponseExecution {
+	response := ResponseExecution{
+		Status:    execution.Status.(string),
+		Created:   execution.Created,
+		Workflow:  execution.Workflow.String,
+		Execution: execution.Executionid,
+	}
+	if execution.Completed.Valid {
+		response.Completed = execution.Completed.Int64
+	}
+
+	if execution.Json.Valid {
+		response.Json = execution.Json.String
+	}
 	return response
 }
 
@@ -198,6 +217,15 @@ func createExecution(ctx context.Context, db *sql.DB, pipeline int64, executioni
 		Pipeline:    pipeline,
 		Executionid: executionid,
 	})
+}
+
+func listRunningExecutions(ctx context.Context, db *sql.DB) ([]zdatabase.Execution, HTTPError) {
+	q := zdatabase.New(db)
+	res, err := q.ListRunningExecutions(ctx)
+	if err != nil {
+		return []zdatabase.Execution{}, InternalServerError{err.Error()}
+	}
+	return res, nil
 }
 
 func updateExecutionJson(ctx context.Context, db *sql.DB, execution int64, workflow *wfv1.Workflow) error {

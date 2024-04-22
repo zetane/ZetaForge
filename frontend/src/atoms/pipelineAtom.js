@@ -1,18 +1,28 @@
 import { atom } from "jotai";
 import { customAlphabet } from "nanoid";
 
+export const pipelineAtom = atom({
+      id: null,
+      name: null,
+      saveTime: null,
+      buffer: null,
+      path: undefined,
+      data: {},
+      log: [],
+      history: null,
+      socketUrl: null
+ });
 
-export const pipelineAtom = atom({});
-
-export const pipelineFactory = () => {
+export const pipelineFactory = (cachePath) => {
   const nanoid = customAlphabet('1234567890abcedfghijklmnopqrstuvwxyz', 12)
   const newNanoid = nanoid()
   const id = `pipeline-${newNanoid}`
+  const buffer = `${cachePath}${id}`
   return {
     id: id,
     name: null,
     saveTime: null,
-    buffer: null,
+    buffer: buffer,
     path: undefined,
     data: {},
     log: [],

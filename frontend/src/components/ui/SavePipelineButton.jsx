@@ -12,7 +12,6 @@ export default function SavePipelineButton() {
   const [mixpanelService] = useAtom(mixpanelAtom)
 
   const savePipeline = trpc.savePipeline.useMutation();
-  const getDistinctId = trpc.getDistinctId.useMutation();
 
   const handleClick = async (editor, pipeline) => {
     try {

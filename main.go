@@ -323,6 +323,23 @@ func main() {
 			ctx.String(err.Status(), err.Error())
 		}
 	})
+	execution := router.Group("/execution")
+	execution.GET("/running", func(ctx *gin.Context) {
+		res, err := listRunningExecutions(ctx.Request.Context(), db)
+
+		if err != nil {
+			log.Printf("Failed to get running executions; err=%v", err)
+			ctx.String(err.Status(), err.Error())
+			return
+		}
+
+		var response []ResponseExecution
+		for _, execution := range res {
+			response = append(response, newResponseExecutionsRow(execution))
+		}
+
+		ctx.JSON(http.StatusOK, response)
+	})
 
 	pipeline := router.Group("/pipeline")
 	pipeline.POST("", func(ctx *gin.Context) {

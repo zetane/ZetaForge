@@ -1,6 +1,7 @@
-import { atom } from "jotai";
+import { atomWithStorage } from 'jotai/utils'
+import { atom } from 'jotai'
 
 export const executionAtom = atom({
-  executions: [],
+  executions: {},
   active: null
 })

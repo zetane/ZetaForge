@@ -11,9 +11,8 @@ import { Configuration, OpenAIApi } from "openai";
 import path from "path";
 import { fileExists, readJsonToObject, readSpecs } from "./fileSystem.js";
 import { copyPipeline, saveBlock } from "./pipelineSerialization.js";
-import {app} from 'electron'
+import {app as electronApp} from 'electron'
 import sha256 from 'sha256'
-import {toBigIntBE} from 'bigint-buffer';
 import getMAC from "getmac"
 
 
@@ -281,7 +280,7 @@ function startExpressServer() {
 
   app.get('/blocks', async (req, res) => {
     const coreBlocks = "../core/blocks"
-    if(app.isPackaged){
+    if(electronApp.isPackaged){
       coreBlocks = path.join(process.resourcesPath, "core", "blocks") 
     }
     
@@ -294,48 +293,34 @@ function startExpressServer() {
   })
 
   app.get('/distinct-id', async(req, res) => {
+    let distinctId = BigInt(0)
+    try {
+      const macAddress = getMAC();
 
-    function get_distinct_id() {
+      let macAsBigInt = BigInt(`0x${macAddress.split(':').join('')}`)
 
-      function getHardwareAddressAsInteger() {
-  
-        try {
-         const macAddress = getMAC();
-         
-         let macAsBigInt = toBigIntBE(Buffer.from(macAddress.split(':').join(''), 'hex'));
-       
-         // Check if the MAC address is universally administered
-         const isUniversallyAdministered = (macAsBigInt & BigInt(0x020000000000)) === BigInt(0);
-       
-         // If not universally administered, set the multicast bit
-         if (!isUniversallyAdministered) {
-           macAsBigInt |= BigInt(0x010000000000);
-         }
-     
-         return macAsBigInt;
-       } catch (error) {
-       console.log("Can't generate distinct_id for mixpanel. Using default distinct_id")
-       console.log(error)
-       console.log("error")
-       return BigInt(0);
-       }
-     }
-     
-     return getHardwareAddressAsInteger()
-  
-   }
+      // Check if the MAC address is universally administered
+      const isUniversallyAdministered = (macAsBigInt & BigInt(0x020000000000)) === BigInt(0);
 
-   const distinctId = sha256(get_distinct_id().toString())
-   return res.send(distinctId)
+      // If not universally administered, set the multicast bit
+      if (!isUniversallyAdministered) {
+        macAsBigInt |= BigInt(0x010000000000);
+      }
 
+      distinctId = macAsBigInt;
+    } catch (error) {
+      console.log("Can't generate distinct_id for mixpanel. Using default distinct_id")
+      console.log(error)
+    }
+    distinctId = sha256(distinctId.toString())
+    return res.send(distinctId)
   })
-  
 
-  app.post("/import-files", upload.array("files"), (req, res) => {
-    const files = req.files;
+app.post("/import-files", upload.array("files"), (req, res) => {
+  const files = req.files;
 
-    files.forEach((file) => {
-      const targetPath = path.join(req.body.blockPath, file.originalname);
+  files.forEach((file) => {
+    const targetPath = path.join(req.body.blockPath, file.originalname);
 
       // Move file from temporary location to target directory
       fs.renameSync(file.path, targetPath);
@@ -429,7 +414,7 @@ function startExpressServer() {
     try {
       // Path to the Python script
       let agents = "agents"
-      if(app.isPackaged) {
+      if(electronApp.isPackaged) {
         agents = path.join(process.resourcesPath, "agents")
       }
       const scriptPath = path.join(agents, agentName, "generate", "computations.py")

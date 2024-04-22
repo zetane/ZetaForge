@@ -1,6 +1,6 @@
 import { modalContentAtom } from "@/atoms/modalAtom";
 import { darkModeAtom } from "@/atoms/themeAtom";
-import { pipelineAtom } from "@/atoms/pipelineAtom";
+import { pipelineAtom, pipelineFactory } from "@/atoms/pipelineAtom";
 import { executionAtom } from "@/atoms/executionAtom";
 import { Play, Password, Renew } from "@carbon/icons-react";
 import {
@@ -29,25 +29,64 @@ import { useImmerAtom } from "jotai-immer";
 import { PipelineLogs } from "./PipelineLogs";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
+import {trpc} from "@/utils/trpc"
 import StopPipelineButton from "./StopPipelineButton";
 
 export default function Navbar({ children }) {
   const [darkMode, setDarkMode] = useAtom(darkModeAtom);
   const [modalContent, setModalContent] = useAtom(modalContentAtom);
+  const [executions, setExecutions] = useImmerAtom(executionAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
+  console.log("PIPELINE: ", pipeline)
 
-  const {pending, error, data }  = useQuery({
+  const cacheQuery = trpc.getCachePath.useQuery();
+  const cachePath = cacheQuery?.data || ""
+  console.log("EXECS: ", executions)
+
+  useEffect(() => {
+    if (executions && !executions.active) {
+      const newPipeline = pipelineFactory()
+      console.log(newPipeline)
+      setPipeline((draft) => {
+        draft = newPipeline
+      })
+      setExecutions((draft) => {
+        draft.active = pipeline
+      })
+    }
+  }, [executions?.active, cachePath])
+
+  const { pending, error, data } = useQuery({
+    queryKey: ['execution-running'],
+    queryFn: async () => { return axios.get(`${import.meta.env.VITE_EXECUTOR}/execution/running`)}
+  })
+  const running = data?.data;
+
+  useEffect(() => {
+    if (!executions || !running) { return }
+    for (let i = 0; i < running.length; i++) {
+      const exec = running[i]
+      const executionId = exec.Execution
+      if (!(Object.hasOwn(executions.executions, executionId))) {
+        setExecutions((draft) => {
+          draft.executions[executionId] = exec
+        })
+      }
+    }
+  }, [running])
+
+  /*const {pendingRoom, errorRoom, dataRoom }  = useQuery({
     queryKey: ['rooms'],
     queryFn: async () => { return axios.get(`${import.meta.env.VITE_EXECUTOR}/rooms`)}
   })
-  const rooms = data?.data
+  const rooms = dataRoom?.data
   useEffect(() => {
     if (!pipeline.socketUrl && rooms?.length > 0) {
       setPipeline((draft) => {
         draft.socketUrl = `${import.meta.env.VITE_WS_EXECUTOR}/ws/${rooms[0]}`;
       })
     }
-  }, [rooms])
+  }, [rooms])*/
 
   const modalPopper = (content) => {
     setModalContent({

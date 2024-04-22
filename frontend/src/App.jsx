@@ -15,18 +15,16 @@ export default function App() {
   return (
     <ProviderInjector>
       <ForgeTheme>
-        <DataWrapper>
-          <Navbar >
-            <LibraryFetcher />
-            <BlockEditorPanel />
-          </Navbar>
-          <LibrarySwitcher />
-          <MainContent>
-            <DrawflowWrapper />
-          </MainContent>
-          <ModalWrapper />
-          <ToastWrapper />
-        </DataWrapper>
+        <Navbar >
+          <LibraryFetcher />
+          <BlockEditorPanel />
+        </Navbar>
+        <LibrarySwitcher />
+        <MainContent>
+          <DrawflowWrapper />
+        </MainContent>
+        <ModalWrapper />
+        <ToastWrapper />
       </ForgeTheme>
     </ProviderInjector>
   );

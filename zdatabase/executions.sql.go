@@ -252,18 +252,12 @@ func (q *Queries) ListPipelineExecutions(ctx context.Context, arg ListPipelineEx
 
 const listRunningExecutions = `-- name: ListRunningExecutions :many
 SELECT e.id, e.pipeline, e.status, e.created, e.completed, e.json, e.deleted, e.executionid, e.workflow FROM Executions e
-INNER JOIN Pipelines p ON p.id = e.pipeline
-WHERE organization = ? AND uuid = ? AND e.deleted = FALSE AND p.deleted = FALSE AND e.status = 'Running' AND e.workflow IS NOT NULL
+WHERE e.deleted = FALSE AND e.status = 'Running'
 ORDER BY e.created DESC
 `
 
-type ListRunningExecutionsParams struct {
-	Organization string
-	Uuid         string
-}
-
-func (q *Queries) ListRunningExecutions(ctx context.Context, arg ListRunningExecutionsParams) ([]Execution, error) {
-	rows, err := q.db.QueryContext(ctx, listRunningExecutions, arg.Organization, arg.Uuid)
+func (q *Queries) ListRunningExecutions(ctx context.Context) ([]Execution, error) {
+	rows, err := q.db.QueryContext(ctx, listRunningExecutions)
 	if err != nil {
 		return nil, err
 	}

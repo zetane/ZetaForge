@@ -28,7 +28,6 @@
   },
   "dependencies": {
     "@sentry/electron": "^4.22.0",
-    "bigint-buffer": "^1.1.5",
     "electron-trpc": "^0.5.2",
     "electron-updater": "^6.1.1",
     "getmac": "^6.6.0"

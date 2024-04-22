@@ -10,8 +10,7 @@ ORDER BY e.created DESC;
 
 -- name: ListRunningExecutions :many
 SELECT e.* FROM Executions e
-INNER JOIN Pipelines p ON p.id = e.pipeline
-WHERE organization = ? AND uuid = ? AND e.deleted = FALSE AND p.deleted = FALSE AND e.status = 'Running' AND e.workflow IS NOT NULL
+WHERE e.deleted = FALSE AND e.status = 'Running'
 ORDER BY e.created DESC;
 
 -- name: ListPipelineExecutions :many
