@@ -69,7 +69,7 @@ python -m zetaforge.forge_cli setup
 go run .
 ```
 
-> Note: You will need to [install gcc](https://jmeubank.github.io/tdm-gcc/) for building the Go server locally if you are on Windows.  
+> Note: You will need to [install gcc](https://jmeubank.github.io/tdm-gcc/) (tested on GCC 10.3.0) for building the Go server locally if you are on Windows.  
 
 4) Open another terminal window and run the following commands to start the frontend:
 ```
