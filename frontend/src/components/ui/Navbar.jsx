@@ -13,7 +13,7 @@ import {
   HeaderNavigation,
   SkipToContent
 } from "@carbon/react";
-import { useAtom } from "jotai";
+import { useAtom, useSetAtom } from "jotai";
 import LoadBlockButton from "./LoadBlockButton";
 import LoadPipelineButton from "./LoadPipelineButton";
 import PipelineNameLabel from "./PipelineNameLabel";
@@ -37,19 +37,19 @@ export default function Navbar({ children }) {
   const [modalContent, setModalContent] = useAtom(modalContentAtom);
   const [executions, setExecutions] = useImmerAtom(executionAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
+  const setFullPipeline = useSetAtom(pipelineAtom)
   console.log("PIPELINE: ", pipeline)
 
   const cacheQuery = trpc.getCachePath.useQuery();
-  const cachePath = cacheQuery?.data || ""
-  console.log("EXECS: ", executions)
+  const cachePath = cacheQuery?.data || null
+  console.log(cachePath)
 
   useEffect(() => {
+    if (!cachePath) { return }
     if (executions && !executions.active) {
-      const newPipeline = pipelineFactory()
-      console.log(newPipeline)
-      setPipeline((draft) => {
-        draft = newPipeline
-      })
+      const newPipeline = pipelineFactory(cachePath)
+      console.log("NEW: ", newPipeline)
+      setFullPipeline((p) => { return newPipeline })
       setExecutions((draft) => {
         draft.active = pipeline
       })
