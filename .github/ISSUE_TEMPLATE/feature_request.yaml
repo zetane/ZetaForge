@@ -1,0 +1,50 @@
+name: Feature Request
+description: >
+  Request form for potential features. 
+labels: [enhancement]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: >
+        Description of the requested feature:
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: >
+        Brief explanation on why you want/need said feature:
+    validations:
+      required: true
+  - type: dropdown
+    id: self-code
+    attributes:
+      label: Do you intend on coding this feature yourself?
+      options:
+        - 'Yes'
+        - 'No'
+      default: 1
+    validations:
+      required: true
+  - type: checkboxes
+    id: subcomponents
+    attributes:
+      label: >
+        Which zetaforge components would be affected by this new feature:
+      options:
+        - label: client
+        - label: anvil
+        - label: driver
+    validations:
+      required: true
+  - type: textarea
+    id: code-snippet
+    attributes:
+      label: >
+        Share any code snippets related to the feature here(optional):
+  - type: textarea
+    id: api
+    attributes:
+      label: >
+        Provide an API design for the feature(optional):
