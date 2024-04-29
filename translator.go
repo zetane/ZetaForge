@@ -12,6 +12,8 @@ import (
 	"server/zjson"
 
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
@@ -25,11 +27,12 @@ type Catalog struct {
 
 func checkImage(ctx context.Context, tagName string, cfg Config) (bool, error) {
 	if cfg.IsLocal {
-		resp, err := http.Get(fmt.Sprintf("http://localhost:%d/v2/_catalog", cfg.Local.RegistryPort))
-		if err != nil {
-			return false, err
-		}
-		defer resp.Body.Close()
+		if cfg.Local.Driver == "minikube" {
+			resp, err := http.Get(fmt.Sprintf("http://localhost:%d/v2/_catalog", cfg.Local.RegistryPort))
+			if err != nil {
+				return false, err
+			}
+			defer resp.Body.Close()
 
 		imageList, err := apiClient.ImageList(ctx, types.ImageListOptions{})
 		if err != nil {
@@ -42,9 +45,33 @@ func checkImage(ctx context.Context, tagName string, cfg Config) (bool, error) {
 					return true, nil
 				}
 			}
-		}
 
-		return false, nil
+			return false, nil
+		} else {
+			apiClient, err := client.NewClientWithOpts(
+				client.WithAPIVersionNegotiation(),
+			)
+			defer apiClient.Close()
+			if err != nil {
+				return false, err
+			}
+
+			imageList, err := apiClient.ImageList(ctx, types.ImageListOptions{})
+			if err != nil {
+				return false, err
+			}
+
+			for _, image := range imageList {
+				for _, tag := range image.RepoTags {
+					if tagName == tag {
+						return true, nil
+					}
+				}
+
+			}
+
+			return false, nil
+		}
 	} else {
 		repo, err := name.NewRepository(cfg.Cloud.RegistryAddr)
 		if err != nil {

@@ -129,11 +129,8 @@ metadata:
   name: weed
   namespace: default
 spec:
-<<<<<<< HEAD
   type: LoadBalancer
   loadBalancerIP: ~
-=======
->>>>>>> ae59fc7 (Switch to minikube)
   selector:
     app.kubernetes.io/name: weed
   ports:
@@ -180,10 +177,15 @@ metadata:
   namespace: kube-system
 spec:
 <<<<<<< HEAD
+<<<<<<< HEAD
   type: LoadBalancer
   loadBalancerIP: ~
 =======
 >>>>>>> ae59fc7 (Switch to minikube)
+=======
+  type: LoadBalancer
+  loadBalancerIP: ~
+>>>>>>> 5e4bbba (Support Orbstack)
   ports:
   - port: 80
     targetPort: 5000
