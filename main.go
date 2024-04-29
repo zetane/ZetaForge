@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -19,6 +20,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"server/zjson"
 
@@ -32,6 +34,8 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
+	"github.com/getsentry/sentry-go"
+	sentrygin "github.com/getsentry/sentry-go/gin"
 	"github.com/mixpanel/mixpanel-go"
 )
 
@@ -184,7 +188,20 @@ func validateJson(ctx context.Context, body io.ReadCloser) (zjson.Pipeline, HTTP
 	return pipeline, nil
 }
 
+func setupSentry() {
+	err := sentry.Init(sentry.ClientOptions{
+		Dsn:              "https://7fb18e8e487455a950298625457264f3@o1096443.ingest.us.sentry.io/4507031960223744",
+		EnableTracing:    true,
+		TracesSampleRate: 1.0,
+	})
+	if err != nil {
+		log.Fatalf("Failed to start Sentry; err=%s", err)
+	}
+	defer sentry.Flush(2 * time.Second)
+}
+
 func main() {
+	setupSentry()
 	file, err := os.ReadFile("config.json")
 	if err != nil {
 		log.Fatalf("Config file missing; err=%v", err)
@@ -258,6 +275,9 @@ func main() {
 
 		c.Next()
 	})
+
+	router.Use(sentrygin.New(sentrygin.Options{}))
+
 	router.POST("/execute", func(ctx *gin.Context) {
 		pipeline, err := validateJson(ctx.Request.Context(), ctx.Request.Body)
 		if err != nil {
@@ -300,7 +320,7 @@ func main() {
 			CheckOrigin: func(r *http.Request) bool {
 				// Allow specific origin
 				origin := r.Header.Get("Origin")
-				return strings.HasPrefix(origin, "http://localhost") || strings.HasPrefix(origin, "http://127.0.0.1") || strings.HasPrefix(origin, "file://") 
+				return strings.HasPrefix(origin, "http://localhost") || strings.HasPrefix(origin, "http://127.0.0.1") || strings.HasPrefix(origin, "file://")
 			},
 
 			ReadBufferSize:  1024,
