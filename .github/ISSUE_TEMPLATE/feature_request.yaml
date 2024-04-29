@@ -34,7 +34,7 @@ body:
         Which zetaforge components would be affected by this new feature:
       options:
         - label: client
-        - label: foundry
+        - label: anvil
         - label: driver
     validations:
       required: true
