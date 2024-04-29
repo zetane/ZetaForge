@@ -237,6 +237,11 @@ func setup(config Config, client clientcmd.ClientConfig) {
 	if err := kubectlApply("setup/build.yaml", resources, clientConfig); err != nil {
 		log.Fatalf("Failed to install bucket/registry; err=%v", err)
 	}
+
+	if config.Local.Driver != "minikube" {
+		return
+	}
+
 	if err := kubectlApply("setup/patch.yaml", resources, clientConfig); err != nil {
 		log.Fatalf("Failed to patch core dns; err=%v", err)
 	}

@@ -58,6 +58,7 @@ type Config struct {
 
 type Local struct {
 	BucketPort int
+	Driver     string
 }
 
 type Cloud struct {

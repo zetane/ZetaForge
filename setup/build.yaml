@@ -122,6 +122,8 @@ metadata:
   name: weed
   namespace: default
 spec:
+  type: LoadBalancer
+  loadBalancerIP: ~
   selector:
     app.kubernetes.io/name: weed
   ports:
@@ -167,6 +169,8 @@ metadata:
   name: registry
   namespace: kube-system
 spec:
+  type: LoadBalancer
+  loadBalancerIP: ~
   ports:
   - port: 80
     targetPort: 5000

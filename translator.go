@@ -1,17 +1,15 @@
 package main
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
-	"fmt"
-	"net/http"
 	"path/filepath"
 
 	"server/zjson"
 
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
@@ -23,28 +21,28 @@ type Catalog struct {
 	Repositories []string `json:"repositories"`
 }
 
-func checkImage(tagName string, cfg Config) (bool, error) {
+func checkImage(ctx context.Context, tagName string, cfg Config) (bool, error) {
 	if cfg.IsLocal {
 		apiClient, err := client.NewClientWithOpts(
 			client.WithAPIVersionNegotiation(),
 		)
+		defer apiClient.Close()
 		if err != nil {
 			return false, err
 		}
-		defer apiClient.Close()
 
-		buffer := new(bytes.Buffer)
-		buffer.ReadFrom(resp.Body)
-
-		var catalog Catalog
-		if err := json.Unmarshal(buffer.Bytes(), &catalog); err != nil {
+		imageList, err := apiClient.ImageList(ctx, types.ImageListOptions{})
+		if err != nil {
 			return false, err
 		}
 
-		for _, image := range catalog.Repositories {
-			if cfg.Local.RegistryDomain+"/"+image+":latest" == tagName {
-				return true, nil
+		for _, image := range imageList {
+			for _, tag := range image.RepoTags {
+				if tagName == tag {
+					return true, nil
+				}
 			}
+
 		}
 
 		return false, nil
@@ -217,7 +215,7 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 
 		if len(block.Action.Container.Image) > 0 {
 			kaniko := kanikoTemplate(&block, organization, cfg)
-			built, err := checkImage(template.Container.Image, cfg)
+			built, err := checkImage(ctx, template.Container.Image, cfg)
 			if err != nil {
 				return &workflow, blocks, err
 			}
