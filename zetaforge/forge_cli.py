@@ -18,7 +18,7 @@ def main():
     parser.add_argument("command", choices=["launch", "teardown", "purge", "setup", "version"], help=help_)
     parser.add_argument("--s2_path", "-s2",  help="Full path to local execution server. Note that this is an option for zetaforge developers, or advanced zetaforge users. If not passed, zetaforge will use the deployed application", default=None)
     parser.add_argument("--app_path", "-path",  help="Full path to local electron executable. Note that this is an option for zetaforge developers, or advanced zetaforge users. If not passed, zetaforge will use the deployed application", default=None)
-    parser.add_argument("--orbstack", action="store_true", help="If passed, anvil will run on orbstack")
+    parser.add_argument("--minikube_mount",  help="If passed, anvil will run on minikube and mount the specified absolute path.")
     args = parser.parse_args()
 
     init()  # Initialize colorama
@@ -39,19 +39,19 @@ def main():
         config = load_config(config_file)
         if config is None:
             print("Config not found! Running setup..")
-            config_file = setup(server_versions[-1], client_versions[-1], server_path=args.s2_path, is_orbstack=args.orbstack)
+            config_file = setup(server_versions[-1], client_versions[-1], server_path=args.s2_path, mount=args.minikube_mount)
             config = load_config(config_file)
 
         if config is not None:
-            run_forge(server_version=server_versions[-1], client_version=client_versions[-1], server_path=args.s2_path, client_path=args.app_path)
+            run_forge(server_version=server_versions[-1], client_version=client_versions[-1], server_path=args.s2_path, client_path=args.app_path, mount=args.minikube_mount)
         else:
             raise Exception("Config failed to load, please re-run `zetaforge setup`.")
     elif args.command == "teardown":
-        teardown(is_orbstack=args.orbstack)
+        teardown(mount=args.minikube_mount)
     elif args.command == 'purge':
         purge()
     elif args.command == 'setup':
-        setup(server_versions[-1], client_versions[-1], is_orbstack=args.orbstack)
+        setup(server_versions[-1], client_versions[-1], mount=args.minikube_mount)
     else:
         print('zetaforge:\t' + __version__)
         print("client:\t" + client_versions[-1])    
