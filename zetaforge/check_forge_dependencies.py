@@ -28,9 +28,9 @@ def check_kube_pod(name):
     
     return False
 
-def check_dependencies():
-    kubectl_flag = check_kubectl()
-    return kubectl_flag
+def check_minikube():
+    check_ctl = subprocess.run(["minikube", "version"], capture_output=True, text=True)
+    return check_ctl.returncode == 0
 
 def check_docker_installed():
     docker = subprocess.run("docker", capture_output=True, text=True)

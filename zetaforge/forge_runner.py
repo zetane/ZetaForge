@@ -4,7 +4,7 @@ import platform
 import time
 import json
 from pkg_resources import resource_filename
-from .check_forge_dependencies import check_dependencies, check_running_kube, check_kube_pod
+from .check_forge_dependencies import check_minikube, check_running_kube, check_kube_pod
 from .install_forge_dependencies import *
 from pathlib import Path
 from colorama import init, Fore
@@ -25,8 +25,11 @@ INSTALL_YAML = resource_filename("zetaforge", os.path.join('utils', 'install.yam
 EXECUTABLES_PATH = os.path.join(Path(__file__).parent, 'executables')
 FRONT_END = os.path.join(EXECUTABLES_PATH, "frontend")
 
-def write_json(server_version, client_version, context):
-    _, server_path = get_launch_paths(server_version, client_version)
+def write_json(server_version, client_version, context, s2_path=None):
+    if s2_path:
+        server_path = s2_path
+    else:
+        _, server_path = get_launch_paths(server_version, client_version)
     config = create_config_json(os.path.dirname(server_path), context)
     return config
 
@@ -117,10 +120,10 @@ def select_kubectl_context():
 
     return selected_context
 
-def setup(server_version, client_version, build_flag = True, install_flag = True):
+def setup(server_version, client_version, build_flag = True, install_flag = True, server_path = None, is_orbstack = False):
     print("Platform: ", platform.machine())
     print("CWD: ", os.path.abspath(os.getcwd()))
-    context = select_kubectl_context()
+
 
     kubectl_flag = check_dependencies()        
         
@@ -133,20 +136,12 @@ def setup(server_version, client_version, build_flag = True, install_flag = True
         #install_kubectl()
         #switch_context = subprocess.run(f"./kubectl config use-context {context}", shell=True, cwd=EXECUTABLES_PATH)
 
-    in_context = (switch_context.returncode == 0)
-        
-    if not in_context:
-        print(f"Cannot find the context {context} for kubernetes. Please double check that you have entered the correct context.")        
-        subprocess.run(["kubectl", "config", "get-contexts"], capture_output=True, text=True)
-        raise Exception("Exception while setting the context")
-    
-    running_kube = check_running_kube(context)
-    if not running_kube:
-        raise Exception("Kubernetes is not running, please start kubernetes and ensure that you are able to connect to the kube context.")
+        in_context = (switch_context.returncode == 0)
 
-        
-    build = subprocess.run(["kubectl", "apply", "-f", f"{BUILD_YAML}"], capture_output=True, text=True)
-    install = subprocess.run(["kubectl", "apply", "-f", f"{INSTALL_YAML}"], capture_output=True, text=True)
+        if not in_context:
+            print(f"Cannot find the context {context} for kubernetes. Please double check that you have entered the correct context.")        
+            subprocess.run(["kubectl", "config", "get-contexts"], capture_output=True, text=True)
+            raise Exception("Exception while setting the context")
 
     if build.returncode != 0 or install.returncode != 0:
         raise Exception("Error while building")
@@ -163,16 +158,28 @@ def setup(server_version, client_version, build_flag = True, install_flag = True
 
 
 #dev version is only passed, when a developer wants to pass a local version(for e.g. dev_path=./s2-v2.3.5-amd64)
-def run_forge(server_version=None, client_version=None, server_path=None, client_path=None):
+def run_forge(server_version=None, client_version=None, server_path=None, client_path=None, is_orbstack = False):
     global time_start
     time_start = datetime.now()
 
     #init is called for collarama library, better logging.
     init()   
 
+<<<<<<< HEAD
     weed = check_kube_pod("weed")
     if not weed:
         raise Exception("SeaweedFS is not running, please ensure kubernetes is running or re-run `zetaforge setup`.")
+=======
+    if is_orbstack:
+        reg = check_kube_pod("registry")
+        if not reg:
+            print("Registry container not found, restarting..")
+            setup(server_version, client_version)
+            raise Exception("Container registry is not running, please ensure kubernetes is running or re-run `zetaforge setup`.")
+        weed = check_kube_pod("weed")
+        if not weed:
+            raise Exception("SeaweedFS is not running, please ensure kubernetes is running or re-run `zetaforge setup`.")
+>>>>>>> 04a84c9 (pip install for minikube)
 
     mixpanel_client.track_event('Initial Launch')
 
@@ -252,6 +259,7 @@ def purge():
     shutil.rmtree(EXECUTABLES_PATH)
     os.makedirs(EXECUTABLES_PATH)
 
+<<<<<<< HEAD
 def teardown():
     
     print("Tearing down services..")
@@ -260,12 +268,35 @@ def teardown():
     print ("Removing install: ", {install.stdout})
     build = subprocess.run(["kubectl", "delete", "-f", BUILD_YAML], capture_output=True, text=True)
     print("Removing build: ", {build.stdout})
+=======
+def teardown(is_orbstack = False):
+    if is_orbstack:
+        contexts = get_kubectl_contexts()
+        default = None
+        for i, context in enumerate(contexts, start=1):
+            if context.startswith("*"):
+                default = context[1:]
+    
+        print("Tearing down services..")
+        if default and default == "docker-desktop":
+            stop = subprocess.run(["kubectl", "stop", "registry"], capture_output=True, text=True)
+            print(stop.stdout)
+
+        install = subprocess.run(["kubectl", "delete", "-f", INSTALL_YAML], capture_output=True, text=True)
+        print ("Removing install: ", {install.stdout})
+        build = subprocess.run(["kubectl", "delete", "-f", BUILD_YAML], capture_output=True, text=True)
+        print("Removing build: ", {build.stdout})
+    else:
+        minikube = subprocess.run(["minikube", "stop", "-p", "zetaforge"], capture_output=True, text=True)
+        if minikube.returncode != 0:
+            raise Exception("Error while starting minikube")
+>>>>>>> 04a84c9 (pip install for minikube)
     print("Completed teardown!")
 
 def create_config_json(s2_path, context):
     config = {
         "IsLocal":True,
-        "ServerPort":"8080",
+        "ServerPort": 8080,
         "KanikoImage":"gcr.io/kaniko-project/executor:latest",
         "WorkDir":"/app",
         "FileDir":"/files",
@@ -276,7 +307,14 @@ def create_config_json(s2_path, context):
         "Database":"./zetaforge.db",
         "KubeContext": context,
         "Local": {
+<<<<<<< HEAD
             "BucketPort":"8333"
+=======
+            "BucketPort": 8333,
+            "RegistryPort": registry_port,
+            "RegistryDomain":"example.org",
+            "Driver": "minikube"
+>>>>>>> 04a84c9 (pip install for minikube)
         }
     } 
 
@@ -285,3 +323,13 @@ def create_config_json(s2_path, context):
         json.dump(config, outfile)
 
     return file_path
+
+def generate_distinct_id():
+    seed = 0
+    try:
+        seed = uuid.getnode()
+    except:
+        seed = 0
+        
+    distinct_id = sha256(str(seed).encode('utf-8')).hexdigest()
+    return distinct_id

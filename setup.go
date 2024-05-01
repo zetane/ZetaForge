@@ -161,15 +161,13 @@ func kubectlCheckPods(ctx context.Context, clientConfig *rest.Config) error {
 			return err
 		}
 
-		if len(pods.Items) != 1 {
-			return errors.New("invalid number of bucket pods")
-		}
-
-		phase := pods.Items[0].Status.Phase
-		if phase == v1.PodRunning {
-			break
-		} else if phase == v1.PodFailed || phase == v1.PodSucceeded {
-			return errors.New("bucket has stopped working")
+		if len(pods.Items) > 0 {
+			phase := pods.Items[0].Status.Phase
+			if phase == v1.PodRunning {
+				break
+			} else if phase == v1.PodFailed || phase == v1.PodSucceeded {
+				return errors.New("bucket has stopped working")
+			}
 		}
 
 		log.Println("Waiting on bucket")
@@ -182,15 +180,13 @@ func kubectlCheckPods(ctx context.Context, clientConfig *rest.Config) error {
 			return err
 		}
 
-		if len(pods.Items) != 1 {
-			return errors.New("invalid number of registry pods")
-		}
-
-		phase := pods.Items[0].Status.Phase
-		if phase == v1.PodRunning {
-			break
-		} else if phase == v1.PodFailed || phase == v1.PodSucceeded {
-			return errors.New("registry has stopped working")
+		if len(pods.Items) > 0 {
+			phase := pods.Items[0].Status.Phase
+			if phase == v1.PodRunning {
+				break
+			} else if phase == v1.PodFailed || phase == v1.PodSucceeded {
+				return errors.New("registry has stopped working")
+			}
 		}
 
 		log.Println("Waiting on registry")
@@ -203,15 +199,13 @@ func kubectlCheckPods(ctx context.Context, clientConfig *rest.Config) error {
 			return err
 		}
 
-		if len(pods.Items) != 1 {
-			return errors.New("invalid number of core dns patch pods")
-		}
-
-		phase := pods.Items[0].Status.Phase
-		if phase == v1.PodSucceeded {
-			break
-		} else if phase == v1.PodFailed {
-			return errors.New("core dns patch failed")
+		if len(pods.Items) > 0 {
+			phase := pods.Items[0].Status.Phase
+			if phase == v1.PodSucceeded {
+				break
+			} else if phase == v1.PodFailed {
+				return errors.New("core dns patch failed")
+			}
 		}
 
 		log.Println("Waiting on core dns patch")

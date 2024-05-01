@@ -1,5 +1,5 @@
-from .forge_runner import run_forge, teardown, purge, setup, get_launch_paths
-from .install_forge_dependencies import check_version
+from .forge_runner import run_forge, teardown, purge, setup
+from .install_forge_dependencies import check_version, get_launch_paths
 import argparse, os, json
 from pathlib import Path
 from .__init__ import __version__
@@ -18,6 +18,7 @@ def main():
     parser.add_argument("command", choices=["launch", "teardown", "purge", "setup", "version"], help=help_)
     parser.add_argument("--s2_path", "-s2",  help="Full path to local execution server. Note that this is an option for zetaforge developers, or advanced zetaforge users. If not passed, zetaforge will use the deployed application", default=None)
     parser.add_argument("--app_path", "-path",  help="Full path to local electron executable. Note that this is an option for zetaforge developers, or advanced zetaforge users. If not passed, zetaforge will use the deployed application", default=None)
+    parser.add_argument("--orbstack", action="store_true", help="If passed, anvil will run on orbstack")
     args = parser.parse_args()
 
     init()  # Initialize colorama
@@ -25,6 +26,8 @@ def main():
     server_versions = [__version__]
     client_versions =[__version__]
     client_path, server_path = get_launch_paths(server_versions[-1], client_versions[-1])
+    if args.s2_path is not None:
+        server_path = args.s2_path
     print(server_path)
     server_dir = os.path.dirname(server_path)
     print(server_dir)
@@ -36,7 +39,7 @@ def main():
         config = load_config(config_file)
         if config is None:
             print("Config not found! Running setup..")
-            config_file = setup(server_versions[-1], client_versions[-1])
+            config_file = setup(server_versions[-1], client_versions[-1], server_path=args.s2_path, is_orbstack=args.orbstack)
             config = load_config(config_file)
 
         if config is not None:
@@ -44,11 +47,11 @@ def main():
         else:
             raise Exception("Config failed to load, please re-run `zetaforge setup`.")
     elif args.command == "teardown":
-        teardown()
+        teardown(is_orbstack=args.orbstack)
     elif args.command == 'purge':
         purge()
     elif args.command == 'setup':
-        setup(server_versions[-1], client_versions[-1])
+        setup(server_versions[-1], client_versions[-1], is_orbstack=args.orbstack)
     else:
         print('zetaforge:\t' + __version__)
         print("client:\t" + client_versions[-1])    
