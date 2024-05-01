@@ -8,9 +8,9 @@ import { genJSON } from '@/utils/blockUtils';
 import generateSchema from '@/utils/schemaValidation';
 import { trpc } from "@/utils/trpc";
 import '@fortawesome/fontawesome-free/css/all.min.css';
+import { humanId } from 'human-id';
 import { useAtom, useSetAtom } from 'jotai';
 import { useImmerAtom } from 'jotai-immer';
-import { customAlphabet } from 'nanoid';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLoadPipeline } from "./useLoadPipeline";
 
@@ -230,9 +230,7 @@ export default function DrawflowWrapper() {
   }, [renderNodes])
 
   const addBlockToPipeline = (block) => {
-    const nanoid = customAlphabet('1234567890abcedfghijklmnopqrstuvwxyz', 12)
-    const newNanoid = nanoid()
-    const id = `${block.information.id}-${newNanoid}`
+    const id = humanId({ separator: "-", capitalize: false });
     block.information.id = id
     block.action.container.image = id
     setPipeline((draft) => {
