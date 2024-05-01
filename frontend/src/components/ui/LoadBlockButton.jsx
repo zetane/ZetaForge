@@ -27,6 +27,8 @@ export default function LoadBlockButton() {
     const nanoid = customAlphabet('1234567890abcedfghijklmnopqrstuvwxyz', 12)
     const newNanoid = nanoid()
     const id = `${block.information.id}-${newNanoid}`
+    block.information.id = id
+    block.action.container.image = id
 
     block = centerBlockPosition(block)
     const newPipeline = getPipelineFormat(pipeline)

@@ -3,16 +3,16 @@ import { blockEditorRootAtom, isBlockEditorOpenAtom } from '@/atoms/editorAtom';
 import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { pipelineSchemaAtom } from "@/atoms/pipelineSchemaAtom";
 import Drawflow from '@/components/ZetaneDrawflowEditor';
+import BlockGenerator from '@/components/ui/blockGenerator/BlockGenerator';
+import { genJSON } from '@/utils/blockUtils';
+import generateSchema from '@/utils/schemaValidation';
 import { trpc } from "@/utils/trpc";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { useAtom, useSetAtom } from 'jotai';
-import { useEffect, useRef, useState, useCallback } from 'react';
-import BlockGenerator from '@/components/ui/blockGenerator/BlockGenerator';
 import { useImmerAtom } from 'jotai-immer';
-import { genJSON } from '@/utils/blockUtils';
 import { customAlphabet } from 'nanoid';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLoadPipeline } from "./useLoadPipeline";
-import generateSchema from '@/utils/schemaValidation';
 
 const launchDrawflow = (parentDomRef, canvasDomRef, pipeline, setPipeline) => {
   if (parentDomRef.className != "parent-drawflow") {
@@ -47,17 +47,17 @@ export default function DrawflowWrapper() {
 
   const savePipeline = trpc.savePipeline.useMutation();
   const getBlockPath = trpc.getBlockPath.useMutation();
-  
+
   // Redraw the connections when resizing textarea
   useEffect(() => {
     if (!editor) return;
 
     const resizeObserver = new ResizeObserver(entries => {
-        entries.forEach(entry => {
-            if (entry.target.classList.contains('textarea-node')) {
-                editor.updateAllConnections();
-            }
-        });
+      entries.forEach(entry => {
+        if (entry.target.classList.contains('textarea-node')) {
+          editor.updateAllConnections();
+        }
+      });
     });
 
     const textareas = document.querySelectorAll('.textarea-node');
@@ -68,7 +68,7 @@ export default function DrawflowWrapper() {
 
 
   const createConnection = (connection, pipeline) => {
-    const {output_id, input_id, output_class, input_class} = connection;
+    const { output_id, input_id, output_class, input_class } = connection;
     const outputBlock = pipeline.data[output_id]
     const inputBlock = pipeline.data[input_id]
     if (outputBlock && inputBlock) {
@@ -93,8 +93,8 @@ export default function DrawflowWrapper() {
         if (!outputHasInput) {
           setPipeline((draft) => {
             draft.data[output_id].outputs[output_class].connections.push({
-             variable: input_class,
-             block: input_id
+              variable: input_class,
+              block: input_id
             })
           })
         }
@@ -103,7 +103,7 @@ export default function DrawflowWrapper() {
   }
 
   const removeConnection = (connection, pipeline) => {
-    const {output_id, input_id, output_class, input_class} = connection;
+    const { output_id, input_id, output_class, input_class } = connection;
     const outputBlock = pipeline.data[output_id]
     const inputBlock = pipeline.data[input_id]
     if (outputBlock && inputBlock) {
@@ -150,13 +150,13 @@ export default function DrawflowWrapper() {
 
   useEffect(() => {
     const nodes = Object.entries(pipeline.data).map(([key, block]) => {
-      return (<BlockGenerator key={key} 
-                block={block} 
-                openView={openView} 
-                id={key} 
-                historySink={pipeline.history} 
-                pipelineAtom={pipelineAtom}
-                />)
+      return (<BlockGenerator key={key}
+        block={block}
+        openView={openView}
+        id={key}
+        historySink={pipeline.history}
+        pipelineAtom={pipelineAtom}
+      />)
     })
     setRenderNodes(nodes)
   }, [pipeline.data])
@@ -201,18 +201,18 @@ export default function DrawflowWrapper() {
         try {
           if (Object.getOwnPropertyNames(pipeline.data).length !== 0) {
             const pipelineSpecs = editor.convert_drawflow_to_block(pipeline.name, pipeline.data);
-    
+
             // note that we are writing to the buffer, not the load path
             pipelineSpecs['sink'] = pipeline.buffer;
             pipelineSpecs['build'] = pipeline.buffer;
-    
+
             const saveData = {
               specs: pipelineSpecs,
               name: pipeline.name,
               buffer: pipeline.buffer,
               writePath: pipeline.buffer
             };
-    
+
             const response = await savePipeline.mutateAsync(saveData);
             const { dirPath, specs } = response;
           }
@@ -220,7 +220,7 @@ export default function DrawflowWrapper() {
           console.error("Error saving pipeline:", error);
         }
       };
-  
+
       fetchData();
     } else {
       if (editor) {
@@ -233,6 +233,8 @@ export default function DrawflowWrapper() {
     const nanoid = customAlphabet('1234567890abcedfghijklmnopqrstuvwxyz', 12)
     const newNanoid = nanoid()
     const id = `${block.information.id}-${newNanoid}`
+    block.information.id = id
+    block.action.container.image = id
     setPipeline((draft) => {
       draft.data[id] = block;
     })
@@ -259,18 +261,18 @@ export default function DrawflowWrapper() {
     }
     block.views.node.pos_x =
       posX *
-        (editor.precanvas.clientWidth /
-          (editor.precanvas.clientWidth * editor.zoom)) -
+      (editor.precanvas.clientWidth /
+        (editor.precanvas.clientWidth * editor.zoom)) -
       editor.precanvas.getBoundingClientRect().x *
-        (editor.precanvas.clientWidth /
-          (editor.precanvas.clientWidth * editor.zoom));
+      (editor.precanvas.clientWidth /
+        (editor.precanvas.clientWidth * editor.zoom));
     block.views.node.pos_y =
       posY *
-        (editor.precanvas.clientHeight /
-          (editor.precanvas.clientHeight * editor.zoom)) -
+      (editor.precanvas.clientHeight /
+        (editor.precanvas.clientHeight * editor.zoom)) -
       editor.precanvas.getBoundingClientRect().y *
-        (editor.precanvas.clientHeight /
-          (editor.precanvas.clientHeight * editor.zoom));
+      (editor.precanvas.clientHeight /
+        (editor.precanvas.clientHeight * editor.zoom));
 
     return block
   }
@@ -289,7 +291,7 @@ export default function DrawflowWrapper() {
 
   const openView = async (id) => {
     const root = await getBlockPath.mutateAsync({
-      blockId: id, 
+      blockId: id,
       pipelinePath: pipeline.buffer
     });
     setBlockEditorRoot(root);
@@ -307,7 +309,7 @@ export default function DrawflowWrapper() {
       event.target.value = ''; // Reset the file input
     }
   };
-  
+
   const fileInput = useRef();
 
   return (
