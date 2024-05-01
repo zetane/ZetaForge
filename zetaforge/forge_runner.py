@@ -4,7 +4,7 @@ import platform
 import time
 import json
 from pkg_resources import resource_filename
-from .check_forge_dependencies import check_minikube, check_running_kube, check_kube_pod
+from .check_forge_dependencies import check_minikube, check_running_kube, check_kube_pod, check_kubectl
 from .install_forge_dependencies import *
 from pathlib import Path
 from colorama import init, Fore
@@ -25,12 +25,12 @@ INSTALL_YAML = resource_filename("zetaforge", os.path.join('utils', 'install.yam
 EXECUTABLES_PATH = os.path.join(Path(__file__).parent, 'executables')
 FRONT_END = os.path.join(EXECUTABLES_PATH, "frontend")
 
-def write_json(server_version, client_version, context, registry_port, s2_path=None):
+def write_json(server_version, client_version, context, registry_port, driver, s2_path=None):
     if s2_path:
         server_path = s2_path
     else:
         _, server_path = get_launch_paths(server_version, client_version)
-    config = create_config_json(os.path.dirname(server_path), context, registry_port)
+    config = create_config_json(os.path.dirname(server_path), context, registry_port, driver)
     return config
 
 
@@ -120,7 +120,7 @@ def select_kubectl_context():
 
     return selected_context
 
-def setup(server_version, client_version, build_flag = True, install_flag = True, server_path = None, is_orbstack = False):
+def setup(server_version, client_version, build_flag = True, install_flag = True, server_path = None, mount = None):
     print("Platform: ", platform.machine())
     print("CWD: ", os.path.abspath(os.getcwd()))
 
@@ -128,7 +128,8 @@ def setup(server_version, client_version, build_flag = True, install_flag = True
     print(f"Setting registry port: {registry_port}")
     update_yaml(int(registry_port))
 
-    if is_orbstack:
+    if mount is None:
+        driver = "orbstack"
         context = select_kubectl_context()
         kubectl_flag = check_kubectl()        
 
@@ -167,16 +168,18 @@ def setup(server_version, client_version, build_flag = True, install_flag = True
             raise Exception("Error detecting container registry")
     else:
         context = "zetaforge"
+        driver = "minikube"
         if not check_minikube():
             print("Minikube not found. Please install minikube.")
             raise Exception("Minikube not found!")
-        minikube = subprocess.run(["minikube", "start", "--mount-string=/home/xvalue/mnt:/host", "--mount", "-p", "zetaforge"], capture_output=True, text=True)
+        minikube = subprocess.run(["minikube", "start", "--mount-string=" + mount + ":/host", "--mount", "-p", "zetaforge"], capture_output=True, text=True)
         if minikube.returncode != 0:
+            print(minikube.stderr)
             raise Exception("Error while starting minikube")
 
     install_frontend_dependencies(client_version=client_version)
 
-    config_path = write_json(server_version, client_version, context, registry_port, server_path)
+    config_path = write_json(server_version, client_version, context, registry_port, server_path, driver)
 
     print(f"Setup complete, wrote config to {config_path}.")
         
@@ -184,14 +187,14 @@ def setup(server_version, client_version, build_flag = True, install_flag = True
 
 
 #dev version is only passed, when a developer wants to pass a local version(for e.g. dev_path=./s2-v2.3.5-amd64)
-def run_forge(server_version=None, client_version=None, server_path=None, client_path=None, is_orbstack = False):
+def run_forge(server_version=None, client_version=None, server_path=None, client_path=None, mount = None):
     global time_start
     time_start = datetime.now()
 
     #init is called for collarama library, better logging.
     init()   
 
-    if is_orbstack:
+    if mount is None:
         reg = check_kube_pod("registry")
         if not reg:
             print("Registry container not found, restarting..")
@@ -279,8 +282,8 @@ def purge():
     shutil.rmtree(EXECUTABLES_PATH)
     os.makedirs(EXECUTABLES_PATH)
 
-def teardown(is_orbstack = False):
-    if is_orbstack:
+def teardown(mount = None):
+    if mount is None:
         contexts = get_kubectl_contexts()
         default = None
         for i, context in enumerate(contexts, start=1):
@@ -299,10 +302,35 @@ def teardown(is_orbstack = False):
     else:
         minikube = subprocess.run(["minikube", "stop", "-p", "zetaforge"], capture_output=True, text=True)
         if minikube.returncode != 0:
+            print(minikube.stderr)
             raise Exception("Error while starting minikube")
     print("Completed teardown!")
 
-def create_config_json(s2_path, context):
+
+def check_expected_services(config):
+    is_local = config["IsLocal"]
+    print(config)
+    if is_local:
+        local = config["Local"]
+        ports = [local["RegistryPort"]]
+    
+        for port in ports:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(1)  # Set a timeout of 1 second
+            
+            try:
+                sock.bind(('localhost', int(port)))
+
+                raise Exception(f"Was able to bind to {port}, which means kube services are nto running correctly. Please re-run `zetaforge setup`.")
+            except socket.error as e:
+                if e.errno == errno.EADDRINUSE:
+                    print(f"Service running at port {port}")
+            finally:
+                sock.close()
+    
+    return True 
+
+def create_config_json(s2_path, context, registry_port=5000, driver="orbstack"):
     config = {
         "IsLocal":True,
         "ServerPort": 8080,
@@ -319,7 +347,7 @@ def create_config_json(s2_path, context):
             "BucketPort": 8333,
             "RegistryPort": registry_port,
             "RegistryDomain":"example.org",
-            "Driver": "minikube"
+            "Driver": driver
         }
     } 
 
