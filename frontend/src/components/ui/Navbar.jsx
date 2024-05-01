@@ -29,7 +29,6 @@ import { useImmerAtom } from "jotai-immer";
 import { PipelineLogs } from "./PipelineLogs";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import {trpc} from "@/utils/trpc"
 import StopPipelineButton from "./StopPipelineButton";
 
 export default function Navbar({ children }) {
@@ -38,23 +37,22 @@ export default function Navbar({ children }) {
   const [executions, setExecutions] = useImmerAtom(executionAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const setFullPipeline = useSetAtom(pipelineAtom)
-  console.log("PIPELINE: ", pipeline)
 
-  const cacheQuery = trpc.getCachePath.useQuery();
-  const cachePath = cacheQuery?.data || null
-  console.log(cachePath)
+  console.log("local: ", window.cache.local)
+  console.log("app: ", window.cache.app())
 
   useEffect(() => {
-    if (!cachePath) { return }
     if (executions && !executions.active) {
-      const newPipeline = pipelineFactory(cachePath)
-      console.log("NEW: ", newPipeline)
+      const newPipeline = pipelineFactory(window.cache.local)
       setFullPipeline((p) => { return newPipeline })
-      setExecutions((draft) => {
-        draft.active = pipeline
-      })
     }
-  }, [executions?.active, cachePath])
+  }, [executions?.active])
+
+  useEffect(() => {
+    setExecutions((draft) => {
+      draft.active = pipeline
+    })
+  }, [pipeline])
 
   const { pending, error, data } = useQuery({
     queryKey: ['execution-running'],
@@ -74,6 +72,8 @@ export default function Navbar({ children }) {
       }
     }
   }, [running])
+  console.log("EXECS: ", executions)
+  console.log("pipeline: ", pipeline)
 
   /*const {pendingRoom, errorRoom, dataRoom }  = useQuery({
     queryKey: ['rooms'],
