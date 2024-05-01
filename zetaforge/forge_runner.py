@@ -30,7 +30,7 @@ def write_json(server_version, client_version, context, registry_port, s2_path=N
         server_path = s2_path
     else:
         _, server_path = get_launch_paths(server_version, client_version)
-    config = create_config_json(os.path.dirname(server_path), context)
+    config = create_config_json(os.path.dirname(server_path), context, registry_port)
     return config
 
 
@@ -152,7 +152,6 @@ def setup(server_version, client_version, build_flag = True, install_flag = True
         if not running_kube:
             raise Exception("Kubernetes is not running, please start kubernetes and ensure that you are able to connect to the kube context.")
 
-
         build = subprocess.run(["kubectl", "apply", "-f", f"{BUILD_YAML}"], capture_output=True, text=True)
         install = subprocess.run(["kubectl", "apply", "-f", f"{INSTALL_YAML}"], capture_output=True, text=True)
 
@@ -174,7 +173,6 @@ def setup(server_version, client_version, build_flag = True, install_flag = True
         minikube = subprocess.run(["minikube", "start", "--mount-string=/home/xvalue/mnt:/host", "--mount", "-p", "zetaforge"], capture_output=True, text=True)
         if minikube.returncode != 0:
             raise Exception("Error while starting minikube")
-
 
     install_frontend_dependencies(client_version=client_version)
 
