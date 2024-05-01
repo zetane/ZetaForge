@@ -9,7 +9,6 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -190,9 +189,7 @@ func validateJson(ctx context.Context, body io.ReadCloser) (zjson.Pipeline, HTTP
 
 func setupSentry() {
 	err := sentry.Init(sentry.ClientOptions{
-		Dsn:              "https://7fb18e8e487455a950298625457264f3@o1096443.ingest.us.sentry.io/4507031960223744",
-		EnableTracing:    true,
-		TracesSampleRate: 1.0,
+		Dsn: "https://7fb18e8e487455a950298625457264f3@o1096443.ingest.us.sentry.io/4507031960223744",
 	})
 	if err != nil {
 		log.Fatalf("Failed to start Sentry; err=%s", err)
