@@ -81,6 +81,13 @@ data:
             "List",
             "Write"
           ]
+        },
+        {
+          "name": "anonymous",
+          "actions": [
+            "Read",
+            "List"
+          ]
         }
       ]
     }
