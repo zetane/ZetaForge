@@ -8,6 +8,8 @@ body:
     attributes:
       label: >
         Summary:
+      description: >
+        Write a short description of the bug.
     validations:
       required: true
   - type: textarea
@@ -15,6 +17,8 @@ body:
     attributes:
       label: >
         Expected behavior:
+      description: >
+        What behavior did you expect?
     validations:
       required: true
   - type: textarea
@@ -22,6 +26,8 @@ body:
     attributes:
       label: >
         Actual behavior:
+      description: >
+        What actually happened instead?
     validations:
       required: true
   - type: textarea
@@ -29,6 +35,8 @@ body:
     attributes:
       label: >
         Steps to reproduce:
+      description: 
+        Write a step-by-step process on how to reproduce the bug.
       placeholder: |
         1. 
         2. 
@@ -39,7 +47,9 @@ body:
     id: version
     attributes:
       label: >
-        Version:
+        Zetaforge version:
+      description: 
+        Enter the Zetaforge version on which you experienced the bug.
       placeholder: 0.1.1
     validations:
       required: true
@@ -47,12 +57,22 @@ body:
     id: os
     attributes:
       label: Operating System
+      description: >
+        Enter the operating system on which you experienced the bug.
       options:
         - 'Windows'
         - 'MacOs'
-        - 'Linux distribution'
+        - 'Other (specify)'
     validations:
       required: true
+  - type: input
+    id: osOther
+    attributes:
+      label: >
+        Other operating system:
+      description: >
+        Enter your operating system if you selected "Other" above.
+      placeholder: Arch
   - type: textarea
     id: logs
     attributes:
@@ -60,7 +80,7 @@ body:
         Logs:
       render: bash
       description: >
-        Please provide the application logs.
+        Paste any relevant logs.
     validations:
       required: true
   - type: textarea
@@ -69,4 +89,11 @@ body:
       label: >
         Recording:
       description: >
-        Please provide a recording of the bug if appropriate.
+        Attach a recording of the bug if relevant.
+  - type: textarea
+    id: extra
+    attributes:
+      label: >
+        Anything else?:
+      description: >
+        Share any additional information you think might help us resolve this bug.
