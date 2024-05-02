@@ -398,8 +398,8 @@ function DirectoryViewer({
           </div>
         ) : null}
 
-        <div className="w-64">
-          <TreeView selected={currentFile.file} label="">
+        <div className="w-64 overflow-y-auto mt-1">
+          <TreeView selected={currentFile.file} hideLabel>
             {Object.entries(fileSystem).map(([folder, folderData]) =>
               renderTreeNodes(folder, folderData),
             )}
