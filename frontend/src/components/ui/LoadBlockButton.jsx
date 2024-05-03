@@ -2,11 +2,11 @@ import { getDirectoryPath } from "@/../utils/fileUtils";
 import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
 import { mixpanelAtom } from "@/atoms/mixpanelAtom";
 import { getPipelineFormat, pipelineAtom } from "@/atoms/pipelineAtom";
+import { generateId, replaceIds } from "@/utils/blockUtils";
 import { trpc } from "@/utils/trpc";
 import { HeaderMenuItem } from "@carbon/react";
 import { useAtom } from "jotai";
 import { useImmerAtom } from 'jotai-immer';
-import { customAlphabet } from "nanoid";
 import { useRef } from "react";
 
 export default function LoadBlockButton() {
@@ -24,10 +24,8 @@ export default function LoadBlockButton() {
   const saveBlockMutation = trpc.saveBlock.useMutation();
 
   const addBlockToPipeline = async (block, path) => {
-    const nanoid = customAlphabet('1234567890abcedfghijklmnopqrstuvwxyz', 12)
-    const newNanoid = nanoid()
-    const id = `${block.information.id}-${newNanoid}`
-
+    const id = generateId(block);
+    block = replaceIds(block, id)
     block = centerBlockPosition(block)
     const newPipeline = getPipelineFormat(pipeline)
     let newPipelineData = JSON.parse(JSON.stringify(pipeline.data))
