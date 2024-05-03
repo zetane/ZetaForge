@@ -33,7 +33,7 @@ export function generateId(block) {
 
 export function replaceIds(block, id){
   if (block.action?.container) {
-    block.action.container.image = id;
+    block.action.container.version = id;
   }
   return block;
 }
