@@ -25,14 +25,15 @@ export const genJSON = (block, id) => {
 }
 
 export function generateId(block) {
-  const nanoid = customAlphabet('1234567890abcedfghijklmnopqrstuvwxyz', 12)
-  const newNanoid = nanoid()
+  const nanoid = customAlphabet('1234567890abcedfghijklmnopqrstuvwxyz', 12);
+  const newNanoid = nanoid();
   const id = `${block.information.id}-${newNanoid}`
+  return id;
 }
 
 export function replaceIds(block, id){
   if (block.action?.container) {
     block.action.container.image = id;
   }
-  return block
+  return block;
 }
