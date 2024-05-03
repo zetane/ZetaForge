@@ -73,8 +73,9 @@ export default function Editor() {
         console.log(blockPath)
         const relPath = blockPath.replaceAll('\\', '/')
         const blockFolderName = relPath.split("/").pop();
+        const blockName = pipeline.data[blockFolderName].information.name;
         setBlockFolderName(blockFolderName);
-        setBlockName(pipeline[blockFolderName].information.name)
+        setBlockName(blockName);
         setBlockLogs(`${blockPath}/logs.txt`);
         setFileSystem({
           [blockFolderName]: { content: "", type: "folder" },
