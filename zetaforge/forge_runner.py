@@ -9,10 +9,9 @@ from .install_forge_dependencies import *
 from pathlib import Path
 from colorama import init, Fore
 from datetime import datetime
-import socket, errno
+import socket
 import json
 import shutil
-import yaml 
 import threading
 from .mixpanel_client import MixpanelClient
 
@@ -26,9 +25,9 @@ INSTALL_YAML = resource_filename("zetaforge", os.path.join('utils', 'install.yam
 EXECUTABLES_PATH = os.path.join(Path(__file__).parent, 'executables')
 FRONT_END = os.path.join(EXECUTABLES_PATH, "frontend")
 
-def write_json(server_version, client_version, context, registry_port):
+def write_json(server_version, client_version, context):
     _, server_path = get_launch_paths(server_version, client_version)
-    config = create_config_json(os.path.dirname(server_path), context, registry_port)
+    config = create_config_json(os.path.dirname(server_path), context)
     return config
 
 
@@ -68,19 +67,6 @@ def find_available_port(start_port, end_port):
             except OSError:
                 pass
     return None
-
-def update_yaml(port):
-    d = None
-    yaml_doc = None
-    with open(BUILD_YAML) as f:
-        yaml_doc = list(yaml.safe_load_all(f))
-        d = yaml_doc[-1]
-
-    d['spec']['ports'][0]['port'] = port
-    yaml_doc[-1] = d
-
-    with open(BUILD_YAML, "w") as f:
-        yaml.dump_all(yaml_doc, f, default_flow_style=False)
 
 def get_kubectl_contexts():
     # Get the list of kubectl contexts
@@ -137,10 +123,6 @@ def setup(server_version, client_version, build_flag = True, install_flag = True
     context = select_kubectl_context()
 
     kubectl_flag = check_dependencies()        
-
-    registry_port = 5000
-    print(f"Setting registry port: {registry_port}")
-    update_yaml(int(registry_port))
         
     switch_context = None
     if kubectl_flag:
@@ -170,41 +152,10 @@ def setup(server_version, client_version, build_flag = True, install_flag = True
         raise Exception("Error while building")
         
     time.sleep(3)
-    name = "k8s_registry"
-    container_id = check_for_container(name)
-
-    if not container_id:
-        print("Registry is not running, please verify that docker and kubernetes are running and re-run the setup process.")
-        raise Exception("Error detecting container registry")
-        
-    if context == "docker-desktop":
-        ins_cmd = subprocess.run(["docker", "inspect", str(container_id)], capture_output=True, text=True)
-
-        json_data = json.loads(ins_cmd.stdout)[0]
-        volumename = ""
-        for item in json_data.get("Mounts", []):
-            volumetype = item.get("Type", "")
-            if volumetype == 'volume':
-                volumename = item.get("Name", "")
-        print("Volume: ", volumename)
-            
-        print("Binding k8s registry to registry pod")
-        regcmd = subprocess.Popen(["docker", "run", "--rm", "--name", "registry", "-p", f"{registry_port}:5000", "-v", f"{volumename}:/var/lib/registry", "registry:2"],  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-        while True:
-            checkcmd = subprocess.run(["docker", "inspect", "registry"], capture_output=True)  
-            
-            if checkcmd.stdout:
-                break
-            
-            time.sleep(1)
-
-        regcmd.terminate()
-        print("Completed binding pods")
     
     install_frontend_dependencies(client_version=client_version)
 
-    config_path = write_json(server_version, client_version, context, registry_port)
+    config_path = write_json(server_version, client_version, context)
 
     print(f"Setup complete, wrote config to {config_path}.")
         
@@ -219,11 +170,6 @@ def run_forge(server_version=None, client_version=None, server_path=None, client
     #init is called for collarama library, better logging.
     init()   
 
-    reg = check_kube_pod("registry")
-    if not reg:
-        print("Registry container not found, restarting..")
-        setup(server_version, client_version)
-        raise Exception("Container registry is not running, please ensure kubernetes is running or re-run `zetaforge setup`.")
     weed = check_kube_pod("weed")
     if not weed:
         raise Exception("SeaweedFS is not running, please ensure kubernetes is running or re-run `zetaforge setup`.")
@@ -290,7 +236,6 @@ def run_forge(server_version=None, client_version=None, server_path=None, client
 
     finally:
         total_time = (datetime.now() - time_start).total_seconds()
-       
 
         try:
             mixpanel_client.track_event('Full Launch', props={'Duration(seconds)': total_time})
@@ -308,16 +253,8 @@ def purge():
     os.makedirs(EXECUTABLES_PATH)
 
 def teardown():
-    contexts = get_kubectl_contexts()
-    default = None
-    for i, context in enumerate(contexts, start=1):
-        if context.startswith("*"):
-            default = context[1:]
     
     print("Tearing down services..")
-    if default and default == "docker-desktop":
-        stop = subprocess.run(["kubectl", "stop", "registry"], capture_output=True, text=True)
-        print(stop.stdout)
 
     install = subprocess.run(["kubectl", "delete", "-f", INSTALL_YAML], capture_output=True, text=True)
     print ("Removing install: ", {install.stdout})
@@ -325,30 +262,7 @@ def teardown():
     print("Removing build: ", {build.stdout})
     print("Completed teardown!")
 
-def check_expected_services(config):
-    is_local = config["IsLocal"]
-    print(config)
-    if is_local:
-        local = config["Local"]
-        ports = [local["RegistryPort"]]
-    
-        for port in ports:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(1)  # Set a timeout of 1 second
-            
-            try:
-                sock.bind(('localhost', int(port)))
-
-                raise Exception(f"Was able to bind to {port}, which means kube services are nto running correctly. Please re-run `zetaforge setup`.")
-            except socket.error as e:
-                if e.errno == errno.EADDRINUSE:
-                    print(f"Service running at port {port}")
-            finally:
-                sock.close()
-    
-    return True 
-
-def create_config_json(s2_path, context, registry_port=5000):
+def create_config_json(s2_path, context):
     config = {
         "IsLocal":True,
         "ServerPort":"8080",
@@ -362,8 +276,7 @@ def create_config_json(s2_path, context, registry_port=5000):
         "Database":"./zetaforge.db",
         "KubeContext": context,
         "Local": {
-            "BucketPort":"8333",
-            "RegistryPort": str(registry_port)
+            "BucketPort":"8333"
         }
     } 
 

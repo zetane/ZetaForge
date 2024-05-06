@@ -122,38 +122,7 @@ func blockTemplate(block *zjson.Block, blockKey string, organization string, cfg
 
 func kanikoTemplate(block *zjson.Block, organization string, cfg Config) *wfv1.Template {
 	if cfg.IsLocal {
-		name := block.Action.Container.Image + "-" + block.Action.Container.Version
-		cmd := []string{
-			"/kaniko/executor",
-			"--context",
-			"tar:///workspace/context.tar.gz",
-			"--destination",
-			"registry:" + cfg.Local.RegistryPort + "/" + block.Action.Container.Image + ":" + block.Action.Container.Version,
-			"--insecure",
-			"--compressed-caching=false",
-			"--snapshotMode=redo",
-			"--use-new-run",
-		}
-		artifact := wfv1.Artifact{
-			Name: "context",
-			Path: "/workspace/context.tar.gz",
-			ArtifactLocation: wfv1.ArtifactLocation{
-				S3: &wfv1.S3Artifact{
-					Key: name + "-build.tar.gz",
-				},
-			},
-			Archive: &wfv1.ArchiveStrategy{
-				None: &wfv1.NoneStrategy{},
-			},
-		}
-		return &wfv1.Template{
-			Name: name + "-build",
-			Container: &corev1.Container{
-				Image:   cfg.KanikoImage,
-				Command: cmd,
-			},
-			Inputs: wfv1.Inputs{Artifacts: []wfv1.Artifact{artifact}},
-		}
+		return nil
 	} else {
 		name := organization + "-" + block.Action.Container.Image + "-" + block.Action.Container.Version
 		cmd := []string{

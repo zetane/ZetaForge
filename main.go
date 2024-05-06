@@ -54,8 +54,7 @@ type Config struct {
 }
 
 type Local struct {
-	BucketPort   string
-	RegistryPort string
+	BucketPort string
 }
 
 type Cloud struct {
@@ -300,7 +299,7 @@ func main() {
 			CheckOrigin: func(r *http.Request) bool {
 				// Allow specific origin
 				origin := r.Header.Get("Origin")
-				return strings.HasPrefix(origin, "http://localhost") || strings.HasPrefix(origin, "http://127.0.0.1") || strings.HasPrefix(origin, "file://") 
+				return strings.HasPrefix(origin, "http://localhost") || strings.HasPrefix(origin, "http://127.0.0.1") || strings.HasPrefix(origin, "file://")
 			},
 
 			ReadBufferSize:  1024,
