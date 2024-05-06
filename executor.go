@@ -2,6 +2,7 @@ package main
 
 import (
 	"archive/tar"
+	"bytes"
 	"compress/gzip"
 	"database/sql"
 	"encoding/json"
@@ -13,6 +14,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -25,9 +27,12 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	endpoints "github.com/aws/smithy-go/endpoints"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
 	"golang.org/x/net/context"
+	"golang.org/x/sync/errgroup"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -225,8 +230,8 @@ func deleteFiles(ctx context.Context, prefix string, extraFiles []string, cfg Co
 
 	params := &s3.DeleteObjectsInput{
 		Bucket: aws.String(BUCKET),
-		Delete: &types.Delete{
-			Objects: []types.ObjectIdentifier{},
+		Delete: &s3types.Delete{
+			Objects: []s3types.ObjectIdentifier{},
 		},
 	}
 
@@ -236,13 +241,13 @@ func deleteFiles(ctx context.Context, prefix string, extraFiles []string, cfg Co
 	})
 
 	for _, content := range res.Contents {
-		params.Delete.Objects = append(params.Delete.Objects, types.ObjectIdentifier{
+		params.Delete.Objects = append(params.Delete.Objects, s3types.ObjectIdentifier{
 			Key: content.Key,
 		})
 	}
 
 	for _, file := range extraFiles {
-		params.Delete.Objects = append(params.Delete.Objects, types.ObjectIdentifier{
+		params.Delete.Objects = append(params.Delete.Objects, s3types.ObjectIdentifier{
 			Key: aws.String(file),
 		})
 	}
@@ -496,6 +501,80 @@ func deleteArgo(ctx context.Context, name string, client clientcmd.ClientConfig)
 	}
 }
 
+func buildImage(ctx context.Context, source string, tag string) error {
+
+	dockerClient, err := client.NewClientWithOpts(
+		client.WithAPIVersionNegotiation(),
+	)
+	if err != nil {
+		return err
+	}
+	defer dockerClient.Close()
+
+	buff := bytes.NewBuffer(nil)
+	tw := tar.NewWriter(buff)
+	err = filepath.Walk(source, func(path string, info fs.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if !info.Mode().IsRegular() {
+			return nil
+		}
+
+		header, err := tar.FileInfoHeader(info, info.Name())
+
+		if err != nil {
+			return err
+		}
+
+		header.Name = filepath.ToSlash(strings.TrimPrefix(strings.Replace(path, source, "", -1), string(filepath.Separator)))
+
+		if err := tw.WriteHeader(header); err != nil {
+			return err
+		}
+
+		file, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+
+		if _, err := io.Copy(tw, file); err != nil {
+			return err
+		}
+
+		return file.Close()
+	})
+	if err != nil {
+		return err
+	}
+	if err := tw.Close(); err != nil {
+		return err
+	}
+
+	resp, err := dockerClient.ImageBuild(ctx, buff, types.ImageBuildOptions{
+		Tags:        []string{tag},
+		Remove:      true,
+		ForceRemove: true,
+	})
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	stream := make([]byte, 100)
+
+	for {
+		n, err := resp.Body.Read(stream)
+		if err == io.EOF {
+			return nil
+		} else if err != nil {
+			return err
+		}
+		log.Println(string(stream[:n]))
+	}
+}
+
 func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Config, client clientcmd.ClientConfig, db *sql.DB, hub *Hub) {
 	ctx := context.Background()
 	defer log.Printf("Completed")
@@ -580,6 +659,9 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 
 	executionFiles := s3key
 
+	eg, egCtx := errgroup.WithContext(ctx)
+	eg.SetLimit(runtime.NumCPU())
+
 	uploadedFiles := []string{}
 	for path, image := range blocks {
 		log.Printf("Path: %s", path)
@@ -591,13 +673,9 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 		}
 
 		if len(image) > 0 {
-			buildFile := image + "-build.tar.gz"
-			if err := uploadTar(ctx, path, buildFile, buildFile, cfg); err != nil {
-				deleteFiles(ctx, executionFiles, uploadedFiles, cfg)
-				log.Printf("Failed to upload build context; err=%v", err)
-				return
-			}
-			uploadedFiles = append(uploadedFiles, buildFile)
+			eg.Go(func() error {
+				return buildImage(egCtx, path, image)
+			})
 		}
 
 		name := s3key + "/" + filepath.Base(path) + ".py"
@@ -607,6 +685,11 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 			return
 		}
 		uploadedFiles = append(uploadedFiles, name)
+	}
+
+	if err := eg.Wait(); err != nil {
+		log.Printf("Error during pipeline execution; err=%v", err)
+		return
 	}
 
 	workflow, err = runArgo(ctx, workflow, pipeline.Sink, pipeline.Id, execution.ID, client, db, hub)

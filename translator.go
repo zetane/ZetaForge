@@ -22,10 +22,10 @@ func checkImage(ctx context.Context, tagName string, cfg Config) (bool, error) {
 		apiClient, err := client.NewClientWithOpts(
 			client.WithAPIVersionNegotiation(),
 		)
-		defer apiClient.Close()
 		if err != nil {
 			return true, err
 		}
+		defer apiClient.Close()
 
 		imageList, err := apiClient.ImageList(ctx, types.ImageListOptions{})
 		if err != nil {
@@ -76,9 +76,8 @@ func blockTemplate(block *zjson.Block, blockKey string, organization string, cfg
 	var image string
 	var computationName string
 	if cfg.IsLocal {
-		image = "localhost:" + cfg.Local.RegistryPort + "/" + block.Action.Container.Image + ":" + block.Action.Container.Version
+		image = "zetaforge/" + block.Action.Container.Image + ":" + block.Action.Container.Version
 		computationName = blockKey + ".py"
-
 	} else {
 		image = cfg.Cloud.RegistryAddr + ":" + organization + "-" + block.Action.Container.Image + "-" + block.Action.Container.Version
 		computationName = organization + "-" + blockKey + ".py"
@@ -252,10 +251,14 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 			blockPath := filepath.Join(pipeline.Build, blockKey)
 			blocks[blockPath] = ""
 			if toBuild {
-				blocks[blockPath] = block.Action.Container.Image + "-" + block.Action.Container.Version
-				templates[kaniko.Name] = kaniko
-				tasks[kaniko.Name] = &wfv1.DAGTask{Name: kaniko.Name, Template: kaniko.Name}
-				task.Dependencies = append(task.Dependencies, kaniko.Name)
+				if cfg.IsLocal {
+					blocks[blockPath] = "zetaforge/" + block.Action.Container.Image + ":" + block.Action.Container.Version
+				} else {
+					blocks[blockPath] = block.Action.Container.Image + "-" + block.Action.Container.Version
+					templates[kaniko.Name] = kaniko
+					tasks[kaniko.Name] = &wfv1.DAGTask{Name: kaniko.Name, Template: kaniko.Name}
+					task.Dependencies = append(task.Dependencies, kaniko.Name)
+				}
 			}
 		}
 

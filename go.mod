@@ -12,6 +12,7 @@ require (
 	github.com/docker/docker v25.0.2+incompatible
 	github.com/gin-gonic/gin v1.9.1
 	github.com/google/go-containerregistry v0.19.0
+	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.1
 	github.com/invopop/jsonschema v0.12.0
 	github.com/mattn/go-sqlite3 v1.14.22
@@ -19,6 +20,7 @@ require (
 	github.com/pressly/goose/v3 v3.18.0
 	github.com/xeipuuv/gojsonschema v1.2.0
 	golang.org/x/net v0.19.0
+	golang.org/x/sync v0.7.0
 	k8s.io/api v0.24.3
 	k8s.io/apimachinery v0.24.3
 	k8s.io/client-go v0.24.3
@@ -84,7 +86,6 @@ require (
 	github.com/google/gnostic v0.6.9 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
 	github.com/huandu/xstrings v1.3.3 // indirect
@@ -160,7 +161,6 @@ require (
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
 	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/oauth2 v0.13.0 // indirect
-	golang.org/x/sync v0.6.0 // indirect
 	golang.org/x/sys v0.16.0 // indirect
 	golang.org/x/term v0.15.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
