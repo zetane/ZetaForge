@@ -93,3 +93,8 @@ type Pipeline struct {
 	Sink     string           `json:"sink"`
 	Build    string           `json:"build"`
 }
+
+type Execution struct {
+	Id       string   `json:"id"`
+	Pipeline Pipeline `json:"pipeline"`
+}

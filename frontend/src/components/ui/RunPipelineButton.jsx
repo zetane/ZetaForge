@@ -1,15 +1,16 @@
 import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
-import { Button, HeaderGlobalAction } from "@carbon/react";
-import { useAtom } from "jotai";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { pipelineSchemaAtom } from "@/atoms/pipelineSchemaAtom";
+import { trpc } from "@/utils/trpc";
+import { HeadObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { Button } from "@carbon/react";
 import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
+import { useAtom } from "jotai";
 import { useImmerAtom } from "jotai-immer";
-import { useState, useEffect, useRef } from "react";
+import { useRef, useState } from "react";
+import { uuidv7 } from "uuidv7";
 import ClosableModal from "./modal/ClosableModal";
-import { S3Client, HeadObjectCommand } from '@aws-sdk/client-s3'
-import { trpc } from "@/utils/trpc";
 import { mixpanelAtom } from "@/atoms/mixpanelAtom";
 
 const BUCKET = import.meta.env.VITE_BUCKET
@@ -102,8 +103,8 @@ export default function RunPipelineButton({modalPopper, children, action}) {
   }
 
   const mutation = useMutation({
-    mutationFn: async (pipeline) => {
-      return axios.post(`${import.meta.env.VITE_EXECUTOR}/execute`, pipeline)
+    mutationFn: async (execution) => {
+      return axios.post(`${import.meta.env.VITE_EXECUTOR}/execute`, execution)
     },
   })
 
@@ -137,7 +138,11 @@ export default function RunPipelineButton({modalPopper, children, action}) {
       pipelineSpecs['build'] = pipeline.buffer
       pipelineSpecs['name'] = pipeline.name
       pipelineSpecs['id'] = pipeline.id
-      const res = await mutation.mutateAsync(pipelineSpecs)
+      const execution = {
+        id: uuidv7(),
+        pipeline: pipelineSpecs,
+      }
+      const res = await mutation.mutateAsync(execution)
       if (res.status == 201) {
         setPipeline((draft) => {
           draft.socketUrl = `ws://localhost:8080/ws/${pipelineSpecs.id}`;
