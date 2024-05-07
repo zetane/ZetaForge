@@ -13,6 +13,7 @@ import { genJSON } from '@/utils/blockUtils';
 import { customAlphabet } from 'nanoid';
 import { useLoadPipeline } from "./useLoadPipeline";
 import generateSchema from '@/utils/schemaValidation';
+import { drawConnection, updateConnection, addConnection } from '@/utils/drawflowUtils';
 
 const launchDrawflow = (parentDomRef, canvasDomRef, pipeline, setPipeline) => {
   if (parentDomRef.className != "parent-drawflow") {
@@ -98,6 +99,14 @@ export default function DrawflowWrapper() {
             })
           })
         }
+
+        // if (!inputHasOutput && !outputHasInput) {
+        //   try {
+        //     addConnection(output_id, input_id, output_class, input_class, pipeline.data, drawflowCanvas.current, editor);
+        //   } catch (e) {
+        //     console.log(e)
+        //   }
+        // }
       }
     }
   }
@@ -144,6 +153,8 @@ export default function DrawflowWrapper() {
       constructedEditor.on('nodeRemoved', (id) => removeNodeToDrawflow(id, pipelineRef.current));
       constructedEditor.on('connectionCreated', (connection) => createConnection(connection, pipelineRef.current));
       constructedEditor.on('connectionRemoved', (connection) => removeConnection(connection, pipelineRef.current));
+      constructedEditor.on('drawingConnection', (node) => drawConnection(node, constructedEditor, drawflowCanvas.current));
+      constructedEditor.on('updateConnection', ({eX, eY}) => updateConnection(eX, eY, constructedEditor, drawflowCanvas.current));
       setEditor(constructedEditor);
     }
   }, []);
@@ -189,7 +200,8 @@ export default function DrawflowWrapper() {
           let inputConnections = output.connections;
           for (const input of inputConnections) {
             try {
-              editor.addConnection(id, input.block, outputKey, input.variable);
+              // editor.addConnection(id, input.block, outputKey, input.variable);
+              addConnection(id, input.block, outputKey, input.variable, pipeline.data, drawflowCanvas.current, editor);
             } catch (e) {
               console.log(e)
             }
