@@ -155,6 +155,9 @@ func deleteFiles(ctx context.Context, prefix string, extraFiles []string, cfg Co
 		Bucket: aws.String(BUCKET),
 		Prefix: aws.String(prefix),
 	})
+	if err != nil {
+		log.Printf("Failed to delete files; err=%v", err)
+	}
 
 	for _, content := range res.Contents {
 		params.Delete.Objects = append(params.Delete.Objects, s3types.ObjectIdentifier{

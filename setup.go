@@ -269,10 +269,10 @@ func setup(config Config, client clientcmd.ClientConfig) {
 			<-signals
 			log.Println("Starting Shutdown...")
 			if err := kubectlDelete("setup/install.yaml", resources, clientConfig); err != nil {
-				log.Fatalf("Failed to delete argo; err=%v", err)
+				log.Printf("Failed to delete argo; err=%v", err)
 			}
 			if err := kubectlDelete("setup/build.yaml", resources, clientConfig); err != nil {
-				log.Fatalf("Failed to delete bucket; err=%v", err)
+				log.Printf("Failed to delete bucket; err=%v", err)
 			}
 			log.Println("Shutdown Successful")
 			signal.Stop(signals)
