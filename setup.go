@@ -149,6 +149,48 @@ func kubectlApply(filePath string, resources map[string]string, clientConfig *re
 	}
 }
 
+func kubectlDelete(filePath string, resources map[string]string, clientConfig *rest.Config) error {
+	file, err := kubectlFiles.ReadFile(filePath)
+	if err != nil {
+		return err
+	}
+	reader := io.NopCloser(bytes.NewReader(file))
+
+	dynamicClient, err := dynamic.NewForConfig(clientConfig)
+	if err != nil {
+		return err
+	}
+
+	item := yaml.NewDocumentDecoder(reader)
+
+	var obj unstructured.Unstructured
+	decoder := scheme.Codecs.UniversalDeserializer()
+	buffer := make([]byte, 1024*1024*5)
+	for {
+		n, err := item.Read(buffer)
+		if err != nil {
+			if err == io.EOF {
+				return nil
+			}
+			return err
+		}
+
+		_, gvk, err := decoder.Decode(buffer[:n], nil, &obj)
+		if err != nil {
+			return err
+		}
+
+		gvr := schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: resources[gvk.Kind]}
+		namespace := obj.GetNamespace()
+		name := obj.GetName()
+		err = dynamicClient.Resource(gvr).Namespace(namespace).Delete(context.Background(), name, metav1.DeleteOptions{})
+		if err != nil {
+			return err
+		}
+		log.Printf("Resource %s %s deleted", gvk.Kind, name)
+	}
+}
+
 func kubectlCheckPods(ctx context.Context, clientConfig *rest.Config) error {
 	clientset, err := kubernetes.NewForConfig(clientConfig)
 	if err != nil {
@@ -226,6 +268,12 @@ func setup(config Config, client clientcmd.ClientConfig) {
 		go func() {
 			<-signals
 			log.Println("Starting Shutdown...")
+			if err := kubectlDelete("setup/install.yaml", resources, clientConfig); err != nil {
+				log.Fatalf("Failed to delete argo; err=%v", err)
+			}
+			if err := kubectlDelete("setup/build.yaml", resources, clientConfig); err != nil {
+				log.Fatalf("Failed to delete bucket; err=%v", err)
+			}
 			log.Println("Shutdown Successful")
 			signal.Stop(signals)
 			os.Exit(1)
