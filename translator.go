@@ -22,10 +22,10 @@ func checkImage(ctx context.Context, tagName string, cfg Config) (bool, error) {
 		apiClient, err := client.NewClientWithOpts(
 			client.WithAPIVersionNegotiation(),
 		)
-		defer apiClient.Close()
 		if err != nil {
 			return true, err
 		}
+		defer apiClient.Close()
 
 		imageList, err := apiClient.ImageList(ctx, types.ImageListOptions{})
 		if err != nil {
@@ -76,9 +76,8 @@ func blockTemplate(block *zjson.Block, blockKey string, organization string, cfg
 	var image string
 	var computationName string
 	if cfg.IsLocal {
-		image = "localhost:" + cfg.Local.RegistryPort + "/" + block.Action.Container.Image + ":" + block.Action.Container.Version
+		image = "zetaforge/" + block.Action.Container.Image + ":" + block.Action.Container.Version
 		computationName = blockKey + ".py"
-
 	} else {
 		image = cfg.Cloud.RegistryAddr + ":" + organization + "-" + block.Action.Container.Image + "-" + block.Action.Container.Version
 		computationName = organization + "-" + blockKey + ".py"
@@ -123,38 +122,7 @@ func blockTemplate(block *zjson.Block, blockKey string, organization string, cfg
 
 func kanikoTemplate(block *zjson.Block, organization string, cfg Config) *wfv1.Template {
 	if cfg.IsLocal {
-		name := block.Action.Container.Image + "-" + block.Action.Container.Version
-		cmd := []string{
-			"/kaniko/executor",
-			"--context",
-			"tar:///workspace/context.tar.gz",
-			"--destination",
-			"registry:" + cfg.Local.RegistryPort + "/" + block.Action.Container.Image + ":" + block.Action.Container.Version,
-			"--insecure",
-			"--compressed-caching=false",
-			"--snapshotMode=redo",
-			"--use-new-run",
-		}
-		artifact := wfv1.Artifact{
-			Name: "context",
-			Path: "/workspace/context.tar.gz",
-			ArtifactLocation: wfv1.ArtifactLocation{
-				S3: &wfv1.S3Artifact{
-					Key: name + "-build.tar.gz",
-				},
-			},
-			Archive: &wfv1.ArchiveStrategy{
-				None: &wfv1.NoneStrategy{},
-			},
-		}
-		return &wfv1.Template{
-			Name: name + "-build",
-			Container: &corev1.Container{
-				Image:   cfg.KanikoImage,
-				Command: cmd,
-			},
-			Inputs: wfv1.Inputs{Artifacts: []wfv1.Artifact{artifact}},
-		}
+		return nil
 	} else {
 		name := organization + "-" + block.Action.Container.Image + "-" + block.Action.Container.Version
 		cmd := []string{
@@ -252,10 +220,14 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 			blockPath := filepath.Join(pipeline.Build, blockKey)
 			blocks[blockPath] = ""
 			if toBuild {
-				blocks[blockPath] = block.Action.Container.Image + "-" + block.Action.Container.Version
-				templates[kaniko.Name] = kaniko
-				tasks[kaniko.Name] = &wfv1.DAGTask{Name: kaniko.Name, Template: kaniko.Name}
-				task.Dependencies = append(task.Dependencies, kaniko.Name)
+				if cfg.IsLocal {
+					blocks[blockPath] = "zetaforge/" + block.Action.Container.Image + ":" + block.Action.Container.Version
+				} else {
+					blocks[blockPath] = block.Action.Container.Image + "-" + block.Action.Container.Version
+					templates[kaniko.Name] = kaniko
+					tasks[kaniko.Name] = &wfv1.DAGTask{Name: kaniko.Name, Template: kaniko.Name}
+					task.Dependencies = append(task.Dependencies, kaniko.Name)
+				}
 			}
 		}
 

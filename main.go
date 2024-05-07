@@ -57,8 +57,7 @@ type Config struct {
 }
 
 type Local struct {
-	BucketPort   string
-	RegistryPort string
+	BucketPort string
 }
 
 type Cloud struct {
