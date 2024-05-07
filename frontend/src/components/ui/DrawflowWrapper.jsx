@@ -3,16 +3,15 @@ import { blockEditorRootAtom, isBlockEditorOpenAtom } from '@/atoms/editorAtom';
 import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { pipelineSchemaAtom } from "@/atoms/pipelineSchemaAtom";
 import Drawflow from '@/components/ZetaneDrawflowEditor';
+import BlockGenerator from '@/components/ui/blockGenerator/BlockGenerator';
+import { genJSON, generateId, replaceIds } from '@/utils/blockUtils';
+import generateSchema from '@/utils/schemaValidation';
 import { trpc } from "@/utils/trpc";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { useAtom, useSetAtom } from 'jotai';
-import { useEffect, useRef, useState, useCallback } from 'react';
-import BlockGenerator from '@/components/ui/blockGenerator/BlockGenerator';
 import { useImmerAtom } from 'jotai-immer';
-import { genJSON } from '@/utils/blockUtils';
-import { customAlphabet } from 'nanoid';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLoadPipeline } from "./useLoadPipeline";
-import generateSchema from '@/utils/schemaValidation';
 
 const launchDrawflow = (parentDomRef, canvasDomRef, pipeline, setPipeline) => {
   if (parentDomRef.className != "parent-drawflow") {
@@ -230,9 +229,8 @@ export default function DrawflowWrapper() {
   }, [renderNodes])
 
   const addBlockToPipeline = (block) => {
-    const nanoid = customAlphabet('1234567890abcedfghijklmnopqrstuvwxyz', 12)
-    const newNanoid = nanoid()
-    const id = `${block.information.id}-${newNanoid}`
+    const id = generateId(block);
+    block = replaceIds(block, id);
     setPipeline((draft) => {
       draft.data[id] = block;
     })
