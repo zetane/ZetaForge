@@ -38,7 +38,8 @@ export default function Editor() {
   const minizedStyles = "inset-y-16 right-8 w-1/3"
   const maximizedStyles = "inset-y-11 right-0 w-full"
   const [blockPath] = useAtom(blockEditorRootAtom);
-  const [blockFolderName, setBlockFolderName] = useState(null); //TODO check if still needed
+  const [blockFolderName, setBlockFolderName] = useState(null);
+  const [blockName, setBlockName] = useState("");
   const setBlockEditorOpen = useSetAtom(isBlockEditorOpenAtom);
   const [openAIApiKey] = useAtom(openAIApiKeyAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
@@ -72,7 +73,9 @@ export default function Editor() {
         console.log(blockPath)
         const relPath = blockPath.replaceAll('\\', '/')
         const blockFolderName = relPath.split("/").pop();
+        const blockName = pipeline.data[blockFolderName].information.name;
         setBlockFolderName(blockFolderName);
+        setBlockName(blockName);
         setBlockLogs(`${blockPath}/logs.txt`);
         setFileSystem({
           [blockFolderName]: { content: "", type: "folder" },
@@ -308,7 +311,10 @@ export default function Editor() {
   return (
     <div className={"editor-block absolute flex flex-col z-[8000] " + (isMaximized ? maximizedStyles : minizedStyles)}>
       <div className="block-editor-header">
-        <span className="p-4 text-lg italic">{blockFolderName}</span>
+        <div className='p-4'>
+          <p className='text-lg italic'>{blockName}</p>
+          <p className="text-sm">{blockFolderName}</p>
+        </div>
         <div className="flex flex-row items-center justify-end">
           <div className="p-4">
             <Bot size={24} className="mx-2 align-middle" />

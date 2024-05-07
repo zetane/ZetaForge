@@ -206,7 +206,7 @@ const InputField = ({ type, value, name, step, parameterName, onChange }) => {
   const handleChange = (event) => {
     const displayedValue = !isTextBlock ? event.target.value : event.target.value.replace(/['"]/g, '');
     setCurrentValue(displayedValue);
-    const blockValue = !isTextBlock ? event.target.value : `'${event.target.value}'`
+    const blockValue = !isTextBlock ? event.target.value : JSON.stringify(displayedValue);
     onChange(name, blockValue, parameterName);
   };
 

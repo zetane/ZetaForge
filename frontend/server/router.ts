@@ -143,7 +143,7 @@ export const appRouter = router({
       const {pipelineSpec, name, blockSpec, blockId, blockPath, pipelinePath} = input;
       let savePaths;
       if (blockSpec.action?.container) {
-        savePaths = await saveBlock(blockId, blockPath, pipelinePath);
+        savePaths = await saveBlock(blockId, blockSpec, blockPath, pipelinePath);
         await saveSpec(pipelineSpec, pipelinePath, name+".json")
       } else if (blockSpec.action?.parameters) {
         savePaths = await saveSpec(pipelineSpec, pipelinePath, name+".json")
