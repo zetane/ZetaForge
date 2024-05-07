@@ -8,21 +8,21 @@ import {
   DocumentDownload,
   Folder,
   FolderOpen,
-  PlayFilled,
+  // PlayFilled,
   Save,
 } from "@carbon/icons-react";
 import { Button, Modal, TreeNode, TreeView } from "@carbon/react";
 import { useAtom } from 'jotai';
 import { useImmerAtom } from 'jotai-immer';
 import { useCallback, useEffect, useRef, useState } from "react";
-import { EditorCodeMirror } from "./CodeMirrorComponents";
+import { EditorCodeMirror, ViewerCodeMirror } from "./CodeMirrorComponents";
 import Splitter from "./Splitter";
+import ComputationsFileEditor from "./ComputationsFileEditor"
 
 function DirectoryViewer({
   fileSystemProp,
   blockPath,
   lastGeneratedIndex,
-  handleDockerCommands,
   fetchFileSystem,
   blockFolderName,
 }) {
@@ -36,6 +36,7 @@ function DirectoryViewer({
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const [editor] = useAtom(drawflowEditorAtom);
   const [compilationErrorToast, setCompilationErrorToast] = useAtom(compilationErrorToastAtom)
+  const [isComputationsFile, setIsComputationsFile] = useState(false);
 
   const fileInputRef = useRef(null);
   const folderInputRef = useRef(null);
@@ -43,11 +44,9 @@ function DirectoryViewer({
   const compileComputation = trpc.compileComputation.useMutation();
   const saveBlockSpecs = trpc.saveBlockSpecs.useMutation();
 
-  // let generated_from_index = '';
-
   useEffect(() => {
     setFileSystem(fileSystemProp);
-  }, [fileSystemProp]);
+  }, [fileSystemProp], fileSystem);
 
   const handleFileImport = () => {
     fileInputRef.current.click();
@@ -274,11 +273,11 @@ function DirectoryViewer({
     const currentPath = parentPath ? `${parentPath}/${folder}` : folder;
 
     const specialFiles = [
-      "computations.py",
+      "computations.py", "Dockerfile", "requirements.txt"
     ];
 
     const isSpecialFile = specialFiles.includes(folder);
-    const textStyle = isSpecialFile ? { color: "darkorange" } : {};
+    const textStyle = isSpecialFile ? { color: "darkorange", paddingRight: "4px", paddingLeft: "4px" } : {};
 
     const handleFileClick = (filePath) => {
       // Check for unsaved changes as before
@@ -295,6 +294,7 @@ function DirectoryViewer({
         } else {
           // Existing logic for non-HTML files
           setCurrentFile({ path: filePath, content: folderData.content });
+          setIsComputationsFile(filePath.endsWith("computations.py"));
         }
       }
     };
@@ -333,35 +333,22 @@ function DirectoryViewer({
             renderIcon={FolderOpen}
             size="sm"
             iconDescription="Import folder"
-            tooltipPosition="bottom"
-            hasIconOnly
+            tooltipPosition="right"
+            // hasIconOnly
             onClick={handleFolderImport}
             title="Import folder into your block folder"
           >
-            Import Folder
+            Add Folder
           </Button>
           <Button
             renderIcon={DocumentDownload}
             size="sm"
             iconDescription="Import files"
             tooltipPosition="bottom"
-            hasIconOnly
             onClick={handleFileImport}
             title="Import files into your block folder"
           >
-            Import Files
-          </Button>
-
-          <Button
-            renderIcon={PlayFilled}
-            iconDescription="Run test"
-            tooltipPosition="bottom"
-            hasIconOnly
-            size="sm"
-            onClick={handleDockerCommands}
-            title="Run test from this block folder"
-          >
-            Run
+            Add Files
           </Button>
 
           <input
@@ -398,7 +385,7 @@ function DirectoryViewer({
           </div>
         ) : null}
 
-        <div className="w-64">
+        <div className="w-80">
           <TreeView selected={currentFile.file} label="">
             {Object.entries(fileSystem).map(([folder, folderData]) =>
               renderTreeNodes(folder, folderData),
@@ -408,7 +395,7 @@ function DirectoryViewer({
       </div>
       <Splitter onDrag={handleDrag} />
       <div className="w-full min-w-0 flex flex-col">
-        <span className="text-xl text-gray-30">
+        <span className="text-md text-gray-30 mt-2">
           {currentFile.path ? <span>{currentFile.path}</span> : null}
         </span>
         {fileSystem === null ? (
@@ -416,22 +403,35 @@ function DirectoryViewer({
         ) : (
           currentFile &&
           currentFile.path && (
-            <div className="relative overflow-y-auto">
-              <EditorCodeMirror
-                key={currentFile.path}
-                code={currentFile.content || ""}
-                onChange={(newValue) => onChange(newValue)}
-              />
-              <div className="absolute right-0 top-0">
-                <Button
-                  renderIcon={Save}
-                  iconDescription="Save code"
-                  hasIconOnly
-                  size="md"
-                  kind="ghost"
-                  onClick={saveChanges}
+          <div className="relative overflow-y-auto mt-6 px-5">
+              {console.log("Current file path:", currentFile.path)}
+              {currentFile.path.endsWith("computations.py") ? (
+                <ComputationsFileEditor fetchFileSystem={fetchFileSystem} />
+              ) : ["specs_v1.json", "run_test.py"].some(fileName =>
+                currentFile.path.endsWith(fileName)) ? (
+                <ViewerCodeMirror
+                  className="code-block"
+                  code={currentFile.content || ""}
                 />
-              </div>
+              ) : (
+                <>
+                  <EditorCodeMirror
+                    key={currentFile.path}
+                    code={currentFile.content || ""}
+                    onChange={(newValue) => onChange(newValue)}
+                  />
+                  <div className="absolute right-8 top-2">
+                    <Button
+                      renderIcon={Save}
+                      iconDescription="Save code"
+                      tooltipPosition="left"
+                      hasIconOnly
+                      size="md"
+                      onClick={saveChanges}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           )
         )}

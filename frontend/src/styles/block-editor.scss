@@ -3,6 +3,9 @@
   --bePromptInputText: #000000;
   --bePromptBackground: #c6c6c6;
   --bePromptInputBackground: #f9f9f9;
+  --beCodeViewerBackground: #F8F8F8;
+  --beCodeEditorBackground: #ffffff;
+  --bePromptPlaceholderText: #bebebe;
 }
 
 @mixin dark {
@@ -10,12 +13,17 @@
   --bePromptInputText: #ffffff;
   --bePromptBackground: #393939;
   --bePromptInputBackground: #454545;
+  --beCodeViewerBackground: #1e1e1e;
+  --beCodeEditorBackground: #080808;
+  --bePromptPlaceholderText: #989898;
 }
 
 .editor-block {
-	background-color: var(--cds-background) !important;
-	height: 94dvh;
-	border: 1px solid var(--cds-border-subtle)
+  position: relative;
+  background-color: var(--cds-background) !important;
+  height: calc(100vh - 55px);
+  border: 1px solid var(--cds-border-subtle);
+  top: 50px !important;
 }
 
 .block-editor-header {
@@ -24,17 +32,55 @@
 }
 
 .block-editor-prompt {
-  @apply rounded p-2;
+  @apply rounded-lg p-4;
   background-color: var(--bePromptBackground);
 }
 
 .block-editor-prompt-input {
-  @apply min-h-20 w-full rounded-lg border-purple-300 p-2 text-base placeholder-purple-300;
+  @apply min-h-20 w-full rounded-lg border-gray-300 p-2 text-base placeholder-[var(--bePromptPlaceholderText)];
   background-color: var(--bePromptInputBackground);
   color: var(--bePromptInputText)
 }
 
-.block-editor-code-header{
-  @apply p-2;
-  background-color: var(--bePromptBackground);
+.cm-theme .cm-content {
+	font-size: 16px;
+	font-family: 'Menlo', 'Consolas', 'Courier New', monospace;
+}
+
+.prompt-spinner {
+  position: relative;
+  bottom: -22px; 
+  right: -22px;
+  transform: scale(0.35);
+  transform-origin: center;
+  color: rgba(105, 23, 176, 1);
+}
+
+.icon-button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-button:hover,
+.icon-button:focus {
+  outline: none;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.prompt-spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+// Large screens
+@media (min-width: 1600px) {
+    .cm-theme .cm-content {
+        font-size: 18px;
+    }
 }
