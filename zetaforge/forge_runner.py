@@ -25,12 +25,12 @@ INSTALL_YAML = resource_filename("zetaforge", os.path.join('utils', 'install.yam
 EXECUTABLES_PATH = os.path.join(Path(__file__).parent, 'executables')
 FRONT_END = os.path.join(EXECUTABLES_PATH, "frontend")
 
-def write_json(server_version, client_version, context, registry_port, driver, s2_path=None):
+def write_json(server_version, client_version, context, driver, s2_path=None):
     if s2_path:
         server_path = s2_path
     else:
         _, server_path = get_launch_paths(server_version, client_version)
-    config = create_config_json(os.path.dirname(server_path), context, registry_port, driver)
+    config = create_config_json(os.path.dirname(server_path), context, driver)
     return config
 
 
@@ -120,18 +120,24 @@ def select_kubectl_context():
 
     return selected_context
 
-def setup(server_version, client_version, build_flag = True, install_flag = True, server_path = None, mount = None):
+def setup(server_version, client_version, build_flag = True, install_flag = True, server_path = None, minikube = False):
     print("Platform: ", platform.machine())
     print("CWD: ", os.path.abspath(os.getcwd()))
 
-    registry_port = find_available_port(32000, 64000)
-    print(f"Setting registry port: {registry_port}")
-    update_yaml(int(registry_port))
-
-    if mount is None:
-        driver = "orbstack"
+    if minikube:
+        context = "zetaforge"
+        driver = "minikube"
+        if not check_minikube():
+            print("Minikube not found. Please install minikube.")
+            raise Exception("Minikube not found!")
+        minikube = subprocess.run(["minikube", "-p", "zetaforge", "start"], capture_output=True, text=True)
+        if minikube.returncode != 0:
+            print(minikube.stderr)
+            raise Exception("Error while starting minikube")
+    else:
+        driver = "docker-desktop"
         context = select_kubectl_context()
-        kubectl_flag = check_kubectl()        
+        kubectl_flag = check_kubectl()
 
         switch_context = None
         if kubectl_flag:
@@ -153,33 +159,9 @@ def setup(server_version, client_version, build_flag = True, install_flag = True
         if not running_kube:
             raise Exception("Kubernetes is not running, please start kubernetes and ensure that you are able to connect to the kube context.")
 
-        build = subprocess.run(["kubectl", "apply", "-f", f"{BUILD_YAML}"], capture_output=True, text=True)
-        install = subprocess.run(["kubectl", "apply", "-f", f"{INSTALL_YAML}"], capture_output=True, text=True)
-
-        if build.returncode != 0 or install.returncode != 0:
-            raise Exception("Error while building")
-
-        time.sleep(3)
-        name = "k8s_registry"
-        container_id = check_for_container(name)
-
-        if not container_id:
-            print("Registry is not running, please verify that docker and kubernetes are running and re-run the setup process.")
-            raise Exception("Error detecting container registry")
-    else:
-        context = "zetaforge"
-        driver = "minikube"
-        if not check_minikube():
-            print("Minikube not found. Please install minikube.")
-            raise Exception("Minikube not found!")
-        minikube = subprocess.run(["minikube", "start", "--mount-string=" + mount + ":/host", "--mount", "-p", "zetaforge"], capture_output=True, text=True)
-        if minikube.returncode != 0:
-            print(minikube.stderr)
-            raise Exception("Error while starting minikube")
-
     install_frontend_dependencies(client_version=client_version)
 
-    config_path = write_json(server_version, client_version, context, registry_port, server_path, driver)
+    config_path = write_json(server_version, client_version, context, server_path, driver)
 
     print(f"Setup complete, wrote config to {config_path}.")
         
@@ -187,22 +169,12 @@ def setup(server_version, client_version, build_flag = True, install_flag = True
 
 
 #dev version is only passed, when a developer wants to pass a local version(for e.g. dev_path=./s2-v2.3.5-amd64)
-def run_forge(server_version=None, client_version=None, server_path=None, client_path=None, mount = None):
+def run_forge(server_version=None, client_version=None, server_path=None, client_path=None):
     global time_start
     time_start = datetime.now()
 
     #init is called for collarama library, better logging.
-    init()   
-
-    if mount is None:
-        reg = check_kube_pod("registry")
-        if not reg:
-            print("Registry container not found, restarting..")
-            setup(server_version, client_version)
-            raise Exception("Container registry is not running, please ensure kubernetes is running or re-run `zetaforge setup`.")
-        weed = check_kube_pod("weed")
-        if not weed:
-            raise Exception("SeaweedFS is not running, please ensure kubernetes is running or re-run `zetaforge setup`.")
+    init()
 
     mixpanel_client.track_event('Initial Launch')
 
@@ -282,28 +254,13 @@ def purge():
     shutil.rmtree(EXECUTABLES_PATH)
     os.makedirs(EXECUTABLES_PATH)
 
-def teardown(mount = None):
-    if mount is None:
-        contexts = get_kubectl_contexts()
-        default = None
-        for i, context in enumerate(contexts, start=1):
-            if context.startswith("*"):
-                default = context[1:]
-    
-        print("Tearing down services..")
-        if default and default == "docker-desktop":
-            stop = subprocess.run(["kubectl", "stop", "registry"], capture_output=True, text=True)
-            print(stop.stdout)
-
-        install = subprocess.run(["kubectl", "delete", "-f", INSTALL_YAML], capture_output=True, text=True)
-        print ("Removing install: ", {install.stdout})
-        build = subprocess.run(["kubectl", "delete", "-f", BUILD_YAML], capture_output=True, text=True)
-        print("Removing build: ", {build.stdout})
-    else:
-        minikube = subprocess.run(["minikube", "stop", "-p", "zetaforge"], capture_output=True, text=True)
+def teardown(minikube = False):
+    if minikube:
+        minikube = subprocess.run(["minikube", "-p", "zetaforge", "stop"], capture_output=True, text=True)
         if minikube.returncode != 0:
             print(minikube.stderr)
             raise Exception("Error while starting minikube")
+
     print("Completed teardown!")
 
 
@@ -330,7 +287,7 @@ def check_expected_services(config):
     
     return True 
 
-def create_config_json(s2_path, context, registry_port=5000, driver="orbstack"):
+def create_config_json(s2_path, context, driver="orbstack"):
     config = {
         "IsLocal":True,
         "ServerPort": 8080,
@@ -345,8 +302,6 @@ def create_config_json(s2_path, context, registry_port=5000, driver="orbstack"):
         "KubeContext": context,
         "Local": {
             "BucketPort": 8333,
-            "RegistryPort": registry_port,
-            "RegistryDomain":"example.org",
             "Driver": driver
         }
     } 
