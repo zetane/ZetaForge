@@ -170,45 +170,7 @@ func kubectlCheckPods(ctx context.Context, clientConfig *rest.Config) error {
 			}
 		}
 
-		log.Println("Waiting on bucket")
-		time.Sleep(WAIT_TIME)
-	}
-
-	for {
-		pods, err := clientset.CoreV1().Pods("kube-system").List(ctx, metav1.ListOptions{LabelSelector: "app.kubernetes.io/name=registry"})
-		if err != nil {
-			return err
-		}
-
-		if len(pods.Items) > 0 {
-			phase := pods.Items[0].Status.Phase
-			if phase == v1.PodRunning {
-				break
-			} else if phase == v1.PodFailed || phase == v1.PodSucceeded {
-				return errors.New("registry has stopped working")
-			}
-		}
-
-		log.Println("Waiting on registry")
-		time.Sleep(WAIT_TIME)
-	}
-
-	for {
-		pods, err := clientset.CoreV1().Pods("kube-system").List(ctx, metav1.ListOptions{LabelSelector: "app.kubernetes.io/name=registry-aliases-patch-core-dns"})
-		if err != nil {
-			return err
-		}
-
-		if len(pods.Items) > 0 {
-			phase := pods.Items[0].Status.Phase
-			if phase == v1.PodSucceeded {
-				break
-			} else if phase == v1.PodFailed {
-				return errors.New("core dns patch failed")
-			}
-		}
-
-		log.Println("Waiting on core dns patch")
+		log.Println("Waiting on bucket...")
 		time.Sleep(WAIT_TIME)
 	}
 
@@ -221,6 +183,7 @@ func setup(config Config, client clientcmd.ClientConfig) {
 		log.Fatalf("Failed to get client config; err=%v", err)
 	}
 
+	log.Println("Starting Setup...")
 	resources, err := kubectlResources(clientConfig)
 	if err != nil {
 		log.Fatalf("Failed to fetch kubernetes resources; err=%v", err)
@@ -229,50 +192,43 @@ func setup(config Config, client clientcmd.ClientConfig) {
 		log.Fatalf("Failed to install argo; err=%v", err)
 	}
 	if err := kubectlApply("setup/build.yaml", resources, clientConfig); err != nil {
-		log.Fatalf("Failed to install bucket/registry; err=%v", err)
+		log.Fatalf("Failed to install bucket; err=%v", err)
 	}
 
-	if config.Local.Driver != "minikube" {
-		return
-	}
-
-	if err := kubectlApply("setup/patch.yaml", resources, clientConfig); err != nil {
-		log.Fatalf("Failed to patch core dns; err=%v", err)
-	}
 	if err := kubectlCheckPods(context.Background(), clientConfig); err != nil {
 		log.Fatalf("Setup execution failed; err=%v", err)
 	}
+	log.Println("Setup Successful")
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt)
-	defer signal.Stop(signals)
 
-	stopRegistryCh := make(chan struct{}, 1)
-	readyRegistryCh := make(chan struct{})
-	go func() {
-		if err := portForward(context.Background(), "registry", "kube-system", config.Local.RegistryPort, 80, stopRegistryCh, readyRegistryCh, clientConfig); err != nil {
-			log.Fatalf("Port-Forwarding error; err=%v", err)
-		}
-	}()
-
-	stopBucketCh := make(chan struct{}, 1)
-	readyBucketCh := make(chan struct{})
-	go func() {
-		if err := portForward(context.Background(), "weed", "default", config.Local.BucketPort, 8333, stopBucketCh, readyBucketCh, clientConfig); err != nil {
-			log.Fatalf("Port-Forwarding error; err=%v", err)
-		}
-	}()
-
-	go func() {
-		<-signals
-		if stopRegistryCh != nil {
-			close(stopRegistryCh)
-		}
-		if stopBucketCh != nil {
-			close(stopBucketCh)
-		}
-		os.Exit(1)
-	}()
-	<-readyRegistryCh
-	<-readyBucketCh
+	if config.Local.Driver == "minikube" {
+		stopBucketCh := make(chan struct{}, 1)
+		readyBucketCh := make(chan struct{})
+		go func() {
+			if err := portForward(context.Background(), "weed", "default", config.Local.BucketPort, 8333, stopBucketCh, readyBucketCh, clientConfig); err != nil {
+				log.Fatalf("Port-Forwarding error; err=%v", err)
+			}
+		}()
+		go func() {
+			<-signals
+			log.Println("Starting Shutdown...")
+			if stopBucketCh != nil {
+				close(stopBucketCh)
+			}
+			log.Println("Shutdown Successful")
+			signal.Stop(signals)
+			os.Exit(1)
+		}()
+		<-readyBucketCh
+	} else {
+		go func() {
+			<-signals
+			log.Println("Starting Shutdown...")
+			log.Println("Shutdown Successful")
+			signal.Stop(signals)
+			os.Exit(1)
+		}()
+	}
 }

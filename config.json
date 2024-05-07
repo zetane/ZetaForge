@@ -12,11 +12,6 @@
 
 	"Local": {
 		"BucketPort": 8333,
-		"RegistryPort": 5000,
-<<<<<<< HEAD
-=======
-		"RegistryDomain":"example.org",
->>>>>>> 5e4bbba (Support Orbstack)
-		"Driver": "minikube"
+		"Driver": "docker-desktop"
 	}
 } 

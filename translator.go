@@ -1,12 +1,8 @@
 package main
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
-	"fmt"
-	"net/http"
 	"path/filepath"
 
 	"server/zjson"
@@ -21,40 +17,18 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type Catalog struct {
-	Repositories []string `json:"repositories"`
-}
-
 func checkImage(ctx context.Context, tagName string, cfg Config) (bool, error) {
 	if cfg.IsLocal {
 		if cfg.Local.Driver == "minikube" {
-			resp, err := http.Get(fmt.Sprintf("http://localhost:%d/v2/_catalog", cfg.Local.RegistryPort))
-			if err != nil {
-				return false, err
-			}
-			defer resp.Body.Close()
-
-		imageList, err := apiClient.ImageList(ctx, types.ImageListOptions{})
-		if err != nil {
-			return false, err
-		}
-
-		for _, image := range imageList {
-			for _, tag := range image.RepoTags {
-				if tagName == tag {
-					return true, nil
-				}
-			}
-
 			return false, nil
 		} else {
 			apiClient, err := client.NewClientWithOpts(
 				client.WithAPIVersionNegotiation(),
 			)
-			defer apiClient.Close()
 			if err != nil {
 				return false, err
 			}
+			defer apiClient.Close()
 
 			imageList, err := apiClient.ImageList(ctx, types.ImageListOptions{})
 			if err != nil {
@@ -248,7 +222,7 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 
 			blockPath := filepath.Join(pipeline.Build, blockKey)
 			blocks[blockPath] = ""
-			if toBuild {
+			if !built {
 				if cfg.IsLocal {
 					blocks[blockPath] = "zetaforge/" + block.Action.Container.Image + ":" + block.Action.Container.Version
 				} else {
