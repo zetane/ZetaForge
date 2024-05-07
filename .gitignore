@@ -53,5 +53,4 @@ build/
 *.bak
 *.tmp
 *.swp
-setup/*
 canny4/

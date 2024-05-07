@@ -10,6 +10,7 @@ import (
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
+	"github.com/go-cmd/cmd"
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
@@ -17,36 +18,46 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func checkImage(ctx context.Context, tagName string, cfg Config) (bool, error) {
+func checkImage(ctx context.Context, tag string, cfg Config) (bool, error) {
 	if cfg.IsLocal {
-		apiClient, err := client.NewClientWithOpts(
-			client.WithAPIVersionNegotiation(),
-		)
-		if err != nil {
-			return true, err
-		}
-		defer apiClient.Close()
-
-		imageList, err := apiClient.ImageList(ctx, types.ImageListOptions{})
-		if err != nil {
-			return true, err
-		}
-
-		for _, image := range imageList {
-			for _, tag := range image.RepoTags {
-				if tagName == tag {
-					return false, nil
+		if cfg.Local.Driver == "minikube" {
+			minikubeImage := cmd.NewCmd("minikube", "-p", "zetaforge", "image", "ls")
+			<-minikubeImage.Start()
+			for _, line := range minikubeImage.Status().Stdout {
+				if "docker.io/"+tag == line {
+					return true, nil
 				}
 			}
+			return false, nil
+		} else {
+			apiClient, err := client.NewClientWithOpts(
+				client.WithAPIVersionNegotiation(),
+			)
+			if err != nil {
+				return false, err
+			}
+			defer apiClient.Close()
 
+			imageList, err := apiClient.ImageList(ctx, types.ImageListOptions{})
+			if err != nil {
+				return false, err
+			}
+
+			for _, image := range imageList {
+				for _, tagName := range image.RepoTags {
+					if tag == tagName {
+						return true, nil
+					}
+				}
+
+			}
+
+			return false, nil
 		}
-
-		return true, nil
-
 	} else {
 		repo, err := name.NewRepository(cfg.Cloud.RegistryAddr)
 		if err != nil {
-			return true, err
+			return false, err
 		}
 
 		auth := authn.FromConfig(
@@ -59,16 +70,16 @@ func checkImage(ctx context.Context, tagName string, cfg Config) (bool, error) {
 		data, err := remote.List(repo, remote.WithAuth(auth))
 
 		if err != nil {
-			return true, err
+			return false, err
 		}
 
-		for _, tag := range data {
-			if tagName == cfg.Cloud.RegistryAddr+":"+tag {
-				return false, nil
+		for _, tagName := range data {
+			if tag == cfg.Cloud.RegistryAddr+":"+tagName {
+				return true, nil
 			}
 		}
 
-		return true, nil
+		return false, nil
 	}
 }
 
@@ -212,14 +223,14 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 
 		if len(block.Action.Container.Image) > 0 {
 			kaniko := kanikoTemplate(&block, organization, cfg)
-			toBuild, err := checkImage(ctx, template.Container.Image, cfg)
+			built, err := checkImage(ctx, template.Container.Image, cfg)
 			if err != nil {
 				return &workflow, blocks, err
 			}
 
 			blockPath := filepath.Join(pipeline.Build, blockKey)
 			blocks[blockPath] = ""
-			if toBuild {
+			if !built {
 				if cfg.IsLocal {
 					blocks[blockPath] = "zetaforge/" + block.Action.Container.Image + ":" + block.Action.Container.Version
 				} else {
