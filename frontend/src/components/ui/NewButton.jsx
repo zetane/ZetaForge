@@ -9,13 +9,11 @@ import {trpc} from "@/utils/trpc"
 export default function NewButton() {
   const [editor] = useAtom(drawflowEditorAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
-  const cacheQuery = trpc.getCachePath.useQuery();
-  const cachePath = cacheQuery?.data || ""
 
   const handleClick = async (editor, pipeline) => {
     const nanoid = customAlphabet('1234567890abcedfghijklmnopqrstuvwxyz', 12)
     const name = `pipeline-${nanoid()}`
-    const bufferPath = `${cachePath}${name}`
+    const bufferPath = `${window.cache.local}${name}`
     setPipeline((draft) => {
       draft.id = name,
       draft.name = name,

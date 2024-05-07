@@ -7,8 +7,6 @@ import { customAlphabet } from 'nanoid';
 export const useLoadPipeline = () => {
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const savePipelineMutation = trpc.savePipeline.useMutation();
-  const cacheQuery = trpc.getCachePath.useQuery();
-  const cachePath = cacheQuery?.data || "";
 
   const loadPipeline = async (file) => {
     console.log("***********Loading pipeline from file:", file);
@@ -25,7 +23,7 @@ export const useLoadPipeline = () => {
     // Clear the pipeline object first to avoid key collisions
     const nanoid = customAlphabet('1234567890abcedfghijklmnopqrstuvwxyz', 12);
     const name = `pipeline-${nanoid()}`;
-    const bufferPath = `${cachePath}${name}`;
+    const bufferPath = `${window.cache.local}${name}`;
 
     setPipeline(draft => {
       draft.id = name;

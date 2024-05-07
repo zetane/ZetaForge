@@ -23,6 +23,7 @@ import RunPipelineButton from "./RunPipelineButton";
 import LogsButton from "./LogsButton";
 import NewButton from "./NewButton";
 import ApiKeysModal from "./modal/ApiKeysModal";
+import RunningButton from "./RunningButton";
 import useWebSocket, {ReadyState} from "react-use-websocket";
 import { useEffect } from "react";
 import { useImmerAtom } from "jotai-immer";
@@ -224,6 +225,7 @@ export default function Navbar({ children }) {
         </RunPipelineButton>
         <PipelineNameLabel />
         <LogsButton />
+        <RunningButton />
       </HeaderGlobalBar>
       {children}
     </Header>

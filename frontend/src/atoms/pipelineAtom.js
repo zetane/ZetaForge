@@ -20,7 +20,7 @@ export const pipelineFactory = (cachePath) => {
   const buffer = `${cachePath}${id}`
   return {
     id: id,
-    name: null,
+    name: id,
     saveTime: null,
     buffer: buffer,
     path: undefined,

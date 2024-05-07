@@ -10,7 +10,7 @@ ORDER BY e.created DESC;
 
 -- name: ListRunningExecutions :many
 SELECT e.* FROM Executions e
-WHERE e.deleted = FALSE AND e.status = 'Running'
+WHERE e.deleted = FALSE AND e.status = 'Running' AND e.completed is null
 ORDER BY e.created DESC;
 
 -- name: ListPipelineExecutions :many

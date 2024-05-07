@@ -1,4 +1,3 @@
-import React from 'react';
 import { LogsCodeMirror } from "@/components/ui/blockEditor/CodeMirrorComponents";
 import ClosableModal from "./modal/ClosableModal";
 import { pipelineAtom } from "@/atoms/pipelineAtom";

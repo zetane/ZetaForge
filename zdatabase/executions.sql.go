@@ -252,7 +252,7 @@ func (q *Queries) ListPipelineExecutions(ctx context.Context, arg ListPipelineEx
 
 const listRunningExecutions = `-- name: ListRunningExecutions :many
 SELECT e.id, e.pipeline, e.status, e.created, e.completed, e.json, e.deleted, e.executionid, e.workflow FROM Executions e
-WHERE e.deleted = FALSE AND e.status = 'Running'
+WHERE e.deleted = FALSE AND e.status = 'Running' AND e.completed is null
 ORDER BY e.created DESC
 `
 
