@@ -120,13 +120,12 @@ def select_kubectl_context():
 
     return selected_context
 
-def setup(server_version, client_version, build_flag = True, install_flag = True, server_path = None, minikube = False):
+def setup(server_version, client_version, driver, build_flag = True, install_flag = True, server_path = None):
     print("Platform: ", platform.machine())
     print("CWD: ", os.path.abspath(os.getcwd()))
 
-    if minikube:
+    if driver == "minikube":
         context = "zetaforge"
-        driver = "minikube"
         if not check_minikube():
             print("Minikube not found. Please install minikube.")
             raise Exception("Minikube not found!")
@@ -135,7 +134,6 @@ def setup(server_version, client_version, build_flag = True, install_flag = True
             print(minikube.stderr)
             raise Exception("Error while starting minikube")
     else:
-        driver = "docker-desktop"
         context = select_kubectl_context()
         kubectl_flag = check_kubectl()
 
@@ -161,7 +159,7 @@ def setup(server_version, client_version, build_flag = True, install_flag = True
 
     install_frontend_dependencies(client_version=client_version)
 
-    config_path = write_json(server_version, client_version, context, server_path, driver)
+    config_path = write_json(server_version, client_version, context, driver, server_path)
 
     print(f"Setup complete, wrote config to {config_path}.")
         
@@ -254,8 +252,8 @@ def purge():
     shutil.rmtree(EXECUTABLES_PATH)
     os.makedirs(EXECUTABLES_PATH)
 
-def teardown(minikube = False):
-    if minikube:
+def teardown(driver):
+    if driver == "minikube":
         minikube = subprocess.run(["minikube", "-p", "zetaforge", "stop"], capture_output=True, text=True)
         if minikube.returncode != 0:
             print(minikube.stderr)
@@ -287,7 +285,7 @@ def check_expected_services(config):
     
     return True 
 
-def create_config_json(s2_path, context, driver="orbstack"):
+def create_config_json(s2_path, context, driver):
     config = {
         "IsLocal":True,
         "ServerPort": 8080,
