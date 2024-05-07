@@ -10,6 +10,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.42.1
 	github.com/aws/smithy-go v1.16.0
 	github.com/docker/docker v25.0.2+incompatible
+	github.com/getsentry/sentry-go v0.27.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-cmd/cmd v1.4.2
 	github.com/google/go-containerregistry v0.19.0
@@ -70,7 +71,6 @@ require (
 	github.com/evilmonkeyinc/jsonpath v0.8.1 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
-	github.com/getsentry/sentry-go v0.27.0 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.1 // indirect
 	github.com/go-logr/logr v1.4.1 // indirect
