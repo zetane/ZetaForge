@@ -10,6 +10,7 @@ import (
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
+	"github.com/go-cmd/cmd"
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
@@ -17,9 +18,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func checkImage(ctx context.Context, tagName string, cfg Config) (bool, error) {
+func checkImage(ctx context.Context, tag string, cfg Config) (bool, error) {
 	if cfg.IsLocal {
 		if cfg.Local.Driver == "minikube" {
+			minikubeImage := cmd.NewCmd("minikube", "-p", "zetaforge", "image", "ls")
+			<-minikubeImage.Start()
+			for _, line := range minikubeImage.Status().Stdout {
+				if "docker.io/"+tag == line {
+					return true, nil
+				}
+			}
 			return false, nil
 		} else {
 			apiClient, err := client.NewClientWithOpts(
@@ -36,8 +44,8 @@ func checkImage(ctx context.Context, tagName string, cfg Config) (bool, error) {
 			}
 
 			for _, image := range imageList {
-				for _, tag := range image.RepoTags {
-					if tagName == tag {
+				for _, tagName := range image.RepoTags {
+					if tag == tagName {
 						return true, nil
 					}
 				}
@@ -65,8 +73,8 @@ func checkImage(ctx context.Context, tagName string, cfg Config) (bool, error) {
 			return false, err
 		}
 
-		for _, tag := range data {
-			if tagName == cfg.Cloud.RegistryAddr+":"+tag {
+		for _, tagName := range data {
+			if tag == cfg.Cloud.RegistryAddr+":"+tagName {
 				return true, nil
 			}
 		}

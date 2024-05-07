@@ -11,6 +11,7 @@ require (
 	github.com/aws/smithy-go v1.16.0
 	github.com/docker/docker v25.0.2+incompatible
 	github.com/gin-gonic/gin v1.9.1
+	github.com/go-cmd/cmd v1.4.2
 	github.com/google/go-containerregistry v0.19.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.1
