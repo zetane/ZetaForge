@@ -43,7 +43,7 @@ var migrations embed.FS
 
 type Config struct {
 	IsLocal         bool
-	ServerPort      string
+	ServerPort      int
 	KanikoImage     string
 	WorkDir         string
 	FileDir         string
@@ -57,7 +57,8 @@ type Config struct {
 }
 
 type Local struct {
-	BucketPort string
+	BucketPort int
+	Driver     string
 }
 
 type Cloud struct {
@@ -230,6 +231,7 @@ func main() {
 			clientcmd.NewDefaultClientConfigLoadingRules(),
 			&clientcmd.ConfigOverrides{},
 		)
+		setup(config, client)
 	} else {
 		cacert, err := base64.StdEncoding.DecodeString(config.Cloud.CaCert)
 		if err != nil {
@@ -499,5 +501,5 @@ func main() {
 		}
 	})
 
-	router.Run(":" + config.ServerPort)
+	router.Run(fmt.Sprintf(":%d", config.ServerPort))
 }

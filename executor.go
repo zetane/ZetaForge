@@ -3,7 +3,6 @@ package main
 import (
 	"archive/tar"
 	"bytes"
-	"compress/gzip"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -31,6 +30,7 @@ import (
 	endpoints "github.com/aws/smithy-go/endpoints"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
+	"github.com/go-cmd/cmd"
 	"golang.org/x/net/context"
 	"golang.org/x/sync/errgroup"
 	corev1 "k8s.io/api/core/v1"
@@ -41,11 +41,11 @@ const BUCKET = "zetaforge"
 
 type Endpoint struct {
 	Bucket string
-	S3Port string
+	S3Port int
 }
 
 func (endpoint *Endpoint) ResolveEndpoint(ctx context.Context, params s3.EndpointParameters) (endpoints.Endpoint, error) {
-	uri, err := url.Parse("http://localhost:" + endpoint.S3Port + "/" + endpoint.Bucket)
+	uri, err := url.Parse(fmt.Sprintf("http://localhost:%d/%s", endpoint.S3Port, endpoint.Bucket))
 	return endpoints.Endpoint{URI: *uri}, err
 }
 
@@ -84,90 +84,6 @@ func upload(ctx context.Context, source string, key string, cfg Config) error {
 
 	_, err = client.PutObject(ctx, params)
 	return err
-}
-
-func uploadFiles(ctx context.Context, source string, prefix string, cfg Config) error {
-	err := filepath.Walk(source, func(path string, info fs.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if !info.Mode().IsRegular() {
-			return nil
-		}
-
-		name := filepath.ToSlash(strings.TrimPrefix(
-			strings.Replace(path, filepath.Clean(source), "", -1),
-			string(filepath.Separator),
-		))
-
-		return upload(ctx, path, prefix+name, cfg)
-	})
-
-	return err
-}
-
-func tarFile(source string, key string) error {
-	file, err := os.Create(key)
-
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	gzw := gzip.NewWriter(file)
-	defer gzw.Close()
-
-	tw := tar.NewWriter(gzw)
-	defer tw.Close()
-
-	err = filepath.Walk(source, func(path string, info fs.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if !info.Mode().IsRegular() {
-			return nil
-		}
-
-		header, err := tar.FileInfoHeader(info, info.Name())
-
-		if err != nil {
-			return err
-		}
-
-		header.Name = filepath.ToSlash(strings.TrimPrefix(strings.Replace(path, source, "", -1), string(filepath.Separator)))
-
-		if err := tw.WriteHeader(header); err != nil {
-			return err
-		}
-
-		file, err := os.Open(path)
-		if err != nil {
-			return err
-		}
-
-		if _, err := io.Copy(tw, file); err != nil {
-			return err
-		}
-
-		return file.Close()
-	})
-
-	return err
-}
-
-func uploadTar(ctx context.Context, source string, buildFile string, uploadKey string, cfg Config) error {
-	if err := tarFile(source, buildFile); err != nil {
-		return err
-	}
-	defer os.Remove(buildFile)
-
-	if err := upload(ctx, buildFile, uploadKey, cfg); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func downloadFiles(ctx context.Context, sink string, prefix string, cfg Config) error {
@@ -239,6 +155,9 @@ func deleteFiles(ctx context.Context, prefix string, extraFiles []string, cfg Co
 		Bucket: aws.String(BUCKET),
 		Prefix: aws.String(prefix),
 	})
+	if err != nil {
+		log.Printf("Failed to delete files; err=%v", err)
+	}
 
 	for _, content := range res.Contents {
 		params.Delete.Objects = append(params.Delete.Objects, s3types.ObjectIdentifier{
@@ -482,6 +401,11 @@ func deleteArgo(ctx context.Context, name string, client clientcmd.ClientConfig)
 		},
 	)
 
+	if err != nil {
+		log.Printf("Failed to delete workflow %s; err=%v", name, err)
+		return
+	}
+
 	namespace, _, err := client.Namespace()
 
 	if err != nil {
@@ -501,77 +425,118 @@ func deleteArgo(ctx context.Context, name string, client clientcmd.ClientConfig)
 	}
 }
 
-func buildImage(ctx context.Context, source string, tag string) error {
+func buildImage(ctx context.Context, source string, tag string, cfg Config) error {
+	if cfg.Local.Driver == "minikube" {
+		minikubeBuild := cmd.NewCmd("minikube", "-p", "zetaforge", "image", "build", "-t", tag, source)
+		minikubeChan := minikubeBuild.Start()
+		lineCount := 0
+		done := false
 
-	dockerClient, err := client.NewClientWithOpts(
-		client.WithAPIVersionNegotiation(),
-	)
-	if err != nil {
-		return err
-	}
-	defer dockerClient.Close()
+		for {
+			select {
+			case <-minikubeChan:
+				done = true
+			default:
+				output := minikubeBuild.Status().Stderr
+				if len(output) > lineCount {
+					for i := 0; i < len(output)-lineCount; i++ {
+						log.Println(output[lineCount+i])
+					}
+					lineCount = len(output)
+				}
+			}
+			if done {
+				break
+			}
+		}
 
-	buff := bytes.NewBuffer(nil)
-	tw := tar.NewWriter(buff)
-	err = filepath.Walk(source, func(path string, info fs.FileInfo, err error) error {
+		output := minikubeBuild.Status().Stderr
+		if len(output) > lineCount {
+			for i := 0; i < len(output)-lineCount; i++ {
+				log.Println(output[lineCount+i])
+			}
+		}
+
+		minikubeImage := cmd.NewCmd("minikube", "-p", "zetaforge", "image", "ls")
+		<-minikubeImage.Start()
+		for _, line := range minikubeImage.Status().Stdout {
+			if "docker.io/"+tag == line {
+				return nil
+			}
+		}
+
+		return errors.New("Failed to build image: " + tag)
+	} else {
+		dockerClient, err := client.NewClientWithOpts(
+			client.WithAPIVersionNegotiation(),
+		)
 		if err != nil {
 			return err
 		}
+		defer dockerClient.Close()
 
-		if !info.Mode().IsRegular() {
-			return nil
-		}
+		buff := bytes.NewBuffer(nil)
+		tw := tar.NewWriter(buff)
+		err = filepath.Walk(source, func(path string, info fs.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
 
-		header, err := tar.FileInfoHeader(info, info.Name())
+			if !info.Mode().IsRegular() {
+				return nil
+			}
 
+			header, err := tar.FileInfoHeader(info, info.Name())
+
+			if err != nil {
+				return err
+			}
+
+			header.Name = filepath.ToSlash(strings.TrimPrefix(strings.Replace(path, source, "", -1), string(filepath.Separator)))
+
+			if err := tw.WriteHeader(header); err != nil {
+				return err
+			}
+
+			file, err := os.Open(path)
+			if err != nil {
+				return err
+			}
+
+			if _, err := io.Copy(tw, file); err != nil {
+				return err
+			}
+
+			return file.Close()
+		})
 		if err != nil {
 			return err
 		}
-
-		header.Name = filepath.ToSlash(strings.TrimPrefix(strings.Replace(path, source, "", -1), string(filepath.Separator)))
-
-		if err := tw.WriteHeader(header); err != nil {
+		if err := tw.Close(); err != nil {
 			return err
 		}
 
-		file, err := os.Open(path)
+		resp, err := dockerClient.ImageBuild(ctx, buff, types.ImageBuildOptions{
+			Tags:        []string{tag},
+			Remove:      true,
+			ForceRemove: true,
+		})
 		if err != nil {
 			return err
 		}
+		defer resp.Body.Close()
 
-		if _, err := io.Copy(tw, file); err != nil {
-			return err
+		stream := make([]byte, 100)
+
+		for {
+			n, err := resp.Body.Read(stream)
+			if err == io.EOF {
+				return nil
+			} else if err != nil {
+				return err
+			}
+			log.Println(string(stream[:n]))
 		}
-
-		return file.Close()
-	})
-	if err != nil {
-		return err
-	}
-	if err := tw.Close(); err != nil {
-		return err
-	}
-
-	resp, err := dockerClient.ImageBuild(ctx, buff, types.ImageBuildOptions{
-		Tags:        []string{tag},
-		Remove:      true,
-		ForceRemove: true,
-	})
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	stream := make([]byte, 100)
-
-	for {
-		n, err := resp.Body.Read(stream)
-		if err == io.EOF {
-			return nil
-		} else if err != nil {
-			return err
-		}
-		log.Println(string(stream[:n]))
 	}
 }
 
@@ -674,7 +639,7 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 
 		if len(image) > 0 {
 			eg.Go(func() error {
-				return buildImage(egCtx, path, image)
+				return buildImage(egCtx, path, image, cfg)
 			})
 		}
 

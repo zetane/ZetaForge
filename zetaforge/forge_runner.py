@@ -4,7 +4,7 @@ import platform
 import time
 import json
 from pkg_resources import resource_filename
-from .check_forge_dependencies import check_dependencies, check_running_kube, check_kube_pod
+from .check_forge_dependencies import check_minikube, check_running_kube, check_kube_pod, check_kubectl
 from .install_forge_dependencies import *
 from pathlib import Path
 from colorama import init, Fore
@@ -25,9 +25,12 @@ INSTALL_YAML = resource_filename("zetaforge", os.path.join('utils', 'install.yam
 EXECUTABLES_PATH = os.path.join(Path(__file__).parent, 'executables')
 FRONT_END = os.path.join(EXECUTABLES_PATH, "frontend")
 
-def write_json(server_version, client_version, context):
-    _, server_path = get_launch_paths(server_version, client_version)
-    config = create_config_json(os.path.dirname(server_path), context)
+def write_json(server_version, client_version, context, driver, s2_path=None):
+    if s2_path:
+        server_path = s2_path
+    else:
+        _, server_path = get_launch_paths(server_version, client_version)
+    config = create_config_json(os.path.dirname(server_path), context, driver)
     return config
 
 
@@ -117,45 +120,46 @@ def select_kubectl_context():
 
     return selected_context
 
-def setup(server_version, client_version, build_flag = True, install_flag = True):
+def setup(server_version, client_version, driver, build_flag = True, install_flag = True, server_path = None):
     print("Platform: ", platform.machine())
     print("CWD: ", os.path.abspath(os.getcwd()))
-    context = select_kubectl_context()
 
-    kubectl_flag = check_dependencies()        
-        
-    switch_context = None
-    if kubectl_flag:
-        switch_context = subprocess.run(["kubectl", "config", "use-context", f"{context}"], capture_output=True, text=True)
+    if driver == "minikube":
+        context = "zetaforge"
+        if not check_minikube():
+            print("Minikube not found. Please install minikube.")
+            raise Exception("Minikube not found!")
+        minikube = subprocess.run(["minikube", "-p", "zetaforge", "start"], capture_output=True, text=True)
+        if minikube.returncode != 0:
+            print(minikube.stderr)
+            raise Exception("Error while starting minikube")
     else:
-        print("Kubectl not found. Please install docker-desktop and enable kubernetes, or ensure that kubectl installed and is able to connect to a working kubernetes cluster.")
-        raise EnvironmentError("Kubectl not found!")
+        context = select_kubectl_context()
+        kubectl_flag = check_kubectl()
+
+        switch_context = None
+        if kubectl_flag:
+            switch_context = subprocess.run(["kubectl", "config", "use-context", f"{context}"], capture_output=True, text=True)
+        else:
+            print("Kubectl not found. Please install docker-desktop and enable kubernetes, or ensure that kubectl installed and is able to connect to a working kubernetes cluster.")
+            raise EnvironmentError("Kubectl not found!")
         #install_kubectl()
         #switch_context = subprocess.run(f"./kubectl config use-context {context}", shell=True, cwd=EXECUTABLES_PATH)
 
-    in_context = (switch_context.returncode == 0)
-        
-    if not in_context:
-        print(f"Cannot find the context {context} for kubernetes. Please double check that you have entered the correct context.")        
-        subprocess.run(["kubectl", "config", "get-contexts"], capture_output=True, text=True)
-        raise Exception("Exception while setting the context")
-    
-    running_kube = check_running_kube(context)
-    if not running_kube:
-        raise Exception("Kubernetes is not running, please start kubernetes and ensure that you are able to connect to the kube context.")
+        in_context = (switch_context.returncode == 0)
 
-        
-    build = subprocess.run(["kubectl", "apply", "-f", f"{BUILD_YAML}"], capture_output=True, text=True)
-    install = subprocess.run(["kubectl", "apply", "-f", f"{INSTALL_YAML}"], capture_output=True, text=True)
+        if not in_context:
+            print(f"Cannot find the context {context} for kubernetes. Please double check that you have entered the correct context.")        
+            subprocess.run(["kubectl", "config", "get-contexts"], capture_output=True, text=True)
+            raise Exception("Exception while setting the context")
 
-    if build.returncode != 0 or install.returncode != 0:
-        raise Exception("Error while building")
-        
-    time.sleep(3)
-    
+        running_kube = check_running_kube(context)
+        if not running_kube:
+            raise Exception("Kubernetes is not running, please start kubernetes and ensure that you are able to connect to the kube context.")
+
     install_frontend_dependencies(client_version=client_version)
 
-    config_path = write_json(server_version, client_version, context)
+    config_path = write_json(server_version, client_version, context, driver, server_path)
 
     print(f"Setup complete, wrote config to {config_path}.")
         
@@ -168,11 +172,7 @@ def run_forge(server_version=None, client_version=None, server_path=None, client
     time_start = datetime.now()
 
     #init is called for collarama library, better logging.
-    init()   
-
-    weed = check_kube_pod("weed")
-    if not weed:
-        raise Exception("SeaweedFS is not running, please ensure kubernetes is running or re-run `zetaforge setup`.")
+    init()
 
     mixpanel_client.track_event('Initial Launch')
 
@@ -252,20 +252,43 @@ def purge():
     shutil.rmtree(EXECUTABLES_PATH)
     os.makedirs(EXECUTABLES_PATH)
 
-def teardown():
-    
-    print("Tearing down services..")
+def teardown(driver):
+    if driver == "minikube":
+        minikube = subprocess.run(["minikube", "-p", "zetaforge", "stop"], capture_output=True, text=True)
+        if minikube.returncode != 0:
+            print(minikube.stderr)
+            raise Exception("Error while starting minikube")
 
-    install = subprocess.run(["kubectl", "delete", "-f", INSTALL_YAML], capture_output=True, text=True)
-    print ("Removing install: ", {install.stdout})
-    build = subprocess.run(["kubectl", "delete", "-f", BUILD_YAML], capture_output=True, text=True)
-    print("Removing build: ", {build.stdout})
     print("Completed teardown!")
 
-def create_config_json(s2_path, context):
+
+def check_expected_services(config):
+    is_local = config["IsLocal"]
+    print(config)
+    if is_local:
+        local = config["Local"]
+        ports = [local["RegistryPort"]]
+    
+        for port in ports:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(1)  # Set a timeout of 1 second
+            
+            try:
+                sock.bind(('localhost', int(port)))
+
+                raise Exception(f"Was able to bind to {port}, which means kube services are nto running correctly. Please re-run `zetaforge setup`.")
+            except socket.error as e:
+                if e.errno == errno.EADDRINUSE:
+                    print(f"Service running at port {port}")
+            finally:
+                sock.close()
+    
+    return True 
+
+def create_config_json(s2_path, context, driver):
     config = {
         "IsLocal":True,
-        "ServerPort":"8080",
+        "ServerPort": 8080,
         "KanikoImage":"gcr.io/kaniko-project/executor:latest",
         "WorkDir":"/app",
         "FileDir":"/files",
@@ -276,7 +299,8 @@ def create_config_json(s2_path, context):
         "Database":"./zetaforge.db",
         "KubeContext": context,
         "Local": {
-            "BucketPort":"8333"
+            "BucketPort": 8333,
+            "Driver": driver
         }
     } 
 
@@ -285,3 +309,13 @@ def create_config_json(s2_path, context):
         json.dump(config, outfile)
 
     return file_path
+
+def generate_distinct_id():
+    seed = 0
+    try:
+        seed = uuid.getnode()
+    except:
+        seed = 0
+        
+    distinct_id = sha256(str(seed).encode('utf-8')).hexdigest()
+    return distinct_id
