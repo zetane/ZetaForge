@@ -10,6 +10,7 @@ import { useState, useEffect, useRef } from "react";
 import ClosableModal from "./modal/ClosableModal";
 import { S3Client, HeadObjectCommand } from '@aws-sdk/client-s3'
 import { trpc } from "@/utils/trpc";
+import { mixpanelAtom } from "@/atoms/mixpanelAtom";
 
 const BUCKET = import.meta.env.VITE_BUCKET
 
@@ -22,6 +23,7 @@ export default function RunPipelineButton({modalPopper, children, action}) {
   const [angle, setAngle] = useState(0)
   const posRef = useRef({ x: 0, y: 0 });
   const velocityRef = useRef({ x: 2, y: 2 });
+  const [mixpanelService] = useAtom(mixpanelAtom)
 
   const s3Uploader = trpc.uploadToS3.useMutation()
 
@@ -144,6 +146,12 @@ export default function RunPipelineButton({modalPopper, children, action}) {
           draft.log = []
         })
       }
+      try {
+        mixpanelService.trackEvent('Run Created')
+      } catch (err) {
+  
+      }
+      
     } catch (error) {
 
     }

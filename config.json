@@ -13,5 +13,6 @@
 	"Local": {
 		"BucketPort": 8333,
 		"Driver": "docker-desktop"
-	}
+	},
+	"ZetaforgeIsDev": true
 } 

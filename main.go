@@ -3,17 +3,12 @@ package main
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
 	"database/sql"
 	"embed"
 	"encoding/base64"
-	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
-	"math/big"
-	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -21,8 +16,8 @@ import (
 	"strings"
 	"time"
 
+	"fmt"
 	"server/zjson"
-
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -35,7 +30,6 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	sentrygin "github.com/getsentry/sentry-go/gin"
-	"github.com/mixpanel/mixpanel-go"
 )
 
 //go:embed db/migrations/*.sql
@@ -92,45 +86,6 @@ func createLogger(pipelineId string, file io.Writer, messageFunc func(string, st
 	return io.MultiWriter(os.Stdout, wsWriter, file)
 }
 
-// UTILITY FUNCTIONS FOR GENERATING DISTINCT ID FOR MIXPANEL
-func macAddressToDecimal(mac string) (*big.Int, error) {
-	macWithoutColons := strings.ReplaceAll(mac, ":", "")
-
-	macBytes, err := hex.DecodeString(macWithoutColons)
-	if err != nil {
-		return nil, err
-	}
-
-	// Convert the byte slice to a BigInt
-	macAsBigInt := new(big.Int).SetBytes(macBytes)
-
-	return macAsBigInt, nil
-
-}
-
-func getMACAddress() (string, *big.Int, error) {
-
-	// return value: big Int, which is MAC address of the device. In the case of Failure, we return zero, as big Int.
-
-	interfaces, err := net.Interfaces()
-	if err != nil {
-		return "", nil, err
-	}
-
-	// Find the first non-loopback interface with a hardware address
-	for _, iface := range interfaces {
-		if iface.Flags&net.FlagLoopback == 0 && len(iface.HardwareAddr) > 0 {
-			macAddress := iface.HardwareAddr.String()
-			macInt, err := macAddressToDecimal(macAddress)
-			if err != nil {
-				return "", nil, err
-			}
-			return macAddress, macInt, nil
-		}
-	}
-
-	return "", new(big.Int).SetInt64(int64(0)), fmt.Errorf("unable to determine distinct_id, using default distinct_id")
-}
 
 func validateJson(ctx context.Context, body io.ReadCloser) (zjson.Pipeline, HTTPError) {
 	schema, err := json.Marshal(jsonschema.Reflect(&zjson.Pipeline{}))
@@ -164,26 +119,8 @@ func validateJson(ctx context.Context, body io.ReadCloser) (zjson.Pipeline, HTTP
 		return zjson.Pipeline{}, InternalServerError{err.Error()}
 	}
 
-	//Get Mac address as a big integer, then hash it with sha256. Note that, this might give a different result if we run s2 from the cloud
-	_, macInt, err := getMACAddress()
-	if err != nil {
-		log.Printf("Mixpanel error; err=%v", err)
-	}
-
-	macAsString := macInt.String()
-	hash := sha256.New()
-	hash.Write([]byte(macAsString))
-	hashedResult := hash.Sum(nil)
-	distinctID := hex.EncodeToString(hashedResult)
-
-	mp := mixpanel.NewApiClient("4c09914a48f08de1dbe3dc4dd2dcf90d")
-	if err := mp.Track(ctx, []*mixpanel.Event{
-		mp.NewEvent("Run Created", distinctID, map[string]interface{}{
-			"distinct_id": distinctID,
-		}),
-	}); err != nil {
-		log.Printf("Mixpanel error; err=%v", err)
-	}
+	
+	
 	return pipeline, nil
 }
 
