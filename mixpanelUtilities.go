@@ -1,23 +1,23 @@
 package main
 
-import ("math/big"
-"net"
-"context"
-"strings"
-"os"
-"crypto/sha256"
-"encoding/hex"
-"encoding/json"
-"fmt"
-"log"
-"github.com/kaganAtZetane/mixpanel-go"
-"runtime"
-"sync"
+import (
+	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"fmt"
+	"log"
+	"math/big"
+	"net"
+	"os"
+	"runtime"
+	"strings"
+	"sync"
+
+	"github.com/kaganAtZetane/mixpanel-go"
 )
 
-
-
-func generateDistinctID() (string) {
+func generateDistinctID() string {
 	_, macInt, err := getMACAddress()
 	if err != nil {
 		log.Printf("Mixpanel error; err=%v", err)
@@ -70,21 +70,19 @@ func getMACAddress() (string, *big.Int, error) {
 	return "", new(big.Int).SetInt64(int64(0)), fmt.Errorf("unable to determine distinct_id, using default distinct_id")
 }
 
-
-
 type MixpanelJsonConfig struct {
-	ZetaforgeIsDev bool  `json:"ZetaforgeIsDev"`
+	ZetaforgeIsDev bool `json:"ZetaforgeIsDev"`
 }
 
-type MixpanelClient struct{
-	Client 	*mixpanel.ApiClient
+type MixpanelClient struct {
+	Client     *mixpanel.ApiClient
 	DistinctID string
-	Token string
-	Enabled bool
-	IsDev bool
+	Token      string
+	Enabled    bool
+	IsDev      bool
 }
 
-//mixpanelClient is now a singleton instance
+// mixpanelClient is now a singleton instance
 var (
 	once           sync.Once
 	mixpanelClient *MixpanelClient
@@ -94,7 +92,7 @@ func InitMixpanelClient(token string, ctx context.Context) *MixpanelClient {
 	once.Do(func() {
 		client := mixpanel.NewApiClient(token)
 		file, err := os.ReadFile("config.json")
-defer file.Close()
+
 		var isDev bool
 		enabled := true
 		if err != nil {
@@ -148,7 +146,7 @@ func (m *MixpanelClient) SetPeopleProperties(ctx context.Context, userProperties
 		os = "Mac OS X"
 	}
 
-	for k,v := range userProperties {
+	for k, v := range userProperties {
 		finalProperties[k] = v
 	}
 	finalProperties["$os"] = os
@@ -162,7 +160,6 @@ func (m *MixpanelClient) SetPeopleProperties(ctx context.Context, userProperties
 	return err
 }
 
-
 func (m *MixpanelClient) TrackEvent(ctx context.Context, eventName string, properties map[string]any) error {
 	if !m.Enabled {
 		return nil
@@ -173,14 +170,13 @@ func (m *MixpanelClient) TrackEvent(ctx context.Context, eventName string, prope
 		os = "Mac OS X"
 	}
 
-	for k,v := range properties {
+	for k, v := range properties {
 		finalProperties[k] = v
 	}
 	finalProperties["distinct_id"] = m.DistinctID
 	finalProperties["$os"] = os
 	finalProperties["is_dev"] = m.IsDev
 
-	
 	event := m.Client.NewEvent(eventName, m.DistinctID, finalProperties)
 	err := m.Client.Track(ctx, []*mixpanel.Event{event})
 	if err != nil {
@@ -189,8 +185,3 @@ func (m *MixpanelClient) TrackEvent(ctx context.Context, eventName string, prope
 	}
 	return err
 }
-
-
-
-
-

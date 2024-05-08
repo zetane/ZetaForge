@@ -1,5 +1,5 @@
 from .forge_runner import run_forge, teardown, purge, setup
-from .install_forge_dependencies import check_version, get_launch_paths
+from .install_forge_dependencies import check_version, get_launch_paths, remove_running_services
 import argparse, os, json
 from pathlib import Path
 from .__init__ import __version__
@@ -37,6 +37,7 @@ def main():
     
     if args.command == "launch":
         check_version(server_versions[-1], client_versions[-1])
+        remove_running_services()
         print(f"Checking for config in {config_file}")
         config = load_config(config_file)
         if config is None:

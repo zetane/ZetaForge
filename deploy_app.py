@@ -4,9 +4,6 @@ IT BASICALLY, HAS THREE STEPS
 1) BUILD SERVER2
 2) WRAP IT WITHIN FRONTEND
 3) BUILD FRONTEND(WHICH ALSO HAS SERVER2)
-
-
-THIS SCRIPT IS NOT DESIGNED FOR USERS, ONLY FOR DEVELOPERS
 """
 
 import subprocess
@@ -15,7 +12,41 @@ import os
 import threading
 import json
 import argparse
+import boto3
 
+def get_download_file(client_version, system, arch):
+    bucket_key = "ZetaForge-" + client_version
+    if system == 'Windows':
+        bucket_key += '-windows-x64'
+        bucket_key += ".tar.gz"
+        return bucket_key
+    elif system == 'Linux':
+        bucket_key += '-linux'
+        if arch == 'x86_64' or arch == 'x86-64':
+            bucket_key += '-x64'
+        else:
+            bucket_key += '-arm64'
+        bucket_key += ".tar.gz"
+        return bucket_key
+    else:
+        bucket_key += '-darwin'
+        if arch == 'x86_64' or arch == 'x86-64':
+            bucket_key += '-x64'
+        else:
+            bucket_key += '-arm64'
+        bucket_key += ".tar.gz"
+        return bucket_key
+
+def upload_to_s3(file_path, object_key):
+    s3_client = boto3.client('s3')
+    bucket_name = 'forge-executables-test'
+
+    try:
+        with open(file_path, 'rb') as file:
+            s3_client.upload_fileobj(file, bucket_name, object_key)
+        print(f"File {file_path} uploaded to S3 bucket {bucket_name} as {object_key}")
+    except Exception as e:
+        print(f"Error uploading file to S3: {str(e)}")
 
 def get_package_version():
     # Specify the path to the package.json file
@@ -55,80 +86,82 @@ def main():
 
     for os_ in os_list:
         print(f"Compiling {version} for {os_}..")
-        compile_app(version, os_, args.arch)
+        for goarch in args.arch:
+            if goarch == 'arm64' and (os_ == 'windows' or os_ == 'linux'):
+                continue
+            compile_app(version, os_, goarch)
+            package_name = get_package_version(version, os_, goarch)
+            upload_to_s3(os.path.join('frontend', 'release', version, package_name), package_name)
     
     
-def compile_app(version, goos, archs = ['amd64', 'arm64']):
-    for goarch in archs:
-        print(f"Compiling {goarch}..")
-        if goarch == 'arm64' and (goos == 'windows' or goos == 'linux'):
-            continue
+def compile_app(version, goos, goarch):
+    print(f"Compiling {goarch}..")
 
-        frontend = os.path.join("frontend", "server2")
-        shutil.rmtree(frontend)
-        os.makedirs(frontend, exist_ok=True)
+    frontend = os.path.join("frontend", "server2")
+    shutil.rmtree(frontend)
+    os.makedirs(frontend, exist_ok=True)
 
-        try:
-            arch = goarch
-            if goos == 'windows':
-                arch = 'amd64'
-                s = subprocess.run(["env", f"GOOS={goos}", f"GOARCH={arch}", "CGO_ENABLED=1", "CC=x86_64-w64-mingw32-gcc", "go", "build"], capture_output=True, text=True)
-                if s.returncode != 0:
-                    raise Exception(f"Failed to build go server: {s.stderr}")
-                print(s)
-            elif goos == 'linux':
-                s = subprocess.run(["env", f"GOOS={goos}", f"GOARCH={arch}", "CGO_ENABLED=1", "CC=x86_64-linux-musl-gcc", "go", "build", "-trimpath", "-ldflags", "-extldflags -static"], capture_output=True, text=True)
-                if s.returncode != 0:
-                    raise Exception(f"Failed to build go server: {s.stderr}")
-                print(s)
-            else:
-                s = subprocess.run(["env", f"GOOS={goos}", f"GOARCH={arch}", "CGO_ENABLED=1", "go", "build"], capture_output=True, text=True)
-                if s.returncode != 0:
-                    raise Exception(f"Failed to build go server: {s.stderr}")
-                print(s)
-        except Exception as err:
-            print("ERROR WHILE BUILDING GO")
-            print(err)
-            raise Exception("Error")
-
-        server = "server"
-        filename = 's2-' + version
-        if goos == "windows":
-            filename += '.exe'
-            server += ".exe"
-        else:
-            filename += f'-{goarch}'
-        
-        dest = os.path.join(frontend, filename)
-        print(f"Compiled go server {server}, moving to {dest}")
-        os.rename(server, dest)
-
-        print("Copying entrypoint.py..")
-        shutil.copyfile("entrypoint.py", os.path.join("frontend", "server2", "entrypoint.py"))
-        print(f'Building client: {goos}-{goarch}')
+    try:
+        arch = goarch
         if goos == 'windows':
-            res = subprocess.Popen(["npm" , "run", f"build:{goos}"], cwd="frontend", stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            arch = 'amd64'
+            s = subprocess.run(["env", f"GOOS={goos}", f"GOARCH={arch}", "CGO_ENABLED=1", "CC=x86_64-w64-mingw32-gcc", "go", "build"], capture_output=True, text=True)
+            if s.returncode != 0:
+                raise Exception(f"Failed to build go server: {s.stderr}")
+            print(s)
+        elif goos == 'linux':
+            s = subprocess.run(["env", f"GOOS={goos}", f"GOARCH={arch}", "CGO_ENABLED=1", "CC=x86_64-linux-musl-gcc", "go", "build", "-trimpath", "-ldflags", "-extldflags -static"], capture_output=True, text=True)
+            if s.returncode != 0:
+                raise Exception(f"Failed to build go server: {s.stderr}")
+            print(s)
         else:
-            res = subprocess.Popen(["npm" , "run", f"build:{goos}-{goarch}"], cwd="frontend", stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        
-        def read_output(process, name):
-            for line in process.stdout:
-                print(f"{name}: {line.decode('utf-8')}", end='')
+            s = subprocess.run(["env", f"GOOS={goos}", f"GOARCH={arch}", "CGO_ENABLED=1", "go", "build"], capture_output=True, text=True)
+            if s.returncode != 0:
+                raise Exception(f"Failed to build go server: {s.stderr}")
+            print(s)
+    except Exception as err:
+        print("ERROR WHILE BUILDING GO")
+        print(err)
+        raise Exception("Error")
 
-        def read_error(process, name):
-            for line in process.stderr:
-                print(f"{name} (stderr): {line.decode('utf-8')}", end='')
+    server = "server"
+    filename = 's2-' + version
+    if goos == "windows":
+        filename += '.exe'
+        server += ".exe"
+    else:
+        filename += f'-{goarch}'
+    
+    dest = os.path.join(frontend, filename)
+    print(f"Compiled go server {server}, moving to {dest}")
+    os.rename(server, dest)
 
-        # Create threads to read the outputs concurrently
-        npm_stdout_thread = threading.Thread(target=read_output, args=(res, '[npm build]'))
-        npm_stderr_thread = threading.Thread(target=read_error, args=(res, '[npm build]'))
+    print("Copying entrypoint.py..")
+    shutil.copyfile("entrypoint.py", os.path.join("frontend", "server2", "entrypoint.py"))
+    print(f'Building client: {goos}-{goarch}')
+    if goos == 'windows':
+        res = subprocess.Popen(["npm" , "run", f"build:{goos}"], cwd="frontend", stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    else:
+        res = subprocess.Popen(["npm" , "run", f"build:{goos}-{goarch}"], cwd="frontend", stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    
+    def read_output(process, name):
+        for line in process.stdout:
+            print(f"{name}: {line.decode('utf-8')}", end='')
 
-        npm_stdout_thread.start()
-        npm_stderr_thread.start()
+    def read_error(process, name):
+        for line in process.stderr:
+            print(f"{name} (stderr): {line.decode('utf-8')}", end='')
 
-        npm_stdout_thread.join()
-        npm_stderr_thread.join()
-        
+    # Create threads to read the outputs concurrently
+    npm_stdout_thread = threading.Thread(target=read_output, args=(res, '[npm build]'))
+    npm_stderr_thread = threading.Thread(target=read_error, args=(res, '[npm build]'))
+
+    npm_stdout_thread.start()
+    npm_stderr_thread.start()
+
+    npm_stdout_thread.join()
+    npm_stderr_thread.join()
+    
 
 if __name__ == '__main__':
     main()

@@ -57,4 +57,4 @@ setup(
         "langchain-openai==0.1.2",
         "sentry-sdk===2.0.1"],
     include_package_data=True,
-    package_data={'zetaforge': ['utils/*.yaml', 'executables/*'],},)
+    package_data={'zetaforge': ['utils/*', 'executables/*'],},)

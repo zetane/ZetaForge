@@ -15,10 +15,15 @@ import platform
 import sys
 from zipfile import ZipFile
 import tarfile
+from .check_forge_dependencies import check_kube_svc
+from pkg_resources import resource_filename
 
 # BACKEND = resource_filename("")
 EXECUTABLES_PATH = os.path.join(Path(__file__).parent, 'executables')
 ssl._create_default_https_context = ssl._create_unverified_context
+
+BUILD_YAML = resource_filename("zetaforge", os.path.join('utils', 'build.yaml'))
+INSTALL_YAML = resource_filename("zetaforge", os.path.join('utils', 'install.yaml'))
 
 s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED), region_name='us-east-2')
 
@@ -192,6 +197,9 @@ def check_and_clean_files(directory, version):
             if file_version == version:
                 print(f"Found an existing install of version {version}")
             else:
+                print(f"Found a previous version of forge, uninstalling..")
+
+
                 file_path = os.path.join(directory, filename)
                 if os.path.isfile(file_path):
                     os.remove(file_path)
@@ -218,6 +226,14 @@ def check_and_clean_files(directory, version):
                 print(f"Found ZetaForge.app but did not find version {version}, removing previous app")
                 shutil.rmtree(os.path.join(EXECUTABLES_PATH, "zetaforge.app"))
 
+def remove_running_services():
+    print(f"Checking for existing kube services to remove..")
+    kube = check_kube_svc("weed") or check_kube_svc("registry") or check_kube_svc("argo-server", "argo")
+    if kube:
+        install = subprocess.run(["kubectl", "delete", "-f", INSTALL_YAML], capture_output=True, text=True)
+        print ("Removing install: ", {install.stdout})
+        build = subprocess.run(["kubectl", "delete", "-f", BUILD_YAML], capture_output=True, text=True)
+        print("Removing build: ", {build.stdout})
 
 def check_version(server_version, client_version):
     check_and_clean_files(EXECUTABLES_PATH, client_version)
