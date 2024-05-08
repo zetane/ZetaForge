@@ -6,6 +6,7 @@ import { createIPCHandler } from 'electron-trpc/main';
 import { release } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import "../../polyfill/crypto";
 import { startExpressServer } from "../../server/express.mjs";
 import { update } from './update';
 

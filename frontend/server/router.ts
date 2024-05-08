@@ -1,13 +1,11 @@
 import { TRPCError } from "@trpc/server";
 import { app, dialog } from 'electron';
 import fs from "fs/promises";
-import getMAC from "getmac";
 import path from "path";
-import sha256 from 'sha256';
 import { z } from 'zod';
 import { compileComputation, runTest, saveBlockSpecs } from './blockSerialization.js';
-import { readPipelines, readSpecs, s3Upload } from "./fileSystem.js";
-import { copyPipeline, getBlockPath, removeBlock, saveBlock, saveSpec } from './pipelineSerialization.js';
+import { readPipelines, readSpecs } from "./fileSystem.js";
+import { copyPipeline, getBlockPath, removeBlock, saveBlock, saveSpec, uploadParameterBlocks } from './pipelineSerialization.js';
 import { publicProcedure, router } from './trpc';
 
 export const appRouter = router({
@@ -176,18 +174,17 @@ export const appRouter = router({
       const {blockId, pipelinePath} = input;
       removeBlock(blockId, pipelinePath);
     }),
-  uploadToS3: publicProcedure
+  uploadParameterBlocks: publicProcedure
     .input(z.object({
-      filePath: z.string(),
+      executionId: z.string(),
+      pipelineSpecs: z.any(), 
     }))
     .mutation(async (opts) => {
       const {input} = opts;
-      const {filePath} = input;
+      const {executionId, pipelineSpecs} = input;
 
-      const res = await s3Upload(filePath)
-      return res;
+      return uploadParameterBlocks(executionId, pipelineSpecs);
     }),
- 
   compileComputation: publicProcedure
     .input(z.object({
       blockPath: z.string(),

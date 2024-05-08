@@ -8,6 +8,7 @@ import {
   filterDirectories,
   readJsonToObject,
 } from "./fileSystem.js";
+import { checkAndUpload } from "./s3.js";
 
 const BLOCK_SPECS = "specs_v1.json";
 
@@ -164,4 +165,32 @@ export async function getPipelineBlockPath(pipelinePath, blockId) {
       return blockPath;
     }
   }
+}
+
+
+export async function uploadParameterBlocks(executionId, pipelineSpecs) {
+  const nodes = pipelineSpecs.pipeline;
+  for (const nodeId in nodes) {
+    const node = nodes[nodeId];
+
+    const parameters = node.action?.parameters;
+
+    if (parameters) {
+      for (const paramKey in parameters) {
+        const param = parameters[paramKey];
+
+        if (param.type === "file") {
+          const filePath = param.value;
+          const fileName = path.basename(filePath);
+          const awsKey = `${executionId}/${fileName}`;
+
+          if (filePath && filePath.trim()) {
+            await checkAndUpload(awsKey, filePath);
+            param.value = `"${fileName}"`;
+          }
+        }
+      }
+    }
+  }
+  return pipelineSpecs;
 }
