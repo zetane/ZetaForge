@@ -158,7 +158,7 @@ def setup(server_version, client_version, driver, build_flag = True, install_fla
             raise Exception("Minikube not found!")
         minikube = subprocess.run(["minikube", "-p", "zetaforge", "start"], capture_output=True, text=True)
         if minikube.returncode != 0:
-            mixpanel_client.track_event("Setup Failure - Minikube Not Found")
+            mixpanel_client.track_event("Setup Failure - Cannot Start Minikube")
             time.sleep(0.5)
             print(minikube.stderr)
             raise Exception("Error while starting minikube")
@@ -284,7 +284,7 @@ def run_forge(server_version=None, client_version=None, server_path=None, client
         client_stdout_thread.join()
         client_stderr_thread.join()
 
-        mixpanel_client.track_event('Launch Successful', props={'Duration(seconds)': total_time})
+        mixpanel_client.track_event('Launch Successful')
 
     except KeyboardInterrupt: 
         print("Terminating servers..")
@@ -293,7 +293,7 @@ def run_forge(server_version=None, client_version=None, server_path=None, client
         total_time = (datetime.now() - time_start).total_seconds()
 
         try:
-            mixpanel_client.track_event('Launch Exit', props={'Duration(seconds)': total_time})
+            mixpanel_client.track_event('Launch End', props={'Duration(seconds)': total_time})
             time.sleep(2) # mixpanel instance is asynch, so making sure that it completes the call before tear down
         except:
             print("Mixpanel cannot track")
