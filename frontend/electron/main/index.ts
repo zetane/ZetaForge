@@ -33,6 +33,14 @@ process.env.VITE_PUBLIC = process.env.VITE_DEV_SERVER_URL
   ? join(process.env.DIST_ELECTRON, '../public')
   : process.env.DIST
 
+const targetValue = '--is_dev'
+const targetIndex = process.argv.indexOf(targetValue);
+if (targetIndex !== -1) {
+  const value = process.argv[targetIndex];
+  process.env.VITE_ZETAFORGE_IS_DEV = 'True'
+} else {
+  process.env.VITE_ZETAFORGE_IS_DEV = 'False'
+}
 
 // Disable GPU Acceleration for Windows 7
 if (release().startsWith('6.1')) app.disableHardwareAcceleration()

@@ -314,6 +314,10 @@ function startExpressServer() {
     }
 });
 
+app.get("/is-dev", async(req, res) => {
+  return res.send( !electronApp.isPackaged || (electronApp.isPackaged && process.env.VITE_ZETAFORGE_IS_DEV === 'True') )
+})
+
    
   
 

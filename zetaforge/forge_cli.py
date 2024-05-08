@@ -4,7 +4,7 @@ import argparse, os, json
 from pathlib import Path
 from .__init__ import __version__
 from colorama import init, Fore, Style
-
+from .mixpanel_client import mixpanel_client
 EXECUTABLES_PATH = os.path.join(Path(__file__).parent, 'executables')
 FRONT_END = os.path.join(EXECUTABLES_PATH, "frontend")
 
@@ -19,6 +19,7 @@ def main():
     parser.add_argument("--s2_path", "-s2",  help="Full path to local execution server. Note that this is an option for zetaforge developers, or advanced zetaforge users. If not passed, zetaforge will use the deployed application", default=None)
     parser.add_argument("--app_path", "-path",  help="Full path to local electron executable. Note that this is an option for zetaforge developers, or advanced zetaforge users. If not passed, zetaforge will use the deployed application", default=None)
     parser.add_argument("--driver", help="Defines which driver to use for kubernetes", default="docker-desktop")
+    parser.add_argument("--is_dev" , "-dev", action="store_true", help="If passed, the mixpanel events will have a field, is_dev that is set to be True")
     args = parser.parse_args()
 
     init()  # Initialize colorama
@@ -28,6 +29,7 @@ def main():
     client_path, server_path = get_launch_paths(server_versions[-1], client_versions[-1])
     if args.s2_path is not None:
         server_path = args.s2_path
+    mixpanel_client.set_env(args.is_dev)
     print(server_path)
     server_dir = os.path.dirname(server_path)
     print(server_dir)
@@ -39,11 +41,11 @@ def main():
         config = load_config(config_file)
         if config is None:
             print("Config not found! Running setup..")
-            config_file = setup(server_versions[-1], client_versions[-1], args.driver, server_path=args.s2_path)
+            config_file = setup(server_versions[-1], client_versions[-1], args.driver, server_path=args.s2_path, is_dev=args.is_dev)
             config = load_config(config_file)
 
         if config is not None:
-            run_forge(server_version=server_versions[-1], client_version=client_versions[-1], server_path=args.s2_path, client_path=args.app_path)
+            run_forge(server_version=server_versions[-1], client_version=client_versions[-1], server_path=args.s2_path, client_path=args.app_path, is_dev=args.is_dev)
         else:
             raise Exception("Config failed to load, please re-run `zetaforge setup`.")
     elif args.command == "teardown":
@@ -51,7 +53,7 @@ def main():
     elif args.command == 'purge':
         purge()
     elif args.command == 'setup':
-        setup(server_versions[-1], client_versions[-1], args.driver)
+        setup(server_versions[-1], client_versions[-1], args.driver, is_dev=args.is_dev)
     else:
         print('zetaforge:\t' + __version__)
         print("client:\t" + client_versions[-1])    
