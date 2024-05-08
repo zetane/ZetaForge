@@ -195,7 +195,7 @@ def setup(server_version, client_version, driver, build_flag = True, install_fla
 
     install_frontend_dependencies(client_version=client_version)
 
-    config_path = write_json(server_version, client_version, context, driver, server_path, is_dev)
+    config_path = write_json(server_version, client_version, context, driver, is_dev, s2_path=server_path)
 
     print(f"Setup complete, wrote config to {config_path}.")
     mixpanel_client.track_event("Setup Successful")
