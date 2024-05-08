@@ -62,7 +62,12 @@ export default function Navbar({ children }) {
   const running = data?.data;
 
   useEffect(() => {
-    if (!executions || !running) { return }
+    if (!executions || !running) { 
+      setExecutions((draft) => {
+        draft.executions = {}
+      })
+      return 
+    }
     for (let i = 0; i < running.length; i++) {
       const exec = running[i]
       const executionId = exec.Execution

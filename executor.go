@@ -444,6 +444,11 @@ func stopArgo(ctx context.Context, name string, client clientcmd.ClientConfig) e
 		},
 	)
 
+	if err != nil {
+		log.Printf("Failed to build an api client; err=%v", err)
+		return err
+	}
+
 	namespace, _, err := client.Namespace()
 
 	if err != nil {
@@ -460,6 +465,58 @@ func stopArgo(ctx context.Context, name string, client clientcmd.ClientConfig) e
 	if err != nil {
 		log.Printf("Failed to stop workflow %s; err=%v", name, err)
 		return err
+	}
+
+	return nil
+}
+
+func terminateArgo(ctx context.Context, client clientcmd.ClientConfig, db *sql.DB, name string, id int64) error {
+	ctx, cli, err := apiclient.NewClientFromOpts(
+		apiclient.Opts{
+			ClientConfigSupplier: func() clientcmd.ClientConfig {
+				return client
+			},
+			Context: ctx,
+		},
+	)
+	if err != nil {
+		log.Printf("Failed to build an api client; err=%v", err)
+		return err
+	}
+
+	namespace, _, err := client.Namespace()
+	if err != nil {
+		log.Printf("Failed to stop workflow %s; err=%v", name, err)
+		return err
+	}
+
+	serviceClient := cli.NewWorkflowServiceClient()
+	wf, err := serviceClient.GetWorkflow(ctx, &workflowpkg.WorkflowGetRequest{
+		Name:      name,
+		Namespace: namespace,
+	})
+	if err != nil {
+		log.Printf("Failed to get workflow %s; err=%v", name, err)
+		return err
+	}
+
+	if wf.Status.Phase != "Running" {
+		// Update the execution status in the database to "Terminated"
+		err := updateExecutionStatus(ctx, db, id, "Terminated")
+		if err != nil {
+			log.Printf("Failed to update execution status for workflow %s; err=%v", name, err)
+			return err
+		}
+	} else {
+		// Terminate the workflow
+		_, err = serviceClient.TerminateWorkflow(ctx, &workflowpkg.WorkflowTerminateRequest{
+			Name:      name,
+			Namespace: namespace,
+		})
+		if err != nil {
+			log.Printf("Failed to stop workflow %s; err=%v", name, err)
+			return err
+		}
 	}
 
 	return nil

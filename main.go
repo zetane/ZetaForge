@@ -358,6 +358,25 @@ func main() {
 
 		ctx.JSON(http.StatusOK, response)
 	})
+	execution.POST("/:executionId/terminate", func(ctx *gin.Context) {
+		executionId := ctx.Param("executionId")
+		res, err := getExecutionById(ctx.Request.Context(), db, executionId)
+
+		if err != nil {
+			log.Printf("Failed to get execution; err=%v", err)
+			ctx.String(err.Status(), err.Error())
+			return
+		}
+
+		argoErr := terminateArgo(ctx, client, db, res.Workflow.String, res.ID)
+		if argoErr != nil {
+			ctx.String(500, fmt.Sprintf("%v", argoErr))
+			return
+		}
+		response := newResponseExecutionsRow(res)
+
+		ctx.JSON(http.StatusOK, response)
+	})
 
 	pipeline := router.Group("/pipeline")
 	pipeline.POST("", func(ctx *gin.Context) {

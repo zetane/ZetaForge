@@ -2,6 +2,7 @@ import * as Sentry from "@sentry/electron/renderer";
 import { init as reactInit } from "@sentry/react";
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import App from "@/App";
 
 Sentry.init(
   {

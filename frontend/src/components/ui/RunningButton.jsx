@@ -25,6 +25,8 @@ export default function RunningButton() {
     executionsCount = Object.keys(executions.executions).length
   }
 
+  console.log(executions.executions)
+
   const svgOverride = { position: 'absolute', right: '15px', top: '5px'}
   return (
     <Button style={styles} size="sm" kind="secondary" onClick={() => modalPopper(<ExecutionDataGrid />)}>

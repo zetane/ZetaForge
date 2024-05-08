@@ -145,6 +145,28 @@ func (q *Queries) GetExecution(ctx context.Context, id int64) (Execution, error)
 	return i, err
 }
 
+const getExecutionByExecutionId = `-- name: GetExecutionByExecutionId :one
+SELECT id, pipeline, status, created, completed, json, deleted, executionid, workflow FROM Executions
+WHERE executionid = ?
+`
+
+func (q *Queries) GetExecutionByExecutionId(ctx context.Context, executionid string) (Execution, error) {
+	row := q.db.QueryRowContext(ctx, getExecutionByExecutionId, executionid)
+	var i Execution
+	err := row.Scan(
+		&i.ID,
+		&i.Pipeline,
+		&i.Status,
+		&i.Created,
+		&i.Completed,
+		&i.Json,
+		&i.Deleted,
+		&i.Executionid,
+		&i.Workflow,
+	)
+	return i, err
+}
+
 const listExecutions = `-- name: ListExecutions :many
 SELECT e.id, e.pipeline, e.status, e.created, e.completed, e.json, e.deleted, e.executionid, e.workflow, p.hash FROM Executions e
 INNER JOIN Pipelines p ON p.id = e.pipeline
@@ -252,7 +274,7 @@ func (q *Queries) ListPipelineExecutions(ctx context.Context, arg ListPipelineEx
 
 const listRunningExecutions = `-- name: ListRunningExecutions :many
 SELECT e.id, e.pipeline, e.status, e.created, e.completed, e.json, e.deleted, e.executionid, e.workflow FROM Executions e
-WHERE e.deleted = FALSE AND e.status = 'Running' AND e.completed is null
+WHERE e.deleted = FALSE AND e.status = 'Running' AND e.completed is null AND e.workflow is not null
 ORDER BY e.created DESC
 `
 

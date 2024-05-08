@@ -334,6 +334,16 @@ func listExecutions(ctx context.Context, db *sql.DB, organization string, uuid s
 	return res, nil
 }
 
+func getExecutionById(ctx context.Context, db *sql.DB, executionId string) (zdatabase.Execution, HTTPError) {
+	q := zdatabase.New(db)
+	res, err := q.GetExecutionByExecutionId(ctx, executionId)
+	if err != nil {
+		return zdatabase.Execution{}, InternalServerError{err.Error()}
+	}
+
+	return res, nil
+}
+
 func getExecution(ctx context.Context, db *sql.DB, organization string, uuid string, hash string, index int) (zdatabase.Execution, HTTPError) {
 	if index < 0 {
 		return zdatabase.Execution{}, BadRequest{"Negative index"}

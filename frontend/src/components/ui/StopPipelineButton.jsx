@@ -9,7 +9,7 @@ export default function StopPipelineButton() {
 
   const mutation = useMutation({
     mutationFn: async (pipeline, executionId) => {
-      return axios.post(`${import.meta.env.VITE_EXECUTOR}/pipeline/${pipeline.id}/${executionId}/stop`, pipeline)
+      return axios.post(`${import.meta.env.VITE_EXECUTOR}/pipeline/${pipeline.id}/${executionId}/terminate`, pipeline)
     },
   })
 

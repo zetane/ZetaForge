@@ -4,7 +4,7 @@ import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { useSetAtom } from "jotai";
 import { useImmerAtom } from "jotai-immer";
 import { DataTable, Table, TableHead, TableRow, TableHeader, TableBody, TableCell, Link, IconButton, Button } from "@carbon/react";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { PipelineStopButton } from "./PipelineStopButton";
 
 export const ExecutionDataGrid = () => {
@@ -15,24 +15,21 @@ export const ExecutionDataGrid = () => {
     setPipeline(selected)
   }
 
-  const rows = useMemo(() => {
-    const items = []
+  const items = []
 
-    for (const [key, value] of Object.entries(execution.executions)) {
-      const data = JSON.parse(value.Json)
-      const label = data?.metadata?.generateName
-      const stopAction = (<PipelineStopButton executionId={key}/>)
-      items.push({
-        id: key, 
-        name: <Link href="#" onClick={(key) => loadPipeline(key)}>{label}</Link>, 
-        created: new Date(value.Created * 1000).toLocaleString(), 
-        status: value.Status,
-        actions: stopAction
-      })
-    }
+  for (const [key, value] of Object.entries(execution?.executions)) {
+    const data = JSON.parse(value.Json)
+    const label = data?.metadata?.generateName
+    const stopAction = (<PipelineStopButton executionId={key} />)
+    items.push({
+      id: key,
+      name: <Link href="#" onClick={(key) => loadPipeline(key)}>{label}</Link>,
+      created: new Date(value.Created * 1000).toLocaleString(),
+      status: value.Status,
+      actions: stopAction
+    })
+  }
 
-    return items
-  }, [execution?.executions])
   const headers = [
     {
       key: 'name',
@@ -57,7 +54,7 @@ export const ExecutionDataGrid = () => {
       passiveModal={true}
       modalClass="custom-modal-size"
     >
-      <DataTable rows={rows} headers={headers}>
+      <DataTable rows={items} headers={headers}>
         {({ rows, headers, getTableProps, getHeaderProps, getRowProps }) => (
           <Table {...getTableProps()}>
             <TableHead>

@@ -7,23 +7,24 @@ export const PipelineStopButton = ({executionId}) => {
   console.log("key: ", executionId)
   const mutation = useMutation({
     mutationFn: async () => {
-      return axios.delete(`${import.meta.env.VITE_EXECUTOR}/execution/${executionId}`)
+      return axios.post(`${import.meta.env.VITE_EXECUTOR}/execution/${executionId}/terminate`)
     },
   })
 
   const svgOverride = { position: 'absolute', right: '15px', top: '5px'}
   const buttonStyles = { margin: '5px' }
 
-  let stopText = "Stop"
+  let stopButton = (<div>
+      Stop
+      <Stop size="20" style={svgOverride} />
+    </div>)
   if (mutation.isLoading) {
-    stopText = "Stopping.."
+    stopButton = (<div>"Stopping.."</div>)
   }
 
   return (
     <Button size="sm" style={buttonStyles} disabled={mutation.isLoading} onClick={() => {mutation.mutateAsync()} }>
-      Stop
-      <Stop size="20" style={svgOverride} />
+      { stopButton }
     </Button>
   )
-
 }
