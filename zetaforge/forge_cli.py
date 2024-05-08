@@ -41,7 +41,7 @@ def main():
         config = load_config(config_file)
         if config is None:
             print("Config not found! Running setup..")
-            config_file = setup(server_versions[-1], client_versions[-1], args.driver, server_path=args.s2_path)
+            config_file = setup(server_versions[-1], client_versions[-1], args.driver, server_path=args.s2_path, is_dev=args.is_dev)
             config = load_config(config_file)
 
         if config is not None:

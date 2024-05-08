@@ -35,12 +35,13 @@ INSTALL_YAML = resource_filename("zetaforge", os.path.join('utils', 'install.yam
 EXECUTABLES_PATH = os.path.join(Path(__file__).parent, 'executables')
 FRONT_END = os.path.join(EXECUTABLES_PATH, "frontend")
 
-def write_json(server_version, client_version, context, driver, s2_path=None):
+def write_json(server_version, client_version, context, driver, is_dev, s2_path=None):
     if s2_path:
         server_path = s2_path
     else:
         _, server_path = get_launch_paths(server_version, client_version)
-    config = create_config_json(os.path.dirname(server_path), context, driver)
+    config = create_config_json(os.path.dirname(server_path), context, driver, is_dev)
+    return config
 #changes the ZetaforgeIsDev in config.json, it's implemented to prevent certain edge cases.
 def change_env_config(server_version, client_version, env):
     _, server_path = get_launch_paths(server_version, client_version)
@@ -147,7 +148,6 @@ def setup(server_version, client_version, driver, build_flag = True, install_fla
     print("CWD: ", os.path.abspath(os.getcwd()))
     mixpanel_client.track_event('Setup Initiated')
 
-    context = select_kubectl_context()
 
     if driver == "minikube":
         context = "zetaforge"
@@ -195,7 +195,7 @@ def setup(server_version, client_version, driver, build_flag = True, install_fla
 
     install_frontend_dependencies(client_version=client_version)
 
-    config_path = write_json(server_version, client_version, context, driver, server_path)
+    config_path = write_json(server_version, client_version, context, driver, server_path, is_dev)
 
     print(f"Setup complete, wrote config to {config_path}.")
     mixpanel_client.track_event("Setup Successful")
@@ -208,7 +208,7 @@ def run_forge(server_version=None, client_version=None, server_path=None, client
     global time_start
     time_start = datetime.now()
     mixpanel_client.track_event('Launch Initiated')
-
+    change_env_config(server_version, client_version, is_dev)
     #init is called for collarama library, better logging.
     init()
 
@@ -366,12 +366,4 @@ def create_config_json(s2_path, context, driver, is_dev):
 
     return file_path
 
-def generate_distinct_id():
-    seed = 0
-    try:
-        seed = uuid.getnode()
-    except:
-        seed = 0
-        
-    distinct_id = sha256(str(seed).encode('utf-8')).hexdigest()
-    return distinct_id
+
