@@ -135,6 +135,9 @@ func setupSentry() {
 }
 
 func main() {
+	//Initialize mixpanelClient only once(it's singleton)
+	ctx := context.Background()
+	mixpanelClient = InitMixpanelClient("4c09914a48f08de1dbe3dc4dd2dcf90d", ctx)
 	setupSentry()
 	file, err := os.ReadFile("config.json")
 	if err != nil {

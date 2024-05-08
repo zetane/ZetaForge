@@ -12,6 +12,7 @@ import ("math/big"
 "log"
 "github.com/kaganAtZetane/mixpanel-go"
 "runtime"
+"sync"
 )
 
 
@@ -83,51 +84,56 @@ type MixpanelClient struct{
 	IsDev bool
 }
 
+//mixpanelClient is now a singleton instance
+var (
+	once           sync.Once
+	mixpanelClient *MixpanelClient
+)
+
 func InitMixpanelClient(token string, ctx context.Context) *MixpanelClient {
-	client := mixpanel.NewApiClient(token)
-	file, err := os.ReadFile("config.json")
-	
-	var isDev bool
-	var enabled bool
-	if err != nil {
-		//theoratically, the code should never reach at this statement, since long before, a lack of config.json will throw an exception
-        fmt.Println("Error opening file:", err)
-        enabled = false
-	}
+	once.Do(func() {
+		client := mixpanel.NewApiClient(token)
+		file, err := os.ReadFile("config.json")
 
-	var raw map[string]json.RawMessage
-	
-    if err := json.Unmarshal(file, &raw); err != nil {
-        log.Fatalf("Failed to parse JSON: %v", err)
-		enabled = false
-    }
+		var isDev bool
+		enabled := true
+		if err != nil {
+			fmt.Println("Error opening file:", err)
+			enabled = false
+		}
 
-	var mixpanelConfig MixpanelJsonConfig
+		var raw map[string]json.RawMessage
 
-	//if the field is not provided, then is_dev is set to be true
-	if raw["ZetaforgeIsDev"] != nil {
-        
-        if err := json.Unmarshal(raw["ZetaforgeIsDev"], &isDev); err != nil {
-            log.Fatalf("Failed to parse ZetaforgeIsDev field: %v", err)
-        }
-        mixpanelConfig.ZetaforgeIsDev = isDev
-		//if the field is not provided in config.json, then we automatically set it to true
-    } else {
-        mixpanelConfig.ZetaforgeIsDev = true
-    }
+		if err := json.Unmarshal(file, &raw); err != nil {
+			log.Fatalf("Failed to parse JSON: %v", err)
+			enabled = false
+		}
 
+		var mixpanelConfig MixpanelJsonConfig
 
-	
-	distinctID := generateDistinctID()
-	var mixpanelClient *MixpanelClient
-	mixpanelClient = &MixpanelClient{
-		Client: client,
-		DistinctID: distinctID,
-		Token: token,
-		Enabled: enabled,
-		IsDev: mixpanelConfig.ZetaforgeIsDev,
-	}
-	mixpanelClient.SetPeopleProperties(ctx,  map[string]any{ "$ip": 1})
+		if raw["ZetaforgeIsDev"] != nil {
+			if err := json.Unmarshal(raw["ZetaforgeIsDev"], &isDev); err != nil {
+				log.Fatalf("Failed to parse ZetaforgeIsDev field: %v", err)
+			}
+			mixpanelConfig.ZetaforgeIsDev = isDev
+		} else {
+			mixpanelConfig.ZetaforgeIsDev = true
+		}
+
+		distinctID := generateDistinctID()
+		mixpanelClient = &MixpanelClient{
+			Client:     client,
+			DistinctID: distinctID,
+			Token:      token,
+			Enabled:    enabled,
+			IsDev:      mixpanelConfig.ZetaforgeIsDev,
+		}
+		mixpanelClient.SetPeopleProperties(ctx, map[string]interface{}{"$ip": 1})
+	})
+	return mixpanelClient
+}
+
+func GetMixpanelClient() *MixpanelClient {
 	return mixpanelClient
 }
 
@@ -183,4 +189,8 @@ func (m *MixpanelClient) TrackEvent(ctx context.Context, eventName string, prope
 	}
 	return err
 }
+
+
+
+
 

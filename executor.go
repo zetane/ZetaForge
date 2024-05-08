@@ -319,8 +319,9 @@ func streaming(ctx context.Context, sink string, name string, room string, clien
 }
 
 func runArgo(ctx context.Context, workflow *wfv1.Workflow, sink string, pipeline string, execution int64, client clientcmd.ClientConfig, db *sql.DB, hub *Hub) (*wfv1.Workflow, error) {
-	mixpanelClient := InitMixpanelClient("4c09914a48f08de1dbe3dc4dd2dcf90d", ctx)
-
+	//mixpanelClient is singleton, so a new instance won't be created.
+	mixpanelClient := GetMixpanelClient()
+	
 	
 	
 	ctx, cli, err := apiclient.NewClientFromOpts(
