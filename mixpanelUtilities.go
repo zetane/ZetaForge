@@ -94,7 +94,7 @@ func InitMixpanelClient(token string, ctx context.Context) *MixpanelClient {
 	once.Do(func() {
 		client := mixpanel.NewApiClient(token)
 		file, err := os.ReadFile("config.json")
-
+defer file.Close()
 		var isDev bool
 		enabled := true
 		if err != nil {
