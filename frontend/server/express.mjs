@@ -412,6 +412,71 @@ app.get("/is-dev", async(req, res) => {
     res.send(history);
   });
 
+  
+  
+  app.post("/get-specs", (req, res) => {
+    const { blockPath } = req.body;
+    const specsPath = path.join(blockPath, "specs_v1.json");
+  
+    fs.readFile(specsPath, 'utf8', (err, data) => {
+      if (err) {
+        console.error("Failed to read specs file:", err);
+        res.status(500).send({ error: "Failed to read specs file", message: err.message });
+        return;
+      }
+  
+      try {
+        const specs = JSON.parse(data);
+        res.json(specs);
+      } catch (parseError) {
+        console.error("Error parsing specs JSON:", parseError);
+        res.status(500).send({ error: "Error parsing specs JSON", message: parseError.message });
+      }
+    });
+  });
+  
+
+  
+  
+  app.post("/update-specs", (req, res) => {
+    const { blockPath, specs } = req.body;
+    const filePath = path.join(blockPath, "specs_v1.json");
+    const data = JSON.stringify(specs, null, 2); // Pretty print JSON
+  
+    fs.writeFile(filePath, data, 'utf8', (err) => {
+      if (err) {
+        console.error("Error writing to file:", err);
+        res.status(500).send({ error: "Error writing specs file", message: err.message });
+        return;
+      }
+      res.send({ message: "Specs updated successfully" });
+    });
+  });
+
+  app.get("/get-chat-history-index", (req, res) => {
+    const { blockPath } = req.query;
+    const filePath = path.join(blockPath, "computations.py");
+  
+    fs.readFile(filePath, 'utf8', (err, data) => {
+      if (err) {
+        console.error("Error reading file:", err);
+        res.status(500).send({ error: "Error reading file" });
+        return;
+      }
+  
+      const indexMatch = data.match(/# Chat history index: (\d+)/);
+      if (indexMatch && indexMatch[1]) {
+        res.send({ chatHistoryIndex: parseInt(indexMatch[1], 10) });
+      } else {
+        // If the index is not found, send a default value
+        res.send({ chatHistoryIndex: -1 });  // Or any other default value you consider appropriate
+      }
+    });
+  });
+
+  
+
+
   app.post("/api/call-agent", async (req, res) => {
     const { userMessage, agentName, conversationHistory, apiKey} = req.body
     console.log("USER MESSAGE", userMessage);
@@ -535,7 +600,8 @@ app.get("/is-dev", async(req, res) => {
 
   app.post("/new-block-react", (req, res) => {
     const data = req.body;
-
+  
+    // Function to unescape special characters in the script
     function unescape(s) {
       return s
         .replace(/\\n/g, "\n")
@@ -543,18 +609,21 @@ app.get("/is-dev", async(req, res) => {
         .replace(/\\"/g, '"')
         .replace(/\\\\/g, "\\");
     }
-
+  
     let folderPath = data.block_name;
     const filePath = path.join(data.blockPath, "computations.py");
-    const computations_script = unescape(data.computations_script);
-
+  
+    // Prepend a comment with the chat history index to the computations script
+    const computations_script = `# Chat history index: ${data.chatHistoryIndex}\n` + unescape(data.computations_script);
+  
+    // Write the updated script to the file
     fs.writeFile(filePath, computations_script, (err) => {
       if (err) {
         console.error("Error writing data to file:", err);
         res.status(500).send({ error: "Error writing data to file" });
         return;
       }
-      res.send({log: "Saved compute file to " + folderPath});
+      res.send({ log: "Saved compute file to " + folderPath });
     });
   });
 

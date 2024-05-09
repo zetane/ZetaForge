@@ -1,11 +1,32 @@
 import { darkModeAtom } from "@/atoms/themeAtom";
 import { EditorView } from "@codemirror/view";
 import { loadLanguage } from "@uiw/codemirror-extensions-langs";
-import { basicDark, basicLight } from '@uiw/codemirror-theme-basic';
+import { githubLight } from '@uiw/codemirror-theme-github';
+import { vscodeDark } from '@uiw/codemirror-theme-vscode'
+
 import CodeMirror from "@uiw/react-codemirror";
 import { atom, useAtom } from "jotai";
 
-const themeAtom = atom((get) => get(darkModeAtom) ? basicDark : basicLight);
+
+const editorBackgroundTheme = EditorView.theme({
+  ".cm-content": {
+    backgroundColor: "var(--beCodeEditorBackground)",
+    "& ::selection": {
+      backgroundColor: "#ffcc00",
+    }
+  }
+});
+
+const viewerBackgroundTheme = EditorView.theme({
+  ".cm-content": {
+    backgroundColor: "var(--beCodeViewerBackground)",
+    "& ::selection": {
+      backgroundColor: "#ffcc00",
+    }
+  }
+});
+
+const themeAtom = atom((get) => get(darkModeAtom) ? vscodeDark : githubLight);
 
 export const ViewerCodeMirror = ({ code }) => {
   const [theme] = useAtom(themeAtom);
@@ -13,7 +34,8 @@ export const ViewerCodeMirror = ({ code }) => {
     <CodeMirror
       value={code}
       theme={theme}
-      extensions={[loadLanguage("python")]}
+      className="cm-custom-viewer"
+      extensions={[loadLanguage("python"), viewerBackgroundTheme]}
       readOnly={true}
       basicSetup={{
         lineNumbers: true,
@@ -35,7 +57,7 @@ export const ViewerCodeMirror = ({ code }) => {
         highlightSelectionMatches: false,
         closeBracketsKeymap: false,
         defaultKeymap: false,
-        searchKeymap: false,
+        searchKeymap: true,
         historyKeymap: false,
         foldKeymap: false,
         completionKeymap: false,
@@ -51,10 +73,13 @@ export const EditorCodeMirror = ({ code, onChange }) => {
   return (
     <CodeMirror
       value={code}
-      extensions={[loadLanguage("python")]}
+      extensions={[loadLanguage("python"), editorBackgroundTheme]}
+      className="cm-custom-editor"
       basicSetup={{
         tabSize: 2,
         highlightActiveLine: false,
+        highlightSelectionMatches: true,
+        drawSelection: false,
       }}
       theme={theme}
       onChange={onChange}
@@ -90,7 +115,7 @@ export const LogsCodeMirror = ({ code, onUpdate }) => {
         highlightSelectionMatches: false,
         closeBracketsKeymap: false,
         defaultKeymap: false,
-        searchKeymap: false,
+        searchKeymap: true,
         historyKeymap: false,
         foldKeymap: false,
         completionKeymap: false,

@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "@sentry/electron": "^4.22.0",
+    "@uiw/codemirror-theme-github": "^4.21.25",
     "@sentry/react": "^7.112.2",
     "electron-trpc": "^0.5.2",
     "electron-updater": "^6.1.1",
@@ -52,7 +53,7 @@
     "@types/sha256": "^0.2.2",
     "@uiw/codemirror-extensions-langs": "^4.21.21",
     "@uiw/codemirror-theme-basic": "^4.21.24",
-    "@uiw/codemirror-theme-vscode": "^4.21.21",
+    "@uiw/codemirror-theme-vscode": "^4.21.25",
     "@uiw/react-codemirror": "^4.21.21",
     "@vitejs/plugin-react": "^4.0.4",
     "autoprefixer": "^10.4.16",

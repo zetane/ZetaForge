@@ -3,6 +3,7 @@ import { Code, View } from "@carbon/icons-react"
 import { FileBlock } from "./FileBlock";
 import { useImmerAtom } from "jotai-immer";
 
+
 const isTypeDisabled = (action) => {
   if (!action.parameters) {
     return false
@@ -72,6 +73,7 @@ const BlockGenerator = ({ block, openView, id, historySink, pipelineAtom}) => {
             openView={openView}
             actions={!disabled} 
             src={iframeSrc}
+            blockEvents={block.events}
           />
           <div className="block-body">
             <div className="block-io">
@@ -97,21 +99,33 @@ const BlockPreview = ({id, src}) => {
   )
 }
 
-const BlockTitle = ({ name, id, color, openView, actions, src}) => {
+
+const BlockTitle = ({ name, id, color, openView, actions, src, blockEvents }) => {
+  const handleViewClick = () => {
+    if (!src) {
+      // Convert blockEvents to a string and display it in an alert
+      alert("Block Event: " + JSON.stringify(blockEvents, null, 2));
+    } else {
+      // If source URL is available, open it in a new tab
+      window.open(src, '_blank');
+    }
+  };
+
   let actionContainer = (
     <div className="action-container">
       <button id="btn_open_code" className="view-btn" onClick={() => openView(id)}><Code size={20}/></button>
-      <a href={src} target="_blank" rel="noopener noreferrer"><button id="btn_show_view" className="view-btn"><View size={20}/></button></a>
+      <button id="btn_show_view" className="view-btn" onClick={handleViewClick}><View size={20}/></button>
     </div>
-  )
+  );
 
   return (
     <div className="title-box" style={{ backgroundColor: color }}>
       <span>{name}</span>
-      { actions && actionContainer }
+      {actions && actionContainer}
     </div>
-  )
+  );
 };
+
 const parseHtmlToInputs = (html) => {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
@@ -242,9 +256,9 @@ const InputField = ({ type, value, name, step, parameterName, onChange }) => {
             onChange={handleChange}
             className="input-element"
             style={{
-              minWidth: '200px', // Set the minimum width
+              minWidth: '200px', 
               padding: '10px',
-              paddingRight: '28px' // Make room for the toggle icon
+              paddingRight: '28px'
             }}
           />
           <button
@@ -294,6 +308,9 @@ const BlockContent = ({ html, block, onInputChange }) => {
       {parsedInputs.map((input, index) => {
         const parameterName = input.parameterName;
         const value = block.action?.parameters[parameterName]?.value || '';
+        console.log(block)
+        console.log("parameter Name", parameterName)
+        console.log(parsedInputs)
         return (
           <InputField
             key={index}
