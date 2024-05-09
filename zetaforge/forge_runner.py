@@ -148,7 +148,6 @@ def setup(server_version, client_version, driver, build_flag = True, install_fla
     print("CWD: ", os.path.abspath(os.getcwd()))
     mixpanel_client.track_event('Setup Initiated')
 
-
     if driver == "minikube":
         context = "zetaforge"
         if not check_minikube():
@@ -172,12 +171,10 @@ def setup(server_version, client_version, driver, build_flag = True, install_fla
             switch_context = subprocess.run(["kubectl", "config", "use-context", f"{context}"], capture_output=True, text=True)
             mixpanel_client.track_event("Setup - Kubectl Found")
         else:
-            print("Kubectl not found. Please install docker-desktop and enable kubernetes, or ensure that kubectl installed and is able to connect to a working kubernetes cluster.")
+            print("Kubectl not found. Please install docker-desktop, orbstack, or minikube and enable kubernetes, or ensure that kubectl installed and is able to connect to a working kubernetes cluster.")
             mixpanel_client.track_event("Setup Failure - Kubectl Not Found")
             time.sleep(0.5)
             raise EnvironmentError("Kubectl not found!")
-        
-        
 
         in_context = (switch_context.returncode == 0)
 
@@ -204,15 +201,12 @@ def setup(server_version, client_version, driver, build_flag = True, install_fla
 
 #dev version is only passed, when a developer wants to pass a local version(for e.g. dev_path=./s2-v2.3.5-amd64)
 def run_forge(server_version=None, client_version=None, server_path=None, client_path=None, is_dev=False):
-    
     global time_start
     time_start = datetime.now()
     mixpanel_client.track_event('Launch Initiated')
     change_env_config(server_version, client_version, is_dev)
     #init is called for collarama library, better logging.
     init()
-
-    
 
     if server_path is None:
         _, server_path = get_launch_paths(server_version, client_version)
@@ -315,6 +309,12 @@ def teardown(driver):
             raise Exception("Error while starting minikube")
 
     print("Completed teardown!")
+
+def uninstall():
+    install = subprocess.run(["kubectl", "delete", "-f", INSTALL_YAML], capture_output=True, text=True)
+    print ("Removing install: ", {install.stdout})
+    build = subprocess.run(["kubectl", "delete", "-f", BUILD_YAML], capture_output=True, text=True)
+    print("Removing build: ", {build.stdout})
 
 
 def check_expected_services(config):
