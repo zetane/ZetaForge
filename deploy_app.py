@@ -90,8 +90,8 @@ def main():
             if goarch == 'arm64' and (os_ == 'windows' or os_ == 'linux'):
                 continue
             compile_app(version, os_, goarch)
-            package_name = get_package_version(version, os_, goarch)
-            upload_to_s3(os.path.join('frontend', 'release', version, package_name), package_name)
+            upload_file = get_download_file(version, os_, goarch)
+            upload_to_s3(os.path.join('frontend', 'release', version, upload_file), upload_file)
     
     
 def compile_app(version, goos, goarch):

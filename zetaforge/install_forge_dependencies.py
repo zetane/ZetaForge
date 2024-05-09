@@ -228,11 +228,14 @@ def check_and_clean_files(directory, version):
 
 def remove_running_services():
     print(f"Checking for existing kube services to remove..")
-    kube = check_kube_svc("weed") or check_kube_svc("registry") or check_kube_svc("argo-server", "argo")
-    if kube:
-        install = subprocess.run(["kubectl", "delete", "-f", INSTALL_YAML], capture_output=True, text=True)
-        print ("Removing install: ", {install.stdout})
+    registry = check_kube_svc("registry")
+    argo = check_kube_svc("argo-server", "argo")
+    if registry:
         build = subprocess.run(["kubectl", "delete", "-f", BUILD_YAML], capture_output=True, text=True)
+        print("Removing build: ", {build.stdout})
+
+    if argo:
+        build = subprocess.run(["kubectl", "delete", "-f", INSTALL_YAML], capture_output=True, text=True)
         print("Removing build: ", {build.stdout})
 
 def check_version(server_version, client_version):

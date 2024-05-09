@@ -1,4 +1,4 @@
-from .forge_runner import run_forge, teardown, purge, setup
+from .forge_runner import run_forge, teardown, purge, setup, uninstall
 from .install_forge_dependencies import check_version, get_launch_paths, remove_running_services
 import argparse, os, json
 from pathlib import Path
@@ -15,7 +15,7 @@ def main():
     setup: Creates necessary containers for zetaforge. Note that launch handles this automatically. This is an advanced command for zetaforge developers.
     version:\tPrints server, frontend and pip versions"""
     parser = argparse.ArgumentParser(description='zetaforge launcher')
-    parser.add_argument("command", choices=["launch", "teardown", "purge", "setup", "version"], help=help_)
+    parser.add_argument("command", choices=["launch", "teardown", "purge", "setup", "uninstall", "version"], help=help_)
     parser.add_argument("--s2_path", "-s2",  help="Full path to local execution server. Note that this is an option for zetaforge developers, or advanced zetaforge users. If not passed, zetaforge will use the deployed application", default=None)
     parser.add_argument("--app_path", "-path",  help="Full path to local electron executable. Note that this is an option for zetaforge developers, or advanced zetaforge users. If not passed, zetaforge will use the deployed application", default=None)
     parser.add_argument("--driver", help="Defines which driver to use for kubernetes", default="docker-desktop")
@@ -55,6 +55,8 @@ def main():
         purge()
     elif args.command == 'setup':
         setup(server_versions[-1], client_versions[-1], args.driver, is_dev=args.is_dev)
+    elif args.command == 'uninstall':
+        uninstall()
     else:
         print('zetaforge:\t' + __version__)
         print("client:\t" + client_versions[-1])    
