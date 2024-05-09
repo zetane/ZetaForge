@@ -14,9 +14,9 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"server/zjson"
 	"strings"
 	"time"
-	"server/zjson"
 
 	"github.com/argoproj/argo-workflows/v3/pkg/apiclient"
 	workflowpkg "github.com/argoproj/argo-workflows/v3/pkg/apiclient/workflow"
@@ -321,9 +321,7 @@ func streaming(ctx context.Context, sink string, name string, room string, clien
 func runArgo(ctx context.Context, workflow *wfv1.Workflow, sink string, pipeline string, execution int64, client clientcmd.ClientConfig, db *sql.DB, hub *Hub) (*wfv1.Workflow, error) {
 	//mixpanelClient is singleton, so a new instance won't be created.
 	mixpanelClient := GetMixpanelClient()
-	
-	
-	
+
 	ctx, cli, err := apiclient.NewClientFromOpts(
 		apiclient.Opts{
 			ClientConfigSupplier: func() clientcmd.ClientConfig {
@@ -374,8 +372,7 @@ func runArgo(ctx context.Context, workflow *wfv1.Workflow, sink string, pipeline
 		}
 
 		if workflow.Status.Phase.Completed() {
-			
-			
+
 			log.Printf("Status: Completed")
 			mixpanelClient.TrackEvent(ctx, "Run Completed", map[string]any{})
 			break
@@ -605,7 +602,7 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 
 	log.Printf("*** Writing pipeline history to: %v", pipeline.Sink)
 
-	s3key := pipeline.Id + "/" + executionId
+	s3key := executionId
 
 	workflow, blocks, err := translate(ctx, pipeline, "org", cfg, s3key)
 	if err != nil {
@@ -629,8 +626,6 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 		return
 	}
 
-	executionFiles := s3key
-
 	eg, egCtx := errgroup.WithContext(ctx)
 	eg.SetLimit(runtime.NumCPU())
 
@@ -639,7 +634,7 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 		log.Printf("Path: %s", path)
 		log.Printf("Image: %s", image)
 		if _, err := os.Stat(filepath.Join(path, cfg.ComputationFile)); err != nil {
-			deleteFiles(ctx, executionFiles, uploadedFiles, cfg)
+			deleteFiles(ctx, s3key, uploadedFiles, cfg)
 			log.Printf("Computation file does not exist; err=%v", err)
 			return
 		}
@@ -652,7 +647,7 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 
 		name := s3key + "/" + filepath.Base(path) + ".py"
 		if err := upload(ctx, filepath.Join(path, cfg.ComputationFile), name, cfg); err != nil {
-			deleteFiles(ctx, executionFiles, uploadedFiles, cfg)
+			deleteFiles(ctx, s3key, uploadedFiles, cfg)
 			log.Printf("Failed to upload computation file; err=%v", err)
 			return
 		}
@@ -678,7 +673,7 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 		return
 	}
 
-	if err := downloadFiles(ctx, pipeline.Sink, executionFiles, cfg); err != nil {
+	if err := downloadFiles(ctx, pipeline.Sink, s3key, cfg); err != nil {
 		log.Printf("Failed to download files; err=%v", err)
 		return
 	}
@@ -701,7 +696,7 @@ func cloudExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 	}
 	defer hub.CloseRoom(pipeline.Id)
 
-	s3key := pipeline.Id + "/" + executionId
+	s3key := executionId
 
 	workflow, _, err := translate(ctx, pipeline, "org", cfg, s3key)
 	if err != nil {
