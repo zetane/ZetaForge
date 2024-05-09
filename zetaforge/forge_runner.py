@@ -292,7 +292,6 @@ def run_forge(server_version=None, client_version=None, server_path=None, client
         except:
             print("Mixpanel cannot track")
 
-        server.kill()
         client.kill()
 
 
