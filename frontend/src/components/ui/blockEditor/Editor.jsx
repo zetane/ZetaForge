@@ -21,6 +21,7 @@ import DirectoryViewer from "./DirectoryViewer";
 import ComputationsFileEditor from './ComputationsFileEditor';
 import TestLogs from "./TestLogs";
 import SpecsInterface from "./SpecsInterface";
+import { trpc } from '@/utils/trpc';
 
 export default function Editor() {
   const serverAddress = "http://localhost:3330";
