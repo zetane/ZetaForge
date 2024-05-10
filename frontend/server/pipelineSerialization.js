@@ -3,7 +3,6 @@ import { app } from "electron";
 import fs from "fs/promises";
 import path from "path";
 import process from "process";
-import { SPECS_FILE_NAME } from "../utils/constants.js";
 import { setDifference } from "../utils/set.js";
 import {
   fileExists,

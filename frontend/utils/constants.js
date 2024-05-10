@@ -1,1 +1,0 @@
-export const SPECS_FILE_NAME = "specs.json"
