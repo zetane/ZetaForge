@@ -56,8 +56,8 @@ export default function LoadBlockButton() {
 
     }
     const files = fileInput.current.files
-    for (const key in files) {
-      const file = files[key]
+    for (let i = 0; i < files.length; i++) {
+      const file = files.item(i)
       let relPath = file.webkitRelativePath
       relPath = relPath.replaceAll('\\', '/')
       const name = removeFileExtension(file.name)
