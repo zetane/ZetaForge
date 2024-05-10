@@ -38,6 +38,7 @@ var migrations embed.FS
 
 type Config struct {
 	IsLocal         bool
+	IsDev           bool
 	ServerPort      int
 	KanikoImage     string
 	WorkDir         string

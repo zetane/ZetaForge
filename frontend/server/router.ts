@@ -5,7 +5,7 @@ import path from "path";
 import { z } from 'zod';
 import { compileComputation, runTest, saveBlockSpecs } from './blockSerialization.js';
 import { readPipelines, readSpecs } from "./fileSystem.js";
-import { copyPipeline, getBlockPath, removeBlock, saveBlock, saveSpec, uploadParameterBlocks } from './pipelineSerialization.js';
+import { copyPipeline, getBlockPath, removeBlock, saveBlock, saveSpec, uploadBlocks } from './pipelineSerialization.js';
 import { publicProcedure, router } from './trpc';
 
 export const appRouter = router({
@@ -178,13 +178,14 @@ export const appRouter = router({
     .input(z.object({
       pipelineId: z.string(),
       executionId: z.string(),
-      pipelineSpecs: z.any(), 
+      pipelineSpecs: z.any(),
+      buffer: z.string(), 
     }))
     .mutation(async (opts) => {
       const {input} = opts;
-      const {pipelineId, executionId, pipelineSpecs} = input;
+      const {pipelineId, executionId, pipelineSpecs, buffer} = input;
 
-      return uploadParameterBlocks(pipelineId, executionId, pipelineSpecs);
+      return uploadBlocks(pipelineId, executionId, pipelineSpecs, buffer);
     }),
   compileComputation: publicProcedure
     .input(z.object({

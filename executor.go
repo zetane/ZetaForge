@@ -629,29 +629,17 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 	eg, egCtx := errgroup.WithContext(ctx)
 	eg.SetLimit(runtime.NumCPU())
 
-	uploadedFiles := []string{}
 	for path, image := range blocks {
+		path := path
+		image := image
 		log.Printf("Path: %s", path)
 		log.Printf("Image: %s", image)
-		if _, err := os.Stat(filepath.Join(path, cfg.ComputationFile)); err != nil {
-			deleteFiles(ctx, s3key, uploadedFiles, cfg)
-			log.Printf("Computation file does not exist; err=%v", err)
-			return
-		}
 
 		if len(image) > 0 {
 			eg.Go(func() error {
 				return buildImage(egCtx, path, image, cfg)
 			})
 		}
-
-		name := s3key + "/" + filepath.Base(path) + ".py"
-		if err := upload(ctx, filepath.Join(path, cfg.ComputationFile), name, cfg); err != nil {
-			deleteFiles(ctx, s3key, uploadedFiles, cfg)
-			log.Printf("Failed to upload computation file; err=%v", err)
-			return
-		}
-		uploadedFiles = append(uploadedFiles, name)
 	}
 
 	if err := eg.Wait(); err != nil {

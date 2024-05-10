@@ -1,5 +1,6 @@
 {
 	"IsLocal":true,
+	"IsDev": true,
 	"ServerPort": 8080,
 	"KanikoImage":"gcr.io/kaniko-project/executor:latest",
 	"WorkDir":"/app",
@@ -13,6 +14,5 @@
 	"Local": {
 		"BucketPort": 8333,
 		"Driver": "docker-desktop"
-	},
-	"ZetaforgeIsDev": true
+	}
 } 
