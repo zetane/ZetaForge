@@ -8,9 +8,9 @@ import { HeaderMenuItem } from "@carbon/react";
 import { useAtom } from "jotai";
 import { useImmerAtom } from 'jotai-immer';
 import { useRef } from "react";
+import { SPECS_FILE_NAME } from "../../../utils/constants";
 
 export default function LoadBlockButton() {
-  const FILE_EXTENSION_REGEX = /\.[^/.]+$/;
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom)
   const [mixpanelService] = useAtom(mixpanelAtom)
   const [editor] = useAtom(drawflowEditorAtom)
@@ -60,16 +60,19 @@ export default function LoadBlockButton() {
       const file = files.item(i)
       let relPath = file.webkitRelativePath
       relPath = relPath.replaceAll('\\', '/')
-      const name = removeFileExtension(file.name)
-      if (name === "specs") {
-        const spec = JSON.parse(await (new Blob([file])).text())
-        let folderPath = getDirectoryPath(file.path)
-        folderPath = folderPath.replaceAll('\\', '/')
+      const parts = relPath.split("/")
+      if (parts.length == 2) {
+        const name = parts[1]
+        if (name === SPECS_FILE_NAME) {
+          const spec = JSON.parse(await (new Blob([file])).text())
+          let folderPath = getDirectoryPath(file.path)
+          folderPath = folderPath.replaceAll('\\', '/')
 
-        await addBlockToPipeline(spec, folderPath)
+          await addBlockToPipeline(spec, folderPath)
 
-        fileInput.current.value = ''
-        break;
+          fileInput.current.value = ''
+          break;
+        }
       }
     }
   };
@@ -79,10 +82,6 @@ export default function LoadBlockButton() {
     block.views.node.pos_y = ((editor.precanvas.clientHeight / 2) - editor.precanvas.getBoundingClientRect().y) / editor.zoom;
     return block;
   }
-
-  const removeFileExtension = (fileName) => {
-    return fileName.replace(FILE_EXTENSION_REGEX, "");
-  };
 
   return (
     <div>
