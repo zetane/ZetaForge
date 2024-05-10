@@ -2,6 +2,7 @@ import { SPECS_FILE_NAME } from "../src/utils/constants";
 import fs from "fs/promises";
 import { tmpdir } from "os";
 import path from "path";
+import { SPECS_FILE_NAME } from "../utils/constants";
 
 export const readPipelines = async (dir) => {
   const items = await fs.readdir(dir);
