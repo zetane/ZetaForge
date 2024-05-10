@@ -256,6 +256,9 @@ func setup(config Config, client clientcmd.ClientConfig) {
 		go func() {
 			<-signals
 			log.Println("Starting Shutdown...")
+			if err := kubectlDelete("setup/install.yaml", resources, clientConfig); err != nil {
+				log.Printf("Failed to delete argo; err=%v", err)
+			}
 			if stopBucketCh != nil {
 				close(stopBucketCh)
 			}
@@ -271,12 +274,25 @@ func setup(config Config, client clientcmd.ClientConfig) {
 			if err := kubectlDelete("setup/install.yaml", resources, clientConfig); err != nil {
 				log.Printf("Failed to delete argo; err=%v", err)
 			}
-			if err := kubectlDelete("setup/build.yaml", resources, clientConfig); err != nil {
-				log.Printf("Failed to delete bucket; err=%v", err)
-			}
 			log.Println("Shutdown Successful")
 			signal.Stop(signals)
 			os.Exit(1)
 		}()
+	}
+}
+
+func uninstall(client clientcmd.ClientConfig) {
+	clientConfig, err := client.ClientConfig()
+	if err != nil {
+		log.Fatalf("Failed to get client config; err=%v", err)
+	}
+
+	resources, err := kubectlResources(clientConfig)
+	if err != nil {
+		log.Fatalf("Failed to fetch kubernetes resources; err=%v", err)
+	}
+
+	if err := kubectlDelete("setup/build.yaml", resources, clientConfig); err != nil {
+		log.Fatalf("Failed to delete bucket; err=%v", err)
 	}
 }

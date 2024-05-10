@@ -164,13 +164,21 @@ func main() {
 	if err := goose.Up(db, "db/migrations"); err != nil {
 		log.Fatalf("Failed to migrate database; err=%v", err)
 	}
-
 	var client clientcmd.ClientConfig
 	if config.IsLocal {
 		client = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 			clientcmd.NewDefaultClientConfigLoadingRules(),
 			&clientcmd.ConfigOverrides{},
 		)
+
+		// Switching to Cobra if we need more arguments
+		if len(os.Args) > 1 {
+			if os.Args[1] == "--uninstall" {
+				uninstall(client)
+				return
+			}
+			os.Exit(1)
+		}
 		setup(config, client)
 	} else {
 		cacert, err := base64.StdEncoding.DecodeString(config.Cloud.CaCert)
