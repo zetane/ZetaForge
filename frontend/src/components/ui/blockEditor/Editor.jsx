@@ -1,40 +1,41 @@
 import { blockEditorRootAtom, isBlockEditorOpenAtom } from "@/atoms/editorAtom";
+import { pipelineAtom } from "@/atoms/pipelineAtom";
+import { trpc } from '@/utils/trpc';
 import {
-  Bot,
   Close,
   Maximize,
   Minimize,
   PlayFilled
 } from "@carbon/icons-react";
 import {
+  Button,
   IconButton,
   Tab,
   TabList,
   TabPanel,
   TabPanels,
-  Tabs,
-  Button
+  Tabs
 } from "@carbon/react";
 import { useAtom, useSetAtom } from "jotai";
 import { useCallback, useEffect, useRef, useState } from "react";
 import DirectoryViewer from "./DirectoryViewer";
-import ComputationsFileEditor from './ComputationsFileEditor';
-import TestLogs from "./TestLogs";
 import SpecsInterface from "./SpecsInterface";
-import { trpc } from '@/utils/trpc';
+import TestLogs from "./TestLogs";
 
 export default function Editor() {
   const serverAddress = "http://localhost:3330";
   const minizedStyles = "inset-y-16 right-0 w-1/2"
   const maximizedStyles = "inset-y-11 right-0 w-full"
+  const [pipeline] = useAtom(pipelineAtom);
   const [blockPath] = useAtom(blockEditorRootAtom);
-  const [blockFolderName, setBlockFolderName] = useState(null);
-  const [blockName, setBlockName] = useState("");
+  const relPath = blockPath.replaceAll('\\', '/')
+  const blockFolderName = relPath.split("/").pop();
+  const blockName = pipeline.data[blockFolderName].information.name;
+  const blockLogs = `${blockPath}/logs.txt`
   const setBlockEditorOpen = useSetAtom(isBlockEditorOpenAtom);
 
   const [queryAndResponses, setQueryAndResponses] = useState([]);
   const [lastGeneratedIndex, setLastGeneratedIndex] = useState("");
-  const [blockLogs, setBlockLogs] = useState("");
   const [fileSystem, setFileSystem] = useState({});
   const [isRunButtonPressed, setIsRunButtonPressed] = useState(false);
   const [isMaximized, setMaximized] = useState(false)
@@ -46,24 +47,6 @@ export default function Editor() {
   const runTest = trpc.runTest.useMutation();
 
   useEffect(() => {
-    const init = async () => {
-      try {
-        console.log(blockPath)
-        const relPath = blockPath.replaceAll('\\', '/')
-        const blockFolderName = relPath.split("/").pop();
-        const blockName = pipeline.data[blockFolderName].information.name;
-        setBlockFolderName(blockFolderName);
-        setBlockName(blockName);
-        setBlockLogs(`${blockPath}/logs.txt`);
-        setFileSystem({
-          [blockFolderName]: { content: "", type: "folder" },
-        });
-      } catch (error) {
-        console.error("Fetch error:", error);
-      }
-    };
-
-    init();
     fetchFileSystem(blockFolderName);
   }, [blockPath]);
 
@@ -93,7 +76,7 @@ export default function Editor() {
     } catch (error) {
       console.error("Error fetching file system:", error);
     }
-  }, [blockFolderName, blockPath]);
+  }, [blockPath]);
 
   const handleDockerCommands = useCallback(async () => {
     setIsRunButtonPressed(true);
