@@ -168,7 +168,7 @@ export async function getPipelineBlockPath(pipelinePath, blockId) {
 }
 
 
-export async function uploadParameterBlocks(executionId, pipelineSpecs) {
+export async function uploadParameterBlocks(pipelineId, executionId, pipelineSpecs) {
   const nodes = pipelineSpecs.pipeline;
   for (const nodeId in nodes) {
     const node = nodes[nodeId];
@@ -182,7 +182,7 @@ export async function uploadParameterBlocks(executionId, pipelineSpecs) {
         if (param.type === "file") {
           const filePath = param.value;
           const fileName = path.basename(filePath);
-          const awsKey = `${executionId}/${fileName}`;
+          const awsKey = `${pipelineId}/${executionId}/${fileName}`;
 
           if (filePath && filePath.trim()) {
             await checkAndUpload(awsKey, filePath);

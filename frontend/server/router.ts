@@ -176,14 +176,15 @@ export const appRouter = router({
     }),
   uploadParameterBlocks: publicProcedure
     .input(z.object({
+      pipelineId: z.string(),
       executionId: z.string(),
       pipelineSpecs: z.any(), 
     }))
     .mutation(async (opts) => {
       const {input} = opts;
-      const {executionId, pipelineSpecs} = input;
+      const {pipelineId, executionId, pipelineSpecs} = input;
 
-      return uploadParameterBlocks(executionId, pipelineSpecs);
+      return uploadParameterBlocks(pipelineId, executionId, pipelineSpecs);
     }),
   compileComputation: publicProcedure
     .input(z.object({

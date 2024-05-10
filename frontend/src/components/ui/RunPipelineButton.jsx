@@ -49,6 +49,7 @@ export default function RunPipelineButton({modalPopper, children, action}) {
     let pipelineSpecs = editor.convert_drawflow_to_block(pipeline.name, pipeline.data);
     const executionId = uuidv7();
     pipelineSpecs = await uploadParameterBlocks.mutateAsync({
+      pipelineId: pipeline.id,
       executionId: executionId,
       pipelineSpecs: pipelineSpecs,
     });
