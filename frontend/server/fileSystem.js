@@ -1,8 +1,8 @@
+import { SPECS_FILE_NAME } from '@/utils/constants';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import fs from "fs/promises";
 import { tmpdir } from "os";
 import path from "path";
-import { SPECS_FILE_NAME } from "../utils/constants";
 
 // TODO: use env vars
 export const s3Upload = async (filePath) => {

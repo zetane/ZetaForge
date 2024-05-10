@@ -1,8 +1,8 @@
+import { SPECS_FILE_NAME } from "@/utils/constants.js";
 import { app } from "electron";
 import fs from "fs/promises";
 import path from "path";
 import process from "process";
-import { SPECS_FILE_NAME } from "../utils/constants.js";
 import { setDifference } from "../utils/set.js";
 import {
   fileExists,
@@ -10,8 +10,6 @@ import {
   readJsonToObject,
 } from "./fileSystem.js";
 import { checkAndUpload } from "./s3.js";
-
-const BLOCK_SPECS = "specs.json";
 
 export async function saveSpec(spec, writePath, pipelineName) {
   const pipelineSpecsPath = path.join(writePath, pipelineName)

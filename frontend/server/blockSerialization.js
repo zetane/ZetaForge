@@ -1,8 +1,8 @@
+import { SPECS_FILE_NAME } from "@/utils/constants";
 import { execFile, spawnSync } from "child_process";
 import { app } from "electron";
 import fs from "fs/promises";
 import path, { resolve } from "path";
-import { SPECS_FILE_NAME } from "../utils/constants";
 import { fileExists } from "./fileSystem";
 
 export async function compileComputation(blockPath) {
