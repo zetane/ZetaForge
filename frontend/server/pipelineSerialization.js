@@ -10,7 +10,7 @@ import {
 } from "./fileSystem.js";
 import { checkAndUpload } from "./s3.js";
 
-const BLOCK_SPECS = "specs_v1.json";
+const BLOCK_SPECS = "specs.json";
 
 export async function saveSpec(spec, writePath, pipelineName) {
   const pipelineSpecsPath = path.join(writePath, pipelineName)

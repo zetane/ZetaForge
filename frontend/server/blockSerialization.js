@@ -22,7 +22,7 @@ export async function compileComputation(blockPath) {
 }
 
 export async function saveBlockSpecs(blockPath, specs) {
-  const specsPath = path.join(blockPath, "specs_v1.json");
+  const specsPath = path.join(blockPath, "specs.json");
 
   removeConnections(specs.inputs)
   removeConnections(specs.outputs)

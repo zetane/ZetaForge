@@ -61,7 +61,7 @@ export default function LoadBlockButton() {
       let relPath = file.webkitRelativePath
       relPath = relPath.replaceAll('\\', '/')
       const name = removeFileExtension(file.name)
-      if (name === "specs_v1") {
+      if (name === "specs") {
         const spec = JSON.parse(await (new Blob([file])).text())
         let folderPath = getDirectoryPath(file.path)
         folderPath = folderPath.replaceAll('\\', '/')

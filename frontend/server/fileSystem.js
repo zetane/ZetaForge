@@ -52,7 +52,7 @@ const specBuilder = async (specs, dir) => {
       const stat = await fs.stat(itemPath);
 
       if (stat.isDirectory()) {
-        const specs = path.join(itemPath, "specs_v1.json");
+        const specs = path.join(itemPath, "specs.json");
         try {
           await fs.stat(specs)
           const specData = await fs.readFile(specs)

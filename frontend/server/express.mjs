@@ -376,7 +376,7 @@ app.get("/is-dev", async(req, res) => {
 
   app.post("/get-agent", async (req, res) => {
     const { blockPath } = req.body;
-    const specsPath = `${blockPath}/specs_v1.json`;
+    const specsPath = `${blockPath}/specs.json`;
 
     fs.readFile(specsPath, (err, data) => {
       if (err) {
