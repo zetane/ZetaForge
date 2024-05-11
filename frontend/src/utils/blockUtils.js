@@ -1,7 +1,8 @@
-const processConnections = (connections) => {
+const processConnections = (connections, id, type) => {
   const jsonConns = {}
   for (const key in connections) {
     jsonConns[key] = { "connections": []};
+    // jsonConns[key] = { "connections": [{"node": id, [type]: key}]};
   }
   return jsonConns;
 }
@@ -16,6 +17,8 @@ export const genJSON = (block, id) => {
     typenode: false,
     inputs: (block.inputs),
     outputs: (block.outputs),
+    // inputs: processConnections(block.inputs, id, "input"),
+    // outputs: processConnections(block.outputs, id, "output"),
     // inputs: processConnections(block.inputs),
     // outputs: processConnections(block.outputs),
     pos_x: block.views.node.pos_x,
