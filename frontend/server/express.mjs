@@ -1,4 +1,3 @@
-import { SPECS_FILE_NAME } from "../src/utils/constants";
 import bodyParser from "body-parser";
 import { spawn } from "child_process";
 import compression from "compression";
@@ -10,6 +9,10 @@ import fs, { readFileSync } from "fs";
 import multer from "multer";
 import { Configuration, OpenAIApi } from "openai";
 import path from "path";
+import sha256 from 'sha256';
+import { BLOCK_SPECS_FILE_NAME } from "../src/utils/constants";
+import { fileExists, readJsonToObject, readSpecs } from "./fileSystem.js";
+import { copyPipeline, saveBlock } from "./pipelineSerialization.js";
 
 
 function startExpressServer() {
@@ -112,7 +115,7 @@ function startExpressServer() {
 
   app.post("/get-agent", async (req, res) => {
     const { blockPath } = req.body;
-    const specsPath = path.join(blockPath, SPECS_FILE_NAME)
+    const specsPath = path.join(blockPath, BLOCK_SPECS_FILE_NAME)
     
     fs.readFile(specsPath, (err, data) => {
       if (err) {

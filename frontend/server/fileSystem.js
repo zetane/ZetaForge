@@ -1,7 +1,8 @@
-import { SPECS_FILE_NAME } from "../src/utils/constants";
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import fs from "fs/promises";
 import { tmpdir } from "os";
 import path from "path";
+import { BLOCK_SPECS_FILE_NAME } from "../src/utils/constants";
 
 export const readPipelines = async (dir) => {
   const items = await fs.readdir(dir);
@@ -51,7 +52,7 @@ const specBuilder = async (specs, dir) => {
       const stat = await fs.stat(itemPath);
 
       if (stat.isDirectory()) {
-        const specs = path.join(itemPath, SPECS_FILE_NAME);
+        const specs = path.join(itemPath, BLOCK_SPECS_FILE_NAME);
         try {
           await fs.stat(specs)
           const specData = await fs.readFile(specs)

@@ -2,7 +2,7 @@ import { app } from "electron";
 import fs from "fs/promises";
 import path from "path";
 import process from "process";
-import { PIPELINE_SPECS_FILE_NAME, SPECS_FILE_NAME } from "../src/utils/constants";
+import { BLOCK_SPECS_FILE_NAME, PIPELINE_SPECS_FILE_NAME } from "../src/utils/constants";
 import { setDifference } from "../utils/set.js";
 import {
   fileExists,
@@ -25,7 +25,7 @@ export async function saveBlock(blockKey, blockSpec, fromPath, toPath) {
   console.log(`saving ${blockKey} from ${fromPath} to ${newFolder}`)
   await fs.mkdir(newFolder, { recursive: true });
   await fs.cp(fromPath, newFolder, { recursive: true });
-  await fs.writeFile(path.join(newFolder, SPECS_FILE_NAME), JSON.stringify(blockSpec, null, 2))
+  await fs.writeFile(path.join(newFolder, BLOCK_SPECS_FILE_NAME), JSON.stringify(blockSpec, null, 2))
   return newFolder;
 }
 
@@ -81,8 +81,8 @@ export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
     console.log(`saving ${key} from ${existingBlockPath} to ${newBlockPath}`)
     if (existingBlockPath != newBlockPath) {
       // if it's the same folder, don't try to copy it
-      await fs.cp(existingBlockPath, newBlockPath, { recursive: true })
-      await fs.writeFile(path.join(newBlockPath, SPECS_FILE_NAME), JSON.stringify(blockSpec, null, 2))
+      await fs.cp(existingBlockPath, newBlockPath, {recursive: true})
+      await fs.writeFile(path.join(newBlockPath, BLOCK_SPECS_FILE_NAME), JSON.stringify(blockSpec, null, 2))
     }
   }
 
