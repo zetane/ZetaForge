@@ -77,7 +77,6 @@ export default function RunPipelineButton({modalPopper, children, action}) {
       const node = nodes[nodeId];
 
       const parameters = node.action?.parameters;
-      console.log(parameters)
 
       if (parameters) {
         for (const paramKey in parameters) {
