@@ -1,8 +1,8 @@
-import { SPECS_FILE_NAME } from "../src/utils/constants";
 import { app } from "electron";
 import fs from "fs/promises";
 import path from "path";
 import process from "process";
+import { PIPELINE_SPECS_FILE_NAME, SPECS_FILE_NAME } from "../src/utils/constants";
 import { setDifference } from "../utils/set.js";
 import {
   fileExists,
@@ -11,8 +11,8 @@ import {
 } from "./fileSystem.js";
 import { checkAndUpload } from "./s3.js";
 
-export async function saveSpec(spec, writePath, pipelineName) {
-  const pipelineSpecsPath = path.join(writePath, pipelineName)
+export async function saveSpec(spec, writePath) {
+  const pipelineSpecsPath = path.join(writePath, PIPELINE_SPECS_FILE_NAME)
   await fs.mkdir(writePath, { recursive: true });
   await fs.writeFile(
     pipelineSpecsPath,
@@ -29,15 +29,14 @@ export async function saveBlock(blockKey, blockSpec, fromPath, toPath) {
   return newFolder;
 }
 
-export async function copyPipeline(pipelineSpecs, pipelineName, fromDir, toDir) {
-  const pipeline_specs = pipelineName + ".json";
+export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
   const bufferPath = path.resolve(process.cwd(), fromDir)
 
   console.log(`supposed to be writing from ${fromDir} to ${toDir}`)
 
   // Takes existing pipeline + spec
   const writePipelineDirectory = toDir;
-  const pipelineSpecsPath = path.join(writePipelineDirectory, pipeline_specs);
+  const pipelineSpecsPath = path.join(writePipelineDirectory, PIPELINE_SPECS_FILE_NAME);
 
   const fromBlockIndex = await getBlockIndex([bufferPath]);
 

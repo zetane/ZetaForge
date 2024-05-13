@@ -33,8 +33,7 @@ export default function LoadBlockButton() {
     newPipeline.pipeline = newPipelineData
 
     const cacheData = {
-      pipelineSpec: newPipeline,
-      name: pipeline.name,
+      pipelineSpec: newPipeline,      
       blockSpec: block,
       blockId: id,
       blockPath: path,
