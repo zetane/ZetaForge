@@ -123,9 +123,9 @@ export default function RunPipelineButton({modalPopper, children, action}) {
     }
 
     let pipelineSpecs = editor.convert_drawflow_to_block(pipeline.name, pipeline.data);
-    pipelineSpecs = await processNodes(pipelineSpecs)
-
+    
     try {
+      pipelineSpecs = await processNodes(pipelineSpecs)
       // tries to put history in a user path if it exists, if not
       // will put it into the buffer path (.cache)
       pipelineSpecs['sink'] = pipeline.path ? pipeline.path : pipeline.buffer
@@ -146,6 +146,7 @@ export default function RunPipelineButton({modalPopper, children, action}) {
           draft.log = []
         })
       }
+      setValidationErrorMsg([])
       try {
         mixpanelService.trackEvent('Run Created')
       } catch (err) {
@@ -153,7 +154,8 @@ export default function RunPipelineButton({modalPopper, children, action}) {
       }
       
     } catch (error) {
-
+      setValidationErrorMsg([`Error originating from S3: ${error.message}`])
+      setIsOpen(true)
     }
   };
 
