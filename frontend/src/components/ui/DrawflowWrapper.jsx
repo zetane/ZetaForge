@@ -16,20 +16,20 @@ import { useLoadPipeline } from "./useLoadPipeline";
 import generateSchema from '@/utils/schemaValidation';
 import drawflowUtils from '@/utils/drawflowUtils';
 
-const launchDrawflow = (parentDomRef, canvasDomRef, pipeline, setPipeline) => {
-  if (parentDomRef.className != "parent-drawflow") {
-    const editor = new Drawflow(parentDomRef, pipeline, setPipeline, canvasDomRef);
+// const launchDrawflow = (parentDomRef, canvasDomRef, pipeline, setPipeline) => {
+//   if (parentDomRef.className != "parent-drawflow") {
+//     const editor = new Drawflow(parentDomRef, pipeline, setPipeline, canvasDomRef);
 
-    // editor.reroute = true;
-    // editor.reroute_fix_curvature = true;
-    // editor.force_first_input = false;
+//     // editor.reroute = true;
+//     // editor.reroute_fix_curvature = true;
+//     // editor.force_first_input = false;
 
-    // Start the editor
-    editor.start();
-    return editor;
-  }
-  return null;
-};
+//     // Start the editor
+//     editor.start();
+//     return editor;
+//   }
+//   return null;
+// };
 
 const dragOverHandler = (event) => {
   event.preventDefault()
@@ -46,7 +46,6 @@ export default function DrawflowWrapper() {
   const [renderNodes, setRenderNodes] = useState([])
   const drawflowCanvas = useRef(null);
   const pipelineRef = useRef(null)
-  const connectionRef = useRef({});
 
   pipelineRef.current = pipeline
 
@@ -55,7 +54,7 @@ export default function DrawflowWrapper() {
   
   // Redraw the connections when resizing textarea
   useEffect(() => {
-    if (!editor) return;
+    // if (!editor) return;
 
     const resizeObserver = new ResizeObserver(entries => {
         entries.forEach(entry => {
@@ -69,7 +68,7 @@ export default function DrawflowWrapper() {
     textareas.forEach(textarea => resizeObserver.observe(textarea));
 
     return () => resizeObserver.disconnect();
-  }, [editor, renderNodes]);
+  }, [renderNodes]);
 
 
   // const createConnection = (connection, pipeline) => {
@@ -150,11 +149,11 @@ export default function DrawflowWrapper() {
       drawflowUtils.reroute_fix_curvature = true;
       drawflowUtils.force_first_input = false;
       drawflowUtils.setPipeline = setPipeline;
-      drawflowUtils.connection_list = pipelineConnections;
+      drawflowUtils.pipeline = pipeline;
       drawflowUtils.updateConnectionList = setPipelineConnectionsAtom;
 
       /* Update data Nodes */
-      node.addEventListener('dbclick', drawflowUtils.dbclick)
+      node.addEventListener('dblclick', drawflowUtils.dblclick)
 
       /* Mouse and Touch Actions */
       node.addEventListener('mouseup', drawflowUtils.dragEnd)
@@ -182,15 +181,15 @@ export default function DrawflowWrapper() {
       node.addEventListener('onpointerout', drawflowUtils.pointerup_handler)
       node.addEventListener('onpointerleave', drawflowUtils.pointerup_handler)
     } else { return }
-    const constructedEditor = launchDrawflow(node, drawflowCanvas.current, pipeline, setPipeline);
-    if (constructedEditor) {
+    // const constructedEditor = launchDrawflow(node, drawflowCanvas.current, pipeline, setPipeline);
+    // if (constructedEditor) {
       // constructedEditor.on('nodeRemoved', (id) => removeNodeToDrawflow(id, pipelineRef.current));
       // constructedEditor.on('connectionCreated', (connection) => createConnection(connection, pipelineRef.current));
       // constructedEditor.on('connectionRemoved', (connection) => removeConnection(connection, pipelineRef.current));
       // constructedEditor.on('drawingConnection', (node) => drawflowUtils.drawConnection(node, constructedEditor, drawflowCanvas.current));
       // constructedEditor.on('updateConnection', ({eX, eY}) => drawflowUtils.updateConnection(eX, eY, constructedEditor, drawflowCanvas.current));
-      setEditor(constructedEditor);
-    }
+    //   setEditor(constructedEditor);
+    // }
   }, []);
 
   useEffect(() => {
@@ -203,13 +202,10 @@ export default function DrawflowWrapper() {
                 pipelineAtom={pipelineAtom}
                 />)
     })
+    drawflowUtils.pipeline = pipeline;
     setRenderNodes(nodes)
     console.log("pipeline: ", pipeline.data)
   }, [pipeline.data])
-
-  useEffect(() => {
-    console.log("connections: ", pipelineConnections)
-  }, [pipelineConnections])
 
   useEffect(() => {
     if (pipeline.data && Object.keys(pipeline.data).length) {
@@ -234,6 +230,8 @@ export default function DrawflowWrapper() {
       }
 
       try {
+        drawflowUtils.connection_list = pipelineConnections;
+        console.log(pipelineConnections)
         drawflowUtils.addConnection();
       } catch (e) {
         console.log(e)
