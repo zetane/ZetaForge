@@ -3,7 +3,6 @@ import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
 import { mixpanelAtom } from "@/atoms/mixpanelAtom";
 import { getPipelineFormat, pipelineAtom } from "@/atoms/pipelineAtom";
 import { generateId, replaceIds } from "@/utils/blockUtils";
-import { SPECS_FILE_NAME } from "@/utils/constants";
 import { trpc } from "@/utils/trpc";
 import { HeaderMenuItem } from "@carbon/react";
 import { useAtom } from "jotai";
@@ -63,7 +62,7 @@ export default function LoadBlockButton() {
       const parts = relPath.split("/")
       if (parts.length == 2) {
         const name = parts[1]
-        if (name === SPECS_FILE_NAME) {
+        if (isSpecsFile(name)) {
           const spec = JSON.parse(await (new Blob([file])).text())
           let folderPath = getDirectoryPath(file.path)
           folderPath = folderPath.replaceAll('\\', '/')
@@ -82,6 +81,10 @@ export default function LoadBlockButton() {
     block.views.node.pos_y = ((editor.precanvas.clientHeight / 2) - editor.precanvas.getBoundingClientRect().y) / editor.zoom;
     return block;
   }
+
+  const isSpecsFile = (fileName) => {
+    return fileName.startsWith("specs") && fileName.endsWith('.json')
+  } 
 
   return (
     <div>
