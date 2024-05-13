@@ -49,14 +49,14 @@ export default function RunPipelineButton({modalPopper, children, action}) {
     let pipelineSpecs = editor.convert_drawflow_to_block(pipeline.name, pipeline.data);
     const executionId = uuidv7();
     console.log(pipeline.buffer)
-    pipelineSpecs = await uploadParameterBlocks.mutateAsync({
-      pipelineId: pipeline.id,
-      executionId: executionId,
-      pipelineSpecs: pipelineSpecs,
-      buffer: pipeline.buffer,
-    });
 
     try {
+      pipelineSpecs = await uploadParameterBlocks.mutateAsync({
+        pipelineId: pipeline.id,
+        executionId: executionId,
+        pipelineSpecs: pipelineSpecs,
+        buffer: pipeline.buffer,
+      });
       // tries to put history in a user path if it exists, if not
       // will put it into the buffer path (.cache)
       pipelineSpecs['sink'] = pipeline.path ? pipeline.path : pipeline.buffer
@@ -81,6 +81,7 @@ export default function RunPipelineButton({modalPopper, children, action}) {
           draft.log = []
         })
       }
+      setValidationErrorMsg([])
       try {
         mixpanelService.trackEvent('Run Created')
       } catch (err) {
@@ -88,7 +89,8 @@ export default function RunPipelineButton({modalPopper, children, action}) {
       }
       
     } catch (error) {
-
+      setValidationErrorMsg([error.message])
+      setIsOpen(true)
     }
   };
 
