@@ -35,13 +35,13 @@ export const FileBlock = ({blockId, block, setFocusAction}) => {
     const files = fileInput.current.files
     const file = files[0]
     const name = file.name
-    const response = await uploadToS3(`files/${name.toString()}`, file)
     const value = file.path.toString()
 
     setFocusAction((draft) => { draft.data[blockId].action.parameters['path'].value = value })
+
+    await uploadToS3(`files/${name.toString()}`, file)
   }
 
-  const path = block.action.parameters?.path?.value || '';
 
   return (
     <div className="block-content">

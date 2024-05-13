@@ -14,9 +14,9 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"server/zjson"
 	"strings"
 	"time"
-	"server/zjson"
 
 	"github.com/argoproj/argo-workflows/v3/pkg/apiclient"
 	workflowpkg "github.com/argoproj/argo-workflows/v3/pkg/apiclient/workflow"
@@ -313,7 +313,7 @@ func streaming(ctx context.Context, sink string, name string, room string, clien
 		}
 	}
 
-	for _, container := range []string{"init", "wait", "main"} {
+	for _, container := range []string{"main"} {
 		go containerStream(container)
 	}
 }
@@ -321,9 +321,7 @@ func streaming(ctx context.Context, sink string, name string, room string, clien
 func runArgo(ctx context.Context, workflow *wfv1.Workflow, sink string, pipeline string, execution int64, client clientcmd.ClientConfig, db *sql.DB, hub *Hub) (*wfv1.Workflow, error) {
 	//mixpanelClient is singleton, so a new instance won't be created.
 	mixpanelClient := GetMixpanelClient()
-	
-	
-	
+
 	ctx, cli, err := apiclient.NewClientFromOpts(
 		apiclient.Opts{
 			ClientConfigSupplier: func() clientcmd.ClientConfig {
@@ -374,8 +372,7 @@ func runArgo(ctx context.Context, workflow *wfv1.Workflow, sink string, pipeline
 		}
 
 		if workflow.Status.Phase.Completed() {
-			
-			
+
 			log.Printf("Status: Completed")
 			mixpanelClient.TrackEvent(ctx, "Run Completed", map[string]any{})
 			break
