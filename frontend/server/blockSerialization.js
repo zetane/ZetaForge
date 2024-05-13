@@ -1,4 +1,3 @@
-import { SPECS_FILE_NAME } from "@/utils/constants";
 import { execFile, spawnSync } from "child_process";
 import { app } from "electron";
 import fs from "fs/promises";
