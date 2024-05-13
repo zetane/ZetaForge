@@ -1261,48 +1261,13 @@ exports.import = (data, notifi = true) => {
   }
 }
 exports.convert_drawflow_to_block = (name, blockGraph) => {
-  const graph_with_connections = exports.drawflow;
-  const node_keys = Object.keys(graph_with_connections.drawflow.Home.data);
+  const graph_with_connections = JSON.parse(JSON.stringify(blockGraph))
   const newPipeline = {}
-  for (let i = 0; i < node_keys.length; i++) {
-    const key = node_keys[i]
-    const node = graph_with_connections.drawflow.Home.data[key]
-    // console.log("node: ", node)
-    // console.log("graph_with_connections.drawflow.Home.data: ", graph_with_connections.drawflow.Home.data)
-    const reactBlock = blockGraph[key];
-    // deep copy
-    // TODO: can we use immer here?
-    // that would solve *all the problems*
-    const block = JSON.parse(JSON.stringify(reactBlock))
-    // console.log("react block aka pipeline: ", block)
-    const nodes_inputs = exports.getChildrenAsArray(node, "inputs");
-    // console.log("node_inputs: ", nodes_inputs)
-    const nodes_outputs = exports.getChildrenAsArray(node, "outputs");
-    // console.log("nodes_outputs: ", nodes_outputs)
-
-    block.events = {}
-    // get x,y from drawflow
-    // block.views.node.pos_x = node.pos_x.toString()
-    // block.views.node.pos_y = node.pos_y.toString()
-
-    // get inputs from drawflow
-    const block_variable_keys_inputs = Object.keys(block.inputs);
-    for (let j = 0; j < block_variable_keys_inputs.length; j++) {
-      let block_output_connections = exports.renameKeyInArrayOfObjects(nodes_inputs[j].connections, 'input', 'variable');        
-      block_output_connections = exports.renameKeyInArrayOfObjects(block_output_connections, 'node', 'block');        
-      block.inputs[block_variable_keys_inputs[j]].connections = block_output_connections;
-    }
-    
-    // get outputs from drawflow
-    const block_variable_keys_outputs = Object.keys(block.outputs);
-    for (let j = 0; j < block_variable_keys_outputs.length; j++) {
-      let block_input_connections = exports.renameKeyInArrayOfObjects(nodes_outputs[j].connections, 'output', 'variable');        
-      block_input_connections = exports.renameKeyInArrayOfObjects(block_input_connections, 'node', 'block')
-      block.outputs[block_variable_keys_outputs[j]].connections = block_input_connections;
-    }
-
-    newPipeline[key] = block;
+  for (const block in graph_with_connections) {
+    graph_with_connections[block].events = {};
+    newPipeline[block] = graph_with_connections[block];
   }
+
   const pipeline = {
       pipeline: newPipeline,
       sink: "./history",
