@@ -110,7 +110,18 @@ export default function RunPipelineButton({modalPopper, children, action}) {
   const runPipeline = async (editor, pipeline) => {
     // check if pipeline structure exists
     if (!pipeline.data || !Object.keys(pipeline.data).length) return null;
-    const results = pipelineSchema.safeParse(pipeline.data);
+    setValidationErrorMsg([])
+
+    let pipelineSpecs = editor.convert_drawflow_to_block(pipeline.name, pipeline.data);
+    try {
+      pipelineSpecs = await processNodes(pipelineSpecs)
+    } catch (error) {
+      setValidationErrorMsg([`Failed to upload files to anvil server: ${error}`])
+      setIsOpen(true)
+      return null;
+    }
+
+    const results = pipelineSchema.safeParse(pipelineSpecs.pipeline);
 
     if (!results.success) {
       setValidationErrorMsg(prev => {
@@ -122,8 +133,6 @@ export default function RunPipelineButton({modalPopper, children, action}) {
       setValidationErrorMsg([]);
     }
 
-    let pipelineSpecs = editor.convert_drawflow_to_block(pipeline.name, pipeline.data);
-    pipelineSpecs = await processNodes(pipelineSpecs)
 
     try {
       // tries to put history in a user path if it exists, if not

@@ -73,5 +73,15 @@ export default defineConfig(({ command }) => {
       }
     })(),
     clearScreen: false,
+    // Fixes a bug with s3 and nodejs 
+    // see https://github.com/aws/aws-sdk-js-v3/discussions/3950
+    build: {
+      rollupOptions: {
+        output: {
+          globals: {crypto: 'crypto'},
+        },
+        external: ['crypto'],
+      }
+    }
   }
 })
