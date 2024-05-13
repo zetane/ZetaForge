@@ -1,4 +1,4 @@
-import { SPECS_FILE_NAME } from "@/utils/constants.js";
+import { SPECS_FILE_NAME } from "../src/utils/constants";
 import { app } from "electron";
 import fs from "fs/promises";
 import path from "path";

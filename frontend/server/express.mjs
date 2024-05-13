@@ -1,4 +1,4 @@
-import { SPECS_FILE_NAME } from "@/utils/constants.js";
+import { SPECS_FILE_NAME } from "../src/utils/constants";
 import bodyParser from "body-parser";
 import { exec, spawn } from "child_process";
 import compression from "compression";

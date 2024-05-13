@@ -1,4 +1,4 @@
-import { SPECS_FILE_NAME } from '@/utils/constants';
+import { SPECS_FILE_NAME } from "../src/utils/constants";
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import fs from "fs/promises";
 import { tmpdir } from "os";
