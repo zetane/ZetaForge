@@ -83,7 +83,7 @@ func checkImage(ctx context.Context, tag string, cfg Config) (bool, error) {
 	}
 }
 
-func blockTemplate(block *zjson.Block, blockKey string, organization string, cfg Config, key string) *wfv1.Template {
+func blockTemplate(block *zjson.Block, blockKey string, organization string, key string, cfg Config) *wfv1.Template {
 	var image string
 	var computationName string
 	if cfg.IsLocal {
@@ -193,7 +193,7 @@ func kanikoTemplate(block *zjson.Block, organization string, cfg Config) *wfv1.T
 
 }
 
-func translate(ctx context.Context, pipeline *zjson.Pipeline, organization string, cfg Config, key string) (*wfv1.Workflow, map[string]string, error) {
+func translate(ctx context.Context, pipeline *zjson.Pipeline, organization string, key string, cfg Config) (*wfv1.Workflow, map[string]string, error) {
 	workflow := wfv1.Workflow{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Workflow",
@@ -218,7 +218,7 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 	templates := make(map[string]*wfv1.Template)
 	for id, block := range pipeline.Pipeline {
 		blockKey := id
-		template := blockTemplate(&block, blockKey, organization, cfg, key)
+		template := blockTemplate(&block, blockKey, organization, key, cfg)
 		task := wfv1.DAGTask{Name: template.Name, Template: template.Name}
 
 		if len(block.Action.Container.Image) > 0 {
@@ -297,9 +297,9 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 
 		var filesName string
 		if cfg.IsLocal {
-			filesName = "files"
+			filesName = key
 		} else {
-			filesName = organization + "/" + "files"
+			filesName = organization + "/" + key
 			workflow.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
 				{
 					Name: cfg.Cloud.Registry,
