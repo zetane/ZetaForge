@@ -342,6 +342,7 @@ def check_expected_services(config):
 def create_config_json(s2_path, context, driver, is_dev):
     config = {
         "IsLocal":True,
+        "IsDev": is_dev,
         "ServerPort": 8080,
         "KanikoImage":"gcr.io/kaniko-project/executor:latest",
         "WorkDir":"/app",
@@ -355,8 +356,7 @@ def create_config_json(s2_path, context, driver, is_dev):
         "Local": {
             "BucketPort": 8333,
             "Driver": driver
-        },
-        "ZetaforgeIsDev": is_dev
+        }
     } 
 
     file_path = os.path.join(s2_path, "config.json")
