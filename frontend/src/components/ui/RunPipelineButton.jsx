@@ -79,7 +79,7 @@ export default function RunPipelineButton({modalPopper, children, action}) {
         id: executionId,
         ...pipelineSpecs,
       }
-      console.log("execution: ", execution)
+      
       const res = await mutation.mutateAsync(execution)
       if (res.status == 201) {
         setPipeline((draft) => {
