@@ -1,7 +1,7 @@
 import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
 import { mixpanelAtom } from "@/atoms/mixpanelAtom";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
-import { pipelineSchemaAtom } from "@/atoms/pipelineSchemaAtom";
+import generateSchema from '@/utils/schemaValidation';
 import { trpc } from "@/utils/trpc";
 import { Button } from "@carbon/react";
 import { useMutation } from "@tanstack/react-query";
@@ -16,7 +16,6 @@ export default function RunPipelineButton({modalPopper, children, action}) {
   const [editor] = useAtom(drawflowEditorAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const [validationErrorMsg, setValidationErrorMsg] = useState([]);
-  const [pipelineSchema, _] = useAtom(pipelineSchemaAtom);
   const [isOpen, setIsOpen] = useState(false);
   const [angle, setAngle] = useState(0)
   const posRef = useRef({ x: 0, y: 0 });
@@ -51,7 +50,8 @@ export default function RunPipelineButton({modalPopper, children, action}) {
       return null;
     }
 
-    const results = pipelineSchema.safeParse(pipelineSpecs.pipeline);
+    const schema = generateSchema(pipeline.data);
+    const results = schema.safeParse(pipeline.data);
 
     if (!results.success) {
       setValidationErrorMsg(prev => {
@@ -79,6 +79,7 @@ export default function RunPipelineButton({modalPopper, children, action}) {
         id: executionId,
         pipeline: pipelineSpecs,
       }
+      console.log("execution: ", execution)
       const res = await mutation.mutateAsync(execution)
       if (res.status == 201) {
         setPipeline((draft) => {
@@ -95,7 +96,8 @@ export default function RunPipelineButton({modalPopper, children, action}) {
       }
       
     } catch (error) {
-
+      setValidationErrorMsg([error.message])
+      setIsOpen(true)
     }
   };
 
