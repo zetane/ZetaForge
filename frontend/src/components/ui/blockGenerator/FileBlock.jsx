@@ -11,7 +11,6 @@ export const FileBlock = ({blockId, block, setFocusAction}) => {
     setFocusAction((draft) => { draft.data[blockId].action.parameters['path'].value = value })
   }
 
-  const path = block.action.parameters?.path?.value || '';
 
   return (
     <div className="block-content">

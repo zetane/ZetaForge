@@ -313,7 +313,7 @@ func streaming(ctx context.Context, sink string, name string, room string, clien
 		}
 	}
 
-	for _, container := range []string{"init", "wait", "main"} {
+	for _, container := range []string{"main"} {
 		go containerStream(container)
 	}
 }
