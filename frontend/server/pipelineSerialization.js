@@ -95,7 +95,7 @@ export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
     JSON.stringify(pipelineSpecs, null, 2)
   );
 
-  return { specs: pipeline_specs, dirPath: writePipelineDirectory }
+  return {specs: PIPELINE_SPECS_FILE_NAME, dirPath: writePipelineDirectory}
 }
 
 async function getBlockIndex(blockDirectories) {
