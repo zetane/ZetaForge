@@ -630,6 +630,7 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 	eg.SetLimit(runtime.NumCPU())
 
 	for path, image := range blocks {
+		// Duplicate variables -> https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/loopclosure
 		path := path
 		image := image
 		log.Printf("Path: %s", path)

@@ -88,7 +88,7 @@ func createLogger(pipelineId string, file io.Writer, messageFunc func(string, st
 	return io.MultiWriter(os.Stdout, wsWriter, file)
 }
 
-func validateJson[D any](ctx context.Context, body io.ReadCloser) (D, HTTPError) {
+func validateJson[D any](body io.ReadCloser) (D, HTTPError) {
 	var data D
 	schema, err := json.Marshal(jsonschema.Reflect(data))
 
@@ -216,7 +216,7 @@ func main() {
 	router.Use(sentrygin.New(sentrygin.Options{}))
 
 	router.POST("/execute", func(ctx *gin.Context) {
-		execution, err := validateJson[zjson.Execution](ctx.Request.Context(), ctx.Request.Body)
+		execution, err := validateJson[zjson.Execution](ctx.Request.Body)
 		if err != nil {
 			log.Printf("Invalid json request; err=%v", err)
 			ctx.String(err.Status(), err.Error())
@@ -272,7 +272,7 @@ func main() {
 
 	pipeline := router.Group("/pipeline")
 	pipeline.POST("", func(ctx *gin.Context) {
-		pipeline, err := validateJson[zjson.Pipeline](ctx.Request.Context(), ctx.Request.Body)
+		pipeline, err := validateJson[zjson.Pipeline](ctx.Request.Body)
 		if err != nil {
 			log.Printf("Invalid json request; err=%v", err)
 			ctx.String(err.Status(), err.Error())

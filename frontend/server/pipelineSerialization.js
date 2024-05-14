@@ -192,7 +192,7 @@ export async function uploadBlocks(pipelineId, executionId, pipelineSpecs, buffe
         }
       }
     } else if (container) {
-      const computationFile = buffer + "/" + nodeId + "/computations.py";
+      const computationFile = path.join(buffer, "/", nodeId, "/computations.py");
       const awsKey = `${pipelineId}/${executionId}/${nodeId}.py`;
       await checkAndUpload(awsKey, computationFile)
     }
