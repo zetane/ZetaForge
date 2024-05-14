@@ -134,10 +134,7 @@ func setupSentry() {
 }
 
 func main() {
-	//Initialize mixpanelClient only once(it's singleton)
 	ctx := context.Background()
-	mixpanelClient = InitMixpanelClient(ctx, "4c09914a48f08de1dbe3dc4dd2dcf90d")
-	setupSentry()
 	file, err := os.ReadFile("config.json")
 	if err != nil {
 		log.Fatalf("Config file missing; err=%v", err)
@@ -148,6 +145,10 @@ func main() {
 		log.Fatalf("Config file invalid; err=%v", err)
 		return
 	}
+
+	//Initialize mixpanelClient only once(it's singleton)
+	mixpanelClient = InitMixpanelClient(ctx, "4c09914a48f08de1dbe3dc4dd2dcf90d", config)
+	setupSentry()
 
 	db, err := sql.Open("sqlite3", config.Database)
 	if err != nil {
