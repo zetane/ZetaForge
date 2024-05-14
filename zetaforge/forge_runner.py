@@ -42,20 +42,18 @@ def write_json(server_version, client_version, context, driver, is_dev, s2_path=
         _, server_path = get_launch_paths(server_version, client_version)
     config = create_config_json(os.path.dirname(server_path), context, driver, is_dev)
     return config
-#changes the ZetaforgeIsDev in config.json, it's implemented to prevent certain edge cases.
+
+#changes the IsDev in config.json, it's implemented to prevent certain edge cases.
 def change_env_config(server_version, client_version, env):
     _, server_path = get_launch_paths(server_version, client_version)
     config = dict()
     config_path = os.path.join(os.path.dirname(server_path), "config.json")
     with open(config_path, "r") as f:
         config = json.load(f)
-    config['ZetaforgeIsDev'] = env
+    config['IsDev'] = env
     with open(config_path, "w") as outfile:
         json.dump(config, outfile)
     return outfile
-
-
-
 
 def check_for_container(name):
     ls_cmd = subprocess.run(["docker", "container", "ls", '--format', 'json'], capture_output=True, text=True)
