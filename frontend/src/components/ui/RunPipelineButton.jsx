@@ -77,7 +77,7 @@ export default function RunPipelineButton({modalPopper, children, action}) {
       pipelineSpecs['id'] = pipeline.id
       const execution = {
         id: executionId,
-        pipeline: pipelineSpecs,
+        ...pipelineSpecs,
       }
       console.log("execution: ", execution)
       const res = await mutation.mutateAsync(execution)
