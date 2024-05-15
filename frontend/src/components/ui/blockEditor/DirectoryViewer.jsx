@@ -45,7 +45,7 @@ export default function DirectoryViewer({
 
   useEffect(() => {
     setFileSystem(fileSystemProp);
-  }, [fileSystemProp], fileSystem);
+  }, [fileSystemProp]);
 
   const handleFileImport = () => {
     fileInputRef.current.click();
