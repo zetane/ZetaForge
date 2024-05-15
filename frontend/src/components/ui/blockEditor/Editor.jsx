@@ -130,8 +130,8 @@ export default function Editor() {
               blockFolderName={blockFolderName}
             />
           </TabPanel>
-          <TabPanel className="overflow-y-scroll">
-            <SpecsInterface blockPath={blockPath}/>
+          <TabPanel className="overflow-y-auto">
+            <SpecsInterface key={blockFolderName} blockKey={blockFolderName} />
           </TabPanel>
           <TabPanel className="overflow-hidden">
           <Button
