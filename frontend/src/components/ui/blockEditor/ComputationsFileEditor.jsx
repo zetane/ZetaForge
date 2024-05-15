@@ -317,7 +317,6 @@ export default function ComputationsFileEditor({ fetchFileSystem }) {
                 }}
             >
                 <ViewerCodeMirror
-                className="code-block"
                 code={item.response}
                 />
                 <div className="absolute right-4 top-4">
