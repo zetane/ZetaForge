@@ -18,6 +18,7 @@ import { EditorCodeMirror, ViewerCodeMirror } from "./CodeMirrorComponents";
 import ComputationsFileEditor from "./ComputationsFileEditor";
 import Splitter from "./Splitter";
 
+const EDIT_ONLY_FILES = ["specs_v1.json"] //TODO use the new spec file name
 export default function DirectoryViewer({
   fileSystemProp,
   blockPath,
@@ -86,7 +87,7 @@ export default function DirectoryViewer({
     for (let i = 0; i < files.length; i++) {
       formData.append("files", files[i])
       formData.append("paths", files[i].webkitRelativePath);
-
+    }
 
     formData.append("blockPath", blockPath);
     try {
@@ -211,7 +212,7 @@ export default function DirectoryViewer({
     return path.endsWith("computations.py")
   }
 
-    const saveChanges = (e) => {
+  const saveChanges = (e) => {
     if (!currentFile || !currentFile.path) {
       console.error("No file selected");
       return;
@@ -306,7 +307,7 @@ export default function DirectoryViewer({
           )}
       </TreeNode>
     );
-  }
+  } 
 
   return (
     <div className="flex h-full">
@@ -388,10 +389,9 @@ export default function DirectoryViewer({
               <div className="relative overflow-y-auto mt-6 px-5">
               {currentFile.path.endsWith("computations.py") ? (
                 <ComputationsFileEditor fetchFileSystem={fetchFileSystem} />
-              ) : ["specs_v1.json", "run_test.py"].some(fileName =>
+                ) : EDIT_ONLY_FILES.some(fileName =>
                 currentFile.path.endsWith(fileName)) ? (
-                <ViewerCodeMirror
-                  className="code-block"
+                      <ViewerCodeMirror
                   code={currentFile.content || ""}
                 />
               ) : (
@@ -430,5 +430,4 @@ export default function DirectoryViewer({
       </Modal>
     </div>
   );
-  }
 }
