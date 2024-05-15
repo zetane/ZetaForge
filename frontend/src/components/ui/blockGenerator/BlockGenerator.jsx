@@ -306,9 +306,6 @@ const BlockContent = ({ html, block, onInputChange }) => {
       {parsedInputs.map((input, index) => {
         const parameterName = input.parameterName;
         const value = block.action?.parameters[parameterName]?.value || '';
-        console.log(block)
-        console.log("parameter Name", parameterName)
-        console.log(parsedInputs)
         return (
           <InputField
             key={index}

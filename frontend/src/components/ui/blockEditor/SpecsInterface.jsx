@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { TextInput, Button, Loading, TextArea } from '@carbon/react';
 import { pipelineAtom } from '@/atoms/pipelineAtom';
-import { useImmerAtom } from 'jotai-immer';
 import { Save } from "@carbon/icons-react";
+import { Button, Loading, TextArea, TextInput } from '@carbon/react';
+import { useImmerAtom } from 'jotai-immer';
+import { useEffect, useState } from 'react';
 
 function SpecsInterface({ blockPath }) {
   const [specs, setSpecs] = useState({});
@@ -107,8 +107,7 @@ function SpecsInterface({ blockPath }) {
       body: JSON.stringify({ blockPath, specs })
     })
     .then(response => response.json())
-    .then(() => {
-      console.log('Specs updated successfully');
+      .then(() => {
       setIsLoading(false);
     })
     .catch(error => {
@@ -120,9 +119,7 @@ function SpecsInterface({ blockPath }) {
         const relPath = blockPath.replaceAll('\\', '/')
         const blockFolderName = relPath.split("/").pop();
 
-        console.log(blockFolderName, specs, pipeline.data)
-        const newSpecs = specsValuesUpdate(blockFolderName, specs, pipeline.data);
-        console.log("newSpecs", newSpecs)
+      const newSpecs = specsValuesUpdate(blockFolderName, specs, pipeline.data);
         setPipeline((draft) => {
           draft.data[blockFolderName] = newSpecs;
         })

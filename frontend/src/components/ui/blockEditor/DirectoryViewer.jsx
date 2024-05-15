@@ -385,8 +385,7 @@ export default function DirectoryViewer({
         ) : (
           currentFile &&
           currentFile.path && (
-          <div className="relative overflow-y-auto mt-6 px-5">
-              {console.log("Current file path:", currentFile.path)}
+              <div className="relative overflow-y-auto mt-6 px-5">
               {currentFile.path.endsWith("computations.py") ? (
                 <ComputationsFileEditor fetchFileSystem={fetchFileSystem} />
               ) : ["specs_v1.json", "run_test.py"].some(fileName =>

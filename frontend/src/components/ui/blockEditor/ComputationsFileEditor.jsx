@@ -55,7 +55,6 @@ export default function ComputationsFileEditor({ fetchFileSystem }) {
   useEffect(() => {
     const init = async () => {
       try {
-        console.log(blockPath)
         const relPath = blockPath.replaceAll('\\', '/')
         const blockFolderName = relPath.split("/").pop();
         setBlockFolderName(blockFolderName);

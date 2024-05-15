@@ -51,7 +51,7 @@ export default function Editor() {
   }, [blockPath]);
 
   const handleTabClick = (e) => {
-    e.currentTarget.blur(); // This removes focus from the current tab
+    e.currentTarget.blur();
     fetchFileSystem(blockFolderName);
   };
 
