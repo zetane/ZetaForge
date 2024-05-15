@@ -55,8 +55,8 @@
       "title_bar": {},
       "preview": {},
       "html": "",
-      "pos_x": "0",
-      "pos_y": "0",
+      "pos_x": "300",
+      "pos_y": "200",
       "pos_z": "999, this is the z-index for 2D canvas"
     }
   },
