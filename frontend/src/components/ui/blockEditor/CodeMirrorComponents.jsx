@@ -34,7 +34,6 @@ export const ViewerCodeMirror = ({ code }) => {
     <CodeMirror
       value={code}
       theme={theme}
-      className="cm-custom-viewer"
       extensions={[loadLanguage("python"), viewerBackgroundTheme]}
       readOnly={true}
       basicSetup={{
@@ -74,7 +73,6 @@ export const EditorCodeMirror = ({ code, onChange }) => {
     <CodeMirror
       value={code}
       extensions={[loadLanguage("python"), editorBackgroundTheme]}
-      className="cm-custom-editor"
       basicSetup={{
         tabSize: 2,
         highlightActiveLine: false,
