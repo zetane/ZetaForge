@@ -3,27 +3,26 @@ import ast
 import inspect
 import shutil
 import json
+import time
 from computations import compute
 
 def main():
-    # 1. Make a list of all the files in the current execution directory and store it
-    initial_files_and_folders = set(os.listdir())
     original_path = os.getcwd()
 
-    # 2. Check for all the files in the /files directory
+    # Check for all the files in the /files directory
     files_dir = os.path.join("/files")
     if not os.path.exists(files_dir):
         os.makedirs(files_dir, exist_ok=True)
 
     if os.path.exists(files_dir):
-        # 3. Copy any files and folders (recursively) in /files into the current execution directory
         for item in os.listdir(files_dir):
             src_path = os.path.join(files_dir, item)
             dst_path = os.path.join(os.getcwd(), item)
-            if os.path.isdir(src_path):
-                shutil.copytree(src_path, dst_path, dirs_exist_ok=True)
-            else:
-                shutil.copy2(src_path, dst_path)
+            shutil.move(src_path, dst_path)
+
+    # Get current dir files and folders
+    initial_files_and_folders = set(os.listdir())
+    print("Initial files: ", initial_files_and_folders)
 
     params = list()
     inputs = dict()
@@ -55,12 +54,13 @@ def main():
         with open(key + ".txt", "w") as file:
             file.write(json.dumps(value))
 
-    # 4. Check the current execution directory for files and folders after the compute function executes
+    # Check the current execution directory for files and folders after the compute function executes
     current_files_and_folders = set(os.listdir())
     print("Current dir: ", current_files_and_folders)
 
-    # 5. Diff the new exec dir files and folders from the 1st exec dir files and folders state
+    # Diff the new exec dir files and folders from the 1st exec dir files and folders state
     new_items = current_files_and_folders - initial_files_and_folders
+    print("New items: ", new_items)
 
     # 6. Copy any new files in the current execution directory to /files
     if os.path.exists(files_dir):

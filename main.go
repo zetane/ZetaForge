@@ -236,9 +236,9 @@ func main() {
 		sink := filepath.Join(execution.Pipeline.Sink, "history", execution.Id)
 		execution.Pipeline.Sink = sink
 		if config.IsLocal {
-			go localExecute(&execution.Pipeline, res.ID, execution.Id, config, client, db, hub)
+			go localExecute(&execution.Pipeline, res.ID, execution.Id, execution.Build, config, client, db, hub)
 		} else {
-			go cloudExecute(&execution.Pipeline, res.ID, execution.Id, config, client, db, hub)
+			go cloudExecute(&execution.Pipeline, res.ID, execution.Id, execution.Build, config, client, db, hub)
 		}
 		newRes := make(map[string]any)
 		newRes["executionId"] = execution.Id
@@ -408,9 +408,9 @@ func main() {
 		pipeline.Sink = sink
 
 		if config.IsLocal {
-			go localExecute(&pipeline, res.ID, executionId.String(), config, client, db, hub)
+			go localExecute(&pipeline, res.ID, executionId.String(), false, config, client, db, hub)
 		} else {
-			go cloudExecute(&pipeline, res.ID, executionId.String(), config, client, db, hub)
+			go cloudExecute(&pipeline, res.ID, executionId.String(), false, config, client, db, hub)
 		}
 
 		newRes := make(map[string]any)
