@@ -23,7 +23,7 @@ function SpecsInterface({ blockPath }) {
     .then(response => response.json())
     .then(data => {
       setSpecs(data);
-      setFlattenedSpecs(flattenSpecs(data)); // Flatten the specs and update state
+      setFlattenedSpecs(flattenSpecs(data));
       setIsLoading(false);
     })
     .catch(error => {
@@ -36,21 +36,19 @@ function SpecsInterface({ blockPath }) {
     let fields = [];
     Object.keys(data).forEach(key => {
       if (['connections', 'relays', 'command_line', 'pos_x', 'pos_y', 'pos_z', 'parameters'].includes(key)) {
-        return; // Skip these keys
+        return;
       }
   
       const newPath = path.concat(key);
       const newKey = prefix ? `${prefix}.${key}` : key;
       if (typeof data[key] === 'object' && !Array.isArray(data[key]) && data[key] !== null) {
-        // Recursively call flattenSpecs for nested objects
         fields = fields.concat(flattenSpecs(data[key], newKey, newPath));
       } else {
-        // Construct label based on the path
-        let label = key; // Default label
+        let label = key;
         if (newPath.includes('inputs') || newPath.includes('outputs')) {
-          const typeLabel = newPath[0].charAt(0).toUpperCase() + newPath[0].slice(1); // Capitalize first letter
-          const varName = newPath[newPath.length - 2]; // Get variable name from the second last item in the path
-          label = `${typeLabel} ${varName} Type`; // Correctly format label
+          const typeLabel = newPath[0].charAt(0).toUpperCase() + newPath[0].slice(1)
+          const varName = newPath[newPath.length - 2];
+          label = `${typeLabel} ${varName} Type`;
         }
         fields.push({ key: newKey, label, value: data[key] });
       }
@@ -59,7 +57,6 @@ function SpecsInterface({ blockPath }) {
   };
 
   const handleInputChange = (field, value) => {
-    // Update the value in the flattened specs array
     const newFlattenedSpecs = flattenedSpecs.map(item => {
       if (item.key === field) {
         return { ...item, value: value };
@@ -68,7 +65,6 @@ function SpecsInterface({ blockPath }) {
     });
     setFlattenedSpecs(newFlattenedSpecs);
 
-    // Update the original specs object
     const keys = field.split('.');
     const lastKey = keys.pop();
     const lastObj = keys.reduce((obj, key) => obj[key] = obj[key] || {}, specs);
@@ -77,35 +73,25 @@ function SpecsInterface({ blockPath }) {
   };
 
   function specsValuesUpdate(blockFolderName, specs, pipelineData) {
-    // Clone the relevant block specs from pipeline data
     const pipelineBlockSpecs = JSON.parse(JSON.stringify(pipelineData[blockFolderName]));
-  
-    // Define a set of keys to skip
     const keysToSkip = new Set(['connections', 'relays', 'command_line', 'pos_x', 'pos_y', 'pos_z', 'parameters']);
-  
-    // Function to recursively update the values based on specific rules
+
     function updateValues(target, source, path = []) {
       Object.keys(source).forEach(key => {
-        // Skip updates for specific keys
         if (keysToSkip.has(key)) {
           return;
         }
   
         const newPath = path.concat(key);
         if (typeof source[key] === 'object' && !Array.isArray(source[key]) && source[key] !== null) {
-          // Ensure the target path exists or create it
           if (!target[key]) target[key] = {};
-  
-          // Continue recursion
           updateValues(target[key], source[key], newPath);
         } else {
-          // Update the leaf nodes
           target[key] = source[key];
         }
       });
     }
-  
-    // Start the update process
+
     updateValues(pipelineBlockSpecs, specs);
   
     return pipelineBlockSpecs;
@@ -130,7 +116,6 @@ function SpecsInterface({ blockPath }) {
       setIsLoading(false);
     });
 
-    // Update the pipeline block specs
     try {
         const relPath = blockPath.replaceAll('\\', '/')
         const blockFolderName = relPath.split("/").pop();
@@ -151,7 +136,7 @@ function SpecsInterface({ blockPath }) {
       {isLoading ? (
         <Loading description="Loading" withOverlay={true} />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 w-full max-w-4xl"> {/* Responsive grid setup */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 w-full max-w-4xl">
           {flattenedSpecs.map(({ key, label, value }) => (
             <div key={key} className="mb-4 w-full">
               {label.toLowerCase().includes('description') ? (
@@ -162,7 +147,7 @@ function SpecsInterface({ blockPath }) {
                   value={value || ''}
                   onChange={(e) => handleInputChange(key, e.target.value)}
                   rows={4}
-                  style={{ resize: 'vertical' }} // Allows the user to resize the textarea vertically
+                  style={{ resize: 'vertical' }}
                 />
               ) : (
                 <TextInput

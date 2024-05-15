@@ -103,10 +103,8 @@ const BlockPreview = ({id, src}) => {
 const BlockTitle = ({ name, id, color, openView, actions, src, blockEvents }) => {
   const handleViewClick = () => {
     if (!src) {
-      // Convert blockEvents to a string and display it in an alert
       alert("Block Event: " + JSON.stringify(blockEvents, null, 2));
     } else {
-      // If source URL is available, open it in a new tab
       window.open(src, '_blank');
     }
   };

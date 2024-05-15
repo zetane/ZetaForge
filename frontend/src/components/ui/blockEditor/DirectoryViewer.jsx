@@ -8,7 +8,6 @@ import {
   DocumentDownload,
   Folder,
   FolderOpen,
-  // PlayFilled,
   Save,
 } from "@carbon/icons-react";
 import { Button, Modal, TreeNode, TreeView } from "@carbon/react";
@@ -16,10 +15,10 @@ import { useAtom } from 'jotai';
 import { useImmerAtom } from 'jotai-immer';
 import { useCallback, useEffect, useRef, useState } from "react";
 import { EditorCodeMirror, ViewerCodeMirror } from "./CodeMirrorComponents";
+import ComputationsFileEditor from "./ComputationsFileEditor";
 import Splitter from "./Splitter";
-import ComputationsFileEditor from "./ComputationsFileEditor"
 
-function DirectoryViewer({
+export default function DirectoryViewer({
   fileSystemProp,
   blockPath,
   lastGeneratedIndex,
@@ -29,7 +28,7 @@ function DirectoryViewer({
   const serverAddress = "http://localhost:3330";
   const [fileSystem, setFileSystem] = useState({});
   const [currentFile, setCurrentFile] = useState({});
-  const [navWidth, setNavWidth] = useState(300); // Initial width of the navigation pane
+  const [navWidth, setNavWidth] = useState(300);
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [pendingFile, setPendingFile] = useState(null);
@@ -57,8 +56,8 @@ function DirectoryViewer({
     const formData = new FormData();
 
     for (let i = 0; i < files.length; i++) {
-      formData.append("files", files[i]); // Append files only
-      formData.append("paths", files[i].name); // Use file name as path
+      formData.append("files", files[i]);
+      formData.append("paths", files[i].name);
     }
 
     formData.append("blockPath", blockPath);
@@ -85,9 +84,9 @@ function DirectoryViewer({
     const formData = new FormData();
 
     for (let i = 0; i < files.length; i++) {
-      formData.append("files", files[i]); // Append files
-      formData.append("paths", files[i].webkitRelativePath); // Use relative path
-    }
+      formData.append("files", files[i])
+      formData.append("paths", files[i].webkitRelativePath);
+
 
     formData.append("blockPath", blockPath);
     try {
@@ -107,7 +106,6 @@ function DirectoryViewer({
   const handleModalConfirm = (e) => {
     saveChanges(e);
     if (pendingFile) {
-      // Split the path and navigate through the file system
       const relPath = pendingFile.replaceAll('\\', '/')
       const pathSegments = relPath.split("/");
       let fileContent = fileSystem;
@@ -115,10 +113,8 @@ function DirectoryViewer({
       for (let i = 0; i < pathSegments.length; i++) {
         const segment = pathSegments[i];
         if (i === pathSegments.length - 1) {
-          // Last segment, this is the file
           fileContent = fileContent[segment].content;
         } else {
-          // Navigate deeper into the directory structure
           fileContent = fileContent[segment].content;
         }
       }
@@ -126,10 +122,9 @@ function DirectoryViewer({
       setCurrentFile({ path: pendingFile, content: fileContent });
     }
     setIsModalOpen(false);
-    setPendingFile(null); // Reset pending file state
+    setPendingFile(null);
   };
 
-  // Function to handle modal cancel
   const handleModalCancel = () => {
     setIsModalOpen(false);
   };
@@ -143,13 +138,11 @@ function DirectoryViewer({
     setFileSystem((prevFileSystem) => {
       const toggleFolder = (pathSegments, fileSystem) => {
         if (!fileSystem || typeof fileSystem !== "object") {
-          // Safety check to prevent accessing properties of undefined
           return fileSystem;
         }
 
         const [currentSegment, ...remainingSegments] = pathSegments;
         if (!fileSystem[currentSegment]) {
-          // If the current segment does not exist in the file system
           console.error(
             `No such folder: ${currentSegment} in path ${folderPath}`,
           );
@@ -157,7 +150,6 @@ function DirectoryViewer({
         }
 
         if (!remainingSegments.length) {
-          // If this is the target folder
           return {
             ...fileSystem,
             [currentSegment]: {
@@ -166,7 +158,6 @@ function DirectoryViewer({
             },
           };
         } else {
-          // If there are more segments, continue the recursion
           return {
             ...fileSystem,
             [currentSegment]: {
@@ -186,15 +177,13 @@ function DirectoryViewer({
   };
 
   const onChange = (newValue) => {
-    setUnsavedChanges(true); // Indicate that there are unsaved changes
+    setUnsavedChanges(true);
 
-    // Update currentFile with the new content
     setCurrentFile((prevCurrentFile) => ({
       ...prevCurrentFile,
       content: newValue,
     }));
 
-    // Update the fileSystem state to reflect the change in the file's content
     setFileSystem((prevFileSystem) => {
       const relPath = currentFile.path.replaceAll('\\', '/')
       const pathSegments = relPath.split("/");
@@ -205,13 +194,11 @@ function DirectoryViewer({
         const segment = pathSegments[i];
 
         if (i === pathSegments.length - 1) {
-          // If it's the file, update its content
           currentLevel[segment] = {
             ...currentLevel[segment],
             content: newValue,
           };
         } else {
-          // Navigate deeper into the directory structure
           currentLevel = currentLevel[segment].content;
         }
       }
@@ -224,8 +211,7 @@ function DirectoryViewer({
     return path.endsWith("computations.py")
   }
 
-  const saveChanges = (e) => {
-    // Check if there is a current file selected
+    const saveChanges = (e) => {
     if (!currentFile || !currentFile.path) {
       console.error("No file selected");
       return;
@@ -280,19 +266,16 @@ function DirectoryViewer({
     const textStyle = isSpecialFile ? { color: "darkorange", paddingRight: "4px", paddingLeft: "4px" } : {};
 
     const handleFileClick = (filePath) => {
-      // Check for unsaved changes as before
       if (unsavedChanges) {
         setPendingFile(filePath);
         setIsModalOpen(true);
       } else {
         if (filePath.endsWith(".html")) {
-          // Open HTML file in a new tab
-          const fileContent = folderData.content; // Assuming this is your file content
+          const fileContent = folderData.content;
           const blob = new Blob([fileContent], { type: "text/html" });
           const url = URL.createObjectURL(blob);
           window.open(url, "_blank");
         } else {
-          // Existing logic for non-HTML files
           setCurrentFile({ path: filePath, content: folderData.content });
           setIsComputationsFile(filePath.endsWith("computations.py"));
         }
@@ -334,7 +317,6 @@ function DirectoryViewer({
             size="sm"
             iconDescription="Import folder"
             tooltipPosition="right"
-            // hasIconOnly
             onClick={handleFolderImport}
             title="Import folder into your block folder"
           >
@@ -449,6 +431,5 @@ function DirectoryViewer({
       </Modal>
     </div>
   );
+  }
 }
-
-export default DirectoryViewer;
