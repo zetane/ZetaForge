@@ -1,4 +1,3 @@
-import { compilationErrorToastAtom } from '@/atoms/compilationErrorToast';
 import { drawflowEditorAtom } from '@/atoms/drawflowAtom';
 import { pipelineAtom } from '@/atoms/pipelineAtom';
 import { updateSpecs } from '@/utils/specs';
@@ -20,23 +19,17 @@ import Splitter from "./Splitter";
 
 const EDIT_ONLY_FILES = ["specs_v1.json"] //TODO use the new spec file name
 export default function DirectoryViewer({
-  fileSystemProp,
   blockPath,
-  lastGeneratedIndex,
-  fetchFileSystem,
-  blockFolderName,
+  blockKey,
 }) {
   const serverAddress = "http://localhost:3330";
   const [fileSystem, setFileSystem] = useState({});
   const [currentFile, setCurrentFile] = useState({});
-  const [navWidth, setNavWidth] = useState(300);
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [pendingFile, setPendingFile] = useState(null);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const [editor] = useAtom(drawflowEditorAtom);
-  const [compilationErrorToast, setCompilationErrorToast] = useAtom(compilationErrorToastAtom)
-  const [isComputationsFile, setIsComputationsFile] = useState(false);
 
   const fileInputRef = useRef(null);
   const folderInputRef = useRef(null);
@@ -45,12 +38,35 @@ export default function DirectoryViewer({
   const saveBlockSpecs = trpc.saveBlockSpecs.useMutation();
 
   useEffect(() => {
-    setFileSystem(fileSystemProp);
-  }, [fileSystemProp]);
+    fetchFileSystem()
+  }, [pipeline]);
 
   const handleFileImport = () => {
     fileInputRef.current.click();
   };
+
+  const fetchFileSystem = useCallback(async () => {
+    try {
+      const response = await fetch(`${serverAddress}/get-directory-tree`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ folder: blockPath }),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const inserted_data = {
+        [blockKey]: { content: data, expanded: true, type: "folder" },
+      };
+      setFileSystem(inserted_data);
+    } catch (error) {
+      console.error("Error fetching file system:", error);
+    }
+  }, [blockPath]);
 
   const handleFileChange = async (event) => {
     const files = event.target.files;
@@ -129,11 +145,6 @@ export default function DirectoryViewer({
   const handleModalCancel = () => {
     setIsModalOpen(false);
   };
-
-  const handleDrag = useCallback((e) => {
-    const newWidth = e.clientX - 22.5;
-    setNavWidth(newWidth);
-  }, []);
 
   const onToggle = (folderPath) => {
     setFileSystem((prevFileSystem) => {
@@ -237,9 +248,9 @@ export default function DirectoryViewer({
         if (isComputation(currentFile.path)) {
           try {
             const newSpecsIO = await compileComputation.mutateAsync({ blockPath: blockPath });
-            const newSpecs = await updateSpecs(blockFolderName, newSpecsIO, pipeline.data, editor);
+            const newSpecs = await updateSpecs(blockKey, newSpecsIO, pipeline.data, editor);
             setPipeline((draft) => {
-              draft.data[blockFolderName] = newSpecs;
+              draft.data[blockKey] = newSpecs;
             })
             await saveBlockSpecs.mutateAsync({ blockPath: blockPath, blockSpecs: newSpecs });
             fetchFileSystem();
@@ -278,7 +289,6 @@ export default function DirectoryViewer({
           window.open(url, "_blank");
         } else {
           setCurrentFile({ path: filePath, content: folderData.content });
-          setIsComputationsFile(filePath.endsWith("computations.py"));
         }
       }
     };
@@ -351,23 +361,6 @@ export default function DirectoryViewer({
             hidden
           />
         </div>
-        {lastGeneratedIndex !== undefined &&
-          lastGeneratedIndex !== null &&
-          lastGeneratedIndex.toString() !== "" ? (
-          <div>
-            <div
-              style={{
-                marginBottom: "0px",
-                marginTop: "15px",
-                textAlign: "left",
-              }}
-            >
-              {"Generated from: "}
-              <span>{lastGeneratedIndex.toString()}</span>
-            </div>
-          </div>
-        ) : null}
-
         <div className="w-80 overflow-y-auto mt-1">
           <TreeView selected={currentFile.file} hideLabel>
             {Object.entries(fileSystem).map(([folder, folderData]) =>
@@ -376,7 +369,7 @@ export default function DirectoryViewer({
           </TreeView>
         </div>
       </div>
-      <Splitter onDrag={handleDrag} />
+      <Splitter />
       <div className="w-full min-w-0 flex flex-col">
         <span className="text-md text-gray-30 mt-2">
           {currentFile.path ? <span>{currentFile.path}</span> : null}

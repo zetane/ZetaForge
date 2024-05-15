@@ -17,72 +17,32 @@ import {
   Tabs
 } from "@carbon/react";
 import { useAtom, useSetAtom } from "jotai";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import DirectoryViewer from "./DirectoryViewer";
 import SpecsInterface from "./SpecsInterface";
 import TestLogs from "./TestLogs";
 
 export default function Editor() {
-  const serverAddress = "http://localhost:3330";
   const minizedStyles = "inset-y-16 right-0 w-1/2"
   const maximizedStyles = "inset-y-11 right-0 w-full"
   const [pipeline] = useAtom(pipelineAtom);
   const [blockPath] = useAtom(blockEditorRootAtom);
   const relPath = blockPath.replaceAll('\\', '/')
-  const blockFolderName = relPath.split("/").pop();
-  const blockName = pipeline.data[blockFolderName].information.name;
+  const blockKey = relPath.split("/").pop();
+  const blockName = pipeline.data[blockKey].information.name;
   const blockLogs = `${blockPath}/logs.txt`
   const setBlockEditorOpen = useSetAtom(isBlockEditorOpenAtom);
 
-  const [queryAndResponses, setQueryAndResponses] = useState([]);
-  const [lastGeneratedIndex, setLastGeneratedIndex] = useState("");
-  const [fileSystem, setFileSystem] = useState({});
   const [isRunButtonPressed, setIsRunButtonPressed] = useState(false);
   const [isMaximized, setMaximized] = useState(false)
-  const chatTextarea = useRef(null);
-  const panel = useRef(null);
 
-  const compileComputation = trpc.compileComputation.useMutation();
-  const saveBlockSpecs = trpc.saveBlockSpecs.useMutation();
   const runTest = trpc.runTest.useMutation();
-
-  useEffect(() => {
-    fetchFileSystem(blockFolderName);
-  }, [blockPath]);
-
-  const handleTabClick = (e) => {
-    e.currentTarget.blur();
-    fetchFileSystem(blockFolderName);
-  };
-
-  const fetchFileSystem = useCallback(async () => {
-    try {
-      const response = await fetch(`${serverAddress}/get-directory-tree`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ folder: blockPath }),
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const inserted_data = {
-        [blockFolderName]: { content: data, expanded: true, type: "folder" },
-      };
-      setFileSystem(inserted_data);
-    } catch (error) {
-      console.error("Error fetching file system:", error);
-    }
-  }, [blockPath]);
 
   const handleDockerCommands = useCallback(async () => {
     setIsRunButtonPressed(true);
-    runTest.mutateAsync({ blockPath: blockPath, blockKey: blockFolderName });
-    await fetchFileSystem(blockFolderName);
-  }, [blockFolderName, blockPath, fetchFileSystem]);
+    runTest.mutateAsync({ blockPath: blockPath, blockKey: blockKey });
+    await fetchFileSystem(blockKey);
+  }, [blockKey, blockPath]);
 
   const handleClose = () => {
     setBlockEditorOpen(false);
@@ -97,7 +57,7 @@ export default function Editor() {
       <div className="block-editor-header">
         <div className='p-4'>
           <p className='text-lg italic'>{blockName}</p>
-          <p className="text-sm">{blockFolderName}</p>
+          <p className="text-sm">{blockKey}</p>
         </div>
         <div className="flex flex-row items-center justify-end">
           <IconButton kind="ghost" size="lg" className="my-px-16" onClick={toggleMaximize} label="Maximize">
@@ -110,28 +70,25 @@ export default function Editor() {
       </div>
       <Tabs>
         <TabList fullWidth className='shrink-0 max-w-[40rem] mx-auto mb-1'>
-        <Tab onClick={handleTabClick}>
+          <Tab>
             Files
           </Tab>
-          <Tab onClick={handleTabClick}>
+          <Tab>
             Specs
           </Tab>
-          <Tab onClick={handleTabClick}>
+          <Tab>
             Test Block
           </Tab>
         </TabList>
         <TabPanels>
         <TabPanel className="overflow-hidden">
             <DirectoryViewer
-              fileSystemProp={fileSystem}
               blockPath={blockPath}
-              lastGeneratedIndex={lastGeneratedIndex}
-              fetchFileSystem={fetchFileSystem}
-              blockFolderName={blockFolderName}
+              blockKey={blockKey}
             />
           </TabPanel>
           <TabPanel className="overflow-y-auto">
-            <SpecsInterface key={blockFolderName} blockKey={blockFolderName} />
+            <SpecsInterface key={blockKey} blockPath={blockPath} blockKey={blockKey} />
           </TabPanel>
           <TabPanel className="overflow-hidden">
           <Button
