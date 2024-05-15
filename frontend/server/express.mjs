@@ -412,47 +412,6 @@ app.get("/is-dev", async(req, res) => {
     res.send(history);
   });
 
-  
-  
-  app.post("/get-specs", (req, res) => {
-    const { blockPath } = req.body;
-    const specsPath = path.join(blockPath, "specs_v1.json");
-  
-    fs.readFile(specsPath, 'utf8', (err, data) => {
-      if (err) {
-        console.error("Failed to read specs file:", err);
-        res.status(500).send({ error: "Failed to read specs file", message: err.message });
-        return;
-      }
-  
-      try {
-        const specs = JSON.parse(data);
-        res.json(specs);
-      } catch (parseError) {
-        console.error("Error parsing specs JSON:", parseError);
-        res.status(500).send({ error: "Error parsing specs JSON", message: parseError.message });
-      }
-    });
-  });
-  
-
-  
-  
-  app.post("/update-specs", (req, res) => {
-    const { blockPath, specs } = req.body;
-    const filePath = path.join(blockPath, "specs_v1.json");
-    const data = JSON.stringify(specs, null, 2); // Pretty print JSON
-  
-    fs.writeFile(filePath, data, 'utf8', (err) => {
-      if (err) {
-        console.error("Error writing to file:", err);
-        res.status(500).send({ error: "Error writing specs file", message: err.message });
-        return;
-      }
-      res.send({ message: "Specs updated successfully" });
-    });
-  });
-
   app.get("/get-chat-history-index", (req, res) => {
     const { blockPath } = req.query;
     const filePath = path.join(blockPath, "computations.py");
