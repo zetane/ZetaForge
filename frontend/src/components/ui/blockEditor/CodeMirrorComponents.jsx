@@ -2,24 +2,14 @@ import { darkModeAtom } from "@/atoms/themeAtom";
 import { EditorView } from "@codemirror/view";
 import { loadLanguage } from "@uiw/codemirror-extensions-langs";
 import { githubLight } from '@uiw/codemirror-theme-github';
-import { vscodeDark } from '@uiw/codemirror-theme-vscode'
+import { vscodeDark } from '@uiw/codemirror-theme-vscode';
 
 import CodeMirror from "@uiw/react-codemirror";
 import { atom, useAtom } from "jotai";
 
-
-const editorBackgroundTheme = EditorView.theme({
+const backgroundTheme = EditorView.theme({
   ".cm-content": {
     backgroundColor: "var(--beCodeEditorBackground)",
-    "& ::selection": {
-      backgroundColor: "#ffcc00",
-    }
-  }
-});
-
-const viewerBackgroundTheme = EditorView.theme({
-  ".cm-content": {
-    backgroundColor: "var(--beCodeViewerBackground)",
     "& ::selection": {
       backgroundColor: "#ffcc00",
     }
@@ -34,7 +24,7 @@ export const ViewerCodeMirror = ({ code }) => {
     <CodeMirror
       value={code}
       theme={theme}
-      extensions={[loadLanguage("python"), viewerBackgroundTheme]}
+      extensions={[loadLanguage("python"), backgroundTheme]}
       readOnly={true}
       basicSetup={{
         lineNumbers: true,
@@ -72,7 +62,7 @@ export const EditorCodeMirror = ({ code, onChange }) => {
   return (
     <CodeMirror
       value={code}
-      extensions={[loadLanguage("python"), editorBackgroundTheme]}
+      extensions={[loadLanguage("python"), backgroundTheme]}
       basicSetup={{
         tabSize: 2,
         highlightActiveLine: false,
