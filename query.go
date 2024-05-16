@@ -332,3 +332,18 @@ func getExecution(ctx context.Context, db *sql.DB, organization string, uuid str
 
 	return execution, nil
 }
+
+func createSetupVersion(ctx context.Context, db *sql.DB, version string) (zdatabase.SetupVersion, error) {
+	q := zdatabase.New(db)
+	return q.CreateSetupVersion(ctx, version)
+}
+
+func listSetupVersions(ctx context.Context, db *sql.DB) ([]zdatabase.SetupVersion, error) {
+	q := zdatabase.New(db)
+	res, err := q.ListSetupVersions(ctx)
+	if err != nil {
+		return []zdatabase.SetupVersion{}, err
+	}
+
+	return res, nil
+}

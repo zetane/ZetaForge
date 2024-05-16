@@ -48,6 +48,7 @@ type Config struct {
 	ServiceAccount  string
 	Bucket          string
 	Database        string
+	SetupVersion    string
 	Local           Local `json:"Local,omitempty"`
 	Cloud           Cloud `json:"Cloud,omitempty"`
 }
@@ -164,6 +165,7 @@ func main() {
 	if err := goose.Up(db, "db/migrations"); err != nil {
 		log.Fatalf("Failed to migrate database; err=%v", err)
 	}
+
 	var client clientcmd.ClientConfig
 	if config.IsLocal {
 		client = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
@@ -174,12 +176,12 @@ func main() {
 		// Switching to Cobra if we need more arguments
 		if len(os.Args) > 1 {
 			if os.Args[1] == "--uninstall" {
-				uninstall(client)
+				uninstall(ctx, config, client, db)
 				return
 			}
 			os.Exit(1)
 		}
-		setup(config, client)
+		setup(ctx, config, client, db)
 	} else {
 		cacert, err := base64.StdEncoding.DecodeString(config.Cloud.CaCert)
 		if err != nil {
