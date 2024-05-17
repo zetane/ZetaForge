@@ -30,7 +30,7 @@ the content of the directory representing a Block varies depending on its type.
 ### Components of Parameter Blocks
 
 Parameter Blocks are represented using only one file, which is the specs file of that Block. The specs file includes all
-the structural information about a Block and is stored in `frontend/core/blocks/{block-name}/specs_v1.json`.
+the structural information about a Block and is stored in `frontend/core/blocks/{block-name}/specs.json`.
 
 ### Components of Compute Blocks
 
@@ -46,12 +46,12 @@ returns a dictionary with keys that match the output node names from the specs f
 
 4. `run_test.py`: Builds a test image and runs that image using Docker to test the Block and saves the Docker logs.
 
-5. `specs_v1.json`: Includes the structural information about the Block.
+5. `specs.json`: Includes the structural information about the Block.
 
 ### Components of View Blocks
 The role of View Blocks is to create and display visualizations for the computed Block outputs.
 View Blocks have the same five components as the Compute Blocks; i.e., `computations.py`, `Dockerfile`, `requirements.txt`,
-`run_test.py`, and `specs_v1.json`. Using View Blocks, we create HTML-formatted visualizations that will be visualized
+`run_test.py`, and `specs.json`. Using View Blocks, we create HTML-formatted visualizations that will be visualized
 on top of the View Block as the Pipeline runs. 
 
 

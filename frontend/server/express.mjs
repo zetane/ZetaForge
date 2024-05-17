@@ -1,3 +1,4 @@
+import { SPECS_FILE_NAME } from "../src/utils/constants";
 import bodyParser from "body-parser";
 import { exec, spawn } from "child_process";
 import compression from "compression";
@@ -376,8 +377,8 @@ app.get("/is-dev", async(req, res) => {
 
   app.post("/get-agent", async (req, res) => {
     const { blockPath } = req.body;
-    const specsPath = `${blockPath}/specs_v1.json`;
-
+    const specsPath = path.join(blockPath, SPECS_FILE_NAME)
+    
     fs.readFile(specsPath, (err, data) => {
       if (err) {
         console.error(`Error sending the file: ${err}`);

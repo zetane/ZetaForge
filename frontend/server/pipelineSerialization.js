@@ -1,3 +1,4 @@
+import { SPECS_FILE_NAME } from "../src/utils/constants";
 import { app } from "electron";
 import fs from "fs/promises";
 import path from "path";
@@ -9,8 +10,6 @@ import {
   readJsonToObject,
 } from "./fileSystem.js";
 import { checkAndUpload } from "./s3.js";
-
-const BLOCK_SPECS = "specs_v1.json";
 
 export async function saveSpec(spec, writePath, pipelineName) {
   const pipelineSpecsPath = path.join(writePath, pipelineName)
@@ -26,7 +25,7 @@ export async function saveBlock(blockKey, blockSpec, fromPath, toPath) {
   console.log(`saving ${blockKey} from ${fromPath} to ${newFolder}`)
   await fs.mkdir(newFolder, { recursive: true });
   await fs.cp(fromPath, newFolder, { recursive: true });
-  await fs.writeFile(`${newFolder}/${BLOCK_SPECS}`, JSON.stringify(blockSpec, null, 2))
+  await fs.writeFile(path.join(newFolder, SPECS_FILE_NAME), JSON.stringify(blockSpec, null, 2))
   return newFolder;
 }
 
@@ -84,7 +83,7 @@ export async function copyPipeline(pipelineSpecs, pipelineName, fromDir, toDir) 
     if (existingBlockPath != newBlockPath) {
       // if it's the same folder, don't try to copy it
       await fs.cp(existingBlockPath, newBlockPath, {recursive: true})
-      await fs.writeFile(`${newBlockPath}/${BLOCK_SPECS}`, JSON.stringify(blockSpec, null, 2))
+      await fs.writeFile(path.join(newBlockPath, SPECS_FILE_NAME), JSON.stringify(blockSpec, null, 2))
     }
   }
 
