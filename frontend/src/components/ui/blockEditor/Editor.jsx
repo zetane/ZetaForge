@@ -1,14 +1,11 @@
 import { blockEditorRootAtom, isBlockEditorOpenAtom } from "@/atoms/editorAtom";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
-import { trpc } from '@/utils/trpc';
 import {
   Close,
   Maximize,
-  Minimize,
-  PlayFilled
+  Minimize
 } from "@carbon/icons-react";
 import {
-  Button,
   IconButton,
   Tab,
   TabList,
@@ -17,7 +14,7 @@ import {
   Tabs
 } from "@carbon/react";
 import { useAtom, useSetAtom } from "jotai";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import DirectoryViewer from "./DirectoryViewer";
 import SpecsInterface from "./SpecsInterface";
 import TestLogs from "./TestLogs";
@@ -32,17 +29,8 @@ export default function Editor() {
   const blockName = pipeline.data[blockKey].information.name;
   const blockLogs = `${blockPath}/logs.txt`
   const setBlockEditorOpen = useSetAtom(isBlockEditorOpenAtom);
-
-  const [isRunButtonPressed, setIsRunButtonPressed] = useState(false);
   const [isMaximized, setMaximized] = useState(false)
 
-  const runTest = trpc.runTest.useMutation();
-
-  const handleDockerCommands = useCallback(async () => {
-    setIsRunButtonPressed(true);
-    runTest.mutateAsync({ blockPath: blockPath, blockKey: blockKey });
-    await fetchFileSystem(blockKey);
-  }, [blockKey, blockPath]);
 
   const handleClose = () => {
     setBlockEditorOpen(false);
@@ -91,22 +79,11 @@ export default function Editor() {
             <SpecsInterface key={blockKey} blockPath={blockPath} blockKey={blockKey} />
           </TabPanel>
           <TabPanel className="overflow-hidden">
-          <Button
-            renderIcon={PlayFilled}
-            iconDescription="Run test"
-            tooltipPosition="bottom"
-            size="sm"
-            onClick={handleDockerCommands}
-            title="Run test from this block folder"
-            style={{ marginBottom: '20px' }}
-          >
-            Run Test</Button>
-            <div className="h-full pb-12">
             <TestLogs
               filePath={blockLogs}
-              startFetching={isRunButtonPressed}
+              blockPath={blockPath}
+              blockKey={blockKey}
             />
-            </div>
           </TabPanel>
         </TabPanels>
       </Tabs>
