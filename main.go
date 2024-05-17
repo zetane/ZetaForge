@@ -48,6 +48,7 @@ type Config struct {
 	ServiceAccount  string
 	Bucket          string
 	Database        string
+	SetupVersion    string
 	Local           Local `json:"Local,omitempty"`
 	Cloud           Cloud `json:"Cloud,omitempty"`
 }
@@ -171,7 +172,16 @@ func main() {
 			clientcmd.NewDefaultClientConfigLoadingRules(),
 			&clientcmd.ConfigOverrides{},
 		)
-		setup(config, client)
+
+		// Switching to Cobra if we need more arguments
+		if len(os.Args) > 1 {
+			if os.Args[1] == "--uninstall" {
+				uninstall(ctx, client, db)
+				return
+			}
+			os.Exit(1)
+		}
+		setup(ctx, config, client, db)
 	} else {
 		cacert, err := base64.StdEncoding.DecodeString(config.Cloud.CaCert)
 		if err != nil {

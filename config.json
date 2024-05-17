@@ -10,6 +10,7 @@
 	"ServiceAccount":"executor",
 	"Bucket":"forge-bucket",
 	"Database":"./zetaforge.db",
+	"SetupVersion":"1",
 
 	"Local": {
 		"BucketPort": 8333,
