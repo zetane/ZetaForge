@@ -1,7 +1,8 @@
-import { useCallback, useRef, useState, useEffect } from "react";
-import { Code, View } from "@carbon/icons-react"
-import { FileBlock } from "./FileBlock";
+import { Code, View } from "@carbon/icons-react";
+import { Modal } from "@carbon/react";
 import { useImmerAtom } from "jotai-immer";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { FileBlock } from "./FileBlock";
 
 
 const isTypeDisabled = (action) => {
@@ -101,9 +102,11 @@ const BlockPreview = ({id, src}) => {
 
 
 const BlockTitle = ({ name, id, color, openView, actions, src, blockEvents }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
   const handleViewClick = () => {
     if (!src) {
-      alert("Block Event: " + JSON.stringify(blockEvents, null, 2));
+      setIsOpen(true)
     } else {
       window.open(src, '_blank');
     }
@@ -120,6 +123,17 @@ const BlockTitle = ({ name, id, color, openView, actions, src, blockEvents }) =>
     <div className="title-box" style={{ backgroundColor: color }}>
       <span>{name}</span>
       {actions && actionContainer}
+
+      <Modal
+        modalHeading="Block Events"
+        passiveModal={true}
+        open={isOpen}
+        onRequestClose={() => setIsOpen(false)}
+      >
+        <div className="flex flex-col gap-4 p-3">
+          {JSON.stringify(blockEvents, null, 2)}
+        </div>
+      </Modal>
     </div>
   );
 };
