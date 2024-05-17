@@ -1,19 +1,14 @@
 import bodyParser from "body-parser";
-import { exec, spawn } from "child_process";
+import { spawn } from "child_process";
 import compression from "compression";
 import cors from "cors";
 import 'dotenv/config';
 import { app as electronApp } from 'electron';
 import express from "express";
-import fs, { access, constants, readFile, readFileSync, writeFile } from "fs";
-import fsp from "fs/promises";
-import getMAC from "getmac";
+import fs, { readFileSync } from "fs";
 import multer from "multer";
 import { Configuration, OpenAIApi } from "openai";
 import path from "path";
-import sha256 from 'sha256';
-import { fileExists, readJsonToObject, readSpecs } from "./fileSystem.js";
-import { copyPipeline, saveBlock } from "./pipelineSerialization.js";
 
 
 function startExpressServer() {
@@ -209,7 +204,6 @@ function startExpressServer() {
       } else {
         // Determine the file extension
         const ext = path.extname(entry.name).toLowerCase();
-
         // Read content if the file has one of the specified extensions
         let fileContent = `This file type is not supported for display.\n`; // Default placeholder content
         if (
@@ -248,23 +242,10 @@ function startExpressServer() {
 
   app.post("/new-block-react", (req, res) => {
     const data = req.body;
-  
-    // Function to unescape special characters in the script
-    function unescape(s) {
-      return s
-        .replace(/\\n/g, "\n")
-        .replace(/\\r/g, "\r")
-        .replace(/\\"/g, '"')
-        .replace(/\\\\/g, "\\");
-    }
-  
+    
     let folderPath = data.block_name;
     const filePath = path.join(data.blockPath, "computations.py");
   
-    // Prepend a comment with the chat history index to the computations script
-    const computations_script = `# Chat history index: ${data.chatHistoryIndex}\n` + unescape(data.computations_script);
-  
-    // Write the updated script to the file
     fs.writeFile(filePath, computations_script, (err) => {
       if (err) {
         console.error("Error writing data to file:", err);

@@ -5,6 +5,7 @@ import { fileExists, readJsonToObject } from "./fileSystem";
 const CHAT_HISTORY_FILE_NAME = "chatHistory.json";
 const COMPUTATIONS_FILE_NAME = "computations.py";
 const START_PROMPT = "Code Template";
+
 export async function getHistory(blockPath) {
   const chat = await getChat(blockPath);
   return chat.history
