@@ -9,7 +9,7 @@ import {
   Bot,
   Edit,
   Save,
-  Send
+  SendFilled
 } from "@carbon/icons-react";
 import {
   Button,
@@ -303,7 +303,7 @@ export default function ComputationsFileEditor({ fetchFileSystem }) {
                     </div>
                   ) : (
                     <IconButton iconDescription="Send Prompt" label="Send Prompt" kind='ghost' onClick={handleSubmit}>
-                      <Send size={24} />
+                        <SendFilled size={24} />
                     </IconButton>
                   )}
                 </div>
