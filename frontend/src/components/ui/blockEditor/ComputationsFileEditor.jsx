@@ -150,16 +150,12 @@ export default function ComputationsFileEditor({ fetchFileSystem }) {
     }
   };
 
-  const handleEdit = (e) => {
-    const buttonId = e.currentTarget.id;
-    const index = parseInt(buttonId.split("-").pop(), 10);
-
+  const handleEdit = (index) => {
     if (index >= 0 && index < history.data.length) {
       setEditorValue(history.data[index].response);
       setEditorManualPrompt("Manual edit of code #" + index);
       setShowEditor(true);
     }
-    e.currentTarget.blur();
 
     if (panel.current) {
       setTimeout(() => {
@@ -227,9 +223,6 @@ export default function ComputationsFileEditor({ fetchFileSystem }) {
           <div>
             <div className="flex items-center mb-4">
               <RadioButton
-                id={`select-button-${i}`}
-                name="activeCodeMirrorSelection"
-                value={i.toString()}
                 checked={index.data === i}
                 onChange={() => handleGenerate(i)}
               />
@@ -249,13 +242,12 @@ export default function ComputationsFileEditor({ fetchFileSystem }) {
               />
               <div className="absolute right-4 top-4">
                 <Button
-                  id={`edit-button-${i}`}
                   renderIcon={Edit}
                   iconDescription="Edit Code"
                   tooltipPosition="top"
                   hasIconOnly
                   size="md"
-                  onClick={handleEdit}
+                  onClick={() => handleEdit(i)}
                 />
               </div>
             </div>
