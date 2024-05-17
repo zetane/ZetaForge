@@ -226,7 +226,7 @@ export default function ComputationsFileEditor({ fetchFileSystem }) {
                 checked={index.data === i}
                 onChange={() => handleGenerate(i)}
               />
-              <div className='block-editor-code-header ml-2'>Select Code #{i}</div>
+              <div className='ml-2'>Select Code #{i}</div>
             </div>
             <div
               className="relative"
@@ -256,7 +256,7 @@ export default function ComputationsFileEditor({ fetchFileSystem }) {
       ))}
       {showEditor ? (
         <div>
-          <div className='block-editor-code-header'>{editorManualPrompt}</div>
+          <div>{editorManualPrompt}</div>
           <div className="relative">
             <EditorCodeMirror
               code={editorValue}
@@ -269,7 +269,6 @@ export default function ComputationsFileEditor({ fetchFileSystem }) {
                 tooltipPosition="left"
                 hasIconOnly
                 size="md"
-                className="edit-button"
                 onClick={handleSave}
               />
             </div>
