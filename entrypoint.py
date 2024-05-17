@@ -21,11 +21,14 @@ def main():
 
     # Get current dir files and folders
     initial_files_and_folders = set(os.listdir())
-    print("Initial files: ", initial_files_and_folders)
+    #print("Initial files: ", initial_files_and_folders)
 
     params = list()
     inputs = dict()
     debug_inputs = dict()
+
+    block_id = os.getenv("_blockid_")
+    #print("block id: ", block_id)
 
     for key in inspect.signature(compute).parameters.keys():
         value = os.getenv(key)
@@ -50,16 +53,16 @@ def main():
 
     os.chdir(original_path)
     for key, value in outputs.items():
-        with open(key + ".txt", "w") as file:
+        with open(block_id + "-" + key + ".txt", "w") as file:
             file.write(json.dumps(value))
 
     # Check the current execution directory for files and folders after the compute function executes
     current_files_and_folders = set(os.listdir())
-    print("Current dir: ", current_files_and_folders)
+    #print("Current dir: ", current_files_and_folders)
 
     # Diff the new exec dir files and folders from the 1st exec dir files and folders state
     new_items = current_files_and_folders - initial_files_and_folders
-    print("New items: ", new_items)
+    #print("New items: ", new_items)
 
     # 6. Copy any new files in the current execution directory to /files
     if os.path.exists(files_dir):
@@ -71,6 +74,14 @@ def main():
             else:
                 shutil.copy2(src_path, dst_path)
 
+    # Moving offers no noticeable speedup in execution time
+#    if os.path.exists(files_dir):
+#        for item in new_items:
+#            src_path = os.path.join(os.getcwd(), item)
+#            dst_path = os.path.join(files_dir, item)
+#
+#            print(f"Moving {item} from {src_path} to {dst_path}")
+#            shutil.move(src_path, dst_path)
 
 if __name__ == "__main__":
     main()

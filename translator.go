@@ -240,6 +240,11 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 					task.Dependencies = append(task.Dependencies, kaniko.Name)
 				}
 			}
+
+			template.Container.Env = append(template.Container.Env, corev1.EnvVar{
+				Name:  "_blockid_",
+				Value: blockKey,
+			})
 		}
 
 		for name, input := range block.Inputs {
@@ -278,9 +283,11 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 		}
 
 		for name := range block.Outputs {
+			blockVar := blockKey + "-" + name
+			fullPath := filepath.Join(cfg.FileDir, blockVar+".txt")
 			template.Outputs.Parameters = append(template.Outputs.Parameters, wfv1.Parameter{
 				Name:      name,
-				ValueFrom: &wfv1.ValueFrom{Path: name + ".txt"},
+				ValueFrom: &wfv1.ValueFrom{Path: fullPath},
 			})
 		}
 
