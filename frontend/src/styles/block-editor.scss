@@ -54,6 +54,9 @@
   transform: scale(0.35);
   transform-origin: center;
   color: rgba(105, 23, 176, 1);
+  display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .icon-button {
@@ -70,13 +73,6 @@
   outline: none;
   background-color: rgba(0, 0, 0, 0.1);
 }
-
-.prompt-spinner {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 
 // Large screens
 @media (min-width: 1600px) {
