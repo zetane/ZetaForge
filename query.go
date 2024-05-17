@@ -333,16 +333,38 @@ func getExecution(ctx context.Context, db *sql.DB, organization string, uuid str
 	return execution, nil
 }
 
-func createSetupVersion(ctx context.Context, db *sql.DB, version string) (zdatabase.SetupVersion, error) {
-	q := zdatabase.New(db)
-	return q.CreateSetupVersion(ctx, version)
+func setSetupVersion(ctx context.Context, db *sql.DB, version string) (zdatabase.SetupVersion, error) {
+	tx, err := db.Begin()
+	if err != nil {
+		log.Printf("Failed to initialize transaction; err=%v", err)
+		return zdatabase.SetupVersion{}, InternalServerError{err.Error()}
+	}
+	defer tx.Rollback()
+
+	qtx := zdatabase.New(db).WithTx(tx)
+	res, err := qtx.GetSetupVersion(ctx)
+	if err != nil {
+		res, err = qtx.CreateSetupVersion(ctx, version)
+	} else {
+		res, err = qtx.UpdateSetupVersion(ctx, zdatabase.UpdateSetupVersionParams{
+			ID:      res.ID,
+			Version: version,
+		})
+	}
+
+	if err := tx.Commit(); err != nil {
+		log.Printf("Failed to commit transaction; err=%v", err)
+		return zdatabase.SetupVersion{}, InternalServerError{err.Error()}
+	}
+
+	return res, err
 }
 
-func listSetupVersions(ctx context.Context, db *sql.DB) ([]zdatabase.SetupVersion, error) {
+func getSetupVersion(ctx context.Context, db *sql.DB) (zdatabase.SetupVersion, error) {
 	q := zdatabase.New(db)
-	res, err := q.ListSetupVersions(ctx)
+	res, err := q.GetSetupVersion(ctx)
 	if err != nil {
-		return []zdatabase.SetupVersion{}, err
+		return zdatabase.SetupVersion{}, err
 	}
 
 	return res, nil

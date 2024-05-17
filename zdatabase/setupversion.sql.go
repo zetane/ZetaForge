@@ -25,30 +25,34 @@ func (q *Queries) CreateSetupVersion(ctx context.Context, version string) (Setup
 	return i, err
 }
 
-const listSetupVersions = `-- name: ListSetupVersions :many
+const getSetupVersion = `-- name: GetSetupVersion :one
 SELECT id, created, version FROM SetupVersion
 ORDER BY created DESC
+LIMIT 1
 `
 
-func (q *Queries) ListSetupVersions(ctx context.Context) ([]SetupVersion, error) {
-	rows, err := q.db.QueryContext(ctx, listSetupVersions)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []SetupVersion
-	for rows.Next() {
-		var i SetupVersion
-		if err := rows.Scan(&i.ID, &i.Created, &i.Version); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+func (q *Queries) GetSetupVersion(ctx context.Context) (SetupVersion, error) {
+	row := q.db.QueryRowContext(ctx, getSetupVersion)
+	var i SetupVersion
+	err := row.Scan(&i.ID, &i.Created, &i.Version)
+	return i, err
+}
+
+const updateSetupVersion = `-- name: UpdateSetupVersion :one
+UPDATE SetupVersion
+SET version = ?
+WHERE id = ?
+RETURNING id, created, version
+`
+
+type UpdateSetupVersionParams struct {
+	Version string
+	ID      int64
+}
+
+func (q *Queries) UpdateSetupVersion(ctx context.Context, arg UpdateSetupVersionParams) (SetupVersion, error) {
+	row := q.db.QueryRowContext(ctx, updateSetupVersion, arg.Version, arg.ID)
+	var i SetupVersion
+	err := row.Scan(&i.ID, &i.Created, &i.Version)
+	return i, err
 }

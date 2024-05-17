@@ -367,6 +367,7 @@ def create_config_json(s2_path, context, driver, is_dev):
         "Bucket":"forge-bucket",
         "Database":"./zetaforge.db",
         "KubeContext": context,
+        "SetupVersion":"1",
         "Local": {
             "BucketPort": 8333,
             "Driver": driver

@@ -176,7 +176,7 @@ func main() {
 		// Switching to Cobra if we need more arguments
 		if len(os.Args) > 1 {
 			if os.Args[1] == "--uninstall" {
-				uninstall(ctx, config, client, db)
+				uninstall(ctx, client, db)
 				return
 			}
 			os.Exit(1)

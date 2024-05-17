@@ -162,50 +162,6 @@ func kubectlApply(filePath string, resources map[string]string, clientConfig *re
 	}
 }
 
-func kubectlGet(filePath string, resources map[string]string, clientConfig *rest.Config) error {
-	file, err := kubectlFiles.ReadFile(filePath)
-	if err != nil {
-		return err
-	}
-	reader := io.NopCloser(bytes.NewReader(file))
-
-	dynamicClient, err := dynamic.NewForConfig(clientConfig)
-	if err != nil {
-		return err
-	}
-
-	item := yaml.NewDocumentDecoder(reader)
-
-	var obj unstructured.Unstructured
-	decoder := scheme.Codecs.UniversalDeserializer()
-	buffer := make([]byte, 1024*1024*5)
-	for {
-		n, err := item.Read(buffer)
-		if err != nil {
-			if err == io.EOF {
-				return nil
-			}
-			return err
-		}
-
-		_, gvk, err := decoder.Decode(buffer[:n], nil, &obj)
-		if err != nil {
-			return err
-		}
-
-		gvr := schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: resources[gvk.Kind]}
-		namespace := obj.GetNamespace()
-		name := obj.GetName()
-		if !validNamespace(namespace, gvk.Kind) {
-			namespace = "default"
-		}
-		_, err = dynamicClient.Resource(gvr).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
-		if err != nil {
-			return err
-		}
-	}
-}
-
 func kubectlDelete(filePath string, resources map[string]string, clientConfig *rest.Config) error {
 	file, err := kubectlFiles.ReadFile(filePath)
 	if err != nil {
@@ -245,7 +201,8 @@ func kubectlDelete(filePath string, resources map[string]string, clientConfig *r
 		}
 		err = dynamicClient.Resource(gvr).Namespace(namespace).Delete(context.Background(), name, metav1.DeleteOptions{})
 		if err != nil {
-			return err
+			log.Printf("Resource %s %s deletion failed", gvk.Kind, name)
+			continue
 		}
 		log.Printf("Resource %s %s deleted", gvk.Kind, name)
 	}
@@ -279,55 +236,39 @@ func kubectlCheckPods(ctx context.Context, clientConfig *rest.Config) error {
 	return nil
 }
 
-func findSetupVersion(resources map[string]string, clientConfig *rest.Config) string {
-
-	version := 0
-	for {
-		file := fmt.Sprintf("setup/build-%d.yaml", version)
-		if _, err := kubectlFiles.Open(file); err != nil {
-			version -= 1
-			break
-		}
-		if err := kubectlGet(file, resources, clientConfig); err == nil { // if no errors
-			break
-		}
-		version += 1
-	}
-
-	return fmt.Sprintf("%d", version)
-}
-
 func migrate(ctx context.Context, resources map[string]string, config Config, clientConfig *rest.Config, db *sql.DB) error {
-	versions, err := listSetupVersions(ctx, db)
-	if err != nil {
-		return err
-	}
-
+	setupVersion, err := getSetupVersion(ctx, db)
+	log.Println(setupVersion)
 	var version string
-	if len(versions) == 0 {
-		version = findSetupVersion(resources, clientConfig)
+	if err != nil {
+		version = config.SetupVersion
+		// cleanup the earliest version
+		if err := kubectlDelete("setup/build-0.yaml", resources, clientConfig); err != nil {
+			return err
+		}
+
+		if _, err := setSetupVersion(ctx, db, config.SetupVersion); err != nil {
+			return err
+		}
 	} else {
-		version = versions[0].Version
+		version = setupVersion.Version
 	}
 
-	if version != config.SetupVersion {
+	if version < config.SetupVersion {
 		if err := kubectlDelete("setup/build-"+version+".yaml", resources, clientConfig); err != nil {
 			return err
 		}
+		if _, err := setSetupVersion(ctx, db, config.SetupVersion); err != nil {
+			return err
+		}
 		if err := kubectlApply("setup/build-"+config.SetupVersion+".yaml", resources, clientConfig); err != nil {
 			return err
 		}
-		if _, err := createSetupVersion(ctx, db, config.SetupVersion); err != nil {
-			return err
-		}
+	} else if version > config.SetupVersion {
+		log.Fatalf("Invalid version downgrade")
 	} else {
 		if err := kubectlApply("setup/build-"+config.SetupVersion+".yaml", resources, clientConfig); err != nil {
 			return err
-		}
-		if len(versions) == 0 {
-			if _, err := createSetupVersion(ctx, db, config.SetupVersion); err != nil {
-				return err
-			}
 		}
 	}
 
@@ -396,7 +337,7 @@ func setup(ctx context.Context, config Config, client clientcmd.ClientConfig, db
 	}
 }
 
-func uninstall(ctx context.Context, config Config, client clientcmd.ClientConfig, db *sql.DB) {
+func uninstall(ctx context.Context, client clientcmd.ClientConfig, db *sql.DB) {
 	clientConfig, err := client.ClientConfig()
 	if err != nil {
 		log.Fatalf("Failed to get client config; err=%v", err)
@@ -407,16 +348,12 @@ func uninstall(ctx context.Context, config Config, client clientcmd.ClientConfig
 		log.Fatalf("Failed to fetch kubernetes resources; err=%v", err)
 	}
 
-	versions, err := listSetupVersions(ctx, db)
-	if err != nil {
-		log.Printf("Failed to find setup version; err=%v", err)
-	}
-
+	setupVersion, err := getSetupVersion(ctx, db)
 	var version string
-	if len(versions) == 0 {
-		version = findSetupVersion(resources, clientConfig)
+	if err != nil {
+		version = "0"
 	} else {
-		version = versions[0].Version
+		version = setupVersion.Version
 	}
 
 	if err := kubectlDelete("setup/build-"+version+".yaml", resources, clientConfig); err != nil {
