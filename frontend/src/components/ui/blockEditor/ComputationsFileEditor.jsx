@@ -8,10 +8,12 @@ import { trpc } from '@/utils/trpc';
 import {
   Bot,
   Edit,
-  Save
+  Save,
+  Send
 } from "@carbon/icons-react";
 import {
   Button,
+  IconButton,
   Loading,
   RadioButton
 } from "@carbon/react";
@@ -141,11 +143,11 @@ export default function ComputationsFileEditor({ fetchFileSystem }) {
       recordCode(editorManualPrompt, editorValue);
     }
     setShowEditor(false);
-        if (panel.current) {
-            setTimeout(() => {
-                panel.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
-            }, 100);
-        }
+    if (panel.current) {
+      setTimeout(() => {
+        panel.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }, 100);
+    }
   };
 
   const handleEdit = (e) => {
@@ -160,10 +162,10 @@ export default function ComputationsFileEditor({ fetchFileSystem }) {
     e.currentTarget.blur();
 
     if (panel.current) {
-        setTimeout(() => {
-            panel.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
-        }, 100);
-        }
+      setTimeout(() => {
+        panel.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }, 100);
+    }
   };
 
   const handleGenerate = async (index) => {
@@ -219,57 +221,57 @@ export default function ComputationsFileEditor({ fetchFileSystem }) {
     <div ref={panel} className="flex flex-col gap-y-12">
       {history.isSuccess & index.isSuccess && history.data.map((item, i) => (
         <Fragment key={i}>
-            <span className="block-editor-prompt">
+          <span className="block-editor-prompt">
             {item.prompt}
-            </span>
-            <div>
-              <div className="flex items-center mb-4">
-                <RadioButton
+          </span>
+          <div>
+            <div className="flex items-center mb-4">
+              <RadioButton
                 id={`select-button-${i}`}
-                    name="activeCodeMirrorSelection"
+                name="activeCodeMirrorSelection"
                 value={i.toString()}
                 checked={index.data === i}
                 onChange={() => handleGenerate(i)}
-                />
+              />
               <div className='block-editor-code-header ml-2'>Select Code #{i}</div>
             </div>
             <div
-                className="relative"
-                style={{
+              className="relative"
+              style={{
                 border:
-                    index.data === i
+                  index.data === i
                     ? "2px solid darkorange"
                     : "none",
-                }}
+              }}
             >
-                <ViewerCodeMirror
+              <ViewerCodeMirror
                 code={item.response}
-                />
-                <div className="absolute right-4 top-4">
+              />
+              <div className="absolute right-4 top-4">
                 <Button
                   id={`edit-button-${i}`}
-                    renderIcon={Edit}
-                    iconDescription="Edit Code"
-                    tooltipPosition="top"
-                    hasIconOnly
-                    size="md"
-                    onClick={handleEdit}
-                  />
-                </div>
+                  renderIcon={Edit}
+                  iconDescription="Edit Code"
+                  tooltipPosition="top"
+                  hasIconOnly
+                  size="md"
+                  onClick={handleEdit}
+                />
+              </div>
             </div>
-            </div>
+          </div>
         </Fragment>
-        ))}
+      ))}
       {showEditor ? (
         <div>
-            <div className='block-editor-code-header'>{editorManualPrompt}</div>
-            <div className="relative">
+          <div className='block-editor-code-header'>{editorManualPrompt}</div>
+          <div className="relative">
             <EditorCodeMirror
-                code={editorValue}
-                onChange={handleEditorChange}
+              code={editorValue}
+              onChange={handleEditorChange}
             />
             <div className="absolute right-4 top-4">
-                <Button
+              <Button
                 renderIcon={Save}
                 iconDescription="Save code"
                 tooltipPosition="left"
@@ -277,49 +279,47 @@ export default function ComputationsFileEditor({ fetchFileSystem }) {
                 size="md"
                 className="edit-button"
                 onClick={handleSave}
-                />
+              />
             </div>
-            </div>
+          </div>
         </div>
       ) : (
         <>
             {openAIApiKey &&
               <div className="relative">
                 <div className="text-right">
-                    <div className="inline-block p-2">
-                        <Bot size={24} className="align-middle" />
-                        <span className="text-md align-middle">{agentName}</span>
-                    </div>
-                    <textarea
-                        className="w-full p-2 block-editor-prompt-input resize-none"
-                        ref={chatTextarea}
-                        placeholder="Ask to generate code or modify last code"
-                        onKeyDown={(e) => {
-                            if (e.key === "Enter" && !e.shiftKey) {
-                                e.preventDefault();
-                                handleSubmit(e);
-                            }
-                        }}
-                    />
+                  <div className="inline-block p-2">
+                    <Bot size={24} className="align-middle" />
+                    <span className="text-md align-middle">{agentName}</span>
+                  </div>
+                  <textarea
+                    className="w-full p-2 block-editor-prompt-input resize-none"
+                    ref={chatTextarea}
+                    placeholder="Ask to generate code or modify last code"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSubmit(e);
+                      }
+                    }}
+                  />
                 </div>
 
                 <div className="absolute bottom-2 right-1">
-                    {isLoading ? (
-                      <div className='prompt-spinner'>
-                        <Loading active={true} className="send-spinner" description="Sending..." withOverlay={false}/>
-                        </div>
+                  {isLoading ? (
+                    <div className='prompt-spinner'>
+                      <Loading active={true} description="Sending..." withOverlay={false} />
+                    </div>
                   ) : (
-                        <button className="icon-button" onClick={handleSubmit} title="Submit">
-                        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M2 21L23 12L2 3V10L17 12L2 14V21Z" fill="currentColor"/>
-                        </svg>
-                    </button>
-                    )}
+                    <IconButton iconDescription="Send Prompt" label="Send Prompt" kind='ghost' onClick={handleSubmit}>
+                      <Send size={24} />
+                    </IconButton>
+                  )}
                 </div>
             </div>
             }
         </>
-        )}
+      )}
     </div>
   );
 }
