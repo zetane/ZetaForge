@@ -362,7 +362,7 @@ export default function DirectoryViewer({
           />
         </div>
         <div className="w-80 overflow-y-auto mt-1">
-          <TreeView selected={currentFile.file} hideLabel>
+          <TreeView label="directory view" selected={currentFile.file} hideLabel>
             {Object.entries(fileSystem).map(([folder, folderData]) =>
               renderTreeNodes(folder, folderData),
             )}
