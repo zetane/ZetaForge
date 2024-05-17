@@ -17,7 +17,7 @@ import { EditorCodeMirror, ViewerCodeMirror } from "./CodeMirrorComponents";
 import ComputationsFileEditor from "./ComputationsFileEditor";
 import Splitter from "./Splitter";
 
-const EDIT_ONLY_FILES = ["specs_v1.json"] //TODO use the new spec file name
+const EDIT_ONLY_FILES = ["specs_v1.json", "chatHistory.json"] //TODO use the new spec file name
 export default function DirectoryViewer({
   blockPath,
   blockKey,

@@ -1,11 +1,10 @@
 import { TRPCError } from "@trpc/server";
 import { app, dialog } from 'electron';
 import fs from "fs/promises";
-import getMAC from "getmac";
 import path from "path";
-import sha256 from 'sha256';
 import { z } from 'zod';
 import { compileComputation, runTest, saveBlockSpecs } from './blockSerialization.js';
+import { getHistory, getIndex, updateHistory, updateIndex } from "./chat.js";
 import { readPipelines, readSpecs, s3Upload } from "./fileSystem.js";
 import { copyPipeline, getBlockPath, removeBlock, saveBlock, saveSpec } from './pipelineSerialization.js';
 import { publicProcedure, router } from './trpc';
@@ -244,7 +243,57 @@ export const appRouter = router({
           message: 'Could not run test'
         })
       }
-    })
+    }),
+  chat: router({
+    history: router({
+      get: publicProcedure
+      .input(z.object({
+        blockPath: z.string()
+      }))
+      .query(async (opts) => {
+        const { input } = opts;
+        const { blockPath } = input; 
+        
+        const chatHistory = await getHistory(blockPath);
+        return chatHistory;
+      }),
+      update: publicProcedure
+      .input(z.object({
+        blockPath: z.string(),
+        history: z.array(z.any()),
+      }))
+      .mutation(async (opts) => {
+        const { input } = opts;
+        const { blockPath, history } = input; 
+        
+        await  updateHistory(blockPath, history);
+      }),
+    }),
+    index: router({
+      get: publicProcedure
+      .input(z.object({
+        blockPath: z.string()
+      }))
+      .query(async (opts) => {
+        const { input } = opts;
+        const { blockPath } = input; 
+        
+        const chatIndex = await getIndex(blockPath);
+        return chatIndex;
+      }),
+      update: publicProcedure
+      .input(z.object({
+        blockPath: z.string(),
+        index: z.number(),
+      }))
+      .mutation(async (opts) => {
+        const { input } = opts;
+        const { blockPath, index } = input; 
+        
+        await updateIndex(blockPath, index);
+      }),
+    }),
+  })
 });
  
 // Export type router type signature,

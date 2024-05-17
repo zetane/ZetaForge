@@ -1,34 +1,31 @@
 import { openAIApiKeyAtom } from '@/atoms/apiKeysAtom';
 import { compilationErrorToastAtom } from '@/atoms/compilationErrorToast';
 import { drawflowEditorAtom } from '@/atoms/drawflowAtom';
-import { blockEditorRootAtom, isBlockEditorOpenAtom } from "@/atoms/editorAtom";
+import { blockEditorRootAtom } from "@/atoms/editorAtom";
 import { pipelineAtom } from '@/atoms/pipelineAtom';
 import { updateSpecs } from '@/utils/specs';
 import { trpc } from '@/utils/trpc';
 import {
-  Edit,
   Bot,
-  OperationsRecord,
-  Run,
-  Save,
-  Send
+  Edit,
+  Save
 } from "@carbon/icons-react";
 import {
   Button,
-  IconButton,
   Loading,
   RadioButton
 } from "@carbon/react";
-import { useAtom, useSetAtom } from "jotai";
+import { useAtom } from "jotai";
 import { useImmerAtom } from 'jotai-immer';
-import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { EditorCodeMirror, ViewerCodeMirror } from "./CodeMirrorComponents";
 
 
 export default function ComputationsFileEditor({ fetchFileSystem }) {
   const serverAddress = "http://localhost:3330";
   const [blockPath] = useAtom(blockEditorRootAtom);
-  const [blockFolderName, setBlockFolderName] = useState(null);  
+  const relPath = blockPath.replaceAll('\\', '/')
+  const blockFolderName = relPath.split("/").pop();
   const [openAIApiKey] = useAtom(openAIApiKeyAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const [editor] = useAtom(drawflowEditorAtom);
@@ -36,32 +33,32 @@ export default function ComputationsFileEditor({ fetchFileSystem }) {
 
   const [agentName, setAgent] = useState("gpt-4_python_compute");
 
-  const [queryAndResponses, setQueryAndResponses] = useState([]);
   const [showEditor, setShowEditor] = useState(false);
   const [editorValue, setEditorValue] = useState("");
   const [editorManualPrompt, setEditorManualPrompt] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [lastGeneratedIndex, setLastGeneratedIndex] = useState("");
-  const [blockLogs, setBlockLogs] = useState("");
-  const [fileSystem, setFileSystem] = useState({});
-  const [isRunButtonPressed, setIsRunButtonPressed] = useState(false);
-  const [activeCodeMirror, setActiveCodeMirror] = useState(0);
   const chatTextarea = useRef(null);
   const panel = useRef(null);
 
+  const utils = trpc.useUtils();
   const compileComputation = trpc.compileComputation.useMutation();
   const saveBlockSpecs = trpc.saveBlockSpecs.useMutation();
+  const history = trpc.chat.history.get.useQuery({ blockPath });
+  const updateHistory = trpc.chat.history.update.useMutation({
+    onSuccess(input) {
+      utils.chat.history.get.invalidate({ blockPath })
+    }
+  });
+  const index = trpc.chat.index.get.useQuery({ blockPath });
+  const updateIndex = trpc.chat.index.update.useMutation({
+    onSuccess(input) {
+      utils.chat.index.get.invalidate({ blockPath })
+    }
+  });
 
   useEffect(() => {
     const init = async () => {
       try {
-        const relPath = blockPath.replaceAll('\\', '/')
-        const blockFolderName = relPath.split("/").pop();
-        setBlockFolderName(blockFolderName);
-        setBlockLogs(`${blockPath}/logs.txt`);
-        setFileSystem({
-          [blockFolderName]: { content: "", type: "folder" },
-        });
         const response = await fetch(`${serverAddress}/get-agent`, {
           method: "POST",
           headers: {
@@ -79,67 +76,21 @@ export default function ComputationsFileEditor({ fetchFileSystem }) {
         console.error("Fetch error:", error);
       }
     };
-
-    const fetchCodeTemplate = async () => {
-      try {
-        const response = await fetch(`${serverAddress}/get-chat-history`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ blockPath: blockPath }),
-        });
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
-        const history = await response.json();
-        setQueryAndResponses(history);
-      } catch (error) {
-        console.error("Fetch error:", error);
-      }
-    };
-
-    const fetchChatHistoryIndex = async () => {
-      try {
-        const response = await fetch(`${serverAddress}/get-chat-history-index?blockPath=${encodeURIComponent(blockPath)}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch chat history index');
-        }
-        const data = await response.json();
-        if (data.chatHistoryIndex !== -1) {
-          setActiveCodeMirror(data.chatHistoryIndex);
-        } else {
-          setActiveCodeMirror(0);
-        }
-      } catch (error) {
-        console.error("Error fetching chat history index:", error);
-      }
-    };
-    
-
     init();
-    fetchCodeTemplate();
-    fetchChatHistoryIndex();
   }, [blockPath]);
 
-
   const recordCode = (promptToRecord, codeToRecord) => {
-    const newQueriesAndResponses = [
-      ...queryAndResponses,
-      {
-        timestamp: Date.now(),
-        prompt: promptToRecord,
-        response: codeToRecord,
-      }
-    ];
-    setQueryAndResponses(newQueriesAndResponses);
-    fetch(`${serverAddress}/save-chat-history`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ blockPath: blockPath, history: newQueriesAndResponses }),
-    });
+    updateHistory.mutateAsync({
+      blockPath: blockPath,
+      history: [
+        ...history.data,
+        {
+          timestamp: Date.now(),
+          prompt: promptToRecord,
+          response: codeToRecord,
+        }
+      ]
+    })
   };
 
   const handleEditorChange = (value) => {
@@ -154,7 +105,7 @@ export default function ComputationsFileEditor({ fetchFileSystem }) {
     const toSend = {
       userMessage: newPrompt,
       agentName: agentName,
-      conversationHistory: queryAndResponses,
+      conversationHistory: history.data,
       apiKey: openAIApiKey
     };
 
@@ -201,8 +152,8 @@ export default function ComputationsFileEditor({ fetchFileSystem }) {
     const buttonId = e.currentTarget.id;
     const index = parseInt(buttonId.split("-").pop(), 10);
 
-    if (index >= 0 && index < queryAndResponses.length) {
-      setEditorValue(queryAndResponses[index].response);
+    if (index >= 0 && index < history.data.length) {
+      setEditorValue(history.data[index].response);
       setEditorManualPrompt("Manual edit of code #" + index);
       setShowEditor(true);
     }
@@ -217,8 +168,7 @@ export default function ComputationsFileEditor({ fetchFileSystem }) {
 
   const handleGenerate = async (index) => {
 
-    setLastGeneratedIndex(index);
-    let code_content = queryAndResponses[index].response;
+    let code_content = history.data[index].response;
 
     const requestBody = JSON.stringify({
       block_user_name: blockFolderName,
@@ -257,61 +207,37 @@ export default function ComputationsFileEditor({ fetchFileSystem }) {
       setCompilationErrorToast(true);
     }
 
-    setActiveCodeMirror(index);
+    updateIndex.mutateAsync({
+      blockPath: blockPath,
+      index: index
+    })
 
     fetchFileSystem();
   };
-
-  const handleDockerCommands = useCallback(async () => {
-    setIsRunButtonPressed(true);
-    try {
-      const response = await fetch(`${serverAddress}/run-docker-commands`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ blockPath: blockPath }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-    } catch (error) {
-      console.error("Request failed: " + error.message);
-    }
-
-    fetchFileSystem();
-  }, [blockFolderName, blockPath, fetchFileSystem]);
-
-  const handleSequentialExecution = async (e, index) => {
-    await handleGenerate(e, index);
-    await handleDockerCommands();
-  };
-
 
   return (
     <div ref={panel} className="flex flex-col gap-y-12">
-        {queryAndResponses.map((item, index) => (
-        <Fragment key={index}>
+      {history.isSuccess & index.isSuccess && history.data.map((item, i) => (
+        <Fragment key={i}>
             <span className="block-editor-prompt">
             {item.prompt}
             </span>
             <div>
               <div className="flex items-center mb-4">
                 <RadioButton
-                  id={`select-button-${index}`}
+                id={`select-button-${i}`}
                     name="activeCodeMirrorSelection"
-                    value={index.toString()}
-                    checked={activeCodeMirror === index}
-                    onChange={() => handleGenerate(index)}
+                value={i.toString()}
+                checked={index.data === i}
+                onChange={() => handleGenerate(i)}
                 />
-                <div className='block-editor-code-header ml-2'>Select Code #{index}</div>
+              <div className='block-editor-code-header ml-2'>Select Code #{i}</div>
             </div>
             <div
                 className="relative"
                 style={{
                 border:
-                    activeCodeMirror === index
+                    index.data === i
                     ? "2px solid darkorange"
                     : "none",
                 }}
@@ -321,7 +247,7 @@ export default function ComputationsFileEditor({ fetchFileSystem }) {
                 />
                 <div className="absolute right-4 top-4">
                 <Button
-                    id={`edit-button-${index}`}
+                  id={`edit-button-${i}`}
                     renderIcon={Edit}
                     iconDescription="Edit Code"
                     tooltipPosition="top"
@@ -390,8 +316,6 @@ export default function ComputationsFileEditor({ fetchFileSystem }) {
                     </button>
                     )}
                 </div>
-
-
             </div>
             }
         </>
