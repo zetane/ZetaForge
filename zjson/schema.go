@@ -97,4 +97,5 @@ type Pipeline struct {
 type Execution struct {
 	Id       string   `json:"id"`
 	Pipeline Pipeline `json:"pipeline"`
+	Build    bool     `json:"build"`
 }

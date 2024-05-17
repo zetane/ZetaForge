@@ -75,9 +75,11 @@ export default function RunPipelineButton({modalPopper, children, action}) {
       pipelineSpecs['build'] = pipeline.buffer
       pipelineSpecs['name'] = pipeline.name
       pipelineSpecs['id'] = pipeline.id
+      const rebuild = (action == "Rebuild")
       const execution = {
         id: executionId,
         pipeline: pipelineSpecs,
+        build: rebuild
       }
 
       const res = await mutation.mutateAsync(execution)

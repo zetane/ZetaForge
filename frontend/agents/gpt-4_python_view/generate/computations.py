@@ -131,7 +131,7 @@ if __name__ == "__main__":
         apiKey = data['apiKey']
 
         # Call the compute function and get the result
-        result = compute(user_prompt, 'gpt-4', conversation_history, apiKey)
+        result = compute(user_prompt, 'gpt-4o', conversation_history, apiKey)
 
         # Print the result as a JSON string
         print(json.dumps(result))
