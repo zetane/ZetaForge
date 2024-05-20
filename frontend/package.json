@@ -1,6 +1,6 @@
 {
   "name": "zetaforge",
-  "version": "0.1.2",
+  "version": "0.1.4",
   "main": "dist-electron/main/index.js",
   "description": "ZetaForge",
   "author": "Zetane <info@zetane.com>",
@@ -31,7 +31,8 @@
     "@sentry/react": "^7.112.2",
     "electron-trpc": "^0.5.2",
     "electron-updater": "^6.1.1",
-    "getmac": "^6.6.0"
+    "getmac": "^6.6.0",
+    "uuidv7": "^0.6.3"
   },
   "devDependencies": {
     "@aws-sdk/client-s3": "^3.525.0",

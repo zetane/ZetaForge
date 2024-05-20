@@ -2,6 +2,7 @@ import { execFile, spawnSync } from "child_process";
 import { app } from "electron";
 import fs from "fs/promises";
 import path, { resolve } from "path";
+import { SPECS_FILE_NAME } from "../src/utils/constants";
 import { fileExists } from "./fileSystem";
 
 export async function compileComputation(blockPath) {
@@ -22,7 +23,7 @@ export async function compileComputation(blockPath) {
 }
 
 export async function saveBlockSpecs(blockPath, specs) {
-  const specsPath = path.join(blockPath, "specs_v1.json");
+  const specsPath = path.join(blockPath, SPECS_FILE_NAME);
 
   removeConnections(specs.inputs)
   removeConnections(specs.outputs)

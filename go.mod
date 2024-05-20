@@ -17,8 +17,8 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.1
 	github.com/invopop/jsonschema v0.12.0
+	github.com/kaganAtZetane/mixpanel-go v0.0.0-20240503162028-cb57796e81a9
 	github.com/mattn/go-sqlite3 v1.14.22
-	github.com/mixpanel/mixpanel-go v1.2.1
 	github.com/pressly/goose/v3 v3.18.0
 	github.com/xeipuuv/gojsonschema v1.2.0
 	golang.org/x/net v0.23.0
@@ -107,6 +107,7 @@ require (
 	github.com/jcmturner/goidentity/v6 v6.0.1 // indirect
 	github.com/jcmturner/gokrb5/v8 v8.4.4 // indirect
 	github.com/jcmturner/rpc/v2 v2.0.3 // indirect
+	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.17.2 // indirect

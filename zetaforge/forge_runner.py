@@ -13,11 +13,21 @@ import socket
 import json
 import shutil
 import threading
-from .mixpanel_client import MixpanelClient
+from .mixpanel_client import mixpanel_client
+import sentry_sdk
 
 
-mixpanel_client = MixpanelClient('4c09914a48f08de1dbe3dc4dd2dcf90d')
+run_env = mixpanel_client.is_dev
+env = "production"
+if run_env:
+    env = "development"
+sentry_sdk.init(
+    dsn="https://7fb18e8e487455a950298625457264f3@o1096443.ingest.us.sentry.io/4507031960223744",
 
+    # Enable performance monitoring
+    enable_tracing=True,
+    environment=env
+)
 
 BUILD_YAML = resource_filename("zetaforge", os.path.join('utils', 'build.yaml'))
 INSTALL_YAML = resource_filename("zetaforge", os.path.join('utils', 'install.yaml'))
@@ -25,14 +35,25 @@ INSTALL_YAML = resource_filename("zetaforge", os.path.join('utils', 'install.yam
 EXECUTABLES_PATH = os.path.join(Path(__file__).parent, 'executables')
 FRONT_END = os.path.join(EXECUTABLES_PATH, "frontend")
 
-def write_json(server_version, client_version, context, driver, s2_path=None):
+def write_json(server_version, client_version, context, driver, is_dev, s2_path=None):
     if s2_path:
         server_path = s2_path
     else:
         _, server_path = get_launch_paths(server_version, client_version)
-    config = create_config_json(os.path.dirname(server_path), context, driver)
+    config = create_config_json(os.path.dirname(server_path), context, driver, is_dev)
     return config
 
+#changes the IsDev in config.json, it's implemented to prevent certain edge cases.
+def change_env_config(server_version, client_version, env):
+    _, server_path = get_launch_paths(server_version, client_version)
+    config = dict()
+    config_path = os.path.join(os.path.dirname(server_path), "config.json")
+    with open(config_path, "r") as f:
+        config = json.load(f)
+    config['IsDev'] = env
+    with open(config_path, "w") as outfile:
+        json.dump(config, outfile)
+    return outfile
 
 def check_for_container(name):
     ls_cmd = subprocess.run(["docker", "container", "ls", '--format', 'json'], capture_output=True, text=True)
@@ -120,19 +141,25 @@ def select_kubectl_context():
 
     return selected_context
 
-def setup(server_version, client_version, driver, build_flag = True, install_flag = True, server_path = None):
+def setup(server_version, client_version, driver, build_flag = True, install_flag = True, is_dev=False, server_path=None):
     print("Platform: ", platform.machine())
     print("CWD: ", os.path.abspath(os.getcwd()))
+    mixpanel_client.track_event('Setup Initiated')
 
     if driver == "minikube":
         context = "zetaforge"
         if not check_minikube():
+            mixpanel_client.track_event("Setup Failure - Minikube Not Found")
+            time.sleep(0.5)
             print("Minikube not found. Please install minikube.")
             raise Exception("Minikube not found!")
         minikube = subprocess.run(["minikube", "-p", "zetaforge", "start"], capture_output=True, text=True)
         if minikube.returncode != 0:
+            mixpanel_client.track_event("Setup Failure - Cannot Start Minikube")
+            time.sleep(0.5)
             print(minikube.stderr)
             raise Exception("Error while starting minikube")
+        mixpanel_client.track_event("Setup - Minikube Started")
     else:
         context = select_kubectl_context()
         kubectl_flag = check_kubectl()
@@ -140,18 +167,22 @@ def setup(server_version, client_version, driver, build_flag = True, install_fla
         switch_context = None
         if kubectl_flag:
             switch_context = subprocess.run(["kubectl", "config", "use-context", f"{context}"], capture_output=True, text=True)
+            mixpanel_client.track_event("Setup - Kubectl Found")
         else:
-            print("Kubectl not found. Please install docker-desktop and enable kubernetes, or ensure that kubectl installed and is able to connect to a working kubernetes cluster.")
+            print("Kubectl not found. Please install docker-desktop, orbstack, or minikube and enable kubernetes, or ensure that kubectl installed and is able to connect to a working kubernetes cluster.")
+            mixpanel_client.track_event("Setup Failure - Kubectl Not Found")
+            time.sleep(0.5)
             raise EnvironmentError("Kubectl not found!")
-        #install_kubectl()
-        #switch_context = subprocess.run(f"./kubectl config use-context {context}", shell=True, cwd=EXECUTABLES_PATH)
 
         in_context = (switch_context.returncode == 0)
 
         if not in_context:
             print(f"Cannot find the context {context} for kubernetes. Please double check that you have entered the correct context.")        
             subprocess.run(["kubectl", "config", "get-contexts"], capture_output=True, text=True)
+            mixpanel_client.track_event("Setup Failure - Context Switch Error")
             raise Exception("Exception while setting the context")
+
+        mixpanel_client.track_event("Setup - Context changed")
 
         running_kube = check_running_kube(context)
         if not running_kube:
@@ -159,22 +190,29 @@ def setup(server_version, client_version, driver, build_flag = True, install_fla
 
     install_frontend_dependencies(client_version=client_version)
 
-    config_path = write_json(server_version, client_version, context, driver, server_path)
+    config_path = write_json(server_version, client_version, context, driver, is_dev, s2_path=server_path)
 
     print(f"Setup complete, wrote config to {config_path}.")
-        
+    mixpanel_client.track_event("Setup Successful")
     return config_path
 
 
+def read_output(process, name):
+    for line in process.stdout:
+        print(f"{name}: {line.decode('utf-8')}", end='')
+
+def read_error(process, name):
+    for line in process.stderr:
+        print(f"{name} (stderr): {line.decode('utf-8')}", end='')
+
 #dev version is only passed, when a developer wants to pass a local version(for e.g. dev_path=./s2-v2.3.5-amd64)
-def run_forge(server_version=None, client_version=None, server_path=None, client_path=None):
+def run_forge(server_version=None, client_version=None, server_path=None, client_path=None, is_dev=False):
     global time_start
     time_start = datetime.now()
-
+    mixpanel_client.track_event('Launch Initiated')
+    change_env_config(server_version, client_version, is_dev)
     #init is called for collarama library, better logging.
     init()
-
-    mixpanel_client.track_event('Initial Launch')
 
     if server_path is None:
         _, server_path = get_launch_paths(server_version, client_version)
@@ -192,8 +230,14 @@ def run_forge(server_version=None, client_version=None, server_path=None, client
         else:
             server_executable = server_path
         
-        server = subprocess.Popen([server_executable],stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.dirname(server_path))
-
+        try:
+            server = subprocess.Popen([server_executable],stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.dirname(server_path))
+        except:
+            mixpanel_client.track_event("Launch Failure - Anvil Launch Failed")
+            raise Exception(f"Error occured while launching the server executable: {server_executable}")
+        
+        mixpanel_client.track_event('Launch - Anvil Launched')
+        
         print(f"Launching client {client_path}..")
         client_executable = os.path.basename(client_path)
         if platform.system() == 'Darwin':
@@ -202,16 +246,18 @@ def run_forge(server_version=None, client_version=None, server_path=None, client
             client_executable = [client_path, '--no-sandbox']
         else: 
             client_executable = [f"./{client_executable}"]
+        
+        #handles the situation where user launches pip launcher with is_dev, for the client executable.
+        if is_dev:
+            client_executable.append("--is_dev")
 
-        client = subprocess.Popen(client_executable, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.dirname(client_path))
-
-        def read_output(process, name):
-            for line in process.stdout:
-                print(f"{name}: {line.decode('utf-8')}", end='')
-
-        def read_error(process, name):
-            for line in process.stderr:
-                print(f"{name} (stderr): {line.decode('utf-8')}", end='')
+        try:
+            client = subprocess.Popen(client_executable, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.dirname(client_path))
+        except:
+            mixpanel_client.track_event("Launch Failure - Client Launch Failed")
+            raise Exception(f"Error occured while launching the client executable: {client_executable}")
+            
+        mixpanel_client.track_event('Launch - Client Launched')
 
         # Create threads to read the outputs concurrently
         server_stdout_thread = threading.Thread(target=read_output, args=(server, '[server]'))
@@ -231,6 +277,8 @@ def run_forge(server_version=None, client_version=None, server_path=None, client
         client_stdout_thread.join()
         client_stderr_thread.join()
 
+        mixpanel_client.track_event('Launch Successful')
+
     except KeyboardInterrupt: 
         print("Terminating servers..")
 
@@ -238,12 +286,11 @@ def run_forge(server_version=None, client_version=None, server_path=None, client
         total_time = (datetime.now() - time_start).total_seconds()
 
         try:
-            mixpanel_client.track_event('Full Launch', props={'Duration(seconds)': total_time})
+            mixpanel_client.track_event('Launch End', props={'Duration(seconds)': total_time})
             time.sleep(2) # mixpanel instance is asynch, so making sure that it completes the call before tear down
         except:
             print("Mixpanel cannot track")
 
-        server.kill()
         client.kill()
 
 
@@ -261,6 +308,27 @@ def teardown(driver):
 
     print("Completed teardown!")
 
+def uninstall(server_version=None, server_path=None):
+    if server_path is None:
+        _, server_path = get_launch_paths(server_version, None)
+
+    server_executable = os.path.basename(server_path)
+    if platform.system() != 'Windows':
+        server_executable = f"./{server_executable}"
+    else:
+        server_executable = server_path
+
+    try:
+        server = subprocess.Popen([server_executable, "--uninstall"],stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.dirname(server_path))
+    except:
+        raise Exception(f"Error occured while uninstalling")
+
+    server_stdout_thread = threading.Thread(target=read_output, args=(server, '[server]'))
+    server_stderr_thread = threading.Thread(target=read_error, args=(server, '[server]'))
+    server_stdout_thread.start()
+    server_stderr_thread.start()
+    server_stdout_thread.join()
+    server_stderr_thread.join()
 
 def check_expected_services(config):
     is_local = config["IsLocal"]
@@ -285,9 +353,10 @@ def check_expected_services(config):
     
     return True 
 
-def create_config_json(s2_path, context, driver):
+def create_config_json(s2_path, context, driver, is_dev):
     config = {
         "IsLocal":True,
+        "IsDev": is_dev,
         "ServerPort": 8080,
         "KanikoImage":"gcr.io/kaniko-project/executor:latest",
         "WorkDir":"/app",
@@ -298,6 +367,7 @@ def create_config_json(s2_path, context, driver):
         "Bucket":"forge-bucket",
         "Database":"./zetaforge.db",
         "KubeContext": context,
+        "SetupVersion":"1",
         "Local": {
             "BucketPort": 8333,
             "Driver": driver
@@ -310,12 +380,4 @@ def create_config_json(s2_path, context, driver):
 
     return file_path
 
-def generate_distinct_id():
-    seed = 0
-    try:
-        seed = uuid.getnode()
-    except:
-        seed = 0
-        
-    distinct_id = sha256(str(seed).encode('utf-8')).hexdigest()
-    return distinct_id
+

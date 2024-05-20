@@ -1,3 +1,4 @@
+import { SPECS_FILE_NAME } from "../src/utils/constants";
 import bodyParser from "body-parser";
 import { exec, spawn } from "child_process";
 import compression from "compression";
@@ -7,14 +8,11 @@ import { app as electronApp } from 'electron';
 import express from "express";
 import fs, { access, constants, readFile, readFileSync, writeFile } from "fs";
 import fsp from "fs/promises";
-import getMAC from "getmac";
 import multer from "multer";
 import { Configuration, OpenAIApi } from "openai";
 import path from "path";
-import sha256 from 'sha256';
 import { fileExists, readJsonToObject, readSpecs } from "./fileSystem.js";
 import { copyPipeline, saveBlock } from "./pipelineSerialization.js";
-
 
 function startExpressServer() {
   const app = express();
@@ -50,7 +48,7 @@ function startExpressServer() {
       try {
           // Read the JSON file synchronously
           const data = readFileSync(path.join(__dirname, '..', '..', 'history', 'active_run.json'), 'utf8');
-          
+
           // Parse the JSON content
           const parsedData = JSON.parse(data);
 
@@ -62,7 +60,7 @@ function startExpressServer() {
   }
 
 
-  function get_graph_local(callback) {  
+  function get_graph_local(callback) {
     const active = getActiveRun();
     const filePath = path.join(__dirname, '..', '..', 'history', active.run_id, 'results', 'computed_pipeline_'+active.inference+'.json');
 
@@ -73,7 +71,7 @@ function startExpressServer() {
         callback(err);
         return;
       }
-      
+
       // Convert string content to JSON
       const jsonData = JSON.parse(data);
       callback(null, jsonData);
@@ -131,7 +129,7 @@ function startExpressServer() {
 
 
   app.post('/get-graph-local', (req, res) => {
-    // Call the local JSON graph 
+    // Call the local JSON graph
     get_graph_local((err, response) => {
       if (err) {
         console.error('Error:', err);
@@ -167,7 +165,7 @@ function startExpressServer() {
     }
     if (req.body.compute == 'kubernetes_docker_desktop'){
       command += ' --compute "kubernetes_docker_desktop"'
-    }  
+    }
     console.log('Command', command)
 
     const filePath = path.join(__dirname, '..', '..', 'history', 'active_pipeline.json');
@@ -237,7 +235,7 @@ function startExpressServer() {
     const active = getActiveRun()
     if (active && active.run_id) {
       const filePath = path.join(__dirname, '..', '..', 'history', active.run_id, 'results', 'computed_pipeline_1.json');
-      
+
       access(filePath, constants.F_OK, (err) => {
           if (err) {
               console.error(`File not found: ${filePath}`);
@@ -281,9 +279,9 @@ function startExpressServer() {
   app.get('/blocks', async (req, res) => {
     const coreBlocks = "../core/blocks"
     if(electronApp.isPackaged){
-      coreBlocks = path.join(process.resourcesPath, "core", "blocks") 
+      coreBlocks = path.join(process.resourcesPath, "core", "blocks")
     }
-    
+
     try {
       const blocks = await readSpecs(coreBlocks)
       return res.status(200).json(blocks);
@@ -292,33 +290,15 @@ function startExpressServer() {
     }
   })
 
-  app.get('/distinct-id', async(req, res) => {
-    try {
-      const macAddress = getMAC();
-      let macAsBigInt = BigInt(`0x${macAddress.split(':').join('')}`);
-      
-      // Check if the MAC address is universally administered
-      const isUniversallyAdministered = (macAsBigInt & BigInt(0x020000000000)) === BigInt(0);
-      
-      // If not universally administered, set the multicast bit
-      if (!isUniversallyAdministered) {
-          macAsBigInt |= BigInt(0x010000000000);
-      }
-      const distinctId = sha256(macAsBigInt.toString());
-      return res.send(distinctId);
-    } catch (error) {
-      console.log("Can't generate distinct_id for mixpanel. Using default distinct_id");
-      console.log(error);
-      return res.send(sha256(BigInt(0).toString())); // Sending default distinct_id
-    }
-  });
-  
+  app.get("/is-dev", async(req, res) => {
+    return res.send( !electronApp.isPackaged || (electronApp.isPackaged && process.env.VITE_ZETAFORGE_IS_DEV === 'True') )
+  })
 
-app.post("/import-files", upload.array("files"), (req, res) => {
-  const files = req.files;
+  app.post("/import-files", upload.array("files"), (req, res) => {
+    const files = req.files;
 
-  files.forEach((file) => {
-    const targetPath = path.join(req.body.blockPath, file.originalname);
+    files.forEach((file) => {
+      const targetPath = path.join(req.body.blockPath, file.originalname);
 
       // Move file from temporary location to target directory
       fs.renameSync(file.path, targetPath);
@@ -369,7 +349,7 @@ app.post("/import-files", upload.array("files"), (req, res) => {
 
   app.post("/get-agent", async (req, res) => {
     const { blockPath } = req.body;
-    const specsPath = `${blockPath}/specs_v1.json`;
+    const specsPath = path.join(blockPath, SPECS_FILE_NAME)
 
     fs.readFile(specsPath, (err, data) => {
       if (err) {
@@ -400,7 +380,7 @@ app.post("/import-files", upload.array("files"), (req, res) => {
           timestamp: Date.now(),
           prompt: "Code Template",
           response: codeTemplate,
-      }];      
+      }];
     }
     res.send(history);
   });
@@ -408,7 +388,7 @@ app.post("/import-files", upload.array("files"), (req, res) => {
   app.post("/api/call-agent", async (req, res) => {
     const { userMessage, agentName, conversationHistory, apiKey} = req.body
     console.log("USER MESSAGE", userMessage);
-  
+
     try {
       // Path to the Python script
       let agents = "agents"
@@ -576,4 +556,3 @@ app.post("/import-files", upload.array("files"), (req, res) => {
 }
 
 export { startExpressServer };
-

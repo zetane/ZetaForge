@@ -54,6 +54,7 @@ setup(
         'colorama==0.4.6', 
         'mixpanel==4.10.1', 
         "langchain==0.1.15", 
-        "langchain-openai==0.1.2"],
+        "langchain-openai==0.1.2",
+        "sentry-sdk===2.0.1"],
     include_package_data=True,
-    package_data={'zetaforge': ['utils/*.yaml', 'executables/*'],},)
+    package_data={'zetaforge': ['utils/*', 'executables/*'],},)

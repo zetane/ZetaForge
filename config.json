@@ -1,5 +1,6 @@
 {
 	"IsLocal":true,
+	"IsDev": true,
 	"ServerPort": 8080,
 	"KanikoImage":"gcr.io/kaniko-project/executor:latest",
 	"WorkDir":"/app",
@@ -9,6 +10,7 @@
 	"ServiceAccount":"executor",
 	"Bucket":"forge-bucket",
 	"Database":"./zetaforge.db",
+	"SetupVersion":"1",
 
 	"Local": {
 		"BucketPort": 8333,
