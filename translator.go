@@ -284,7 +284,7 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 
 		for name := range block.Outputs {
 			blockVar := blockKey + "-" + name
-			fullPath := filepath.Join(cfg.FileDir, blockVar+".txt")
+			fullPath := cfg.FileDir + "/" + blockVar + ".txt"
 			template.Outputs.Parameters = append(template.Outputs.Parameters, wfv1.Parameter{
 				Name:      name,
 				ValueFrom: &wfv1.ValueFrom{Path: fullPath},
