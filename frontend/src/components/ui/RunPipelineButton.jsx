@@ -37,6 +37,19 @@ export default function RunPipelineButton({modalPopper, children, action}) {
 
     let pipelineSpecs = editor.convert_drawflow_to_block(pipeline.name, pipeline.data);
     const executionId = uuidv7();
+
+
+    try {
+      const res = await axios.get(`${import.meta.env.VITE_EXECUTOR}/ping`)
+      if (res.status != 200) {
+        throw Error()
+      }
+    } catch(error) {
+      setValidationErrorMsg(["Seaweed ping did not return ok. Please wait a few seconds and retry."])
+      setIsOpen(true)
+      return null;
+    }
+
     try {
       pipelineSpecs = await uploadParameterBlocks.mutateAsync({
         pipelineId: pipeline.id,
