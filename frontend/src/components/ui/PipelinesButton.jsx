@@ -2,12 +2,12 @@ import { Button } from "@carbon/react";
 import { useAtom } from "jotai";
 import { modalContentAtom } from "@/atoms/modalAtom";
 import { ExecutionDataGrid } from "@/components/ui/ExecutionDataGrid";
-import { executionAtom } from "@/atoms/executionAtom";
 import { useImmerAtom } from "jotai-immer";
+import { workspaceAtom } from "@/atoms/pipelineAtom";
 
-export default function RunningButton() {
+export default function PipelinesButton() {
   const [modalContent, setModalContent] = useAtom(modalContentAtom);
-  const [executions, setExecutions] = useImmerAtom(executionAtom);
+  const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
   const modalPopper = (content) => {
     setModalContent({
       ...modalContent,
@@ -21,11 +21,9 @@ export default function RunningButton() {
   };
 
   let executionsCount = 0;
-  if (executions?.executions) {
-    executionsCount = Object.keys(executions.executions).length
+  if (workspace?.pipelines) {
+    executionsCount = Object.keys(workspace.running()).length
   }
-
-  console.log(executions.executions)
 
   const svgOverride = { position: 'absolute', right: '15px', top: '5px'}
   return (

@@ -1,33 +1,33 @@
 import ClosableModal from "./modal/ClosableModal";
-import { executionAtom } from "@/atoms/executionAtom";
-import { pipelineAtom } from "@/atoms/pipelineAtom";
-import { useSetAtom } from "jotai";
+import { workspaceAtom } from "@/atoms/pipelineAtom";
 import { useImmerAtom } from "jotai-immer";
-import { DataTable, Table, TableHead, TableRow, TableHeader, TableBody, TableCell, Link, IconButton, Button } from "@carbon/react";
-import { useEffect, useMemo } from "react";
+import { DataTable, Table, TableHead, TableRow, TableHeader, TableBody, TableCell, Link } from "@carbon/react";
 import { PipelineStopButton } from "./PipelineStopButton";
 
 export const ExecutionDataGrid = () => {
-  const [execution, setExecution] = useImmerAtom(executionAtom);
-  const setPipeline = useSetAtom(pipelineAtom);
+  const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
   const loadPipeline = (key) => {
-    const selected = execution.executions[key]
-    setPipeline(selected)
+    setWorkspace((draft) => {
+      draft.active = key
+    })
   }
 
   const items = []
 
-  for (const [key, value] of Object.entries(execution?.executions)) {
-    const data = JSON.parse(value.Json)
-    const label = data?.metadata?.generateName
-    const stopAction = (<PipelineStopButton executionId={key} />)
+  for (const pipeline of workspace?.pipelines.running()) {
+    const data = JSON.parse(pipeline.record);
+    const executionId = data?.Execution;
+    const stopAction = <PipelineStopButton executionId={executionId} />;
+    console.log(pipeline);
+
     items.push({
-      id: key,
-      name: <Link href="#" onClick={(key) => loadPipeline(key)}>{label}</Link>,
-      created: new Date(value.Created * 1000).toLocaleString(),
-      status: value.Status,
-      actions: stopAction
-    })
+      id: pipeline.id,
+      name: <Link href="#" onClick={() => loadPipeline(pipeline.id)}>{pipeline.id}</Link>,
+      created: new Date(pipeline.Created * 1000).toLocaleString(),
+      status: pipeline.Status,
+      deployed: pipeline.Deployed,
+      actions: stopAction,
+    });
   }
 
   const headers = [
@@ -41,7 +41,11 @@ export const ExecutionDataGrid = () => {
     },
     {
       key: 'status',
-      header: 'Status',
+      header: 'Status'
+    },
+    {
+      key: 'deployed',
+      header: 'Deployed'
     },
     {
       key: 'actions',

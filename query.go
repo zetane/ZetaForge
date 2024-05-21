@@ -23,6 +23,29 @@ type ResponsePipeline struct {
 	Deployed     int64
 }
 
+type ResponsePipelineExecution struct {
+	Organization string
+	Created      int64
+	Uuid         string
+	Hash         string
+	PipelineJson string
+	Deployed     int64
+	Status       interface{}
+	Completed    int64
+	Workflow     string
+	Execution    string
+}
+
+type ResponseExecution struct {
+	Hash      string
+	Status    string
+	Created   int64
+	Completed int64
+	Json      string
+	Workflow  string
+	Execution string
+}
+
 func newResponsePipeline(pipeline zdatabase.Pipeline) ResponsePipeline {
 	return ResponsePipeline{
 		Organization: pipeline.Organization,
@@ -34,14 +57,19 @@ func newResponsePipeline(pipeline zdatabase.Pipeline) ResponsePipeline {
 	}
 }
 
-type ResponseExecution struct {
-	Hash      string
-	Status    string
-	Created   int64
-	Completed int64
-	Json      string
-	Workflow  string
-	Execution string
+func newResponsePipelineExecution(filterPipeline zdatabase.FilterPipelinesRow) ResponsePipelineExecution {
+	return ResponsePipelineExecution{
+		Organization: filterPipeline.Organization,
+		Created:      filterPipeline.Created,
+		Uuid:         filterPipeline.Uuid,
+		Hash:         filterPipeline.Hash,
+		PipelineJson: filterPipeline.Json,
+		Deployed:     filterPipeline.Deployed,
+		Status:       filterPipeline.Status,
+		Completed:    filterPipeline.Created,
+		Workflow:     filterPipeline.Workflow.String,
+		Execution:    filterPipeline.Executionid,
+	}
 }
 
 func newResponseExecution(execution zdatabase.Execution, hash string) ResponseExecution {
@@ -152,6 +180,15 @@ func softDeletePipeline(ctx context.Context, db *sql.DB, organization string, uu
 	}
 
 	return nil
+}
+
+func filterPipelines(ctx context.Context, db *sql.DB, filter string) ([]zdatabase.FilterPipelinesRow, HTTPError) {
+	q := zdatabase.New(db)
+	res, err := q.FilterPipelines(ctx, filter)
+	if err != nil {
+		return []zdatabase.FilterPipelinesRow{}, InternalServerError{err.Error()}
+	}
+	return res, nil
 }
 
 func listAllPipelines(ctx context.Context, db *sql.DB, organization string) ([]zdatabase.Pipeline, HTTPError) {

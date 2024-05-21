@@ -354,6 +354,23 @@ func main() {
 
 		ctx.JSON(http.StatusOK, response)
 	})
+	pipeline.GET("/list/:filter", func(ctx *gin.Context) {
+		filter := ctx.Param("filter")
+
+		res, err := filterPipelines(ctx, db, filter)
+		if err != nil {
+			log.Printf("Failed to get filter pipelines; err=%v", err)
+			ctx.String(err.Status(), err.Error())
+			return
+		}
+
+		var response []ResponsePipelineExecution
+		for _, execution := range res {
+			response = append(response, newResponsePipelineExecution(execution))
+		}
+
+		ctx.JSON(http.StatusOK, response)
+	})
 	pipeline.DELETE("/:uuid/:hash", func(ctx *gin.Context) {
 		uuid := ctx.Param("uuid")
 		hash := ctx.Param("hash")

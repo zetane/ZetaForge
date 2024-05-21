@@ -1,11 +1,9 @@
 import { modalContentAtom } from "@/atoms/modalAtom";
 import { darkModeAtom } from "@/atoms/themeAtom";
-import { pipelineAtom, pipelineFactory } from "@/atoms/pipelineAtom";
-import { executionAtom } from "@/atoms/executionAtom";
+import { pipelineAtom, pipelineFactory, workspaceAtom } from "@/atoms/pipelineAtom";
 import { Play, Password, Renew } from "@carbon/icons-react";
 import {
   Header,
-  HeaderGlobalAction,
   HeaderGlobalBar,
   HeaderMenu,
   HeaderMenuItem,
@@ -23,7 +21,7 @@ import RunPipelineButton from "./RunPipelineButton";
 import LogsButton from "./LogsButton";
 import NewButton from "./NewButton";
 import ApiKeysModal from "./modal/ApiKeysModal";
-import RunningButton from "./RunningButton";
+import PipelinesButton from "./PipelinesButton";
 import useWebSocket, {ReadyState} from "react-use-websocket";
 import { useEffect } from "react";
 import { useImmerAtom } from "jotai-immer";
@@ -35,51 +33,47 @@ import StopPipelineButton from "./StopPipelineButton";
 export default function Navbar({ children }) {
   const [darkMode, setDarkMode] = useAtom(darkModeAtom);
   const [modalContent, setModalContent] = useAtom(modalContentAtom);
-  const [executions, setExecutions] = useImmerAtom(executionAtom);
+  const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
-  const setFullPipeline = useSetAtom(pipelineAtom)
-
-  console.log("local: ", window.cache.local)
-  console.log("app: ", window.cache.app())
 
   useEffect(() => {
-    if (executions && !executions.active) {
+    if (workspace && !workspace.active) {
       const newPipeline = pipelineFactory(window.cache.local)
-      setFullPipeline((p) => { return newPipeline })
+      setWorkspace((draft) => {
+        draft.pipelines[newPipeline.id] = newPipeline;
+        draft.active = newPipeline.id;
+      });
     }
-  }, [executions?.active])
+  }, [workspace.active])
 
-  useEffect(() => {
-    setExecutions((draft) => {
-      draft.active = pipeline
-    })
-  }, [pipeline])
+  const createNewPipeline = () => {
+    const newPipeline = pipelineFactory(window.cache.local);
+    setWorkspace((draft) => {
+      draft.pipelines[newPipeline.id] = newPipeline;
+      draft.active = newPipeline.id;
+    });
+  };
 
   const { pending, error, data } = useQuery({
-    queryKey: ['execution-running'],
-    queryFn: async () => { return axios.get(`${import.meta.env.VITE_EXECUTOR}/execution/running`)}
+    queryKey: ['pipeline-running'],
+    queryFn: async () => { return axios.get(`${import.meta.env.VITE_EXECUTOR}/pipeline/list/Running`)}
   })
-  const running = data?.data;
+  const running = data?.data || [];
 
   useEffect(() => {
-    if (!executions || !running) { 
-      setExecutions((draft) => {
-        draft.executions = {}
-      })
-      return 
-    }
     for (let i = 0; i < running.length; i++) {
-      const exec = running[i]
-      const executionId = exec.Execution
-      if (!(Object.hasOwn(executions.executions, executionId))) {
-        setExecutions((draft) => {
-          draft.executions[executionId] = exec
-        })
-      }
+      const pipeline = running[i]
+      const id = pipeline.Pipeline
+      const newPipeline = pipelineFactory(window.local.cache, id)
+      const executionId = pipeline.Execution
+      newPipeline.record = pipeline
+      newPipeline.record.socketUrl = `${import.meta.env.VITE_WS_EXECUTOR}/ws/${executionId}`
+      newPipeline.record.history = id + "/" + executionId
+      setExecutions((draft) => {
+        draft.pipelines[id] = pipeline
+      })
     }
   }, [running])
-  console.log("EXECS: ", executions)
-  console.log("pipeline: ", pipeline)
 
   /*const {pendingRoom, errorRoom, dataRoom }  = useQuery({
     queryKey: ['rooms'],
@@ -104,8 +98,10 @@ export default function Navbar({ children }) {
 
   const svgOverride = { position: 'absolute', right: '15px', top: '5px'}
 
+  const socket = pipeline?.socketUrl || null
+
   const { sendMessage, lastMessage, readyState } = useWebSocket(
-    pipeline.socketUrl,
+    socket,
     {
       share: true,
       shouldReconnect: () => false,
@@ -125,7 +121,7 @@ export default function Navbar({ children }) {
           const message = splitMess[1].trim()
           const tagAndObject = message.split("|||")
           const tag = tagAndObject[0].trim()
-          
+
           if (tag == "outputs") {
             try {
               const outs = JSON.parse(tagAndObject[1]);
@@ -181,7 +177,7 @@ export default function Navbar({ children }) {
     </RunPipelineButton>
   )
 
-  if (pipeline.socketUrl) {
+  if (pipeline?.socketUrl) {
     runButton = (
       <StopPipelineButton />
     )
@@ -202,7 +198,7 @@ export default function Navbar({ children }) {
             <LoadBlockButton />
         </HeaderMenu>
         <HeaderMenu menuLinkName="Settings">
-          <HeaderMenuItem 
+          <HeaderMenuItem
           onClick={() => modalPopper(<ApiKeysModal />)}>
             <Password  size={16} className="mx-1 align-middle"></Password>
             <span>API Keys</span>
@@ -230,7 +226,7 @@ export default function Navbar({ children }) {
         </RunPipelineButton>
         <PipelineNameLabel />
         <LogsButton />
-        <RunningButton />
+        <PipelinesButton />
       </HeaderGlobalBar>
       {children}
     </Header>

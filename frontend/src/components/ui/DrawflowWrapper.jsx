@@ -43,7 +43,7 @@ export default function DrawflowWrapper() {
 
   const savePipeline = trpc.savePipeline.useMutation();
   const getBlockPath = trpc.getBlockPath.useMutation();
-  
+
   // Redraw the connections when resizing textarea
   useEffect(() => {
     if (!editor) return;
@@ -145,23 +145,24 @@ export default function DrawflowWrapper() {
   }, []);
 
   useEffect(() => {
-    const nodes = Object.entries(pipeline.data).map(([key, block]) => {
-      return (<BlockGenerator key={key} 
-                block={block} 
-                openView={openView} 
-                id={key} 
-                historySink={pipeline.history} 
+    const blocks = pipeline?.data || []
+    const nodes = Object.entries(blocks).map(([key, block]) => {
+      return (<BlockGenerator key={key}
+                block={block}
+                openView={openView}
+                id={key}
+                historySink={pipeline.history}
                 pipelineAtom={pipelineAtom}
                 />)
     })
     setRenderNodes(nodes)
-  }, [pipeline.data])
+  }, [pipeline?.data])
 
   useEffect(() => {
     if (renderNodes.length) {
       // Note: This code is super finicky because it's our declarative (React)
       // vs imperative (drawflow) boundary
-      // We have to re-call these functions 
+      // We have to re-call these functions
       // IN THIS ORDER
       // because they programmatically
       // re-draw the connections in the graph
@@ -188,18 +189,18 @@ export default function DrawflowWrapper() {
         try {
           if (Object.getOwnPropertyNames(pipeline.data).length !== 0) {
             const pipelineSpecs = editor.convert_drawflow_to_block(pipeline.name, pipeline.data);
-    
+
             // note that we are writing to the buffer, not the load path
             pipelineSpecs['sink'] = pipeline.buffer;
             pipelineSpecs['build'] = pipeline.buffer;
-    
+
             const saveData = {
               specs: pipelineSpecs,
               name: pipeline.name,
               buffer: pipeline.buffer,
               writePath: pipeline.buffer
             };
-    
+
             const response = await savePipeline.mutateAsync(saveData);
             const { dirPath, specs } = response;
           }
@@ -207,7 +208,7 @@ export default function DrawflowWrapper() {
           console.error("Error saving pipeline:", error);
         }
       };
-  
+
       fetchData();
     } else {
       if (editor) {
@@ -275,7 +276,7 @@ export default function DrawflowWrapper() {
 
   const openView = async (id) => {
     const root = await getBlockPath.mutateAsync({
-      blockId: id, 
+      blockId: id,
       pipelinePath: pipeline.buffer
     });
     setBlockEditorRoot(root);
@@ -293,7 +294,7 @@ export default function DrawflowWrapper() {
       event.target.value = ''; // Reset the file input
     }
   };
-  
+
   const fileInput = useRef();
 
   return (

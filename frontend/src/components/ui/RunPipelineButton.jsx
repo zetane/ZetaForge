@@ -18,9 +18,6 @@ export default function RunPipelineButton({modalPopper, children, action}) {
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const [validationErrorMsg, setValidationErrorMsg] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
-  const [angle, setAngle] = useState(0)
-  const posRef = useRef({ x: 0, y: 0 });
-  const velocityRef = useRef({ x: 2, y: 2 });
   const [mixpanelService] = useAtom(mixpanelAtom)
 
   const uploadParameterBlocks = trpc.uploadParameterBlocks.useMutation();
@@ -85,7 +82,6 @@ export default function RunPipelineButton({modalPopper, children, action}) {
       }
 
       const res = await mutation.mutateAsync(execution)
-      queryClient.invalidateQueries({queryKey: ['rooms']})
       if (res.status == 201) {
         const executionId = res.data?.executionId
         setPipeline((draft) => {
