@@ -246,7 +246,7 @@ function startExpressServer() {
     let folderPath = data.block_name;
     const filePath = path.join(data.blockPath, "computations.py");
   
-    fs.writeFile(filePath, computations_script, (err) => {
+    fs.writeFile(filePath, data.computations_script, (err) => {
       if (err) {
         console.error("Error writing data to file:", err);
         res.status(500).send({ error: "Error writing data to file" });
