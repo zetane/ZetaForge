@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"embed"
 	"errors"
 	"fmt"
@@ -107,6 +108,15 @@ func kubectlResources(clientConfig *rest.Config) (map[string]string, error) {
 	return mapping, nil
 }
 
+func validNamespace(namespace string, Kind string) bool {
+	if namespace == "" {
+		if Kind != "Namespace" && Kind != "CustomResourceDefinition" && Kind != "ClusterRole" && Kind != "ClusterRoleBinding" && Kind != "PriorityClass" {
+			return false
+		}
+	}
+	return true
+}
+
 func kubectlApply(filePath string, resources map[string]string, clientConfig *rest.Config) error {
 	file, err := kubectlFiles.ReadFile(filePath)
 	if err != nil {
@@ -141,6 +151,9 @@ func kubectlApply(filePath string, resources map[string]string, clientConfig *re
 		gvr := schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: resources[gvk.Kind]}
 		namespace := obj.GetNamespace()
 		name := obj.GetName()
+		if !validNamespace(namespace, gvk.Kind) {
+			namespace = "default"
+		}
 		_, err = dynamicClient.Resource(gvr).Namespace(namespace).Apply(context.Background(), name, &obj, metav1.ApplyOptions{FieldManager: name})
 		if err != nil {
 			return err
@@ -183,9 +196,13 @@ func kubectlDelete(filePath string, resources map[string]string, clientConfig *r
 		gvr := schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: resources[gvk.Kind]}
 		namespace := obj.GetNamespace()
 		name := obj.GetName()
+		if !validNamespace(namespace, gvk.Kind) {
+			namespace = "default"
+		}
 		err = dynamicClient.Resource(gvr).Namespace(namespace).Delete(context.Background(), name, metav1.DeleteOptions{})
 		if err != nil {
-			return err
+			log.Printf("Resource %s %s deletion failed", gvk.Kind, name)
+			continue
 		}
 		log.Printf("Resource %s %s deleted", gvk.Kind, name)
 	}
@@ -219,7 +236,46 @@ func kubectlCheckPods(ctx context.Context, clientConfig *rest.Config) error {
 	return nil
 }
 
-func setup(config Config, client clientcmd.ClientConfig) {
+func migrate(ctx context.Context, resources map[string]string, config Config, clientConfig *rest.Config, db *sql.DB) error {
+	setupVersion, err := getSetupVersion(ctx, db)
+	log.Println(setupVersion)
+	var version string
+	if err != nil {
+		version = config.SetupVersion
+		// cleanup the earliest version
+		if err := kubectlDelete("setup/build-0.yaml", resources, clientConfig); err != nil {
+			return err
+		}
+
+		if _, err := setSetupVersion(ctx, db, config.SetupVersion); err != nil {
+			return err
+		}
+	} else {
+		version = setupVersion.Version
+	}
+
+	if version < config.SetupVersion {
+		if err := kubectlDelete("setup/build-"+version+".yaml", resources, clientConfig); err != nil {
+			return err
+		}
+		if _, err := setSetupVersion(ctx, db, config.SetupVersion); err != nil {
+			return err
+		}
+		if err := kubectlApply("setup/build-"+config.SetupVersion+".yaml", resources, clientConfig); err != nil {
+			return err
+		}
+	} else if version > config.SetupVersion {
+		log.Fatalf("Invalid version downgrade")
+	} else {
+		if err := kubectlApply("setup/build-"+config.SetupVersion+".yaml", resources, clientConfig); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func setup(ctx context.Context, config Config, client clientcmd.ClientConfig, db *sql.DB) {
 	clientConfig, err := client.ClientConfig()
 	if err != nil {
 		log.Fatalf("Failed to get client config; err=%v", err)
@@ -233,11 +289,11 @@ func setup(config Config, client clientcmd.ClientConfig) {
 	if err := kubectlApply("setup/install.yaml", resources, clientConfig); err != nil {
 		log.Fatalf("Failed to install argo; err=%v", err)
 	}
-	if err := kubectlApply("setup/build.yaml", resources, clientConfig); err != nil {
-		log.Fatalf("Failed to install bucket; err=%v", err)
+	if err := migrate(ctx, resources, config, clientConfig, db); err != nil {
+		log.Fatalf("Failed to migrate bucket; err=%v", err)
 	}
 
-	if err := kubectlCheckPods(context.Background(), clientConfig); err != nil {
+	if err := kubectlCheckPods(ctx, clientConfig); err != nil {
 		log.Fatalf("Setup execution failed; err=%v", err)
 	}
 	log.Println("Setup Successful")
@@ -256,6 +312,9 @@ func setup(config Config, client clientcmd.ClientConfig) {
 		go func() {
 			<-signals
 			log.Println("Starting Shutdown...")
+			if err := kubectlDelete("setup/install.yaml", resources, clientConfig); err != nil {
+				log.Printf("Failed to delete argo; err=%v", err)
+			}
 			if stopBucketCh != nil {
 				close(stopBucketCh)
 			}
@@ -271,12 +330,33 @@ func setup(config Config, client clientcmd.ClientConfig) {
 			if err := kubectlDelete("setup/install.yaml", resources, clientConfig); err != nil {
 				log.Printf("Failed to delete argo; err=%v", err)
 			}
-			if err := kubectlDelete("setup/build.yaml", resources, clientConfig); err != nil {
-				log.Printf("Failed to delete bucket; err=%v", err)
-			}
 			log.Println("Shutdown Successful")
 			signal.Stop(signals)
 			os.Exit(1)
 		}()
+	}
+}
+
+func uninstall(ctx context.Context, client clientcmd.ClientConfig, db *sql.DB) {
+	clientConfig, err := client.ClientConfig()
+	if err != nil {
+		log.Fatalf("Failed to get client config; err=%v", err)
+	}
+
+	resources, err := kubectlResources(clientConfig)
+	if err != nil {
+		log.Fatalf("Failed to fetch kubernetes resources; err=%v", err)
+	}
+
+	setupVersion, err := getSetupVersion(ctx, db)
+	var version string
+	if err != nil {
+		version = "0"
+	} else {
+		version = setupVersion.Version
+	}
+
+	if err := kubectlDelete("setup/build-"+version+".yaml", resources, clientConfig); err != nil {
+		log.Fatalf("Failed to delete bucket; err=%v", err)
 	}
 }

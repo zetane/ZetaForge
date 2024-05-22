@@ -18,6 +18,7 @@ import (
 
 	"fmt"
 	"server/zjson"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -37,6 +38,7 @@ var migrations embed.FS
 
 type Config struct {
 	IsLocal         bool
+	IsDev           bool
 	ServerPort      int
 	KanikoImage     string
 	WorkDir         string
@@ -46,6 +48,7 @@ type Config struct {
 	ServiceAccount  string
 	Bucket          string
 	Database        string
+	SetupVersion    string
 	Local           Local `json:"Local,omitempty"`
 	Cloud           Cloud `json:"Cloud,omitempty"`
 }
@@ -86,12 +89,12 @@ func createLogger(pipelineId string, file io.Writer, messageFunc func(string, st
 	return io.MultiWriter(os.Stdout, wsWriter, file)
 }
 
-
-func validateJson(ctx context.Context, body io.ReadCloser) (zjson.Pipeline, HTTPError) {
-	schema, err := json.Marshal(jsonschema.Reflect(&zjson.Pipeline{}))
+func validateJson[D any](body io.ReadCloser) (D, HTTPError) {
+	var data D
+	schema, err := json.Marshal(jsonschema.Reflect(data))
 
 	if err != nil { // Should never happen outside of development
-		return zjson.Pipeline{}, InternalServerError{err.Error()}
+		return data, InternalServerError{err.Error()}
 	}
 
 	buffer := new(bytes.Buffer)
@@ -102,7 +105,7 @@ func validateJson(ctx context.Context, body io.ReadCloser) (zjson.Pipeline, HTTP
 	result, err := gojsonschema.Validate(schemaLoader, jsonLoader)
 
 	if err != nil {
-		return zjson.Pipeline{}, InternalServerError{err.Error()}
+		return data, InternalServerError{err.Error()}
 	}
 
 	if !result.Valid() {
@@ -111,17 +114,14 @@ func validateJson(ctx context.Context, body io.ReadCloser) (zjson.Pipeline, HTTP
 			listError = append(listError, error.String())
 		}
 		stringError := strings.Join(listError, "\n")
-		return zjson.Pipeline{}, BadRequest{stringError}
+		return data, BadRequest{stringError}
 	}
 
-	var pipeline zjson.Pipeline
-	if err := json.Unmarshal(buffer.Bytes(), &pipeline); err != nil {
-		return zjson.Pipeline{}, InternalServerError{err.Error()}
+	if err := json.Unmarshal(buffer.Bytes(), &data); err != nil {
+		return data, InternalServerError{err.Error()}
 	}
 
-	
-	
-	return pipeline, nil
+	return data, nil
 }
 
 func setupSentry() {
@@ -135,10 +135,7 @@ func setupSentry() {
 }
 
 func main() {
-	//Initialize mixpanelClient only once(it's singleton)
 	ctx := context.Background()
-	mixpanelClient = InitMixpanelClient("4c09914a48f08de1dbe3dc4dd2dcf90d", ctx)
-	setupSentry()
 	file, err := os.ReadFile("config.json")
 	if err != nil {
 		log.Fatalf("Config file missing; err=%v", err)
@@ -149,6 +146,10 @@ func main() {
 		log.Fatalf("Config file invalid; err=%v", err)
 		return
 	}
+
+	//Initialize mixpanelClient only once(it's singleton)
+	mixpanelClient = InitMixpanelClient(ctx, "4c09914a48f08de1dbe3dc4dd2dcf90d", config)
+	setupSentry()
 
 	db, err := sql.Open("sqlite3", config.Database)
 	if err != nil {
@@ -171,7 +172,16 @@ func main() {
 			clientcmd.NewDefaultClientConfigLoadingRules(),
 			&clientcmd.ConfigOverrides{},
 		)
-		setup(config, client)
+
+		// Switching to Cobra if we need more arguments
+		if len(os.Args) > 1 {
+			if os.Args[1] == "--uninstall" {
+				uninstall(ctx, client, db)
+				return
+			}
+			os.Exit(1)
+		}
+		setup(ctx, config, client, db)
 	} else {
 		cacert, err := base64.StdEncoding.DecodeString(config.Cloud.CaCert)
 		if err != nil {
@@ -217,37 +227,31 @@ func main() {
 	router.Use(sentrygin.New(sentrygin.Options{}))
 
 	router.POST("/execute", func(ctx *gin.Context) {
-		pipeline, err := validateJson(ctx.Request.Context(), ctx.Request.Body)
+		execution, err := validateJson[zjson.Execution](ctx.Request.Body)
 		if err != nil {
 			log.Printf("Invalid json request; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
 
-		res, err := createPipeline(ctx.Request.Context(), db, "org", pipeline)
+		res, err := createPipeline(ctx.Request.Context(), db, "org", execution.Pipeline)
 		if err != nil {
 			log.Printf("Failed to create pipeline; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
 
-		executionId, uuidErr := uuid.NewV7()
-		if uuidErr != nil {
-			log.Printf("uuid generation failed; err=%v", uuidErr)
-			ctx.String(500, fmt.Sprintf("%v", uuidErr))
-		}
-
 		// TODO: client needs to handle file uploading to S3
 		// along with handling results files
-		sink := filepath.Join(pipeline.Sink, "history", executionId.String())
-		pipeline.Sink = sink
+		sink := filepath.Join(execution.Pipeline.Sink, "history", execution.Id)
+		execution.Pipeline.Sink = sink
 		if config.IsLocal {
-			go localExecute(&pipeline, res.ID, executionId.String(), config, client, db, hub)
+			go localExecute(&execution.Pipeline, res.ID, execution.Id, execution.Build, config, client, db, hub)
 		} else {
-			go cloudExecute(&pipeline, res.ID, executionId.String(), config, client, db, hub)
+			go cloudExecute(&execution.Pipeline, res.ID, execution.Id, execution.Build, config, client, db, hub)
 		}
 		newRes := make(map[string]any)
-		newRes["executionId"] = executionId.String()
+		newRes["executionId"] = execution.Id
 		newRes["history"] = sink
 		newRes["pipeline"] = res
 		ctx.JSON(http.StatusCreated, newRes)
@@ -279,7 +283,7 @@ func main() {
 
 	pipeline := router.Group("/pipeline")
 	pipeline.POST("", func(ctx *gin.Context) {
-		pipeline, err := validateJson(ctx.Request.Context(), ctx.Request.Body)
+		pipeline, err := validateJson[zjson.Pipeline](ctx.Request.Body)
 		if err != nil {
 			log.Printf("Invalid json request; err=%v", err)
 			ctx.String(err.Status(), err.Error())
@@ -414,9 +418,9 @@ func main() {
 		pipeline.Sink = sink
 
 		if config.IsLocal {
-			go localExecute(&pipeline, res.ID, executionId.String(), config, client, db, hub)
+			go localExecute(&pipeline, res.ID, executionId.String(), false, config, client, db, hub)
 		} else {
-			go cloudExecute(&pipeline, res.ID, executionId.String(), config, client, db, hub)
+			go cloudExecute(&pipeline, res.ID, executionId.String(), false, config, client, db, hub)
 		}
 
 		newRes := make(map[string]any)

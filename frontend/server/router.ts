@@ -5,7 +5,7 @@ import path from "path";
 import { z } from 'zod';
 import { compileComputation, runTest, saveBlockSpecs } from './blockSerialization.js';
 import { getHistory, getIndex, updateHistory, updateIndex } from "./chat.js";
-import { readPipelines, readSpecs, s3Upload } from "./fileSystem.js";
+import { readPipelines, readSpecs } from "./fileSystem.js";
 import { copyPipeline, getBlockPath, removeBlock, saveBlock, saveSpec } from './pipelineSerialization.js';
 import { publicProcedure, router } from './trpc';
 
@@ -175,18 +175,19 @@ export const appRouter = router({
       const {blockId, pipelinePath} = input;
       removeBlock(blockId, pipelinePath);
     }),
-  uploadToS3: publicProcedure
+  uploadParameterBlocks: publicProcedure
     .input(z.object({
-      filePath: z.string(),
+      pipelineId: z.string(),
+      executionId: z.string(),
+      pipelineSpecs: z.any(),
+      buffer: z.string(), 
     }))
     .mutation(async (opts) => {
       const {input} = opts;
-      const {filePath} = input;
+      const {pipelineId, executionId, pipelineSpecs, buffer} = input;
 
-      const res = await s3Upload(filePath)
-      return res;
+      return uploadBlocks(pipelineId, executionId, pipelineSpecs, buffer);
     }),
- 
   compileComputation: publicProcedure
     .input(z.object({
       blockPath: z.string(),

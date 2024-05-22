@@ -14,9 +14,9 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"server/zjson"
 	"strings"
 	"time"
-	"server/zjson"
 
 	"github.com/argoproj/argo-workflows/v3/pkg/apiclient"
 	workflowpkg "github.com/argoproj/argo-workflows/v3/pkg/apiclient/workflow"
@@ -313,7 +313,7 @@ func streaming(ctx context.Context, sink string, name string, room string, clien
 		}
 	}
 
-	for _, container := range []string{"init", "wait", "main"} {
+	for _, container := range []string{"main"} {
 		go containerStream(container)
 	}
 }
@@ -321,9 +321,7 @@ func streaming(ctx context.Context, sink string, name string, room string, clien
 func runArgo(ctx context.Context, workflow *wfv1.Workflow, sink string, pipeline string, execution int64, client clientcmd.ClientConfig, db *sql.DB, hub *Hub) (*wfv1.Workflow, error) {
 	//mixpanelClient is singleton, so a new instance won't be created.
 	mixpanelClient := GetMixpanelClient()
-	
-	
-	
+
 	ctx, cli, err := apiclient.NewClientFromOpts(
 		apiclient.Opts{
 			ClientConfigSupplier: func() clientcmd.ClientConfig {
@@ -374,8 +372,7 @@ func runArgo(ctx context.Context, workflow *wfv1.Workflow, sink string, pipeline
 		}
 
 		if workflow.Status.Phase.Completed() {
-			
-			
+
 			log.Printf("Status: Completed")
 			mixpanelClient.TrackEvent(ctx, "Run Completed", map[string]any{})
 			break
@@ -547,7 +544,7 @@ func buildImage(ctx context.Context, source string, tag string, cfg Config) erro
 	}
 }
 
-func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Config, client clientcmd.ClientConfig, db *sql.DB, hub *Hub) {
+func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, build bool, cfg Config, client clientcmd.ClientConfig, db *sql.DB, hub *Hub) {
 	ctx := context.Background()
 	defer log.Printf("Completed")
 
@@ -607,7 +604,7 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 
 	s3key := pipeline.Id + "/" + executionId
 
-	workflow, blocks, err := translate(ctx, pipeline, "org", cfg, s3key)
+	workflow, blocks, err := translate(ctx, pipeline, "org", s3key, build, cfg)
 	if err != nil {
 		log.Printf("Failed to translate the pipeline; err=%v", err)
 		return
@@ -629,34 +626,21 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 		return
 	}
 
-	executionFiles := s3key
-
 	eg, egCtx := errgroup.WithContext(ctx)
 	eg.SetLimit(runtime.NumCPU())
 
-	uploadedFiles := []string{}
 	for path, image := range blocks {
+		// Duplicate variables -> https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/loopclosure
+		path := path
+		image := image
 		log.Printf("Path: %s", path)
 		log.Printf("Image: %s", image)
-		if _, err := os.Stat(filepath.Join(path, cfg.ComputationFile)); err != nil {
-			deleteFiles(ctx, executionFiles, uploadedFiles, cfg)
-			log.Printf("Computation file does not exist; err=%v", err)
-			return
-		}
 
 		if len(image) > 0 {
 			eg.Go(func() error {
 				return buildImage(egCtx, path, image, cfg)
 			})
 		}
-
-		name := s3key + "/" + filepath.Base(path) + ".py"
-		if err := upload(ctx, filepath.Join(path, cfg.ComputationFile), name, cfg); err != nil {
-			deleteFiles(ctx, executionFiles, uploadedFiles, cfg)
-			log.Printf("Failed to upload computation file; err=%v", err)
-			return
-		}
-		uploadedFiles = append(uploadedFiles, name)
 	}
 
 	if err := eg.Wait(); err != nil {
@@ -678,13 +662,13 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 		return
 	}
 
-	if err := downloadFiles(ctx, pipeline.Sink, executionFiles, cfg); err != nil {
+	if err := downloadFiles(ctx, pipeline.Sink, s3key, cfg); err != nil {
 		log.Printf("Failed to download files; err=%v", err)
 		return
 	}
 }
 
-func cloudExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Config, client clientcmd.ClientConfig, db *sql.DB, hub *Hub) {
+func cloudExecute(pipeline *zjson.Pipeline, id int64, executionId string, build bool, cfg Config, client clientcmd.ClientConfig, db *sql.DB, hub *Hub) {
 	ctx := context.Background()
 	defer log.Printf("Completed")
 
@@ -703,7 +687,7 @@ func cloudExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 
 	s3key := pipeline.Id + "/" + executionId
 
-	workflow, _, err := translate(ctx, pipeline, "org", cfg, s3key)
+	workflow, _, err := translate(ctx, pipeline, "org", s3key, build, cfg)
 	if err != nil {
 		log.Printf("Failed to translate the pipeline; err=%v", err)
 		return

@@ -56,7 +56,7 @@ def main():
     elif args.command == 'setup':
         setup(server_versions[-1], client_versions[-1], args.driver, is_dev=args.is_dev)
     elif args.command == 'uninstall':
-        uninstall()
+        uninstall(server_versions[-1], server_path=args.s2_path)
     else:
         print('zetaforge:\t' + __version__)
         print("client:\t" + client_versions[-1])    

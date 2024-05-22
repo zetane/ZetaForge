@@ -4,12 +4,10 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"log"
 	"math/big"
 	"net"
-	"os"
 	"runtime"
 	"strings"
 	"sync"
@@ -70,10 +68,6 @@ func getMACAddress() (string, *big.Int, error) {
 	return "", new(big.Int).SetInt64(int64(0)), fmt.Errorf("unable to determine distinct_id, using default distinct_id")
 }
 
-type MixpanelJsonConfig struct {
-	ZetaforgeIsDev bool `json:"ZetaforgeIsDev"`
-}
-
 type MixpanelClient struct {
 	Client     *mixpanel.ApiClient
 	DistinctID string
@@ -88,43 +82,17 @@ var (
 	mixpanelClient *MixpanelClient
 )
 
-func InitMixpanelClient(token string, ctx context.Context) *MixpanelClient {
+func InitMixpanelClient(ctx context.Context, token string, cfg Config) *MixpanelClient {
 	once.Do(func() {
 		client := mixpanel.NewApiClient(token)
-		file, err := os.ReadFile("config.json")
-
-		var isDev bool
-		enabled := true
-		if err != nil {
-			fmt.Println("Error opening file:", err)
-			enabled = false
-		}
-
-		var raw map[string]json.RawMessage
-
-		if err := json.Unmarshal(file, &raw); err != nil {
-			log.Fatalf("Failed to parse JSON: %v", err)
-			enabled = false
-		}
-
-		var mixpanelConfig MixpanelJsonConfig
-
-		if raw["ZetaforgeIsDev"] != nil {
-			if err := json.Unmarshal(raw["ZetaforgeIsDev"], &isDev); err != nil {
-				log.Fatalf("Failed to parse ZetaforgeIsDev field: %v", err)
-			}
-			mixpanelConfig.ZetaforgeIsDev = isDev
-		} else {
-			mixpanelConfig.ZetaforgeIsDev = true
-		}
 
 		distinctID := generateDistinctID()
 		mixpanelClient = &MixpanelClient{
 			Client:     client,
 			DistinctID: distinctID,
 			Token:      token,
-			Enabled:    enabled,
-			IsDev:      mixpanelConfig.ZetaforgeIsDev,
+			Enabled:    true,
+			IsDev:      cfg.IsDev,
 		}
 		mixpanelClient.SetPeopleProperties(ctx, map[string]interface{}{"$ip": 1})
 	})

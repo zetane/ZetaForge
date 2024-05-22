@@ -5,6 +5,7 @@
 	--ztn-red-0: rgba(255, 0, 0, 1);
 	--ztn-white-0: #ffffff;
 	--ztn-gray-0: rgba(139,139,139,1);
+	--ztn-gray-1: rgba(38, 38, 38, 1);
 	--ztn-black-0: #000;
 	--ztn-orange-0: rgba(252, 168, 0, 1);
 	--ztn-orange-10: rgba(253, 187, 55, 1);
@@ -21,6 +22,7 @@
 	--cds-link-inverse: var(--ztn-white-0) !important;
 	--cds-focus: var(--ztn-purple-0) !important;
 	--cds-focus-inverse: var(--ztn-purple-0) !important;
+	--pipeline-background-color: var(--ztn-gray-1) !important;
 }
 @mixin ztn-colors-g100 {
 	// dark mode
@@ -29,6 +31,7 @@
 	--ztn-red-0: rgba(255, 0, 0, 1);
 	--ztn-white-0: #ffffff;
 	--ztn-gray-0: rgba(139,139,139,1);
+	--ztn-gray-1: rgba(38, 38, 38, 1);
 	--ztn-black-0: #000;
 	--ztn-orange-0: rgba(252, 168, 0, 1);
 	--ztn-orange-10: rgba(253, 187, 55, 1);
@@ -39,10 +42,11 @@
 	--cds-button-tertiary-hover: var(--ztn-purple-0) !important;
 	--cds-background-brand: var(--ztn-black-0) !important;
 	--cds-border-interactive: var(--ztn-purple-0) !important;
-	--cds-link-primary: white !important;
+	--cds-link-primary: var(--ztn-white-0)!important;
 	--cds-link-primary-hover: var(--ztn-purple-0) !important;
 	--cds-link-secondary: var(--ztn-purple-0) !important;
 	--cds-link-inverse: var(--ztn-black-0) !important;
 	--cds-focus: var(--ztn-purple-0) !important;
 	--cds-focus-inverse: var(--ztn-purple-0) !important;
+	--pipeline-background-color: var(--ztn-gray-1) !important;
 }

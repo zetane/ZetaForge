@@ -42,20 +42,18 @@ def write_json(server_version, client_version, context, driver, is_dev, s2_path=
         _, server_path = get_launch_paths(server_version, client_version)
     config = create_config_json(os.path.dirname(server_path), context, driver, is_dev)
     return config
-#changes the ZetaforgeIsDev in config.json, it's implemented to prevent certain edge cases.
+
+#changes the IsDev in config.json, it's implemented to prevent certain edge cases.
 def change_env_config(server_version, client_version, env):
     _, server_path = get_launch_paths(server_version, client_version)
     config = dict()
     config_path = os.path.join(os.path.dirname(server_path), "config.json")
     with open(config_path, "r") as f:
         config = json.load(f)
-    config['ZetaforgeIsDev'] = env
+    config['IsDev'] = env
     with open(config_path, "w") as outfile:
         json.dump(config, outfile)
     return outfile
-
-
-
 
 def check_for_container(name):
     ls_cmd = subprocess.run(["docker", "container", "ls", '--format', 'json'], capture_output=True, text=True)
@@ -199,6 +197,14 @@ def setup(server_version, client_version, driver, build_flag = True, install_fla
     return config_path
 
 
+def read_output(process, name):
+    for line in process.stdout:
+        print(f"{name}: {line.decode('utf-8')}", end='')
+
+def read_error(process, name):
+    for line in process.stderr:
+        print(f"{name} (stderr): {line.decode('utf-8')}", end='')
+
 #dev version is only passed, when a developer wants to pass a local version(for e.g. dev_path=./s2-v2.3.5-amd64)
 def run_forge(server_version=None, client_version=None, server_path=None, client_path=None, is_dev=False):
     global time_start
@@ -252,13 +258,6 @@ def run_forge(server_version=None, client_version=None, server_path=None, client
             raise Exception(f"Error occured while launching the client executable: {client_executable}")
             
         mixpanel_client.track_event('Launch - Client Launched')
-        def read_output(process, name):
-            for line in process.stdout:
-                print(f"{name}: {line.decode('utf-8')}", end='')
-
-        def read_error(process, name):
-            for line in process.stderr:
-                print(f"{name} (stderr): {line.decode('utf-8')}", end='')
 
         # Create threads to read the outputs concurrently
         server_stdout_thread = threading.Thread(target=read_output, args=(server, '[server]'))
@@ -309,12 +308,27 @@ def teardown(driver):
 
     print("Completed teardown!")
 
-def uninstall():
-    install = subprocess.run(["kubectl", "delete", "-f", INSTALL_YAML], capture_output=True, text=True)
-    print ("Removing install: ", {install.stdout})
-    build = subprocess.run(["kubectl", "delete", "-f", BUILD_YAML], capture_output=True, text=True)
-    print("Removing build: ", {build.stdout})
+def uninstall(server_version=None, server_path=None):
+    if server_path is None:
+        _, server_path = get_launch_paths(server_version, None)
 
+    server_executable = os.path.basename(server_path)
+    if platform.system() != 'Windows':
+        server_executable = f"./{server_executable}"
+    else:
+        server_executable = server_path
+
+    try:
+        server = subprocess.Popen([server_executable, "--uninstall"],stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.dirname(server_path))
+    except:
+        raise Exception(f"Error occured while uninstalling")
+
+    server_stdout_thread = threading.Thread(target=read_output, args=(server, '[server]'))
+    server_stderr_thread = threading.Thread(target=read_error, args=(server, '[server]'))
+    server_stdout_thread.start()
+    server_stderr_thread.start()
+    server_stdout_thread.join()
+    server_stderr_thread.join()
 
 def check_expected_services(config):
     is_local = config["IsLocal"]
@@ -342,6 +356,7 @@ def check_expected_services(config):
 def create_config_json(s2_path, context, driver, is_dev):
     config = {
         "IsLocal":True,
+        "IsDev": is_dev,
         "ServerPort": 8080,
         "KanikoImage":"gcr.io/kaniko-project/executor:latest",
         "WorkDir":"/app",
@@ -352,11 +367,11 @@ def create_config_json(s2_path, context, driver, is_dev):
         "Bucket":"forge-bucket",
         "Database":"./zetaforge.db",
         "KubeContext": context,
+        "SetupVersion":"1",
         "Local": {
             "BucketPort": 8333,
             "Driver": driver
-        },
-        "ZetaforgeIsDev": is_dev
+        }
     } 
 
     file_path = os.path.join(s2_path, "config.json")
