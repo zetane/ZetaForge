@@ -6,10 +6,12 @@ import { useImmerAtom } from 'jotai-immer';
 import { useMemo } from 'react';
 import { useImmer } from 'use-immer';
 
+const HIDDEN_SPEC_KEYS = ['connections', 'relays', 'command_line', 'pos_x', 'pos_y', 'pos_z', 'parameters']
+
 const flattenSpecs = (data, prefix = '', path = []) => {
   let fields = [];
   Object.keys(data).forEach(key => {
-    if (['connections', 'relays', 'command_line', 'pos_x', 'pos_y', 'pos_z', 'parameters'].includes(key)) {
+    if (HIDDEN_SPEC_KEYS.includes(key)) {
       return;
     }
 
@@ -20,7 +22,7 @@ const flattenSpecs = (data, prefix = '', path = []) => {
     } else {
       let label = key;
       if (newPath.includes('inputs') || newPath.includes('outputs')) {
-        const typeLabel = newPath[0].charAt(0).toUpperCase() + newPath[0].slice(1);
+        const typeLabel = newPath[0].charAt(0) + newPath[0].slice(1);
         const varName = newPath[newPath.length - 2];
         label = `${typeLabel} ${varName} Type`;
       }
@@ -65,11 +67,10 @@ export default function SpecsInterface({ blockPath, blockKey }) {
               <TextArea
                 labelText={label}
                 id={key}
-                className="w-full"
+                className="w-full resize-y"
                 value={value || ''}
                 onChange={(e) => handleInputChange(path, e.target.value)}
-                rows={4}
-                style={{ resize: 'vertical' }} />
+                rows={4} />
             ) : (
               <TextInput
                   labelText={label}
