@@ -32,7 +32,6 @@
     "@uiw/codemirror-theme-github": "^4.21.25",
     "electron-trpc": "^0.5.2",
     "electron-updater": "^6.1.1",
-    "floating-ui": "^5.2.8",
     "getmac": "^6.6.0",
     "use-immer": "^0.9.0",
     "uuidv7": "^0.6.3"
