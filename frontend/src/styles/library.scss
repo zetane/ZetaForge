@@ -38,7 +38,7 @@
 }
 
 .library-tile-container {
-  overflow-y: visible;
+  overflow: auto;
   height: calc(100vh - 230px); /* Adjust the 150px based on the height of other elements */ 
 }
 
