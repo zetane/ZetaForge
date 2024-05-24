@@ -354,13 +354,29 @@ func main() {
 
 		ctx.JSON(http.StatusOK, response)
 	})
-	pipeline.GET("/list/:filter", func(ctx *gin.Context) {
-		filter := ctx.Param("filter")
+	pipeline.GET("/filter", func(ctx *gin.Context) {
+		// TODO: Figure out how to get SQLC to emit the same struct for two different queries
+		limitStr := ctx.DefaultQuery("limit", "0")
+		offsetStr := ctx.DefaultQuery("offset", "0")
 
-		res, err := filterPipelines(ctx, db, filter)
+		limit, err := strconv.Atoi(limitStr)
 		if err != nil {
+			log.Printf("Invalid limit parameter: %s", limitStr)
+			ctx.String(http.StatusBadRequest, "Invalid limit parameter")
+			return
+		}
+
+		offset, err := strconv.Atoi(offsetStr)
+		if err != nil {
+			log.Printf("Invalid offset parameter: %s", offsetStr)
+			ctx.String(http.StatusBadRequest, "Invalid offset parameter")
+			return
+		}
+
+		res, httpErr := filterPipelines(ctx, db, int64(limit), int64(offset))
+		if httpErr != nil {
 			log.Printf("Failed to get filter pipelines; err=%v", err)
-			ctx.String(err.Status(), err.Error())
+			ctx.String(httpErr.Status(), err.Error())
 			return
 		}
 

@@ -3,9 +3,11 @@ import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { trpc } from "@/utils/trpc";
 import { getDirectoryPath } from "@/../utils/fileUtils";
 import { customAlphabet } from 'nanoid';
+import { workspaceAtom } from "@/atoms/pipelineAtom";
 
 export const useLoadPipeline = () => {
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
+  const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
   const savePipelineMutation = trpc.savePipeline.useMutation();
 
   const loadPipeline = async (file) => {
@@ -21,21 +23,9 @@ export const useLoadPipeline = () => {
     const folderPath = getDirectoryPath(file.path);
 
     // Clear the pipeline object first to avoid key collisions
-    const nanoid = customAlphabet('1234567890abcedfghijklmnopqrstuvwxyz', 12);
-    const name = `pipeline-${nanoid()}`;
-    const bufferPath = `${window.cache.local}${name}`;
+    const bufferPath = `${window.cache.local}${data.id}`;
+    const newPipeline = pipelineFactory(window.cache.local, {id: id})
 
-    setPipeline(draft => {
-      draft.id = name;
-      draft.name = name;
-      draft.saveTime = null;
-      draft.buffer = bufferPath;
-      draft.path = undefined;
-      draft.data = {};
-    });
-
-    // set the specs to have the proper history path
-    // and to fetch the blocks from the correct dir
     data['sink'] = folderPath
     data['build'] = bufferPath
 
@@ -47,14 +37,20 @@ export const useLoadPipeline = () => {
     };
     await savePipelineMutation.mutateAsync(cacheData);
 
-    console.log("Setting final pipeline state");
     setPipeline(draft => {
       draft.name = pipelineName;
       draft.path = folderPath;
       draft.saveTime = Date.now();
+      draft.buffer = bufferPath;
       draft.data = data.pipeline;
       draft.id = data.id;
     });
+
+    setWorkspace(draft => {
+      draft.tabs.push({
+
+      })
+    })
   };
 
   return loadPipeline;

@@ -14,15 +14,17 @@ export const ExecutionDataGrid = () => {
 
   const items = []
 
-  for (const pipeline of workspace?.pipelines.running()) {
-    const data = JSON.parse(pipeline.record);
-    const executionId = data?.Execution;
+  for (const pipeline of workspace?.running()) {
+    const record = pipeline.record;
+    const pipelineData = JSON.parse(record.PipelineJson)
+    const friendlyName = pipelineData.name
+    const executionId = record?.Execution;
     const stopAction = <PipelineStopButton executionId={executionId} />;
     console.log(pipeline);
 
     items.push({
       id: pipeline.id,
-      name: <Link href="#" onClick={() => loadPipeline(pipeline.id)}>{pipeline.id}</Link>,
+      name: <Link href="#" onClick={() => loadPipeline(pipeline.id)}>{friendlyName}</Link>,
       created: new Date(pipeline.Created * 1000).toLocaleString(),
       status: pipeline.Status,
       deployed: pipeline.Deployed,

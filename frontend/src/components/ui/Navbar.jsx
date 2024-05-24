@@ -9,8 +9,9 @@ import {
   HeaderMenuItem,
   HeaderName,
   HeaderNavigation,
-  SkipToContent
+  SkipToContent,
 } from "@carbon/react";
+
 import { useAtom, useSetAtom } from "jotai";
 import LoadBlockButton from "./LoadBlockButton";
 import LoadPipelineButton from "./LoadPipelineButton";
@@ -22,6 +23,7 @@ import LogsButton from "./LogsButton";
 import NewButton from "./NewButton";
 import ApiKeysModal from "./modal/ApiKeysModal";
 import PipelinesButton from "./PipelinesButton";
+import WorkspaceTabs from "./WorkspaceTabs";
 import useWebSocket, {ReadyState} from "react-use-websocket";
 import { useEffect } from "react";
 import { useImmerAtom } from "jotai-immer";
@@ -46,34 +48,33 @@ export default function Navbar({ children }) {
     }
   }, [workspace.active])
 
-  const createNewPipeline = () => {
-    const newPipeline = pipelineFactory(window.cache.local);
-    setWorkspace((draft) => {
-      draft.pipelines[newPipeline.id] = newPipeline;
-      draft.active = newPipeline.id;
-    });
-  };
-
+  // TODO: Figure out how to get SQLC to emit the same struct for two different queries
   const { pending, error, data } = useQuery({
-    queryKey: ['pipeline-running'],
-    queryFn: async () => { return axios.get(`${import.meta.env.VITE_EXECUTOR}/pipeline/list/Running`)}
+    queryKey: ['pipelines'],
+    queryFn: async () => { return axios.get(`${import.meta.env.VITE_EXECUTOR}/pipeline/filter?limit=100000&offset=0`)}
   })
-  const running = data?.data || [];
+  const allPipelines = data?.data;
 
   useEffect(() => {
-    for (let i = 0; i < running.length; i++) {
-      const pipeline = running[i]
-      const id = pipeline.Pipeline
-      const newPipeline = pipelineFactory(window.local.cache, id)
-      const executionId = pipeline.Execution
-      newPipeline.record = pipeline
-      newPipeline.record.socketUrl = `${import.meta.env.VITE_WS_EXECUTOR}/ws/${executionId}`
-      newPipeline.record.history = id + "/" + executionId
-      setExecutions((draft) => {
-        draft.pipelines[id] = pipeline
+    const addPipelines = {}
+    const iters = allPipelines || []
+    for (let i = 0; i < iters.length; i++) {
+      const runningExec = allPipelines[i]
+      const id = runningExec.Uuid
+      const executionId = runningExec.Execution
+      const newPipeline = pipelineFactory(window.cache.local, {
+        id: id,
+        socketUrl: `${import.meta.env.VITE_WS_EXECUTOR}/ws/${executionId}`,
+        history: id + "/" + executionId,
+        record: runningExec
       })
+      addPipelines[id] = newPipeline
     }
-  }, [running])
+    setWorkspace((draft) => {
+      const mergedPipelines = Object.assign(draft.pipelines, addPipelines)
+      draft.pipelines = mergedPipelines
+    })
+  }, [allPipelines])
 
   /*const {pendingRoom, errorRoom, dataRoom }  = useQuery({
     queryKey: ['rooms'],
@@ -184,7 +185,7 @@ export default function Navbar({ children }) {
   }
 
   return (
-    <Header aria-label="ZetaForge">
+    <Header aria-label="ZetaForge" className="flex flex-wrap">
       <SkipToContent />
       <HeaderName prefix="" className="select-none">
         ZetaForge
@@ -228,6 +229,7 @@ export default function Navbar({ children }) {
         <LogsButton />
         <PipelinesButton />
       </HeaderGlobalBar>
+      <WorkspaceTabs />
       {children}
     </Header>
   );

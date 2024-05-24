@@ -21,7 +21,7 @@ export default function PipelinesButton() {
   };
 
   let executionsCount = 0;
-  if (workspace?.pipelines) {
+  if (workspace) {
     executionsCount = Object.keys(workspace.running()).length
   }
 

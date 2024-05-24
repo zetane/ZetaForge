@@ -55,7 +55,7 @@ export default class Drawflow {
     this.removeNodeSubscribers = [];
   }
 
-  
+
 
 
   start() {
@@ -154,7 +154,7 @@ export default class Drawflow {
     if (clear) {
       this.clearModuleSelected()
     }
-    
+
     const nodes = pipeline.pipeline
     for (const key in nodes) {
       this.load_block(nodes[key])
@@ -770,7 +770,7 @@ export default class Drawflow {
       // Update connections for each node
       this.updateConnectionNodes('node-' + nodeId);
     });
-  }  
+  }
 
   updateConnectionNodes(id) {
 
@@ -1290,7 +1290,7 @@ export default class Drawflow {
       // This happens because react re-renders twice
       // And we have to make sure that if the user has mutated
       // the DOM that we don't overwrite with unmanaged data,
-      // specifically dynamic graph connections are only stored 
+      // specifically dynamic graph connections are only stored
       // in the node.inputs and node.outputs json object,
       // not the react data structure
 
@@ -1805,8 +1805,7 @@ export default class Drawflow {
 
   removeNodeId(id) {
     this.removeConnectionNodeId(id);
-    var moduleName = this.getModuleFromNodeId(id.slice(5))
-    delete this.drawflow.drawflow[moduleName].data[id.slice(5)];
+    delete this.drawflow.drawflow[this.module].data[id.slice(5)];
     this.dispatch('nodeRemoved', id.slice(5));
   }
 
@@ -1866,7 +1865,15 @@ export default class Drawflow {
     }
   }
 
-  removeConnectionNodeId(id) {
+  removeAllConnections() {
+    const svgElements = this.container.querySelectorAll('svg.connection');
+
+    svgElements.forEach(svg => {
+      svg.remove();
+    });
+  }
+
+  removeConnectionNodeId(id, dispatch=true) {
     const idSearchIn = 'node_in_' + id;
     const idSearchOut = 'node_out_' + id;
 
@@ -1886,7 +1893,9 @@ export default class Drawflow {
 
       elemsOut[i].remove();
 
-      this.dispatch('connectionRemoved', { output_id: listclass[2].slice(14), input_id: listclass[1].slice(13), output_class: listclass[3], input_class: listclass[4] });
+      if (dispatch) {
+        this.dispatch('connectionRemoved', { output_id: listclass[2].slice(14), input_id: listclass[1].slice(13), output_class: listclass[3], input_class: listclass[4] });
+      }
     }
 
     const elemsIn = this.container.querySelectorAll(`.${idSearchIn}`);
@@ -1906,7 +1915,9 @@ export default class Drawflow {
 
       elemsIn[i].remove();
 
-      this.dispatch('connectionRemoved', { output_id: listclass[2].slice(14), input_id: listclass[1].slice(13), output_class: listclass[3], input_class: listclass[4] });
+      if (dispatch) {
+        this.dispatch('connectionRemoved', { output_id: listclass[2].slice(14), input_id: listclass[1].slice(13), output_class: listclass[3], input_class: listclass[4] });
+      }
     }
   }
 
@@ -2022,7 +2033,7 @@ export default class Drawflow {
     //       targetChildren[childKey] = sourceChildren[childKey];
     //     }
     //   }
-    // } 
+    // }
     else {
       console.warn('Incompatible children types. Copying operation not performed.');
     }
@@ -2031,14 +2042,14 @@ export default class Drawflow {
   renameKeyInArrayOfObjects(array, oldKey, newKey) {
     // Create a deep copy of the array
     let copiedArray = JSON.parse(JSON.stringify(array));
-    
+
     for (let obj of copiedArray) {
         if (obj.hasOwnProperty(oldKey)) {
             obj[newKey] = obj[oldKey];
             delete obj[oldKey];
         }
     }
-    
+
     return copiedArray;
   }
 
@@ -2066,15 +2077,15 @@ export default class Drawflow {
       // get inputs from drawflow
       const block_variable_keys_inputs = Object.keys(block.inputs);
       for (let j = 0; j < block_variable_keys_inputs.length; j++) {
-        let block_output_connections = this.renameKeyInArrayOfObjects(nodes_inputs[j].connections, 'input', 'variable');        
-        block_output_connections = this.renameKeyInArrayOfObjects(block_output_connections, 'node', 'block');        
+        let block_output_connections = this.renameKeyInArrayOfObjects(nodes_inputs[j].connections, 'input', 'variable');
+        block_output_connections = this.renameKeyInArrayOfObjects(block_output_connections, 'node', 'block');
         block.inputs[block_variable_keys_inputs[j]].connections = block_output_connections;
       }
-      
+
       // get outputs from drawflow
       const block_variable_keys_outputs = Object.keys(block.outputs);
       for (let j = 0; j < block_variable_keys_outputs.length; j++) {
-        let block_input_connections = this.renameKeyInArrayOfObjects(nodes_outputs[j].connections, 'output', 'variable');        
+        let block_input_connections = this.renameKeyInArrayOfObjects(nodes_outputs[j].connections, 'output', 'variable');
         block_input_connections = this.renameKeyInArrayOfObjects(block_input_connections, 'node', 'block')
         block.outputs[block_variable_keys_outputs[j]].connections = block_input_connections;
       }
@@ -2174,5 +2185,5 @@ export default class Drawflow {
       }
       return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
     });
-  } 
+  }
 }

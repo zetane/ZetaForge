@@ -182,11 +182,23 @@ func softDeletePipeline(ctx context.Context, db *sql.DB, organization string, uu
 	return nil
 }
 
-func filterPipelines(ctx context.Context, db *sql.DB, filter string) ([]zdatabase.FilterPipelinesRow, HTTPError) {
+func filterPipelines(ctx context.Context, db *sql.DB, limit int64, offset int64) ([]zdatabase.FilterPipelinesRow, HTTPError) {
 	q := zdatabase.New(db)
-	res, err := q.FilterPipelines(ctx, filter)
+	res, err := q.FilterPipelines(ctx, zdatabase.FilterPipelinesParams{
+		Limit:  limit,
+		Offset: offset,
+	})
 	if err != nil {
 		return []zdatabase.FilterPipelinesRow{}, InternalServerError{err.Error()}
+	}
+	return res, nil
+}
+
+func allFilterPipelines(ctx context.Context, db *sql.DB) ([]zdatabase.AllFilterPipelinesRow, HTTPError) {
+	q := zdatabase.New(db)
+	res, err := q.AllFilterPipelines(ctx)
+	if err != nil {
+		return []zdatabase.AllFilterPipelinesRow{}, InternalServerError{err.Error()}
 	}
 	return res, nil
 }

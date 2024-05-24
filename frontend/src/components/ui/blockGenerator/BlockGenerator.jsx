@@ -2,6 +2,8 @@ import { useCallback, useRef, useState, useEffect } from "react";
 import { Code, View } from "@carbon/icons-react"
 import { FileBlock } from "./FileBlock";
 import { useImmerAtom } from "jotai-immer";
+import { useAtom } from "jotai";
+import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
 
 const isTypeDisabled = (action) => {
   if (!action.parameters) {
@@ -31,9 +33,10 @@ const checkPath = async (path, count, setIframeSrc) => {
 
 const BlockGenerator = ({ block, openView, id, historySink, pipelineAtom}) => {
   const [_, setFocusAction] = useImmerAtom(pipelineAtom)
+  const [editor, _s] = useAtom(drawflowEditorAtom);
 
   const styles = {
-    top: `${block.views.node.pos_y}px`, 
+    top: `${block.views.node.pos_y}px`,
     left: `${block.views.node.pos_x}px`
   }
 
@@ -52,7 +55,7 @@ const BlockGenerator = ({ block, openView, id, historySink, pipelineAtom}) => {
     setFocusAction((draft) => { draft.data[id].action.parameters[parameterName].value = value })
   }, [focus]);
 
-  let content = (<BlockContent html={block.views.node.html} block={block} onInputChange={handleInputChange} />)
+  let content = (<BlockContent html={block.views.node.html} block={block} onInputChange={handleInputChange} id={id} />)
   if (block.action.parameters?.path?.type == "file") {
     content = (<FileBlock blockId={id} block={block} setFocusAction={setFocusAction} />)
   }
@@ -70,7 +73,7 @@ const BlockGenerator = ({ block, openView, id, historySink, pipelineAtom}) => {
             id={id}
             color={backgroundColor}
             openView={openView}
-            actions={!disabled} 
+            actions={!disabled}
             src={iframeSrc}
           />
           <div className="block-body">
@@ -135,10 +138,29 @@ const parseHtmlToInputs = (html) => {
   return inputs;
 };
 
-const InputField = ({ type, value, name, step, parameterName, onChange }) => {
+const InputField = ({ type, value, name, step, parameterName, onChange, id }) => {
+  const [editor, _] = useAtom(drawflowEditorAtom);
   const [currentValue, setCurrentValue] = useState("");
   const inputRef = useRef(null);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+
+  useEffect(() => {
+    if (!editor) return;
+    if (!inputRef && !inputRef.current) return;
+    console.log(parameterName, name)
+
+    const resizeObserver = new ResizeObserver(entry => {
+      if (entry[0].target.classList.contains('textarea-node')) {
+        editor.updateConnectionNodes(`node-${id}`);
+      }
+    });
+
+    console.log("ref: ", inputRef.current)
+
+    resizeObserver.observe(inputRef.current)
+
+    return () => resizeObserver.disconnect();
+  }, [])
 
   const setCursorPosition = (start, end) => {
     if (!inputRef?.current) return;
@@ -148,7 +170,7 @@ const InputField = ({ type, value, name, step, parameterName, onChange }) => {
 
   useEffect(() => {
     if (currentValue === "") {
-      onChange(name, "", parameterName)
+      //onChange(name, "", parameterName)
       setCurrentValue("")
     }
   }, [currentValue])
@@ -156,7 +178,7 @@ const InputField = ({ type, value, name, step, parameterName, onChange }) => {
   const preventQuotation = (event) => {
     const quotations = ['"', "'", '`'];
     const { key } = event;
-    
+
     const { selectionStart, selectionEnd } = inputRef?.current;
     const atBeginning = selectionStart === 0; // beginning of text, left of start quote
     const atEnd = selectionEnd - 2 === currentValue.length; // end of text, right of end quote
@@ -167,7 +189,7 @@ const InputField = ({ type, value, name, step, parameterName, onChange }) => {
       key === "Delete" && (atEnd || selectionEnd - 1 === currentValue.length)  && !isRangedSelection ||
       key === 'ArrowLeft' && atEnd ||
       key === 'ArrowRight' && atBeginning;
-    
+
     if (boundaries) event.preventDefault();
 
     if (isRangedSelection) {
@@ -279,14 +301,14 @@ const InputField = ({ type, value, name, step, parameterName, onChange }) => {
             height: "30px",
             minHeight: "30px",
             width: "250px",
-            minWidth: "250px" 
+            minWidth: "250px"
           }}
         />
         );
     }
 };
 
-const BlockContent = ({ html, block, onInputChange }) => {
+const BlockContent = ({ html, block, onInputChange, id }) => {
   const parsedInputs = parseHtmlToInputs(html);
 
   return (
@@ -305,6 +327,7 @@ const BlockContent = ({ html, block, onInputChange }) => {
             onChange={(name, value, parameterName) =>
               onInputChange(name, value, parameterName)
             }
+            id={id}
           />
         )
       })}

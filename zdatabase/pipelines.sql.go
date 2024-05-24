@@ -10,6 +10,74 @@ import (
 	"database/sql"
 )
 
+const allFilterPipelines = `-- name: AllFilterPipelines :many
+SELECT p.id, p.organization, p.created, p.uuid, p.hash, p.json, p.deployed, p.deleted, e.id, e.pipeline, e.status, e.created, e.completed, e.json, e.deleted, e.executionid, e.workflow FROM Pipelines p
+INNER JOIN Executions e on e.pipeline = p.id
+WHERE e.status != 'pending' AND e.workflow is not null and p.deleted = FALSE
+ORDER BY e.created DESC
+`
+
+type AllFilterPipelinesRow struct {
+	ID           int64
+	Organization string
+	Created      int64
+	Uuid         string
+	Hash         string
+	Json         string
+	Deployed     int64
+	Deleted      int64
+	ID_2         int64
+	Pipeline     int64
+	Status       interface{}
+	Created_2    int64
+	Completed    sql.NullInt64
+	Json_2       sql.NullString
+	Deleted_2    int64
+	Executionid  string
+	Workflow     sql.NullString
+}
+
+func (q *Queries) AllFilterPipelines(ctx context.Context) ([]AllFilterPipelinesRow, error) {
+	rows, err := q.db.QueryContext(ctx, allFilterPipelines)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []AllFilterPipelinesRow
+	for rows.Next() {
+		var i AllFilterPipelinesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Organization,
+			&i.Created,
+			&i.Uuid,
+			&i.Hash,
+			&i.Json,
+			&i.Deployed,
+			&i.Deleted,
+			&i.ID_2,
+			&i.Pipeline,
+			&i.Status,
+			&i.Created_2,
+			&i.Completed,
+			&i.Json_2,
+			&i.Deleted_2,
+			&i.Executionid,
+			&i.Workflow,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const createPipeline = `-- name: CreatePipeline :one
 INSERT INTO Pipelines(
 	organization, created, uuid, hash, json
@@ -79,8 +147,15 @@ func (q *Queries) DeployPipeline(ctx context.Context, arg DeployPipelineParams) 
 const filterPipelines = `-- name: FilterPipelines :many
 SELECT p.id, p.organization, p.created, p.uuid, p.hash, p.json, p.deployed, p.deleted, e.id, e.pipeline, e.status, e.created, e.completed, e.json, e.deleted, e.executionid, e.workflow FROM Pipelines p
 INNER JOIN Executions e on e.pipeline = p.id
-WHERE e.status = ? AND e.workflow is not null and p.deleted = FALSE
+WHERE e.status != 'pending' AND e.workflow is not null and p.deleted = FALSE
+ORDER BY e.created DESC
+LIMIT ? OFFSET ?
 `
+
+type FilterPipelinesParams struct {
+	Limit  int64
+	Offset int64
+}
 
 type FilterPipelinesRow struct {
 	ID           int64
@@ -102,8 +177,8 @@ type FilterPipelinesRow struct {
 	Workflow     sql.NullString
 }
 
-func (q *Queries) FilterPipelines(ctx context.Context, status interface{}) ([]FilterPipelinesRow, error) {
-	rows, err := q.db.QueryContext(ctx, filterPipelines, status)
+func (q *Queries) FilterPipelines(ctx context.Context, arg FilterPipelinesParams) ([]FilterPipelinesRow, error) {
+	rows, err := q.db.QueryContext(ctx, filterPipelines, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
