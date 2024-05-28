@@ -9,7 +9,6 @@ export const defaultAnvilConfiguration = atom(() => ({
 }))
 export const userAnvilConfigurations = atom([]);
 export const activeIndex = atom(0);
-const activeConfiguration = atom(defaultAnvilConfiguration)
 
 export const addConfiguration = atom(null, (_, set, newConfiguration) => {
     set(userAnvilConfigurations, (prev) => [
