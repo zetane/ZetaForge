@@ -1,5 +1,5 @@
-import { defaultAnvilConfiguration, userAnvilConfigurations, addConfiguration, removeConfiguration } from "@/atoms/anvilHost";
-import { Button, IconButton, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableSelectRow, TableToolbar, TableToolbarContent, TextInput } from "@carbon/react";
+import { defaultAnvilConfiguration, userAnvilConfigurations, addConfiguration, removeConfiguration, activeIndex } from "@/atoms/anvilHost";
+import { IconButton, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableSelectRow, TextInput } from "@carbon/react";
 import { useAtom } from "jotai";
 import ClosableModal from "./ClosableModal";
 import { Add, TrashCan } from "@carbon/icons-react";
@@ -8,6 +8,20 @@ import { useState } from "react";
 export default function AnvilConfigModal() {
   const [defaultConfiguration] = useAtom(defaultAnvilConfiguration)
   const [userConfigurations] = useAtom(userAnvilConfigurations)
+
+  const defaultRows = [defaultConfiguration].map(c => ({
+    configuration: c,
+    deletable: false
+  }))
+  const userRows = userConfigurations.map((c, i) => ({
+    configuration: c,
+    removeable: true,
+    removeIndex: i
+  }))
+  const rows = [...defaultRows, ...userRows].map((r, i) => ({
+    ...r,
+    selectIndex: i
+  }))
 
   return (<ClosableModal
     modalHeading="Anvil Configurations"
@@ -35,8 +49,7 @@ export default function AnvilConfigModal() {
         </TableRow>
       </TableHead>
       <TableBody>
-        <ConfigRows configurations={[defaultConfiguration]} />
-        <ConfigRows configurations={userConfigurations} deletable />
+        <ConfigRows rows={rows} />
         <AddRow />
       </TableBody>
     </Table>
@@ -44,18 +57,27 @@ export default function AnvilConfigModal() {
   )
 }
 
-function ConfigRows({ configurations, deletable }) {
-  const [, removeConfig] = useAtom(removeConfiguration)
+function ConfigRows({ rows }) {
+  return rows.map((r, i) => <ConfigRow key={i} {...r} />)
+}
 
-  function handleRemoveConfiguration(index) {
-    removeConfig(index)
+function ConfigRow({ configuration, removeable, removeIndex, selectIndex }) {
+  const [, removeConfig] = useAtom(removeConfiguration)
+  const [active, setActive] = useAtom(activeIndex)
+
+  function handleRemoveConfiguration() {
+    removeConfig(removeIndex)
   }
 
-  return configurations.map((c, i) => <TableRow key={i}>
-    <TableSelectRow radio />
-    <ConfigCells configuration={c} />
-    {deletable ? <TableCell><IconButton onClick={() => handleRemoveConfiguration(i)} kind="ghost" size="sm"><TrashCan /></IconButton></TableCell> : <TableCell />}
-  </TableRow>)
+  function handleSelectConfiguration() {
+    setActive(selectIndex)
+  }
+
+  return <TableRow>
+    <TableSelectRow radio checked={active == selectIndex} onSelect={handleSelectConfiguration} />
+    <ConfigCells configuration={configuration} />
+    {removeable ? <TableCell><IconButton onClick={handleRemoveConfiguration} kind="ghost" size="sm"><TrashCan /></IconButton></TableCell> : <TableCell />}
+  </TableRow>
 }
 
 function ConfigCells({ configuration }) {
@@ -72,7 +94,6 @@ function AddRow() {
   })
 
   function handleAddConfiguration() {
-    console.log(config)
     addConfig(config)
   }
 
