@@ -1,5 +1,5 @@
 import { defaultAnvilConfiguration, userAnvilConfigurations, addConfiguration, removeConfiguration, activeIndex } from "@/atoms/anvilHost";
-import { IconButton, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableSelectRow, TextInput } from "@carbon/react";
+import { IconButton, NumberInput, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableSelectRow, TextInput } from "@carbon/react";
 import { useAtom } from "jotai";
 import ClosableModal from "./ClosableModal";
 import { Add, TrashCan } from "@carbon/icons-react";
@@ -25,9 +25,8 @@ export default function AnvilConfigModal() {
 
   return (<ClosableModal
     modalHeading="Anvil Configurations"
-    primaryButtonText="Save"
-    secondaryButtonText="Cancel"
     size="md"
+    passiveModal
   >
     <Table>
       <TableHead>
@@ -106,10 +105,10 @@ function AddRow() {
 
   return <TableRow>
     <TableCell />
-    <TableCell><TextInput value={config.name} onChange={(e) => handleInputChange("name", e.target.value)} /></TableCell>
-    <TableCell><TextInput value={config.host} onChange={(e) => handleInputChange("host", e.target.value)} /></TableCell>
-    <TableCell><TextInput value={config.anvilPort} onChange={(e) => handleInputChange("anvilPort", e.target.value)} /></TableCell>
-    <TableCell><TextInput value={config.s3Port} onChange={(e) => handleInputChange("s3Port", e.target.value)} /></TableCell>
+    <TableCell><TextInput size="sm" value={config.name} onChange={(e) => handleInputChange("name", e.target.value)} /></TableCell>
+    <TableCell><TextInput size="sm" alue={config.host} onChange={(e) => handleInputChange("host", e.target.value)} /></TableCell>
+    <TableCell><NumberInput size="sm" allowEmpty hideSteppers min={0} max={65535} value={config.anvilPort} onChange={(e) => handleInputChange("anvilPort", e.target.value)} /></TableCell>
+    <TableCell><NumberInput size="sm" allowEmpty hideSteppers min={0} max={65535} value={config.s3Port} onChange={(e) => handleInputChange("s3Port", e.target.value)} /></TableCell>
     <TableCell><IconButton onClick={handleAddConfiguration} kind="ghost" size="sm"><Add /></IconButton></TableCell>
   </TableRow>
 }
