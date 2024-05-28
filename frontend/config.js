@@ -3,8 +3,13 @@ export default {
     region: "us-east-2",
     accessKeyId: "AKIAIOSFODNN7EXAMPLE",
     secretAccessKey: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
-    endpoint: import.meta.env.VITE_S3_ENDPOINT,
+    host: import.meta.env.VITE_S3_HOST,
+    port: import.meta.env.VITE_S3_PORT,
     forcePathStyle: true,
     bucket: import.meta.env.VITE_BUCKET
+  },
+  anvil: {
+    host: import.meta.env.VITE_ANVIL_HOST,
+    port: import.meta.env.VITE_ANVIL_PORT
   }
 }
