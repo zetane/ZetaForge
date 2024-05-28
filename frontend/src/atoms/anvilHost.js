@@ -7,18 +7,16 @@ export const defaultAnvilConfiguration = atom(() => ({
     anvilPort: config.anvil.port,
     s3Port: config.s3.port,
 }))
-export const userAnvilConfigurations = atom(() => []);
+export const userAnvilConfigurations = atom([]);
 const allConfigurations = atom((get) => [get(defaultAnvilConfiguration), ...get(userAnvilConfigurations)]);
 const activeIndex = atom(0);
 const activeConfiguration = atom((get) => get(allConfigurations)[activeIndex])
 
-const addConfiguration = atom(null, (get, set, newConfiguration) => {
-    set(userAnvilConfigurations, (prev) => {
-        [
-            ...prev,
-            newConfiguration
-        ]
-    })
+export const addConfiguration = atom(null, (get, set, newConfiguration) => {
+    set(userAnvilConfigurations, (prev) => [
+        ...prev,
+        newConfiguration
+    ])
 })
 
 const removeConfiguration = atom(null, (get, set, index) => {
