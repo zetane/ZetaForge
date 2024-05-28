@@ -1,4 +1,4 @@
-import { defaultAnvilConfiguration, userAnvilConfigurations, addConfiguration } from "@/atoms/anvilHost";
+import { defaultAnvilConfiguration, userAnvilConfigurations, addConfiguration, removeConfiguration } from "@/atoms/anvilHost";
 import { Button, IconButton, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableSelectRow, TableToolbar, TableToolbarContent, TextInput } from "@carbon/react";
 import { useAtom } from "jotai";
 import ClosableModal from "./ClosableModal";
@@ -45,10 +45,16 @@ export default function AnvilConfigModal() {
 }
 
 function ConfigRows({ configurations, deletable }) {
+  const [, removeConfig] = useAtom(removeConfiguration)
+
+  function handleRemoveConfiguration(index) {
+    removeConfig(index)
+  }
+
   return configurations.map((c, i) => <TableRow key={i}>
     <TableSelectRow radio />
     <ConfigCells configuration={c} />
-    {deletable ? <TableCell><IconButton kind="ghost" size="sm"><TrashCan /></IconButton></TableCell> : <TableCell />}
+    {deletable ? <TableCell><IconButton onClick={() => handleRemoveConfiguration(i)} kind="ghost" size="sm"><TrashCan /></IconButton></TableCell> : <TableCell />}
   </TableRow>)
 }
 

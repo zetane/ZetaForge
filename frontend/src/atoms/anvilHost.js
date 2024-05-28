@@ -19,9 +19,8 @@ export const addConfiguration = atom(null, (get, set, newConfiguration) => {
     ])
 })
 
-const removeConfiguration = atom(null, (get, set, index) => {
+export const removeConfiguration = atom(null, (get, set, index) => {
     set(userAnvilConfigurations, (prev) => {
-        const userAnvilConfigurationsIndex = index - 1;
-        prev.filter((i) => i != userAnvilConfigurationsIndex);
+        return prev.filter((e, i) => i != index);
     })
 })
