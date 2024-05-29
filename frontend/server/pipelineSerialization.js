@@ -63,11 +63,11 @@ export async function copyPipeline(pipelineSpecs, pipelineName, fromDir, toDir) 
     const blockSpec = pipelineSpecs.pipeline[key]
     if (!existingBlockPath) {
       // NOTE: BAD KEY
-      // At a certain point we serialized non unique keys 
+      // At a certain point we serialized non unique keys
       // for folder names so there's a chance that we will
       // fail to find the correct key and need to fall back
       // to fetching a common folder name
-      
+
       existingBlockPath = fromBlockIndex[blockSpec.information.id]
     }
     if (!existingBlockPath) {
@@ -78,7 +78,7 @@ export async function copyPipeline(pipelineSpecs, pipelineName, fromDir, toDir) 
         existingBlockPath = path.join(process.resourcesPath, existingBlockPath)
       }
     }
-    
+
     console.log(`saving ${key} from ${existingBlockPath} to ${newBlockPath}`)
     if (existingBlockPath != newBlockPath) {
       // if it's the same folder, don't try to copy it

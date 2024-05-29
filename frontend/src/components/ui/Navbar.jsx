@@ -32,21 +32,34 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import StopPipelineButton from "./StopPipelineButton";
 
+const loadNewPipeline = (pipeline) => {
+  if (!pipeline )  { return }
+  const pipelineData = JSON.parse(pipeline.PipelineJson)
+
+  const bufferPath = `${window.cache.local}${pipelineData.id}`;
+  const executionId = pipeline.Execution
+
+  const loadedPipeline = {
+    name: pipelineData.name ? pipelineData.name : pipelineData.id,
+    path: pipelineData.sink ? pipelineData.sink : null,
+    saveTime: Date.now(),
+    buffer: bufferPath,
+    data: pipelineData.pipeline,
+    id: pipelineData.id,
+    history: pipelineData.id + "/" + executionId,
+    record: pipeline
+  }
+
+  const newPipeline = pipelineFactory(window.cache.local, loadedPipeline)
+
+  return newPipeline
+};
+
 export default function Navbar({ children }) {
   const [darkMode, setDarkMode] = useAtom(darkModeAtom);
   const [modalContent, setModalContent] = useAtom(modalContentAtom);
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
-
-  useEffect(() => {
-    if (workspace && !workspace.active) {
-      const newPipeline = pipelineFactory(window.cache.local)
-      setWorkspace((draft) => {
-        draft.pipelines[newPipeline.id] = newPipeline;
-        draft.active = newPipeline.id;
-      });
-    }
-  }, [workspace.active])
 
   // TODO: Figure out how to get SQLC to emit the same struct for two different queries
   const { pending, error, data } = useQuery({
@@ -58,17 +71,10 @@ export default function Navbar({ children }) {
   useEffect(() => {
     const addPipelines = {}
     const iters = allPipelines || []
-    for (let i = 0; i < iters.length; i++) {
-      const runningExec = allPipelines[i]
-      const id = runningExec.Uuid
-      const executionId = runningExec.Execution
-      const newPipeline = pipelineFactory(window.cache.local, {
-        id: id,
-        socketUrl: `${import.meta.env.VITE_WS_EXECUTOR}/ws/${executionId}`,
-        history: id + "/" + executionId,
-        record: runningExec
-      })
-      addPipelines[id] = newPipeline
+    console.log(iters)
+    for (const serverPipeline of iters) {
+      const loaded = loadNewPipeline(serverPipeline)
+      addPipelines[loaded.id] = loaded
     }
     setWorkspace((draft) => {
       const mergedPipelines = Object.assign(draft.pipelines, addPipelines)
@@ -108,6 +114,18 @@ export default function Navbar({ children }) {
       shouldReconnect: () => false,
     }
   );
+
+  useEffect(() => {
+    if (readyState === ReadyState.OPEN) {
+      if (pipeline.socketUrl) {
+        modalPopper(<PipelineLogs />)
+      }
+    } else if (readyState === ReadyState.CLOSED) {
+      setPipeline((draft) => {
+        draft.socketUrl = null;
+      })
+    }
+  }, [readyState]);
 
   useEffect(() => {
     if (lastMessage !== null) {
@@ -159,19 +177,8 @@ export default function Navbar({ children }) {
       })
     }
   }, [lastMessage]);
-  console.log("rs: ", readyState)
 
-  useEffect(() => {
-    if (readyState === ReadyState.OPEN) {
-      if (pipeline.socketUrl) {
-        modalPopper(<PipelineLogs />)
-      }
-    } else if (readyState === ReadyState.CLOSED) {
-      setPipeline((draft) => {
-        draft.socketUrl = null;
-      })
-    }
-  }, [readyState]);
+
 
   let runButton =  (
     <RunPipelineButton modalPopper={modalPopper} action="Run">
@@ -226,7 +233,6 @@ export default function Navbar({ children }) {
         <RunPipelineButton modalPopper={modalPopper} action="Rebuild">
           <Renew size={20} style={svgOverride} />
         </RunPipelineButton>
-        <PipelineNameLabel />
         <LogsButton />
         <PipelinesButton />
       </HeaderGlobalBar>

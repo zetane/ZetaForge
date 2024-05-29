@@ -11,6 +11,8 @@ export default function PipelineNameLabel() {
   const [workspace, _] = useImmerAtom(workspaceAtom)
   const [editing, setEditing] = useState(false);
 
+  console.log("wha: ", pipeline)
+
   let saveIcon = null;
   let saveStyles = { marginLeft: '5px;' }
   if (pipeline?.saveTime) {

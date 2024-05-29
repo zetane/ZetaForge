@@ -3,11 +3,13 @@ import { useAtom } from "jotai";
 import { modalContentAtom } from "@/atoms/modalAtom";
 import { ExecutionDataGrid } from "@/components/ui/ExecutionDataGrid";
 import { useImmerAtom } from "jotai-immer";
-import { workspaceAtom } from "@/atoms/pipelineAtom";
+import { workspaceAtom, getRunning } from "@/atoms/pipelineAtom";
+import { useEffect, useState } from "react";
 
 export default function PipelinesButton() {
   const [modalContent, setModalContent] = useAtom(modalContentAtom);
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
+  const [executions, setExecutions] = useState(0);
   const modalPopper = (content) => {
     setModalContent({
       ...modalContent,
@@ -20,15 +22,24 @@ export default function PipelinesButton() {
     margin: '5px',
   };
 
-  let executionsCount = 0;
-  if (workspace) {
-    executionsCount = Object.keys(workspace.running()).length
+  useEffect(() => {
+    setExecutions(getRunning(workspace))
+  }, [workspace?.pipelines])
+
+  let count = 0;
+  if (executions) {
+    count = executions.length
   }
+
+  console.log("exes: ", executions)
+
+  let grid = (<ExecutionDataGrid executions={executions}/>);
 
   const svgOverride = { position: 'absolute', right: '15px', top: '5px'}
   return (
-    <Button style={styles} size="sm" kind="secondary" onClick={() => modalPopper(<ExecutionDataGrid />)}>
-      Running ({executionsCount})
+    <Button style={styles} size="sm" kind="secondary"
+      onClick={ () => modalPopper(grid) }>
+      Running ({count})
     </Button>
   )
 }

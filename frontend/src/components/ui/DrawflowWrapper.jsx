@@ -133,7 +133,6 @@ export default function DrawflowWrapper() {
                 openView={openView}
                 id={key}
                 historySink={pipeline.history}
-                pipelineAtom={pipelineAtom}
                 />)
     })
     setRenderNodes(nodes)

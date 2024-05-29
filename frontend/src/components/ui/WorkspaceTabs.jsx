@@ -11,6 +11,7 @@ export default function WorkspaceTabs() {
   useEffect(() => {
     const pipelineTabs = Object.values(workspace.tabs).map((key) => {
       const pipeline = workspace.pipelines[key]
+      let label = pipeline?.name
       return {id: pipeline.id, label: pipeline?.name, panel: <TabPanel/>}
     })
     setRenderedTabs(pipelineTabs)
@@ -21,7 +22,6 @@ export default function WorkspaceTabs() {
       }
     }
   }, [workspace])
-  console.log(workspace)
 
   const handleTabChange = (evt) => {
     setWorkspace((draft) => {

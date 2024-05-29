@@ -1,6 +1,7 @@
 import { atom } from 'jotai'
 import { withImmer } from 'jotai-immer';
 import { customAlphabet } from "nanoid";
+import rfdc from 'rfdc';
 
 export const pipelineFactory = (cachePath, pipeline=null) => {
   const nanoid = customAlphabet('1234567890abcedfghijklmnopqrstuvwxyz', 12)
@@ -22,7 +23,6 @@ export const pipelineFactory = (cachePath, pipeline=null) => {
   if (pipeline) {
     defaultPipeline = Object.assign(defaultPipeline, pipeline)
   }
-  console.log(defaultPipeline)
   return defaultPipeline
 }
 
@@ -31,11 +31,18 @@ const initPipeline = pipelineFactory(window.cache.local)
 export const workspaceAtom = atom({
   tabs: [initPipeline.id],
   pipelines: {[initPipeline.id]: initPipeline},
-  running() {
-    return Object.values(this.pipelines).filter(pipeline => pipeline.record )
-  },
   active: initPipeline.id
 })
+
+export const getRunning = (workspace) => {
+  console.log(workspace)
+  let pipelines = []
+  if (workspace) {
+    pipelines = workspace.pipelines
+  }
+  return Object.values(pipelines).filter(pipeline => pipeline.record
+    && pipeline.record.Status == "Running")
+}
 
 const pipelineAtomWithImmer = atom(
   (get) => {
@@ -44,7 +51,7 @@ const pipelineAtomWithImmer = atom(
   },
   (get, set, newPipeline) => {
     const workspace = get(workspaceAtom);
-    const newWorkspace = {...workspace};
+    const newWorkspace = rfdc({proto: true})(workspace)
     newWorkspace.pipelines[newPipeline.id] = newPipeline;
     set(workspaceAtom, newWorkspace)
   }

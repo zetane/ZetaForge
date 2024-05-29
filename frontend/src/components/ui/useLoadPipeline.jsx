@@ -55,3 +55,46 @@ export const useLoadPipeline = () => {
 
   return loadPipeline;
 };
+
+export const useLoadServerPipeline = () => {
+  const loadPipeline = (pipeline) => {
+    if (!pipeline || !pipeline.record)  { return }
+    const record = pipeline.record;
+    const pipelineData = JSON.parse(record.PipelineJson)
+
+    // writes from server location to user local cache
+    // TODO: make this work, right now this will ONLY WORK FOR LOCAL VERSION
+    /*
+
+    data['build'] = bufferPath
+    data['sink'] = bufferPath
+
+    const cacheData = {
+      specs: data,
+      name: data.name,
+      buffer: fromPath,
+      writePath: bufferPath
+    };
+    await savePipelineMutation.mutateAsync(cacheData);
+    */
+    const bufferPath = `${window.cache.local}${pipelineData.id}`;
+    const executionId = record.Execution
+
+    const loadedPipeline = {
+      name: pipelineData.name ? pipelineData.name : pipelineData.id,
+      path: pipelineData.sink ? pipelineData.sink : null,
+      saveTime: Date.now(),
+      buffer: bufferPath,
+      data: pipelineData.pipeline,
+      id: pipelineData.id,
+      history: pipelineData.id + "/" + executionId,
+      record: record
+    }
+
+    const newPipeline = pipelineFactory(window.cache.local, loadedPipeline)
+
+    return newPipeline
+  };
+
+  return loadPipeline;
+};

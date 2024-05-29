@@ -1,9 +1,10 @@
 import { useCallback, useRef, useState, useEffect } from "react";
 import { Code, View } from "@carbon/icons-react"
 import { FileBlock } from "./FileBlock";
+import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
+import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { useImmerAtom } from "jotai-immer";
 import { useAtom } from "jotai";
-import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
 
 const isTypeDisabled = (action) => {
   if (!action.parameters) {
@@ -31,8 +32,8 @@ const checkPath = async (path, count, setIframeSrc) => {
     });
 }
 
-const BlockGenerator = ({ block, openView, id, historySink, pipelineAtom}) => {
-  const [_, setFocusAction] = useImmerAtom(pipelineAtom)
+const BlockGenerator = ({ block, openView, id, historySink}) => {
+  const [pipeline, setFocusAction] = useImmerAtom(pipelineAtom)
   const [editor, _s] = useAtom(drawflowEditorAtom);
 
   const styles = {
@@ -51,9 +52,11 @@ const BlockGenerator = ({ block, openView, id, historySink, pipelineAtom}) => {
   const disabled = isTypeDisabled(block.action)
   const preview = (block.views.node.preview?.active == "true")
 
-  const handleInputChange = useCallback((name, value, parameterName) => {
-    setFocusAction((draft) => { draft.data[id].action.parameters[parameterName].value = value })
-  }, [focus]);
+  const handleInputChange = (name, value, parameterName) => {
+    setFocusAction((draft) => {
+      draft.data[id].action.parameters[parameterName].value = value
+    })
+  }
 
   let content = (<BlockContent html={block.views.node.html} block={block} onInputChange={handleInputChange} id={id} />)
   if (block.action.parameters?.path?.type == "file") {
@@ -154,7 +157,11 @@ const InputField = ({ type, value, name, step, parameterName, onChange, id }) =>
       }
     });
 
-    resizeObserver.observe(inputRef.current)
+    console.log(inputRef.current)
+
+    if (inputRef?.current) {
+      resizeObserver.observe(inputRef.current)
+    }
 
     return () => resizeObserver.disconnect();
   }, [])
@@ -260,6 +267,7 @@ const InputField = ({ type, value, name, step, parameterName, onChange, id }) =>
             name={name}
             onChange={handleChange}
             className="input-element"
+            ref={inputRef}
             style={{
               minWidth: '200px', // Set the minimum width
               padding: '10px',
