@@ -159,6 +159,7 @@ export default function Navbar({ children }) {
       })
     }
   }, [lastMessage]);
+  console.log("rs: ", readyState)
 
   useEffect(() => {
     if (readyState === ReadyState.OPEN) {

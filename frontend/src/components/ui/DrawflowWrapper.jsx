@@ -205,9 +205,7 @@ export default function DrawflowWrapper() {
   const addBlockToPipeline = (block) => {
     const id = generateId(block);
     block = replaceIds(block, id);
-    console.log(block)
     setPipeline((draft) => {
-      console.log(draft)
       draft.data[id] = block;
     })
     return id;
