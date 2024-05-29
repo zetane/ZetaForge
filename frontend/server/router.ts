@@ -14,11 +14,10 @@ export const appRouter = router({
     .query(async () => {
       const resources = process.resourcesPath
       let coreBlocks = "core/blocks"
-      if(app.isPackaged)
-      {
-      coreBlocks = path.join(resources, "core", "blocks")
+      if (app.isPackaged) {
+        coreBlocks = path.join(resources, "core", "blocks")
       }
-      
+
       try {
         const blocks = await readSpecs(coreBlocks)
         return blocks
@@ -38,7 +37,7 @@ export const appRouter = router({
       if (app.isPackaged) {
         blocksPath = path.join(resources, "core", "blocks");
       }
-  
+
       try {
         const coverImagePath = path.join(blocksPath, blockId, "cover-image.png");
         return { coverImagePath };
@@ -46,7 +45,7 @@ export const appRouter = router({
         console.log(error);
         return { coverImagePath: null };
       }
-    }),  
+    }),
   getPipelines: publicProcedure
     .query(async () => {
       const resources = process.resourcesPath;
@@ -54,7 +53,7 @@ export const appRouter = router({
       if (app.isPackaged) {
         corePipelines = path.join(resources, "core", "pipelines");
       }
-  
+
       try {
         const pipelines = await readPipelines(corePipelines);
         return pipelines;
@@ -62,34 +61,34 @@ export const appRouter = router({
         console.log(error);
         return [];
       }
-    }), 
+    }),
   getPipelineCoverImagePath: publicProcedure
-  .input(z.object({
-    pipelineId: z.string(),
-  }))
-  .query(async (opts) => {
-    const { input } = opts;
-    const { pipelineId } = input;
-    const resources = process.resourcesPath;
-    let pipelinesPath = "core/pipelines";
-    if (app.isPackaged) {
-      pipelinesPath = path.join(resources, "core", "pipelines");
-    }
-
-    try {
-      const pipelines = await readPipelines(pipelinesPath);
-      const pipeline = pipelines.find(p => p.id === pipelineId);
-      if (!pipeline) {
-        throw new Error(`Pipeline with ID ${pipelineId} not found`);
+    .input(z.object({
+      pipelineId: z.string(),
+    }))
+    .query(async (opts) => {
+      const { input } = opts;
+      const { pipelineId } = input;
+      const resources = process.resourcesPath;
+      let pipelinesPath = "core/pipelines";
+      if (app.isPackaged) {
+        pipelinesPath = path.join(resources, "core", "pipelines");
       }
-      const coverImagePath = path.join(pipelinesPath, pipeline.folderName, 'cover-image.png');
-      return { coverImagePath };
-    } catch (error) {
-      console.log(error);
-      return { coverImagePath: null };
-    }
-  }),
-  
+
+      try {
+        const pipelines = await readPipelines(pipelinesPath);
+        const pipeline = pipelines.find(p => p.id === pipelineId);
+        if (!pipeline) {
+          throw new Error(`Pipeline with ID ${pipelineId} not found`);
+        }
+        const coverImagePath = path.join(pipelinesPath, pipeline.folderName, 'cover-image.png');
+        return { coverImagePath };
+      } catch (error) {
+        console.log(error);
+        return { coverImagePath: null };
+      }
+    }),
+
   //TODO: load and validate schema
   savePipeline: publicProcedure
     .input(z.object({
@@ -98,11 +97,11 @@ export const appRouter = router({
       buffer: z.string(),
       writePath: z.optional(z.string())
     }))
-    .mutation(async(opts) => {
+    .mutation(async (opts) => {
       const { input } = opts
       let { specs, name, buffer, writePath } = input
       if (!writePath) {
-        const savePath = await dialog.showSaveDialog({properties: ['createDirectory']})
+        const savePath = await dialog.showSaveDialog({ properties: ['createDirectory'] })
         if (!savePath.canceled) {
           const pathArr = savePath.filePath?.split(path.sep)
           name = pathArr ? pathArr[(pathArr.length - 1)] : name
@@ -114,14 +113,14 @@ export const appRouter = router({
             try {
               const stat = await fs.stat(writePath)
               if (stat.isDirectory()) {
-                fs.rm(writePath, {recursive: true, force: true})
+                fs.rm(writePath, { recursive: true, force: true })
               }
             } catch {
               console.log("Creating dir: ", writePath)
             }
           }
         }
-      } 
+      }
 
       if (writePath) {
         const savePaths = await copyPipeline(specs, name, buffer, writePath);
@@ -129,7 +128,7 @@ export const appRouter = router({
       }
 
       return {}
-  }),
+    }),
   saveBlock: publicProcedure
     .input(z.object({
       pipelineSpec: z.any(),
@@ -138,16 +137,16 @@ export const appRouter = router({
       blockId: z.string(),
       blockPath: z.string(),
       pipelinePath: z.string()
-    })) 
-    .mutation(async(opts) => {
-      const {input} = opts;
-      const {pipelineSpec, name, blockSpec, blockId, blockPath, pipelinePath} = input;
+    }))
+    .mutation(async (opts) => {
+      const { input } = opts;
+      const { pipelineSpec, name, blockSpec, blockId, blockPath, pipelinePath } = input;
       let savePaths;
       if (blockSpec.action?.container) {
         savePaths = await saveBlock(blockId, blockSpec, blockPath, pipelinePath);
-        await saveSpec(pipelineSpec, pipelinePath, name+".json")
+        await saveSpec(pipelineSpec, pipelinePath, name + ".json")
       } else if (blockSpec.action?.parameters) {
-        savePaths = await saveSpec(pipelineSpec, pipelinePath, name+".json")
+        savePaths = await saveSpec(pipelineSpec, pipelinePath, name + ".json")
       }
       return savePaths;
     }),
@@ -157,8 +156,8 @@ export const appRouter = router({
       pipelinePath: z.string(),
     }))
     .mutation(async (opts) => {
-      const {input} = opts;
-      const {blockId, pipelinePath} = input;
+      const { input } = opts;
+      const { blockId, pipelinePath } = input;
       return await getBlockPath(blockId, pipelinePath);
     }),
   getCachePath: publicProcedure
@@ -171,8 +170,8 @@ export const appRouter = router({
       pipelinePath: z.string(),
     }))
     .mutation(async (opts) => {
-      const {input} = opts;
-      const {blockId, pipelinePath} = input;
+      const { input } = opts;
+      const { blockId, pipelinePath } = input;
       removeBlock(blockId, pipelinePath);
     }),
   uploadParameterBlocks: publicProcedure
@@ -180,22 +179,28 @@ export const appRouter = router({
       pipelineId: z.string(),
       executionId: z.string(),
       pipelineSpecs: z.any(),
-      buffer: z.string(), 
+      buffer: z.string(),
+      anvilConfiguration: z.object({
+        name: z.string(),
+        host: z.string(),
+        s3Port: z.string(),
+        anvilPort: z.string(),
+      })
     }))
     .mutation(async (opts) => {
-      const {input} = opts;
-      const {pipelineId, executionId, pipelineSpecs, buffer} = input;
+      const { input } = opts;
+      const { pipelineId, executionId, pipelineSpecs, buffer, anvilConfiguration } = input;
 
-      return uploadBlocks(pipelineId, executionId, pipelineSpecs, buffer);
+      return uploadBlocks(pipelineId, executionId, pipelineSpecs, buffer, anvilConfiguration);
     }),
   compileComputation: publicProcedure
     .input(z.object({
       blockPath: z.string(),
     }))
     .mutation(async (opts) => {
-      const {input} = opts;
-      const {blockPath} = input;
-      
+      const { input } = opts;
+      const { blockPath } = input;
+
       try {
         return await compileComputation(blockPath);
       } catch (error) {
@@ -205,7 +210,7 @@ export const appRouter = router({
           message: 'Could not compile.',
         });
       }
-      
+
     }),
   saveBlockSpecs: publicProcedure
     .input(z.object({
@@ -213,8 +218,8 @@ export const appRouter = router({
       blockSpecs: z.any(),
     }))
     .mutation(async (opts) => {
-      const {input} = opts;
-      const {blockPath, blockSpecs} = input; 
+      const { input } = opts;
+      const { blockPath, blockSpecs } = input;
 
       try {
         return await saveBlockSpecs(blockPath, blockSpecs);
@@ -232,12 +237,12 @@ export const appRouter = router({
       blockKey: z.string(),
     }))
     .mutation(async (opts) => {
-      const {input} = opts;
-      const {blockPath, blockKey} = input; 
+      const { input } = opts;
+      const { blockPath, blockKey } = input;
 
       try {
         await runTest(blockPath, blockKey);
-      } catch(error) {
+      } catch (error) {
         console.log(error);
         throw new TRPCError({
           code: 'BAD_REQUEST',
@@ -296,7 +301,7 @@ export const appRouter = router({
     }),
   })
 });
- 
+
 // Export type router type signature,
 // NOT the router itself.
 export type AppRouter = typeof appRouter;

@@ -9,28 +9,27 @@ import LibrarySwitcher from '@/components/ui/library/LibrarySwitcher';
 import ModalWrapper from '@/components/ui/modal/ModalWrapper';
 import ToastWrapper from './components/ui/ToastWrapper';
 import './styles/globals.scss';
+import { Provider } from 'jotai';
+import store from './atoms/store';
 
 
 export default function App() {
-
-
-
-
-
   return (
-    <ProviderInjector>
-      <ForgeTheme>
-        <Navbar >
-          <LibraryFetcher />
-          <BlockEditorPanel />
-        </Navbar>
-        <LibrarySwitcher />
-        <MainContent>
-          <DrawflowWrapper />
-        </MainContent>
-        <ModalWrapper />
-        <ToastWrapper />
-      </ForgeTheme>
-    </ProviderInjector>
+    <Provider store={store}>
+      <ProviderInjector>
+        <ForgeTheme>
+          <Navbar >
+            <LibraryFetcher />
+            <BlockEditorPanel />
+          </Navbar>
+          <LibrarySwitcher />
+          <MainContent>
+            <DrawflowWrapper />
+          </MainContent>
+          <ModalWrapper />
+          <ToastWrapper />
+        </ForgeTheme>
+      </ProviderInjector>
+    </Provider>
   );
 }

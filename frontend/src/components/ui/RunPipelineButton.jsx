@@ -11,22 +11,21 @@ import { useImmerAtom } from "jotai-immer";
 import { useRef, useState } from "react";
 import { uuidv7 } from "uuidv7";
 import ClosableModal from "./modal/ClosableModal";
+import { activeConfiguration } from "@/atoms/anvilHost";
 
-export default function RunPipelineButton({modalPopper, children, action}) {
+export default function RunPipelineButton({ modalPopper, children, action }) {
   const [editor] = useAtom(drawflowEditorAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const [validationErrorMsg, setValidationErrorMsg] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
-  const [angle, setAngle] = useState(0)
-  const posRef = useRef({ x: 0, y: 0 });
-  const velocityRef = useRef({ x: 2, y: 2 });
   const [mixpanelService] = useAtom(mixpanelAtom)
+  const [configuration] = useAtom(activeConfiguration);
 
   const uploadParameterBlocks = trpc.uploadParameterBlocks.useMutation();
 
   const mutation = useMutation({
     mutationFn: async (execution) => {
-      return axios.post(`${import.meta.env.VITE_EXECUTOR}/execute`, execution)
+      return axios.post(`http://${configuration.host}:${configuration.anvilPort}/execute`, execution)
     },
   })
 
@@ -56,6 +55,7 @@ export default function RunPipelineButton({modalPopper, children, action}) {
         executionId: executionId,
         pipelineSpecs: pipelineSpecs,
         buffer: pipeline.buffer,
+        anvilConfiguration: configuration,
       });
     } catch (error) {
       setValidationErrorMsg([`Failed to upload files to anvil server: ${error}`])
@@ -98,7 +98,7 @@ export default function RunPipelineButton({modalPopper, children, action}) {
       const res = await mutation.mutateAsync(execution)
       if (res.status == 201) {
         setPipeline((draft) => {
-          draft.socketUrl = `ws://localhost:8080/ws/${pipelineSpecs.id}`;
+          draft.socketUrl = `ws://${configuration.host}:${configuration.anvilPort}/ws/${pipelineSpecs.id}`;
           draft.history = pipeline.id + "/" + res.data.executionId
           draft.saveTime = Date.now()
           draft.log = []
@@ -107,9 +107,9 @@ export default function RunPipelineButton({modalPopper, children, action}) {
       try {
         mixpanelService.trackEvent('Run Created')
       } catch (err) {
-  
+
       }
-      
+
     } catch (error) {
       setValidationErrorMsg([error.message])
       setIsOpen(true)
@@ -123,8 +123,8 @@ export default function RunPipelineButton({modalPopper, children, action}) {
   return (
     <>
       <Button style={styles} size="sm" onClick={() => { runPipeline(editor, pipeline) }}>
-        <span>{ action }</span>
-        { children }
+        <span>{action}</span>
+        {children}
       </Button>
 
       <ClosableModal
@@ -136,7 +136,7 @@ export default function RunPipelineButton({modalPopper, children, action}) {
         <div className="flex flex-col gap-4 p-3">
           {validationErrorMsg.map((error, i) => {
             return (
-              <p key={"error-msg-"+i}>{error}</p>
+              <p key={"error-msg-" + i}>{error}</p>
             )
           })}
         </div>
