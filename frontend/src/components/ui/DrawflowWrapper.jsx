@@ -10,7 +10,6 @@ import { useAtom, useSetAtom } from 'jotai';
 import { useImmerAtom } from 'jotai-immer';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLoadPipeline } from "./useLoadPipeline";
-import { workspaceAtom } from '@/atoms/pipelineAtom';
 
 const launchDrawflow = (parentDomRef, canvasDomRef, pipeline, setPipeline) => {
   if (parentDomRef.className != "parent-drawflow") {
@@ -35,7 +34,6 @@ const dragOverHandler = (event) => {
 export default function DrawflowWrapper() {
   const [editor, setEditor] = useAtom(drawflowEditorAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
-  const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
   const setBlockEditorRoot = useSetAtom(blockEditorRootAtom);
   const setEditorOpen = useSetAtom(isBlockEditorOpenAtom);
   const [renderNodes, setRenderNodes] = useState([])
@@ -139,12 +137,7 @@ export default function DrawflowWrapper() {
                 />)
     })
     setRenderNodes(nodes)
-  }, [pipeline?.data])
-
-  useEffect(() => {
-    // temporary hack until connections are no longer in drawflow
-
-  }, [workspace?.active])
+  }, [pipeline.data])
 
   useEffect(() => {
     if (renderNodes.length) {
@@ -159,7 +152,6 @@ export default function DrawflowWrapper() {
 
       for (const [id, block] of Object.entries(pipeline.data)) {
         const json = genJSON(block, id)
-        console.log("adding: ", id)
         editor.addNode_from_JSON(json)
       }
 
@@ -169,7 +161,6 @@ export default function DrawflowWrapper() {
           let inputConnections = output.connections;
           for (const input of inputConnections) {
             try {
-              console.log("adding connections: ", id)
               editor.addConnection(id, input.block, outputKey, input.variable);
             } catch (e) {
               console.log(e)
@@ -206,6 +197,7 @@ export default function DrawflowWrapper() {
     } else {
       if (editor) {
         editor.clearDrawflowData()
+        editor.removeAllConnections()
       }
     }
   }, [renderNodes])
@@ -213,7 +205,9 @@ export default function DrawflowWrapper() {
   const addBlockToPipeline = (block) => {
     const id = generateId(block);
     block = replaceIds(block, id);
+    console.log(block)
     setPipeline((draft) => {
+      console.log(draft)
       draft.data[id] = block;
     })
     return id;
@@ -230,7 +224,7 @@ export default function DrawflowWrapper() {
     const jsonData = event.dataTransfer.getData("block");
     const spec = JSON.parse(jsonData)
     const block = setBlockPos(editor, spec, event.clientX, event.clientY)
-    addBlockToPipeline(block, editor)
+    addBlockToPipeline(block)
   };
 
   const setBlockPos = (editor, block, posX, posY) => {

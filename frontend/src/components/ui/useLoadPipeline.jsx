@@ -2,8 +2,7 @@ import { useImmerAtom } from "jotai-immer";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { trpc } from "@/utils/trpc";
 import { getDirectoryPath } from "@/../utils/fileUtils";
-import { customAlphabet } from 'nanoid';
-import { workspaceAtom } from "@/atoms/pipelineAtom";
+import { workspaceAtom, pipelineFactory } from "@/atoms/pipelineAtom";
 
 export const useLoadPipeline = () => {
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
@@ -24,7 +23,6 @@ export const useLoadPipeline = () => {
 
     // Clear the pipeline object first to avoid key collisions
     const bufferPath = `${window.cache.local}${data.id}`;
-    const newPipeline = pipelineFactory(window.cache.local, {id: id})
 
     data['sink'] = folderPath
     data['build'] = bufferPath
@@ -37,19 +35,21 @@ export const useLoadPipeline = () => {
     };
     await savePipelineMutation.mutateAsync(cacheData);
 
-    setPipeline(draft => {
-      draft.name = pipelineName;
-      draft.path = folderPath;
-      draft.saveTime = Date.now();
-      draft.buffer = bufferPath;
-      draft.data = data.pipeline;
-      draft.id = data.id;
-    });
+    const loadedPipeline = {
+      name: data.name,
+      path: folderPath,
+      saveTime: Date.now(),
+      buffer: bufferPath,
+      data: data.pipeline,
+      id: data.id
+    }
+
+    const newPipeline = pipelineFactory(window.cache.local, loadedPipeline)
 
     setWorkspace(draft => {
-      draft.tabs.push({
-
-      })
+      draft.tabs.push(newPipeline.id)
+      draft.pipelines[newPipeline.id] = newPipeline
+      draft.active = newPipeline.id
     })
   };
 

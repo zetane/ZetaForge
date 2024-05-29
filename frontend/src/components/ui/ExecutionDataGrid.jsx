@@ -6,9 +6,13 @@ import { PipelineStopButton } from "./PipelineStopButton";
 
 export const ExecutionDataGrid = () => {
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
-  const loadPipeline = (key) => {
+  const loadPipeline = (pipeline) => {
+    console.log("pushing ", pipeline)
     setWorkspace((draft) => {
-      draft.active = key
+      if (!draft.tabs.includes(pipeline.id)) {
+        draft.tabs.push(pipeline.id)
+      }
+      draft.active = pipeline.id
     })
   }
 
@@ -20,14 +24,14 @@ export const ExecutionDataGrid = () => {
     const friendlyName = pipelineData.name
     const executionId = record?.Execution;
     const stopAction = <PipelineStopButton executionId={executionId} />;
-    console.log(pipeline);
 
     items.push({
       id: pipeline.id,
-      name: <Link href="#" onClick={() => loadPipeline(pipeline.id)}>{friendlyName}</Link>,
-      created: new Date(pipeline.Created * 1000).toLocaleString(),
-      status: pipeline.Status,
-      deployed: pipeline.Deployed,
+      pipeline: pipeline.id,
+      name: <Link href="#" onClick={() => {loadPipeline(pipeline)}}>{friendlyName}</Link>,
+      created: new Date(record?.Created * 1000).toLocaleString(),
+      status: record?.Status,
+      deployed: record?.Deployed,
       actions: stopAction,
     });
   }
@@ -36,6 +40,10 @@ export const ExecutionDataGrid = () => {
     {
       key: 'name',
       header: 'Name',
+    },
+    {
+      key: 'pipeline',
+      header: 'Pipeline'
     },
     {
       key: 'created',

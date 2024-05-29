@@ -147,15 +147,12 @@ const InputField = ({ type, value, name, step, parameterName, onChange, id }) =>
   useEffect(() => {
     if (!editor) return;
     if (!inputRef && !inputRef.current) return;
-    console.log(parameterName, name)
 
     const resizeObserver = new ResizeObserver(entry => {
       if (entry[0].target.classList.contains('textarea-node')) {
         editor.updateConnectionNodes(`node-${id}`);
       }
     });
-
-    console.log("ref: ", inputRef.current)
 
     resizeObserver.observe(inputRef.current)
 

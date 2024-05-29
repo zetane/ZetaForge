@@ -32,8 +32,7 @@ export const workspaceAtom = atom({
   tabs: [initPipeline.id],
   pipelines: {[initPipeline.id]: initPipeline},
   running() {
-    return Object.values(this.pipelines).filter(pipeline => pipeline.record &&
-      pipeline.record.Status == "Running")
+    return Object.values(this.pipelines).filter(pipeline => pipeline.record )
   },
   active: initPipeline.id
 })
@@ -46,7 +45,6 @@ const pipelineAtomWithImmer = atom(
   (get, set, newPipeline) => {
     const workspace = get(workspaceAtom);
     const newWorkspace = {...workspace};
-    newWorkspace.active = newPipeline.id
     newWorkspace.pipelines[newPipeline.id] = newPipeline;
     set(workspaceAtom, newWorkspace)
   }
