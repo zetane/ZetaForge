@@ -1,3 +1,4 @@
+import { SPECS_FILE_NAME } from "../src/utils/constants";
 import { app } from "electron";
 import fs from "fs/promises";
 import path from "path";
@@ -8,8 +9,7 @@ import {
   filterDirectories,
   readJsonToObject,
 } from "./fileSystem.js";
-
-const BLOCK_SPECS = "specs_v1.json";
+import { checkAndUpload } from "./s3.js";
 
 export async function saveSpec(spec, writePath, pipelineName) {
   const pipelineSpecsPath = path.join(writePath, pipelineName)
@@ -20,11 +20,12 @@ export async function saveSpec(spec, writePath, pipelineName) {
   );
 }
 
-export async function saveBlock(blockKey, fromPath, toPath) {
+export async function saveBlock(blockKey, blockSpec, fromPath, toPath) {
   const newFolder = path.join(toPath, blockKey)
   console.log(`saving ${blockKey} from ${fromPath} to ${newFolder}`)
   await fs.mkdir(newFolder, { recursive: true });
   await fs.cp(fromPath, newFolder, { recursive: true });
+  await fs.writeFile(path.join(newFolder, SPECS_FILE_NAME), JSON.stringify(blockSpec, null, 2))
   return newFolder;
 }
 
@@ -59,19 +60,19 @@ export async function copyPipeline(pipelineSpecs, pipelineName, fromDir, toDir) 
   for (const key of Array.from(newPipelineBlocks)) {
     const newBlockPath = path.join(writePipelineDirectory, key);
     let existingBlockPath = fromBlockIndex[key]
+    const blockSpec = pipelineSpecs.pipeline[key]
     if (!existingBlockPath) {
       // NOTE: BAD KEY
       // At a certain point we serialized non unique keys 
       // for folder names so there's a chance that we will
       // fail to find the correct key and need to fall back
       // to fetching a common folder name
-      const blockSpec = pipelineSpecs.pipeline[key]
+      
       existingBlockPath = fromBlockIndex[blockSpec.information.id]
     }
     if (!existingBlockPath) {
       // If we still can't find a path
       // we try to fall back to the block source path
-      const blockSpec = pipelineSpecs.pipeline[key]
       existingBlockPath = blockSpec.information.block_source
       if(app.isPackaged) {
         existingBlockPath = path.join(process.resourcesPath, existingBlockPath)
@@ -82,6 +83,7 @@ export async function copyPipeline(pipelineSpecs, pipelineName, fromDir, toDir) 
     if (existingBlockPath != newBlockPath) {
       // if it's the same folder, don't try to copy it
       await fs.cp(existingBlockPath, newBlockPath, {recursive: true})
+      await fs.writeFile(path.join(newBlockPath, SPECS_FILE_NAME), JSON.stringify(blockSpec, null, 2))
     }
   }
 
@@ -162,4 +164,37 @@ export async function getPipelineBlockPath(pipelinePath, blockId) {
       return blockPath;
     }
   }
+}
+
+
+export async function uploadBlocks(pipelineId, executionId, pipelineSpecs, buffer) {
+  const nodes = pipelineSpecs.pipeline;
+  for (const nodeId in nodes) {
+    const node = nodes[nodeId];
+
+    const parameters = node.action?.parameters;
+    const container = node.action?.container;
+
+    if (parameters) {
+      for (const paramKey in parameters) {
+        const param = parameters[paramKey];
+
+        if (param.type === "file") {
+          const filePath = param.value;
+          const fileName = path.basename(filePath);
+          const awsKey = `${pipelineId}/${executionId}/${fileName}`;
+
+          if (filePath && filePath.trim()) {
+            await checkAndUpload(awsKey, filePath);
+            param.value = `"${fileName}"`;
+          }
+        }
+      }
+    } else if (container) {
+      const computationFile = path.join(buffer, "/", nodeId, "/computations.py");
+      const awsKey = `${pipelineId}/${executionId}/${nodeId}.py`;
+      await checkAndUpload(awsKey, computationFile)
+    }
+  }
+  return pipelineSpecs;
 }

@@ -2,15 +2,14 @@ import { getDirectoryPath } from "@/../utils/fileUtils";
 import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
 import { mixpanelAtom } from "@/atoms/mixpanelAtom";
 import { getPipelineFormat, pipelineAtom } from "@/atoms/pipelineAtom";
+import { generateId, replaceIds } from "@/utils/blockUtils";
 import { trpc } from "@/utils/trpc";
 import { HeaderMenuItem } from "@carbon/react";
 import { useAtom } from "jotai";
 import { useImmerAtom } from 'jotai-immer';
-import { customAlphabet } from "nanoid";
 import { useRef } from "react";
 
 export default function LoadBlockButton() {
-  const FILE_EXTENSION_REGEX = /\.[^/.]+$/;
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom)
   const [mixpanelService] = useAtom(mixpanelAtom)
   const [editor] = useAtom(drawflowEditorAtom)
@@ -24,10 +23,8 @@ export default function LoadBlockButton() {
   const saveBlockMutation = trpc.saveBlock.useMutation();
 
   const addBlockToPipeline = async (block, path) => {
-    const nanoid = customAlphabet('1234567890abcedfghijklmnopqrstuvwxyz', 12)
-    const newNanoid = nanoid()
-    const id = `${block.information.id}-${newNanoid}`
-
+    const id = generateId(block);
+    block = replaceIds(block, id)
     block = centerBlockPosition(block)
     const newPipeline = getPipelineFormat(pipeline)
     let newPipelineData = JSON.parse(JSON.stringify(pipeline.data))
@@ -58,20 +55,23 @@ export default function LoadBlockButton() {
 
     }
     const files = fileInput.current.files
-    for (const key in files) {
-      const file = files[key]
+    for (let i = 0; i < files.length; i++) {
+      const file = files.item(i)
       let relPath = file.webkitRelativePath
       relPath = relPath.replaceAll('\\', '/')
-      const name = removeFileExtension(file.name)
-      if (name === "specs_v1") {
-        const spec = JSON.parse(await (new Blob([file])).text())
-        let folderPath = getDirectoryPath(file.path)
-        folderPath = folderPath.replaceAll('\\', '/')
+      const parts = relPath.split("/")
+      if (parts.length == 2) {
+        const name = parts[1]
+        if (isSpecsFile(name)) {
+          const spec = JSON.parse(await (new Blob([file])).text())
+          let folderPath = getDirectoryPath(file.path)
+          folderPath = folderPath.replaceAll('\\', '/')
 
-        await addBlockToPipeline(spec, folderPath)
+          await addBlockToPipeline(spec, folderPath)
 
-        fileInput.current.value = ''
-        break;
+          fileInput.current.value = ''
+          break;
+        }
       }
     }
   };
@@ -82,9 +82,9 @@ export default function LoadBlockButton() {
     return block;
   }
 
-  const removeFileExtension = (fileName) => {
-    return fileName.replace(FILE_EXTENSION_REGEX, "");
-  };
+  const isSpecsFile = (fileName) => {
+    return fileName.startsWith("specs") && fileName.endsWith('.json')
+  } 
 
   return (
     <div>

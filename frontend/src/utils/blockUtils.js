@@ -1,4 +1,6 @@
-const processConnections = (connections, id, type) => {
+import { customAlphabet } from "nanoid";
+
+const processConnections = (connections) => {
   const jsonConns = {}
   for (const key in connections) {
     jsonConns[key] = { "connections": []};
@@ -25,4 +27,18 @@ export const genJSON = (block, id) => {
     pos_y: block.views.node.pos_y,
   };
 
+}
+
+export function generateId(block) {
+  const nanoid = customAlphabet('1234567890abcedfghijklmnopqrstuvwxyz', 12);
+  const newNanoid = nanoid();
+  const id = `${block.information.id}-${newNanoid}`;
+  return id;
+}
+
+export function replaceIds(block, id){
+  if (block.action?.container) {
+    block.action.container.version = id;
+  }
+  return block;
 }

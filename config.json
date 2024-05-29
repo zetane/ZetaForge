@@ -1,6 +1,7 @@
 {
 	"IsLocal":true,
-	"ServerPort":"8080",
+	"IsDev": true,
+	"ServerPort": 8080,
 	"KanikoImage":"gcr.io/kaniko-project/executor:latest",
 	"WorkDir":"/app",
 	"FileDir":"/files",
@@ -9,9 +10,10 @@
 	"ServiceAccount":"executor",
 	"Bucket":"forge-bucket",
 	"Database":"./zetaforge.db",
+	"SetupVersion":"1",
 
 	"Local": {
-		"BucketPort":"8333",
-		"RegistryPort":"5000"
+		"BucketPort": 8333,
+		"Driver": "docker-desktop"
 	}
 } 

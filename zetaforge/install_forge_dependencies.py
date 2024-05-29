@@ -15,10 +15,15 @@ import platform
 import sys
 from zipfile import ZipFile
 import tarfile
+from .check_forge_dependencies import check_kube_svc
+from pkg_resources import resource_filename
 
 # BACKEND = resource_filename("")
 EXECUTABLES_PATH = os.path.join(Path(__file__).parent, 'executables')
 ssl._create_default_https_context = ssl._create_unverified_context
+
+BUILD_YAML = resource_filename("zetaforge", os.path.join('utils', 'build.yaml'))
+INSTALL_YAML = resource_filename("zetaforge", os.path.join('utils', 'install.yaml'))
 
 s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED), region_name='us-east-2')
 
@@ -192,6 +197,9 @@ def check_and_clean_files(directory, version):
             if file_version == version:
                 print(f"Found an existing install of version {version}")
             else:
+                print(f"Found a previous version of forge, uninstalling..")
+
+
                 file_path = os.path.join(directory, filename)
                 if os.path.isfile(file_path):
                     os.remove(file_path)
@@ -200,24 +208,26 @@ def check_and_clean_files(directory, version):
                     shutil.rmtree(file_path)
                     print(f"Removed directory: {filename}")
         
-        if filename == 'ZetaForge.app':
+        if filename == 'ZetaForge.app' or filename == 'zetaforge.app':
             _, server_path = get_launch_paths(version, version)
             if os.path.exists(server_path):
                 print(f"Found existing version {version}")
             else:
                 # did not find the correct version, reinstall it
                 print(f"Found ZetaForge.app but did not find version {version}, removing previous app")
-                shutil.rmtree(os.path.join(EXECUTABLES_PATH, "ZetaForge.app"))
+                shutil.rmtree(os.path.join(EXECUTABLES_PATH, filename))
 
-        if filename == 'zetaforge.app':
-            _, server_path = get_launch_paths(version, version)
-            if os.path.exists(server_path):
-                print(f"Found existing version {version}")
-            else:
-                # did not find the correct version, reinstall it
-                print(f"Found ZetaForge.app but did not find version {version}, removing previous app")
-                shutil.rmtree(os.path.join(EXECUTABLES_PATH, "zetaforge.app"))
+def remove_running_services():
+    print(f"Checking for existing kube services to remove..")
+    registry = check_kube_svc("registry")
+    argo = check_kube_svc("argo-server", "argo")
+    if registry:
+        build = subprocess.run(["kubectl", "delete", "-f", BUILD_YAML], capture_output=True, text=True)
+        print("Removing build: ", {build.stdout})
 
+    if argo:
+        build = subprocess.run(["kubectl", "delete", "-f", INSTALL_YAML], capture_output=True, text=True)
+        print("Removing build: ", {build.stdout})
 
 def check_version(server_version, client_version):
     check_and_clean_files(EXECUTABLES_PATH, client_version)

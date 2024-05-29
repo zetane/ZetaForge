@@ -1,19 +1,20 @@
+import { SPECS_FILE_NAME } from "../src/utils/constants";
 import bodyParser from "body-parser";
 import { exec, spawn } from "child_process";
 import compression from "compression";
 import cors from "cors";
 import 'dotenv/config';
+import { app as electronApp } from 'electron';
 import express from "express";
 import fs, { access, constants, readFile, readFileSync, writeFile } from "fs";
 import fsp from "fs/promises";
+import getMAC from "getmac";
 import multer from "multer";
 import { Configuration, OpenAIApi } from "openai";
 import path from "path";
+import sha256 from 'sha256';
 import { fileExists, readJsonToObject, readSpecs } from "./fileSystem.js";
 import { copyPipeline, saveBlock } from "./pipelineSerialization.js";
-import {app} from 'electron'
-import sha256 from 'sha256'
-import getMAC from "getmac"
 
 
 function startExpressServer() {
@@ -280,7 +281,7 @@ function startExpressServer() {
 
   app.get('/blocks', async (req, res) => {
     const coreBlocks = "../core/blocks"
-    if(app.isPackaged){
+    if(electronApp.isPackaged){
       coreBlocks = path.join(process.resourcesPath, "core", "blocks") 
     }
     
@@ -313,6 +314,10 @@ function startExpressServer() {
       return res.send(sha256(BigInt(0).toString())); // Sending default distinct_id
     }
 });
+
+app.get("/is-dev", async(req, res) => {
+  return res.send( !electronApp.isPackaged || (electronApp.isPackaged && process.env.VITE_ZETAFORGE_IS_DEV === 'True') )
+})
 
    
   
@@ -372,8 +377,8 @@ function startExpressServer() {
 
   app.post("/get-agent", async (req, res) => {
     const { blockPath } = req.body;
-    const specsPath = `${blockPath}/specs_v1.json`;
-
+    const specsPath = path.join(blockPath, SPECS_FILE_NAME)
+    
     fs.readFile(specsPath, (err, data) => {
       if (err) {
         console.error(`Error sending the file: ${err}`);
@@ -415,7 +420,7 @@ function startExpressServer() {
     try {
       // Path to the Python script
       let agents = "agents"
-      if(app.isPackaged) {
+      if(electronApp.isPackaged) {
         agents = path.join(process.resourcesPath, "agents")
       }
       const scriptPath = path.join(agents, agentName, "generate", "computations.py")
@@ -554,30 +559,6 @@ function startExpressServer() {
     });
   });
 
-  app.post("/run-docker-commands", (req, res) => {
-    const { blockPath: blockPath } = req.body;
-
-    // Execute the Python script
-    const pythonProcess = spawn("python", ["run_test.py"], {
-      cwd: blockPath,
-    });
-
-    pythonProcess.stdout.on("data", (data) => {
-      console.log(data.toString());
-    });
-
-    pythonProcess.stderr.on("data", (data) => {
-      console.error(data.toString());
-    });
-
-    pythonProcess.on("exit", (code) => {
-      console.log(`Child exited with code ${code}`);
-      res.send({ message: `Python script executed with exit code: ${code}` });
-    });
-  });
-  
-  
-  
   app.get("/api/logs", (req, res) => {
     const filePath = req.query.filePath;
 

@@ -38,7 +38,8 @@ export default function Editor() {
   const minizedStyles = "inset-y-16 right-8 w-1/3"
   const maximizedStyles = "inset-y-11 right-0 w-full"
   const [blockPath] = useAtom(blockEditorRootAtom);
-  const [blockFolderName, setBlockFolderName] = useState(null); //TODO check if still needed
+  const [blockFolderName, setBlockFolderName] = useState(null);
+  const [blockName, setBlockName] = useState("");
   const setBlockEditorOpen = useSetAtom(isBlockEditorOpenAtom);
   const [openAIApiKey] = useAtom(openAIApiKeyAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
@@ -64,6 +65,7 @@ export default function Editor() {
 
   const compileComputation = trpc.compileComputation.useMutation();
   const saveBlockSpecs = trpc.saveBlockSpecs.useMutation();
+  const runTest = trpc.runTest.useMutation();
 
   useEffect(() => {
     const init = async () => {
@@ -71,7 +73,9 @@ export default function Editor() {
         console.log(blockPath)
         const relPath = blockPath.replaceAll('\\', '/')
         const blockFolderName = relPath.split("/").pop();
+        const blockName = pipeline.data[blockFolderName].information.name;
         setBlockFolderName(blockFolderName);
+        setBlockName(blockName);
         setBlockLogs(`${blockPath}/logs.txt`);
         setFileSystem({
           [blockFolderName]: { content: "", type: "folder" },
@@ -287,23 +291,8 @@ export default function Editor() {
 
   const handleDockerCommands = useCallback(async () => {
     setIsRunButtonPressed(true);
-    try {
-      const response = await fetch(`${serverAddress}/run-docker-commands`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ blockPath: blockPath }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-    } catch (error) {
-      console.error("Request failed: " + error.message);
-    }
-
-    fetchFileSystem(blockFolderName);
+    runTest.mutateAsync({ blockPath: blockPath, blockKey: blockFolderName });
+    await fetchFileSystem(blockFolderName);
   }, [blockFolderName, blockPath, fetchFileSystem]);
 
   const handleSequentialExecution = async (e, index) => {
@@ -320,9 +309,12 @@ export default function Editor() {
   }
 
   return (
-    <div ref={panel} className={"editor-block absolute overflow-y-scroll z-[8000] " + (isMaximized ? maximizedStyles : minizedStyles)}>
+    <div className={"editor-block absolute flex flex-col z-[8000] " + (isMaximized ? maximizedStyles : minizedStyles)}>
       <div className="block-editor-header">
-        <span className="p-4 text-lg italic">{blockFolderName}</span>
+        <div className='p-4'>
+          <p className='text-lg italic'>{blockName}</p>
+          <p className="text-sm">{blockFolderName}</p>
+        </div>
         <div className="flex flex-row items-center justify-end">
           <div className="p-4">
             <Bot size={24} className="mx-2 align-middle" />
@@ -337,7 +329,6 @@ export default function Editor() {
         </div>
       </div>
       <Tabs>
-        <div></div>
         <TabList fullWidth className='shrink-0 max-w-[40rem] mx-auto'>
           <Tab onClick={handleTabClick}>
             Workspace
@@ -350,7 +341,7 @@ export default function Editor() {
           </Tab>
         </TabList>
         <TabPanels>
-          <TabPanel className="overflow-y-scroll">
+          <TabPanel ref={panel} className="overflow-y-scroll">
             <div className="flex flex-col gap-y-8">
               {queryAndResponses.map((item, index) => (
                 <Fragment key={index}>

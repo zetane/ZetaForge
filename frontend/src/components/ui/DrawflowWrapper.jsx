@@ -2,18 +2,15 @@ import { drawflowEditorAtom } from '@/atoms/drawflowAtom';
 import { blockEditorRootAtom, isBlockEditorOpenAtom } from '@/atoms/editorAtom';
 import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { pipelineConnectionsAtom } from "@/atoms/pipelineConnectionsAtom";
-import { pipelineSchemaAtom } from "@/atoms/pipelineSchemaAtom";
 import Drawflow from '@/components/ZetaneDrawflowEditor';
+import BlockGenerator from '@/components/ui/blockGenerator/BlockGenerator';
+import { genJSON, generateId, replaceIds } from '@/utils/blockUtils';
 import { trpc } from "@/utils/trpc";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { useAtom, useSetAtom } from 'jotai';
-import { useEffect, useRef, useState, useCallback } from 'react';
-import BlockGenerator from '@/components/ui/blockGenerator/BlockGenerator';
 import { useImmerAtom } from 'jotai-immer';
-import { genJSON } from '@/utils/blockUtils';
-import { customAlphabet } from 'nanoid';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLoadPipeline } from "./useLoadPipeline";
-import generateSchema from '@/utils/schemaValidation';
 import drawflowUtils from '@/utils/drawflowUtils';
 
 // const launchDrawflow = (parentDomRef, canvasDomRef, pipeline, setPipeline) => {
@@ -38,7 +35,6 @@ const dragOverHandler = (event) => {
 
 export default function DrawflowWrapper() {
   const [editor, setEditor] = useAtom(drawflowEditorAtom);
-  const [, setPipelineSchema] = useAtom(pipelineSchemaAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const [pipelineConnections, setPipelineConnectionsAtom] = useImmerAtom(pipelineConnectionsAtom);
   const setBlockEditorRoot = useSetAtom(blockEditorRootAtom);
@@ -208,15 +204,6 @@ export default function DrawflowWrapper() {
   }, [pipeline.data])
 
   useEffect(() => {
-    if (pipeline.data && Object.keys(pipeline.data).length) {
-      const schema = generateSchema(pipeline.data);
-      setPipelineSchema(schema);
-    } else {
-      setPipelineSchema({});
-    }
-  }, [Object.keys(pipeline.data).length])
-
-  useEffect(() => {
     if (renderNodes.length) {
       // Note: This code is super finicky because it's our declarative (React)
       // vs imperative (drawflow) boundary
@@ -287,9 +274,8 @@ export default function DrawflowWrapper() {
   }, [renderNodes])
 
   const addBlockToPipeline = (block) => {
-    const nanoid = customAlphabet('1234567890abcedfghijklmnopqrstuvwxyz', 12)
-    const newNanoid = nanoid()
-    const id = `${block.information.id}-${newNanoid}`
+    const id = generateId(block);
+    block = replaceIds(block, id);
     setPipeline((draft) => {
       draft.data[id] = block;
     })

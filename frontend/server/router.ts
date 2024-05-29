@@ -1,13 +1,11 @@
 import { TRPCError } from "@trpc/server";
 import { app, dialog } from 'electron';
 import fs from "fs/promises";
-import getMAC from "getmac";
 import path from "path";
-import sha256 from 'sha256';
 import { z } from 'zod';
-import { compileComputation, saveBlockSpecs } from './blockSerialization.js';
-import { readSpecs, readPipelines, s3Upload } from "./fileSystem.js";
-import { copyPipeline, getBlockPath, removeBlock, saveBlock, saveSpec } from './pipelineSerialization.js';
+import { compileComputation, runTest, saveBlockSpecs } from './blockSerialization.js';
+import { readPipelines, readSpecs } from "./fileSystem.js";
+import { copyPipeline, getBlockPath, removeBlock, saveBlock, saveSpec, uploadBlocks } from './pipelineSerialization.js';
 import { publicProcedure, router } from './trpc';
 
 export const appRouter = router({
@@ -145,7 +143,7 @@ export const appRouter = router({
       const {pipelineSpec, name, blockSpec, blockId, blockPath, pipelinePath} = input;
       let savePaths;
       if (blockSpec.action?.container) {
-        savePaths = await saveBlock(blockId, blockPath, pipelinePath);
+        savePaths = await saveBlock(blockId, blockSpec, blockPath, pipelinePath);
         await saveSpec(pipelineSpec, pipelinePath, name+".json")
       } else if (blockSpec.action?.parameters) {
         savePaths = await saveSpec(pipelineSpec, pipelinePath, name+".json")
@@ -176,18 +174,19 @@ export const appRouter = router({
       const {blockId, pipelinePath} = input;
       removeBlock(blockId, pipelinePath);
     }),
-  uploadToS3: publicProcedure
+  uploadParameterBlocks: publicProcedure
     .input(z.object({
-      filePath: z.string(),
+      pipelineId: z.string(),
+      executionId: z.string(),
+      pipelineSpecs: z.any(),
+      buffer: z.string(), 
     }))
     .mutation(async (opts) => {
       const {input} = opts;
-      const {filePath} = input;
+      const {pipelineId, executionId, pipelineSpecs, buffer} = input;
 
-      const res = await s3Upload(filePath)
-      return res;
+      return uploadBlocks(pipelineId, executionId, pipelineSpecs, buffer);
     }),
- 
   compileComputation: publicProcedure
     .input(z.object({
       blockPath: z.string(),
@@ -225,8 +224,26 @@ export const appRouter = router({
           message: 'Could not compile.',
         });
       }
-    })
+    }),
+  runTest: publicProcedure
+    .input(z.object({
+      blockPath: z.string(),
+      blockKey: z.string(),
+    }))
+    .mutation(async (opts) => {
+      const {input} = opts;
+      const {blockPath, blockKey} = input; 
 
+      try {
+        await runTest(blockPath, blockKey);
+      } catch(error) {
+        console.log(error);
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Could not run test'
+        })
+      }
+    })
 });
  
 // Export type router type signature,

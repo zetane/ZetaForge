@@ -10,6 +10,7 @@ import (
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
+	"github.com/go-cmd/cmd"
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
@@ -17,36 +18,46 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func checkImage(ctx context.Context, tagName string, cfg Config) (bool, error) {
+func checkImage(ctx context.Context, tag string, cfg Config) (bool, error) {
 	if cfg.IsLocal {
-		apiClient, err := client.NewClientWithOpts(
-			client.WithAPIVersionNegotiation(),
-		)
-		defer apiClient.Close()
-		if err != nil {
-			return true, err
-		}
-
-		imageList, err := apiClient.ImageList(ctx, types.ImageListOptions{})
-		if err != nil {
-			return true, err
-		}
-
-		for _, image := range imageList {
-			for _, tag := range image.RepoTags {
-				if tagName == tag {
-					return false, nil
+		if cfg.Local.Driver == "minikube" {
+			minikubeImage := cmd.NewCmd("minikube", "-p", "zetaforge", "image", "ls")
+			<-minikubeImage.Start()
+			for _, line := range minikubeImage.Status().Stdout {
+				if "docker.io/"+tag == line {
+					return true, nil
 				}
 			}
+			return false, nil
+		} else {
+			apiClient, err := client.NewClientWithOpts(
+				client.WithAPIVersionNegotiation(),
+			)
+			if err != nil {
+				return false, err
+			}
+			defer apiClient.Close()
 
+			imageList, err := apiClient.ImageList(ctx, types.ImageListOptions{})
+			if err != nil {
+				return false, err
+			}
+
+			for _, image := range imageList {
+				for _, tagName := range image.RepoTags {
+					if tag == tagName {
+						return true, nil
+					}
+				}
+
+			}
+
+			return false, nil
 		}
-
-		return true, nil
-
 	} else {
 		repo, err := name.NewRepository(cfg.Cloud.RegistryAddr)
 		if err != nil {
-			return true, err
+			return false, err
 		}
 
 		auth := authn.FromConfig(
@@ -59,26 +70,25 @@ func checkImage(ctx context.Context, tagName string, cfg Config) (bool, error) {
 		data, err := remote.List(repo, remote.WithAuth(auth))
 
 		if err != nil {
-			return true, err
+			return false, err
 		}
 
-		for _, tag := range data {
-			if tagName == cfg.Cloud.RegistryAddr+":"+tag {
-				return false, nil
+		for _, tagName := range data {
+			if tag == cfg.Cloud.RegistryAddr+":"+tagName {
+				return true, nil
 			}
 		}
 
-		return true, nil
+		return false, nil
 	}
 }
 
-func blockTemplate(block *zjson.Block, blockKey string, organization string, cfg Config, key string) *wfv1.Template {
+func blockTemplate(block *zjson.Block, blockKey string, organization string, key string, cfg Config) *wfv1.Template {
 	var image string
 	var computationName string
 	if cfg.IsLocal {
-		image = "localhost:" + cfg.Local.RegistryPort + "/" + block.Action.Container.Image + ":" + block.Action.Container.Version
+		image = "zetaforge/" + block.Action.Container.Image + ":" + block.Action.Container.Version
 		computationName = blockKey + ".py"
-
 	} else {
 		image = cfg.Cloud.RegistryAddr + ":" + organization + "-" + block.Action.Container.Image + "-" + block.Action.Container.Version
 		computationName = organization + "-" + blockKey + ".py"
@@ -123,38 +133,7 @@ func blockTemplate(block *zjson.Block, blockKey string, organization string, cfg
 
 func kanikoTemplate(block *zjson.Block, organization string, cfg Config) *wfv1.Template {
 	if cfg.IsLocal {
-		name := block.Action.Container.Image + "-" + block.Action.Container.Version
-		cmd := []string{
-			"/kaniko/executor",
-			"--context",
-			"tar:///workspace/context.tar.gz",
-			"--destination",
-			"registry:" + cfg.Local.RegistryPort + "/" + block.Action.Container.Image + ":" + block.Action.Container.Version,
-			"--insecure",
-			"--compressed-caching=false",
-			"--snapshotMode=redo",
-			"--use-new-run",
-		}
-		artifact := wfv1.Artifact{
-			Name: "context",
-			Path: "/workspace/context.tar.gz",
-			ArtifactLocation: wfv1.ArtifactLocation{
-				S3: &wfv1.S3Artifact{
-					Key: name + "-build.tar.gz",
-				},
-			},
-			Archive: &wfv1.ArchiveStrategy{
-				None: &wfv1.NoneStrategy{},
-			},
-		}
-		return &wfv1.Template{
-			Name: name + "-build",
-			Container: &corev1.Container{
-				Image:   cfg.KanikoImage,
-				Command: cmd,
-			},
-			Inputs: wfv1.Inputs{Artifacts: []wfv1.Artifact{artifact}},
-		}
+		return nil
 	} else {
 		name := organization + "-" + block.Action.Container.Image + "-" + block.Action.Container.Version
 		cmd := []string{
@@ -214,7 +193,7 @@ func kanikoTemplate(block *zjson.Block, organization string, cfg Config) *wfv1.T
 
 }
 
-func translate(ctx context.Context, pipeline *zjson.Pipeline, organization string, cfg Config, key string) (*wfv1.Workflow, map[string]string, error) {
+func translate(ctx context.Context, pipeline *zjson.Pipeline, organization string, key string, build bool, cfg Config) (*wfv1.Workflow, map[string]string, error) {
 	workflow := wfv1.Workflow{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Workflow",
@@ -239,34 +218,36 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 	templates := make(map[string]*wfv1.Template)
 	for id, block := range pipeline.Pipeline {
 		blockKey := id
-		template := blockTemplate(&block, blockKey, organization, cfg, key)
+		template := blockTemplate(&block, blockKey, organization, key, cfg)
 		task := wfv1.DAGTask{Name: template.Name, Template: template.Name}
 
 		if len(block.Action.Container.Image) > 0 {
 			kaniko := kanikoTemplate(&block, organization, cfg)
-			toBuild, err := checkImage(ctx, template.Container.Image, cfg)
+			built, err := checkImage(ctx, template.Container.Image, cfg)
 			if err != nil {
 				return &workflow, blocks, err
 			}
 
 			blockPath := filepath.Join(pipeline.Build, blockKey)
 			blocks[blockPath] = ""
-			if toBuild {
-				blocks[blockPath] = block.Action.Container.Image + "-" + block.Action.Container.Version
-				templates[kaniko.Name] = kaniko
-				tasks[kaniko.Name] = &wfv1.DAGTask{Name: kaniko.Name, Template: kaniko.Name}
-				task.Dependencies = append(task.Dependencies, kaniko.Name)
+			if build || !built {
+				if cfg.IsLocal {
+					blocks[blockPath] = "zetaforge/" + block.Action.Container.Image + ":" + block.Action.Container.Version
+				} else {
+					blocks[blockPath] = block.Action.Container.Image + "-" + block.Action.Container.Version
+					templates[kaniko.Name] = kaniko
+					tasks[kaniko.Name] = &wfv1.DAGTask{Name: kaniko.Name, Template: kaniko.Name}
+					task.Dependencies = append(task.Dependencies, kaniko.Name)
+				}
 			}
+
+			template.Container.Env = append(template.Container.Env, corev1.EnvVar{
+				Name:  "_blockid_",
+				Value: blockKey,
+			})
 		}
 
-		inputFile := false
-		outputFile := false
-		inputIsParam := false
-		outputIsParam := (len(block.Action.Parameters) > 0)
 		for name, input := range block.Inputs {
-			if input.Type == "file" || input.Type == "List[file]" {
-				inputFile = true
-			}
 			if len(input.Connections) > 0 {
 				if len(input.Connections) == 1 {
 					connection := input.Connections[0]
@@ -274,7 +255,6 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 					param, ok := inputBlock.Action.Parameters[connection.Variable]
 					// Parameter is in the graph
 					if ok {
-						inputIsParam = true
 						template.Container.Env = append(template.Container.Env, corev1.EnvVar{
 							Name:  name,
 							Value: param.Value,
@@ -302,21 +282,20 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 			}
 		}
 
-		for name, output := range block.Outputs {
-			if output.Type == "file" || output.Type == "List[file]" {
-				outputFile = true
-			}
+		for name := range block.Outputs {
+			blockVar := blockKey + "-" + name
+			fullPath := cfg.FileDir + "/" + blockVar + ".txt"
 			template.Outputs.Parameters = append(template.Outputs.Parameters, wfv1.Parameter{
 				Name:      name,
-				ValueFrom: &wfv1.ValueFrom{Path: name + ".txt"},
+				ValueFrom: &wfv1.ValueFrom{Path: fullPath},
 			})
 		}
 
 		var filesName string
 		if cfg.IsLocal {
-			filesName = "files"
+			filesName = key
 		} else {
-			filesName = organization + "/" + "files"
+			filesName = organization + "/" + key
 			workflow.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
 				{
 					Name: cfg.Cloud.Registry,
@@ -324,42 +303,30 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 			}
 		}
 
-		if inputFile {
-			// if the file is a param, it comes directly from the user
-			if !inputIsParam {
-				filesName = key
-			}
-			template.Inputs.Artifacts = append(template.Inputs.Artifacts, wfv1.Artifact{
-				Name: "in",
-				Path: cfg.FileDir,
-				ArtifactLocation: wfv1.ArtifactLocation{
-					S3: &wfv1.S3Artifact{
-						Key: filesName,
-					},
+		template.Inputs.Artifacts = append(template.Inputs.Artifacts, wfv1.Artifact{
+			Name: "in",
+			Path: cfg.FileDir,
+			ArtifactLocation: wfv1.ArtifactLocation{
+				S3: &wfv1.S3Artifact{
+					Key: filesName,
 				},
-				Archive: &wfv1.ArchiveStrategy{
-					None: &wfv1.NoneStrategy{},
+			},
+			Archive: &wfv1.ArchiveStrategy{
+				None: &wfv1.NoneStrategy{},
+			},
+		})
+		template.Outputs.Artifacts = append(template.Outputs.Artifacts, wfv1.Artifact{
+			Name: "out",
+			Path: cfg.FileDir,
+			ArtifactLocation: wfv1.ArtifactLocation{
+				S3: &wfv1.S3Artifact{
+					Key: filesName,
 				},
-			})
-		}
-		if outputFile {
-			// if the file is a param, it comes directly from the user
-			if !outputIsParam {
-				filesName = key
-			}
-			template.Outputs.Artifacts = append(template.Outputs.Artifacts, wfv1.Artifact{
-				Name: "out",
-				Path: cfg.FileDir,
-				ArtifactLocation: wfv1.ArtifactLocation{
-					S3: &wfv1.S3Artifact{
-						Key: filesName,
-					},
-				},
-				Archive: &wfv1.ArchiveStrategy{
-					None: &wfv1.NoneStrategy{},
-				},
-			})
-		}
+			},
+			Archive: &wfv1.ArchiveStrategy{
+				None: &wfv1.NoneStrategy{},
+			},
+		})
 
 		tasks[task.Name] = &task
 		templates[template.Name] = template

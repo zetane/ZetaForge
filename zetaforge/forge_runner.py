@@ -4,21 +4,30 @@ import platform
 import time
 import json
 from pkg_resources import resource_filename
-from .check_forge_dependencies import check_dependencies, check_running_kube, check_kube_pod
+from .check_forge_dependencies import check_minikube, check_running_kube, check_kube_pod, check_kubectl
 from .install_forge_dependencies import *
 from pathlib import Path
 from colorama import init, Fore
 from datetime import datetime
-import socket, errno
+import socket
 import json
 import shutil
-import yaml 
 import threading
-from .mixpanel_client import MixpanelClient
+from .mixpanel_client import mixpanel_client
+import sentry_sdk
 
 
-mixpanel_client = MixpanelClient('4c09914a48f08de1dbe3dc4dd2dcf90d')
+run_env = mixpanel_client.is_dev
+env = "production"
+if run_env:
+    env = "development"
+sentry_sdk.init(
+    dsn="https://7fb18e8e487455a950298625457264f3@o1096443.ingest.us.sentry.io/4507031960223744",
 
+    # Enable performance monitoring
+    enable_tracing=True,
+    environment=env
+)
 
 BUILD_YAML = resource_filename("zetaforge", os.path.join('utils', 'build.yaml'))
 INSTALL_YAML = resource_filename("zetaforge", os.path.join('utils', 'install.yaml'))
@@ -26,11 +35,25 @@ INSTALL_YAML = resource_filename("zetaforge", os.path.join('utils', 'install.yam
 EXECUTABLES_PATH = os.path.join(Path(__file__).parent, 'executables')
 FRONT_END = os.path.join(EXECUTABLES_PATH, "frontend")
 
-def write_json(server_version, client_version, context, registry_port):
-    _, server_path = get_launch_paths(server_version, client_version)
-    config = create_config_json(os.path.dirname(server_path), context, registry_port)
+def write_json(server_version, client_version, context, driver, is_dev, s2_path=None):
+    if s2_path:
+        server_path = s2_path
+    else:
+        _, server_path = get_launch_paths(server_version, client_version)
+    config = create_config_json(os.path.dirname(server_path), context, driver, is_dev)
     return config
 
+#changes the IsDev in config.json, it's implemented to prevent certain edge cases.
+def change_env_config(server_version, client_version, env):
+    _, server_path = get_launch_paths(server_version, client_version)
+    config = dict()
+    config_path = os.path.join(os.path.dirname(server_path), "config.json")
+    with open(config_path, "r") as f:
+        config = json.load(f)
+    config['IsDev'] = env
+    with open(config_path, "w") as outfile:
+        json.dump(config, outfile)
+    return outfile
 
 def check_for_container(name):
     ls_cmd = subprocess.run(["docker", "container", "ls", '--format', 'json'], capture_output=True, text=True)
@@ -68,19 +91,6 @@ def find_available_port(start_port, end_port):
             except OSError:
                 pass
     return None
-
-def update_yaml(port):
-    d = None
-    yaml_doc = None
-    with open(BUILD_YAML) as f:
-        yaml_doc = list(yaml.safe_load_all(f))
-        d = yaml_doc[-1]
-
-    d['spec']['ports'][0]['port'] = port
-    yaml_doc[-1] = d
-
-    with open(BUILD_YAML, "w") as f:
-        yaml.dump_all(yaml_doc, f, default_flow_style=False)
 
 def get_kubectl_contexts():
     # Get the list of kubectl contexts
@@ -131,104 +141,78 @@ def select_kubectl_context():
 
     return selected_context
 
-def setup(server_version, client_version, build_flag = True, install_flag = True):
+def setup(server_version, client_version, driver, build_flag = True, install_flag = True, is_dev=False, server_path=None):
     print("Platform: ", platform.machine())
     print("CWD: ", os.path.abspath(os.getcwd()))
-    context = select_kubectl_context()
+    mixpanel_client.track_event('Setup Initiated')
 
-    kubectl_flag = check_dependencies()        
-
-    registry_port = 5000
-    print(f"Setting registry port: {registry_port}")
-    update_yaml(int(registry_port))
-        
-    switch_context = None
-    if kubectl_flag:
-        switch_context = subprocess.run(["kubectl", "config", "use-context", f"{context}"], capture_output=True, text=True)
+    if driver == "minikube":
+        context = "zetaforge"
+        if not check_minikube():
+            mixpanel_client.track_event("Setup Failure - Minikube Not Found")
+            time.sleep(0.5)
+            print("Minikube not found. Please install minikube.")
+            raise Exception("Minikube not found!")
+        minikube = subprocess.run(["minikube", "-p", "zetaforge", "start"], capture_output=True, text=True)
+        if minikube.returncode != 0:
+            mixpanel_client.track_event("Setup Failure - Cannot Start Minikube")
+            time.sleep(0.5)
+            print(minikube.stderr)
+            raise Exception("Error while starting minikube")
+        mixpanel_client.track_event("Setup - Minikube Started")
     else:
-        print("Kubectl not found. Please install docker-desktop and enable kubernetes, or ensure that kubectl installed and is able to connect to a working kubernetes cluster.")
-        raise EnvironmentError("Kubectl not found!")
-        #install_kubectl()
-        #switch_context = subprocess.run(f"./kubectl config use-context {context}", shell=True, cwd=EXECUTABLES_PATH)
+        context = select_kubectl_context()
+        kubectl_flag = check_kubectl()
 
-    in_context = (switch_context.returncode == 0)
-        
-    if not in_context:
-        print(f"Cannot find the context {context} for kubernetes. Please double check that you have entered the correct context.")        
-        subprocess.run(["kubectl", "config", "get-contexts"], capture_output=True, text=True)
-        raise Exception("Exception while setting the context")
-    
-    running_kube = check_running_kube(context)
-    if not running_kube:
-        raise Exception("Kubernetes is not running, please start kubernetes and ensure that you are able to connect to the kube context.")
+        switch_context = None
+        if kubectl_flag:
+            switch_context = subprocess.run(["kubectl", "config", "use-context", f"{context}"], capture_output=True, text=True)
+            mixpanel_client.track_event("Setup - Kubectl Found")
+        else:
+            print("Kubectl not found. Please install docker-desktop, orbstack, or minikube and enable kubernetes, or ensure that kubectl installed and is able to connect to a working kubernetes cluster.")
+            mixpanel_client.track_event("Setup Failure - Kubectl Not Found")
+            time.sleep(0.5)
+            raise EnvironmentError("Kubectl not found!")
 
-        
-    build = subprocess.run(["kubectl", "apply", "-f", f"{BUILD_YAML}"], capture_output=True, text=True)
-    install = subprocess.run(["kubectl", "apply", "-f", f"{INSTALL_YAML}"], capture_output=True, text=True)
+        in_context = (switch_context.returncode == 0)
 
-    if build.returncode != 0 or install.returncode != 0:
-        raise Exception("Error while building")
-        
-    time.sleep(3)
-    name = "k8s_registry"
-    container_id = check_for_container(name)
+        if not in_context:
+            print(f"Cannot find the context {context} for kubernetes. Please double check that you have entered the correct context.")        
+            subprocess.run(["kubectl", "config", "get-contexts"], capture_output=True, text=True)
+            mixpanel_client.track_event("Setup Failure - Context Switch Error")
+            raise Exception("Exception while setting the context")
 
-    if not container_id:
-        print("Registry is not running, please verify that docker and kubernetes are running and re-run the setup process.")
-        raise Exception("Error detecting container registry")
-        
-    if context == "docker-desktop":
-        ins_cmd = subprocess.run(["docker", "inspect", str(container_id)], capture_output=True, text=True)
+        mixpanel_client.track_event("Setup - Context changed")
 
-        json_data = json.loads(ins_cmd.stdout)[0]
-        volumename = ""
-        for item in json_data.get("Mounts", []):
-            volumetype = item.get("Type", "")
-            if volumetype == 'volume':
-                volumename = item.get("Name", "")
-        print("Volume: ", volumename)
-            
-        print("Binding k8s registry to registry pod")
-        regcmd = subprocess.Popen(["docker", "run", "--rm", "--name", "registry", "-p", f"{registry_port}:5000", "-v", f"{volumename}:/var/lib/registry", "registry:2"],  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        running_kube = check_running_kube(context)
+        if not running_kube:
+            raise Exception("Kubernetes is not running, please start kubernetes and ensure that you are able to connect to the kube context.")
 
-        while True:
-            checkcmd = subprocess.run(["docker", "inspect", "registry"], capture_output=True)  
-            
-            if checkcmd.stdout:
-                break
-            
-            time.sleep(1)
-
-        regcmd.terminate()
-        print("Completed binding pods")
-    
     install_frontend_dependencies(client_version=client_version)
 
-    config_path = write_json(server_version, client_version, context, registry_port)
+    config_path = write_json(server_version, client_version, context, driver, is_dev, s2_path=server_path)
 
     print(f"Setup complete, wrote config to {config_path}.")
-        
+    mixpanel_client.track_event("Setup Successful")
     return config_path
 
 
+def read_output(process, name):
+    for line in process.stdout:
+        print(f"{name}: {line.decode('utf-8')}", end='')
+
+def read_error(process, name):
+    for line in process.stderr:
+        print(f"{name} (stderr): {line.decode('utf-8')}", end='')
+
 #dev version is only passed, when a developer wants to pass a local version(for e.g. dev_path=./s2-v2.3.5-amd64)
-def run_forge(server_version=None, client_version=None, server_path=None, client_path=None):
+def run_forge(server_version=None, client_version=None, server_path=None, client_path=None, is_dev=False):
     global time_start
     time_start = datetime.now()
-
+    mixpanel_client.track_event('Launch Initiated')
+    change_env_config(server_version, client_version, is_dev)
     #init is called for collarama library, better logging.
-    init()   
-
-    reg = check_kube_pod("registry")
-    if not reg:
-        print("Registry container not found, restarting..")
-        setup(server_version, client_version)
-        raise Exception("Container registry is not running, please ensure kubernetes is running or re-run `zetaforge setup`.")
-    weed = check_kube_pod("weed")
-    if not weed:
-        raise Exception("SeaweedFS is not running, please ensure kubernetes is running or re-run `zetaforge setup`.")
-
-    mixpanel_client.track_event('Initial Launch')
+    init()
 
     if server_path is None:
         _, server_path = get_launch_paths(server_version, client_version)
@@ -246,8 +230,14 @@ def run_forge(server_version=None, client_version=None, server_path=None, client
         else:
             server_executable = server_path
         
-        server = subprocess.Popen([server_executable],stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.dirname(server_path))
-
+        try:
+            server = subprocess.Popen([server_executable],stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.dirname(server_path))
+        except:
+            mixpanel_client.track_event("Launch Failure - Anvil Launch Failed")
+            raise Exception(f"Error occured while launching the server executable: {server_executable}")
+        
+        mixpanel_client.track_event('Launch - Anvil Launched')
+        
         print(f"Launching client {client_path}..")
         client_executable = os.path.basename(client_path)
         if platform.system() == 'Darwin':
@@ -256,16 +246,18 @@ def run_forge(server_version=None, client_version=None, server_path=None, client
             client_executable = [client_path, '--no-sandbox']
         else: 
             client_executable = [f"./{client_executable}"]
+        
+        #handles the situation where user launches pip launcher with is_dev, for the client executable.
+        if is_dev:
+            client_executable.append("--is_dev")
 
-        client = subprocess.Popen(client_executable, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.dirname(client_path))
-
-        def read_output(process, name):
-            for line in process.stdout:
-                print(f"{name}: {line.decode('utf-8')}", end='')
-
-        def read_error(process, name):
-            for line in process.stderr:
-                print(f"{name} (stderr): {line.decode('utf-8')}", end='')
+        try:
+            client = subprocess.Popen(client_executable, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.dirname(client_path))
+        except:
+            mixpanel_client.track_event("Launch Failure - Client Launch Failed")
+            raise Exception(f"Error occured while launching the client executable: {client_executable}")
+            
+        mixpanel_client.track_event('Launch - Client Launched')
 
         # Create threads to read the outputs concurrently
         server_stdout_thread = threading.Thread(target=read_output, args=(server, '[server]'))
@@ -285,20 +277,20 @@ def run_forge(server_version=None, client_version=None, server_path=None, client
         client_stdout_thread.join()
         client_stderr_thread.join()
 
+        mixpanel_client.track_event('Launch Successful')
+
     except KeyboardInterrupt: 
         print("Terminating servers..")
 
     finally:
         total_time = (datetime.now() - time_start).total_seconds()
-       
 
         try:
-            mixpanel_client.track_event('Full Launch', props={'Duration(seconds)': total_time})
+            mixpanel_client.track_event('Launch End', props={'Duration(seconds)': total_time})
             time.sleep(2) # mixpanel instance is asynch, so making sure that it completes the call before tear down
         except:
             print("Mixpanel cannot track")
 
-        server.kill()
         client.kill()
 
 
@@ -307,23 +299,36 @@ def purge():
     shutil.rmtree(EXECUTABLES_PATH)
     os.makedirs(EXECUTABLES_PATH)
 
-def teardown():
-    contexts = get_kubectl_contexts()
-    default = None
-    for i, context in enumerate(contexts, start=1):
-        if context.startswith("*"):
-            default = context[1:]
-    
-    print("Tearing down services..")
-    if default and default == "docker-desktop":
-        stop = subprocess.run(["kubectl", "stop", "registry"], capture_output=True, text=True)
-        print(stop.stdout)
+def teardown(driver):
+    if driver == "minikube":
+        minikube = subprocess.run(["minikube", "-p", "zetaforge", "stop"], capture_output=True, text=True)
+        if minikube.returncode != 0:
+            print(minikube.stderr)
+            raise Exception("Error while starting minikube")
 
-    install = subprocess.run(["kubectl", "delete", "-f", INSTALL_YAML], capture_output=True, text=True)
-    print ("Removing install: ", {install.stdout})
-    build = subprocess.run(["kubectl", "delete", "-f", BUILD_YAML], capture_output=True, text=True)
-    print("Removing build: ", {build.stdout})
     print("Completed teardown!")
+
+def uninstall(server_version=None, server_path=None):
+    if server_path is None:
+        _, server_path = get_launch_paths(server_version, None)
+
+    server_executable = os.path.basename(server_path)
+    if platform.system() != 'Windows':
+        server_executable = f"./{server_executable}"
+    else:
+        server_executable = server_path
+
+    try:
+        server = subprocess.Popen([server_executable, "--uninstall"],stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.dirname(server_path))
+    except:
+        raise Exception(f"Error occured while uninstalling")
+
+    server_stdout_thread = threading.Thread(target=read_output, args=(server, '[server]'))
+    server_stderr_thread = threading.Thread(target=read_error, args=(server, '[server]'))
+    server_stdout_thread.start()
+    server_stderr_thread.start()
+    server_stdout_thread.join()
+    server_stderr_thread.join()
 
 def check_expected_services(config):
     is_local = config["IsLocal"]
@@ -348,10 +353,11 @@ def check_expected_services(config):
     
     return True 
 
-def create_config_json(s2_path, context, registry_port=5000):
+def create_config_json(s2_path, context, driver, is_dev):
     config = {
         "IsLocal":True,
-        "ServerPort":"8080",
+        "IsDev": is_dev,
+        "ServerPort": 8080,
         "KanikoImage":"gcr.io/kaniko-project/executor:latest",
         "WorkDir":"/app",
         "FileDir":"/files",
@@ -361,9 +367,10 @@ def create_config_json(s2_path, context, registry_port=5000):
         "Bucket":"forge-bucket",
         "Database":"./zetaforge.db",
         "KubeContext": context,
+        "SetupVersion":"1",
         "Local": {
-            "BucketPort":"8333",
-            "RegistryPort": str(registry_port)
+            "BucketPort": 8333,
+            "Driver": driver
         }
     } 
 
@@ -372,3 +379,5 @@ def create_config_json(s2_path, context, registry_port=5000):
         json.dump(config, outfile)
 
     return file_path
+
+

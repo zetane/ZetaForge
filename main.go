@@ -3,23 +3,20 @@ package main
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
 	"database/sql"
 	"embed"
 	"encoding/base64"
-	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
-	"math/big"
-	"net"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
+	"fmt"
 	"server/zjson"
 
 	"github.com/gin-gonic/gin"
@@ -32,7 +29,8 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
-	"github.com/mixpanel/mixpanel-go"
+	"github.com/getsentry/sentry-go"
+	sentrygin "github.com/getsentry/sentry-go/gin"
 )
 
 //go:embed db/migrations/*.sql
@@ -40,7 +38,8 @@ var migrations embed.FS
 
 type Config struct {
 	IsLocal         bool
-	ServerPort      string
+	IsDev           bool
+	ServerPort      int
 	KanikoImage     string
 	WorkDir         string
 	FileDir         string
@@ -49,13 +48,14 @@ type Config struct {
 	ServiceAccount  string
 	Bucket          string
 	Database        string
+	SetupVersion    string
 	Local           Local `json:"Local,omitempty"`
 	Cloud           Cloud `json:"Cloud,omitempty"`
 }
 
 type Local struct {
-	BucketPort   string
-	RegistryPort string
+	BucketPort int
+	Driver     string
 }
 
 type Cloud struct {
@@ -89,51 +89,12 @@ func createLogger(pipelineId string, file io.Writer, messageFunc func(string, st
 	return io.MultiWriter(os.Stdout, wsWriter, file)
 }
 
-// UTILITY FUNCTIONS FOR GENERATING DISTINCT ID FOR MIXPANEL
-func macAddressToDecimal(mac string) (*big.Int, error) {
-	macWithoutColons := strings.ReplaceAll(mac, ":", "")
-
-	macBytes, err := hex.DecodeString(macWithoutColons)
-	if err != nil {
-		return nil, err
-	}
-
-	// Convert the byte slice to a BigInt
-	macAsBigInt := new(big.Int).SetBytes(macBytes)
-
-	return macAsBigInt, nil
-
-}
-
-func getMACAddress() (string, *big.Int, error) {
-
-	// return value: big Int, which is MAC address of the device. In the case of Failure, we return zero, as big Int.
-
-	interfaces, err := net.Interfaces()
-	if err != nil {
-		return "", nil, err
-	}
-
-	// Find the first non-loopback interface with a hardware address
-	for _, iface := range interfaces {
-		if iface.Flags&net.FlagLoopback == 0 && len(iface.HardwareAddr) > 0 {
-			macAddress := iface.HardwareAddr.String()
-			macInt, err := macAddressToDecimal(macAddress)
-			if err != nil {
-				return "", nil, err
-			}
-			return macAddress, macInt, nil
-		}
-	}
-
-	return "", new(big.Int).SetInt64(int64(0)), fmt.Errorf("unable to determine distinct_id, using default distinct_id")
-}
-
-func validateJson(ctx context.Context, body io.ReadCloser) (zjson.Pipeline, HTTPError) {
-	schema, err := json.Marshal(jsonschema.Reflect(&zjson.Pipeline{}))
+func validateJson[D any](body io.ReadCloser) (D, HTTPError) {
+	var data D
+	schema, err := json.Marshal(jsonschema.Reflect(data))
 
 	if err != nil { // Should never happen outside of development
-		return zjson.Pipeline{}, InternalServerError{err.Error()}
+		return data, InternalServerError{err.Error()}
 	}
 
 	buffer := new(bytes.Buffer)
@@ -144,7 +105,7 @@ func validateJson(ctx context.Context, body io.ReadCloser) (zjson.Pipeline, HTTP
 	result, err := gojsonschema.Validate(schemaLoader, jsonLoader)
 
 	if err != nil {
-		return zjson.Pipeline{}, InternalServerError{err.Error()}
+		return data, InternalServerError{err.Error()}
 	}
 
 	if !result.Valid() {
@@ -153,38 +114,28 @@ func validateJson(ctx context.Context, body io.ReadCloser) (zjson.Pipeline, HTTP
 			listError = append(listError, error.String())
 		}
 		stringError := strings.Join(listError, "\n")
-		return zjson.Pipeline{}, BadRequest{stringError}
+		return data, BadRequest{stringError}
 	}
 
-	var pipeline zjson.Pipeline
-	if err := json.Unmarshal(buffer.Bytes(), &pipeline); err != nil {
-		return zjson.Pipeline{}, InternalServerError{err.Error()}
+	if err := json.Unmarshal(buffer.Bytes(), &data); err != nil {
+		return data, InternalServerError{err.Error()}
 	}
 
-	//Get Mac address as a big integer, then hash it with sha256. Note that, this might give a different result if we run s2 from the cloud
-	_, macInt, err := getMACAddress()
+	return data, nil
+}
+
+func setupSentry() {
+	err := sentry.Init(sentry.ClientOptions{
+		Dsn: "https://7fb18e8e487455a950298625457264f3@o1096443.ingest.us.sentry.io/4507031960223744",
+	})
 	if err != nil {
-		log.Printf("Mixpanel error; err=%v", err)
+		log.Fatalf("Failed to start Sentry; err=%s", err)
 	}
-
-	macAsString := macInt.String()
-	hash := sha256.New()
-	hash.Write([]byte(macAsString))
-	hashedResult := hash.Sum(nil)
-	distinctID := hex.EncodeToString(hashedResult)
-
-	mp := mixpanel.NewApiClient("4c09914a48f08de1dbe3dc4dd2dcf90d")
-	if err := mp.Track(ctx, []*mixpanel.Event{
-		mp.NewEvent("Run Created", distinctID, map[string]interface{}{
-			"distinct_id": distinctID,
-		}),
-	}); err != nil {
-		log.Printf("Mixpanel error; err=%v", err)
-	}
-	return pipeline, nil
+	defer sentry.Flush(2 * time.Second)
 }
 
 func main() {
+	ctx := context.Background()
 	file, err := os.ReadFile("config.json")
 	if err != nil {
 		log.Fatalf("Config file missing; err=%v", err)
@@ -195,6 +146,10 @@ func main() {
 		log.Fatalf("Config file invalid; err=%v", err)
 		return
 	}
+
+	//Initialize mixpanelClient only once(it's singleton)
+	mixpanelClient = InitMixpanelClient(ctx, "4c09914a48f08de1dbe3dc4dd2dcf90d", config)
+	setupSentry()
 
 	db, err := sql.Open("sqlite3", config.Database)
 	if err != nil {
@@ -217,6 +172,16 @@ func main() {
 			clientcmd.NewDefaultClientConfigLoadingRules(),
 			&clientcmd.ConfigOverrides{},
 		)
+
+		// Switching to Cobra if we need more arguments
+		if len(os.Args) > 1 {
+			if os.Args[1] == "--uninstall" {
+				uninstall(ctx, client, db)
+				return
+			}
+			os.Exit(1)
+		}
+		setup(ctx, config, client, db)
 	} else {
 		cacert, err := base64.StdEncoding.DecodeString(config.Cloud.CaCert)
 		if err != nil {
@@ -258,38 +223,35 @@ func main() {
 
 		c.Next()
 	})
+
+	router.Use(sentrygin.New(sentrygin.Options{}))
+
 	router.POST("/execute", func(ctx *gin.Context) {
-		pipeline, err := validateJson(ctx.Request.Context(), ctx.Request.Body)
+		execution, err := validateJson[zjson.Execution](ctx.Request.Body)
 		if err != nil {
 			log.Printf("Invalid json request; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
 
-		res, err := createPipeline(ctx.Request.Context(), db, "org", pipeline)
+		res, err := createPipeline(ctx.Request.Context(), db, "org", execution.Pipeline)
 		if err != nil {
 			log.Printf("Failed to create pipeline; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
 
-		executionId, uuidErr := uuid.NewV7()
-		if uuidErr != nil {
-			log.Printf("uuid generation failed; err=%v", uuidErr)
-			ctx.String(500, fmt.Sprintf("%v", uuidErr))
-		}
-
 		// TODO: client needs to handle file uploading to S3
 		// along with handling results files
-		sink := filepath.Join(pipeline.Sink, "history", executionId.String())
-		pipeline.Sink = sink
+		sink := filepath.Join(execution.Pipeline.Sink, "history", execution.Id)
+		execution.Pipeline.Sink = sink
 		if config.IsLocal {
-			go localExecute(&pipeline, res.ID, executionId.String(), config, client, db, hub)
+			go localExecute(&execution.Pipeline, res.ID, execution.Id, execution.Build, config, client, db, hub)
 		} else {
-			go cloudExecute(&pipeline, res.ID, executionId.String(), config, client, db, hub)
+			go cloudExecute(&execution.Pipeline, res.ID, execution.Id, execution.Build, config, client, db, hub)
 		}
 		newRes := make(map[string]any)
-		newRes["executionId"] = executionId.String()
+		newRes["executionId"] = execution.Id
 		newRes["history"] = sink
 		newRes["pipeline"] = res
 		ctx.JSON(http.StatusCreated, newRes)
@@ -300,7 +262,7 @@ func main() {
 			CheckOrigin: func(r *http.Request) bool {
 				// Allow specific origin
 				origin := r.Header.Get("Origin")
-				return strings.HasPrefix(origin, "http://localhost") || strings.HasPrefix(origin, "http://127.0.0.1") || strings.HasPrefix(origin, "file://") 
+				return strings.HasPrefix(origin, "http://localhost") || strings.HasPrefix(origin, "http://127.0.0.1") || strings.HasPrefix(origin, "file://")
 			},
 
 			ReadBufferSize:  1024,
@@ -321,7 +283,7 @@ func main() {
 
 	pipeline := router.Group("/pipeline")
 	pipeline.POST("", func(ctx *gin.Context) {
-		pipeline, err := validateJson(ctx.Request.Context(), ctx.Request.Body)
+		pipeline, err := validateJson[zjson.Pipeline](ctx.Request.Body)
 		if err != nil {
 			log.Printf("Invalid json request; err=%v", err)
 			ctx.String(err.Status(), err.Error())
@@ -456,9 +418,9 @@ func main() {
 		pipeline.Sink = sink
 
 		if config.IsLocal {
-			go localExecute(&pipeline, res.ID, executionId.String(), config, client, db, hub)
+			go localExecute(&pipeline, res.ID, executionId.String(), false, config, client, db, hub)
 		} else {
-			go cloudExecute(&pipeline, res.ID, executionId.String(), config, client, db, hub)
+			go cloudExecute(&pipeline, res.ID, executionId.String(), false, config, client, db, hub)
 		}
 
 		newRes := make(map[string]any)
@@ -483,5 +445,5 @@ func main() {
 		}
 	})
 
-	router.Run(":" + config.ServerPort)
+	router.Run(fmt.Sprintf(":%d", config.ServerPort))
 }

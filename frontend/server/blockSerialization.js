@@ -1,7 +1,8 @@
-import { spawnSync } from "child_process";
+import { execFile, spawnSync } from "child_process";
 import { app } from "electron";
 import fs from "fs/promises";
-import path from "path";
+import path, { resolve } from "path";
+import { SPECS_FILE_NAME } from "../src/utils/constants";
 import { fileExists } from "./fileSystem";
 
 export async function compileComputation(blockPath) {
@@ -22,7 +23,7 @@ export async function compileComputation(blockPath) {
 }
 
 export async function saveBlockSpecs(blockPath, specs) {
-  const specsPath = path.join(blockPath, "specs_v1.json");
+  const specsPath = path.join(blockPath, SPECS_FILE_NAME);
 
   removeConnections(specs.inputs)
   removeConnections(specs.outputs)
@@ -39,4 +40,23 @@ function removeConnections(io) {
   }
   
   return io;
+}
+
+export async function runTest(blockPath, blockKey) {
+  const scriptPath = app.isPackaged? path.join(process.resourcesPath, "resources", "run_test.py") : path.join("resources", "run_test.py");
+  if (!(await fileExists(scriptPath))) {
+    throw new Error(`Could not find script for running tests: ${scriptPath}`)
+  }
+  
+  return new Promise(() => {
+    execFile("python", [scriptPath, blockPath, blockKey], (error, stdout, stderr) => {
+      if (error) {
+        rejects(error);
+      }
+
+      console.log(stdout);
+      console.error(stderr);
+      resolve();
+    })
+  })
 }

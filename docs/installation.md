@@ -11,7 +11,15 @@ You need to install Docker Desktop or any other container runtime that includes 
 Follow the instructions to [install Docker Desktop](https://docs.docker.com/desktop/) from their official website.
 You will need to [enable Kubernetes](https://docs.docker.com/desktop/kubernetes/) to use ZetaForge.
 
+> Note: We recommend [disabling SBOM indexing](disabling-sbom.md) on Docker Desktop for performance reasons.
+
 > Note: We recommend [OrbStack](https://orbstack.dev/download) to macOS users for efficiency and performance reasons.
+
+If enabling Kubernetes is not possible or you would rather not, you can install [Minikube](https://minikube.sigs.k8s.io/docs/start) instead.
+Once installed, run the following command in a terminal to verify the installation:
+```
+minikube version
+```
 
 ## Install ZetaForge
 You can get ZetaForge by downloading the application or installing ZetaForge Python package through pip.

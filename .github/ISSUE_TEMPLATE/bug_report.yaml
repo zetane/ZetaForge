@@ -1,0 +1,99 @@
+name: Bug Report
+description: >
+  Request form for general bugs. 
+labels: [bug]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: >
+        Summary:
+      description: >
+        Write a short description of the bug.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: >
+        Expected behavior:
+      description: >
+        What behavior did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: >
+        Actual behavior:
+      description: >
+        What actually happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: >
+        Steps to reproduce:
+      description: 
+        Write a step-by-step process on how to reproduce the bug.
+      placeholder: |
+        1. 
+        2. 
+        3. 
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: >
+        Zetaforge version:
+      description: 
+        Enter the Zetaforge version on which you experienced the bug.
+      placeholder: 0.1.1
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      description: >
+        Enter the operating system on which you experienced the bug.
+      options:
+        - 'Windows'
+        - 'MacOs'
+        - 'Other (specify)'
+    validations:
+      required: true
+  - type: input
+    id: osOther
+    attributes:
+      label: >
+        Other operating system:
+      description: >
+        Enter your operating system if you selected "Other" above.
+      placeholder: Arch
+  - type: textarea
+    id: logs
+    attributes:
+      label: >
+        Logs:
+      render: bash
+      description: >
+        Paste any relevant logs.
+    validations:
+      required: true
+  - type: textarea
+    id: recording
+    attributes:
+      label: >
+        Recording:
+      description: >
+        Attach a recording of the bug if relevant.
+  - type: textarea
+    id: extra
+    attributes:
+      label: >
+        Anything else?:
+      description: >
+        Share any additional information you think might help us resolve this bug.

@@ -2,7 +2,7 @@ package main
 
 import (
 	"archive/tar"
-	"compress/gzip"
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -13,10 +13,10 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"runtime"
+	"server/zjson"
 	"strings"
 	"time"
-
-	"server/zjson"
 
 	"github.com/argoproj/argo-workflows/v3/pkg/apiclient"
 	workflowpkg "github.com/argoproj/argo-workflows/v3/pkg/apiclient/workflow"
@@ -25,9 +25,13 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	endpoints "github.com/aws/smithy-go/endpoints"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
+	"github.com/go-cmd/cmd"
 	"golang.org/x/net/context"
+	"golang.org/x/sync/errgroup"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -36,11 +40,11 @@ const BUCKET = "zetaforge"
 
 type Endpoint struct {
 	Bucket string
-	S3Port string
+	S3Port int
 }
 
 func (endpoint *Endpoint) ResolveEndpoint(ctx context.Context, params s3.EndpointParameters) (endpoints.Endpoint, error) {
-	uri, err := url.Parse("http://localhost:" + endpoint.S3Port + "/" + endpoint.Bucket)
+	uri, err := url.Parse(fmt.Sprintf("http://localhost:%d/%s", endpoint.S3Port, endpoint.Bucket))
 	return endpoints.Endpoint{URI: *uri}, err
 }
 
@@ -79,90 +83,6 @@ func upload(ctx context.Context, source string, key string, cfg Config) error {
 
 	_, err = client.PutObject(ctx, params)
 	return err
-}
-
-func uploadFiles(ctx context.Context, source string, prefix string, cfg Config) error {
-	err := filepath.Walk(source, func(path string, info fs.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if !info.Mode().IsRegular() {
-			return nil
-		}
-
-		name := filepath.ToSlash(strings.TrimPrefix(
-			strings.Replace(path, filepath.Clean(source), "", -1),
-			string(filepath.Separator),
-		))
-
-		return upload(ctx, path, prefix+name, cfg)
-	})
-
-	return err
-}
-
-func tarFile(source string, key string) error {
-	file, err := os.Create(key)
-
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	gzw := gzip.NewWriter(file)
-	defer gzw.Close()
-
-	tw := tar.NewWriter(gzw)
-	defer tw.Close()
-
-	err = filepath.Walk(source, func(path string, info fs.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if !info.Mode().IsRegular() {
-			return nil
-		}
-
-		header, err := tar.FileInfoHeader(info, info.Name())
-
-		if err != nil {
-			return err
-		}
-
-		header.Name = filepath.ToSlash(strings.TrimPrefix(strings.Replace(path, source, "", -1), string(filepath.Separator)))
-
-		if err := tw.WriteHeader(header); err != nil {
-			return err
-		}
-
-		file, err := os.Open(path)
-		if err != nil {
-			return err
-		}
-
-		if _, err := io.Copy(tw, file); err != nil {
-			return err
-		}
-
-		return file.Close()
-	})
-
-	return err
-}
-
-func uploadTar(ctx context.Context, source string, buildFile string, uploadKey string, cfg Config) error {
-	if err := tarFile(source, buildFile); err != nil {
-		return err
-	}
-	defer os.Remove(buildFile)
-
-	if err := upload(ctx, buildFile, uploadKey, cfg); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func downloadFiles(ctx context.Context, sink string, prefix string, cfg Config) error {
@@ -225,8 +145,8 @@ func deleteFiles(ctx context.Context, prefix string, extraFiles []string, cfg Co
 
 	params := &s3.DeleteObjectsInput{
 		Bucket: aws.String(BUCKET),
-		Delete: &types.Delete{
-			Objects: []types.ObjectIdentifier{},
+		Delete: &s3types.Delete{
+			Objects: []s3types.ObjectIdentifier{},
 		},
 	}
 
@@ -234,15 +154,18 @@ func deleteFiles(ctx context.Context, prefix string, extraFiles []string, cfg Co
 		Bucket: aws.String(BUCKET),
 		Prefix: aws.String(prefix),
 	})
+	if err != nil {
+		log.Printf("Failed to delete files; err=%v", err)
+	}
 
 	for _, content := range res.Contents {
-		params.Delete.Objects = append(params.Delete.Objects, types.ObjectIdentifier{
+		params.Delete.Objects = append(params.Delete.Objects, s3types.ObjectIdentifier{
 			Key: content.Key,
 		})
 	}
 
 	for _, file := range extraFiles {
-		params.Delete.Objects = append(params.Delete.Objects, types.ObjectIdentifier{
+		params.Delete.Objects = append(params.Delete.Objects, s3types.ObjectIdentifier{
 			Key: aws.String(file),
 		})
 	}
@@ -332,68 +255,73 @@ func streaming(ctx context.Context, sink string, name string, room string, clien
 	}
 
 	serviceClient := cli.NewWorkflowServiceClient()
-	stream, err := serviceClient.WorkflowLogs(ctx, &workflowpkg.WorkflowLogRequest{
-		Namespace: namespace,
-		Name:      name,
-		LogOptions: &corev1.PodLogOptions{
-			Container: "main", // TODO expand logs
-			Follow:    true,
-		},
-	})
+	containerStream := func(containerName string) {
+		stream, err := serviceClient.WorkflowLogs(ctx, &workflowpkg.WorkflowLogRequest{
+			Namespace: namespace,
+			Name:      name,
+			LogOptions: &corev1.PodLogOptions{
+				Container: containerName,
+				Follow:    true,
+			},
+		})
 
-	if err != nil {
-		log.Printf("Log stream error; err=%v", err)
-		return
-	}
-
-	logMap := make(map[string][]string)
-
-	for {
-		event, err := stream.Recv()
-
-		if err == io.EOF {
-			break
-		} else if err != nil {
+		if err != nil {
 			log.Printf("Log stream error; err=%v", err)
-			break
-		}
-		// Remove the square brackets from the string
-		blockId := ""
-		blockId = strings.TrimPrefix(event.PodName, "[")
-		blockId = strings.TrimSuffix(blockId, "]")
-
-		parts := strings.Split(blockId, "-")
-
-		// Extract the desired parts
-		if len(parts) >= 4 {
-			blockId = strings.Join(parts[2:len(parts)-1], "-")
-		} else {
-			fmt.Println("Invalid input string format")
+			return
 		}
 
-		hub.Broadcast <- Message{
-			Room:    room,
-			Content: fmt.Sprintf("[%s]:::: %s", blockId, event.Content),
-		}
+		logMap := make(map[string][]string)
 
-		if _, ok := logMap[blockId]; ok {
-			logMap[blockId] = append(logMap[blockId], event.Content)
-		} else {
-			logMap[blockId] = []string{event.Content}
-		}
-	}
+		for {
+			event, err := stream.Recv()
 
-	if sink != "" {
-		for podname, logs := range logMap {
-			path := filepath.Join(sink, "logs", podname+".log")
-			if err := writeFile(path, strings.Join(logs, "\n")); err != nil {
+			if err == io.EOF {
+				break
+			} else if err != nil {
 				log.Printf("Log stream error; err=%v", err)
+				break
+			}
+			// Remove the square brackets from the string
+			blockId := ""
+			blockId = strings.TrimPrefix(event.PodName, "[")
+			blockId = strings.TrimSuffix(blockId, "]")
+
+			parts := strings.Split(blockId, "-")
+
+			// Extract the desired parts
+			if len(parts) >= 4 {
+				blockId = strings.Join(parts[2:len(parts)-1], "-")
+			} else {
+				fmt.Println("Invalid input string format")
+			}
+
+			hub.Broadcast <- Message{
+				Room:    room,
+				Content: fmt.Sprintf("[%s]:::: %s", blockId, event.Content),
+			}
+
+			logMap[blockId] = append(logMap[blockId], event.Content)
+		}
+
+		if sink != "" {
+			for podname, logs := range logMap {
+				path := filepath.Join(sink, "logs", podname+"-"+containerName+".log")
+				if err := writeFile(path, strings.Join(logs, "\n")); err != nil {
+					log.Printf("Log stream error; err=%v", err)
+				}
 			}
 		}
+	}
+
+	for _, container := range []string{"main"} {
+		go containerStream(container)
 	}
 }
 
 func runArgo(ctx context.Context, workflow *wfv1.Workflow, sink string, pipeline string, execution int64, client clientcmd.ClientConfig, db *sql.DB, hub *Hub) (*wfv1.Workflow, error) {
+	//mixpanelClient is singleton, so a new instance won't be created.
+	mixpanelClient := GetMixpanelClient()
+
 	ctx, cli, err := apiclient.NewClientFromOpts(
 		apiclient.Opts{
 			ClientConfigSupplier: func() clientcmd.ClientConfig {
@@ -444,7 +372,9 @@ func runArgo(ctx context.Context, workflow *wfv1.Workflow, sink string, pipeline
 		}
 
 		if workflow.Status.Phase.Completed() {
+
 			log.Printf("Status: Completed")
+			mixpanelClient.TrackEvent(ctx, "Run Completed", map[string]any{})
 			break
 		}
 		time.Sleep(time.Second)
@@ -475,6 +405,11 @@ func deleteArgo(ctx context.Context, name string, client clientcmd.ClientConfig)
 		},
 	)
 
+	if err != nil {
+		log.Printf("Failed to delete workflow %s; err=%v", name, err)
+		return
+	}
+
 	namespace, _, err := client.Namespace()
 
 	if err != nil {
@@ -494,7 +429,122 @@ func deleteArgo(ctx context.Context, name string, client clientcmd.ClientConfig)
 	}
 }
 
-func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Config, client clientcmd.ClientConfig, db *sql.DB, hub *Hub) {
+func buildImage(ctx context.Context, source string, tag string, cfg Config) error {
+	if cfg.Local.Driver == "minikube" {
+		minikubeBuild := cmd.NewCmd("minikube", "-p", "zetaforge", "image", "build", "-t", tag, source)
+		minikubeChan := minikubeBuild.Start()
+		lineCount := 0
+		done := false
+
+		for {
+			select {
+			case <-minikubeChan:
+				done = true
+			default:
+				output := minikubeBuild.Status().Stderr
+				if len(output) > lineCount {
+					for i := 0; i < len(output)-lineCount; i++ {
+						log.Println(output[lineCount+i])
+					}
+					lineCount = len(output)
+				}
+			}
+			if done {
+				break
+			}
+		}
+
+		output := minikubeBuild.Status().Stderr
+		if len(output) > lineCount {
+			for i := 0; i < len(output)-lineCount; i++ {
+				log.Println(output[lineCount+i])
+			}
+		}
+
+		minikubeImage := cmd.NewCmd("minikube", "-p", "zetaforge", "image", "ls")
+		<-minikubeImage.Start()
+		for _, line := range minikubeImage.Status().Stdout {
+			if "docker.io/"+tag == line {
+				return nil
+			}
+		}
+
+		return errors.New("Failed to build image: " + tag)
+	} else {
+		dockerClient, err := client.NewClientWithOpts(
+			client.WithAPIVersionNegotiation(),
+		)
+		if err != nil {
+			return err
+		}
+		defer dockerClient.Close()
+
+		buff := bytes.NewBuffer(nil)
+		tw := tar.NewWriter(buff)
+		err = filepath.Walk(source, func(path string, info fs.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+
+			if !info.Mode().IsRegular() {
+				return nil
+			}
+
+			header, err := tar.FileInfoHeader(info, info.Name())
+
+			if err != nil {
+				return err
+			}
+
+			header.Name = filepath.ToSlash(strings.TrimPrefix(strings.Replace(path, source, "", -1), string(filepath.Separator)))
+
+			if err := tw.WriteHeader(header); err != nil {
+				return err
+			}
+
+			file, err := os.Open(path)
+			if err != nil {
+				return err
+			}
+
+			if _, err := io.Copy(tw, file); err != nil {
+				return err
+			}
+
+			return file.Close()
+		})
+		if err != nil {
+			return err
+		}
+		if err := tw.Close(); err != nil {
+			return err
+		}
+
+		resp, err := dockerClient.ImageBuild(ctx, buff, types.ImageBuildOptions{
+			Tags:        []string{tag},
+			Remove:      true,
+			ForceRemove: true,
+		})
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+
+		stream := make([]byte, 100)
+
+		for {
+			n, err := resp.Body.Read(stream)
+			if err == io.EOF {
+				return nil
+			} else if err != nil {
+				return err
+			}
+			log.Println(string(stream[:n]))
+		}
+	}
+}
+
+func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, build bool, cfg Config, client clientcmd.ClientConfig, db *sql.DB, hub *Hub) {
 	ctx := context.Background()
 	defer log.Printf("Completed")
 
@@ -554,7 +604,7 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 
 	s3key := pipeline.Id + "/" + executionId
 
-	workflow, blocks, err := translate(ctx, pipeline, "org", cfg, s3key)
+	workflow, blocks, err := translate(ctx, pipeline, "org", s3key, build, cfg)
 	if err != nil {
 		log.Printf("Failed to translate the pipeline; err=%v", err)
 		return
@@ -576,35 +626,26 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 		return
 	}
 
-	executionFiles := s3key
+	eg, egCtx := errgroup.WithContext(ctx)
+	eg.SetLimit(runtime.NumCPU())
 
-	uploadedFiles := []string{}
 	for path, image := range blocks {
+		// Duplicate variables -> https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/loopclosure
+		path := path
+		image := image
 		log.Printf("Path: %s", path)
 		log.Printf("Image: %s", image)
-		if _, err := os.Stat(filepath.Join(path, cfg.ComputationFile)); err != nil {
-			deleteFiles(ctx, executionFiles, uploadedFiles, cfg)
-			log.Printf("Computation file does not exist; err=%v", err)
-			return
-		}
 
 		if len(image) > 0 {
-			buildFile := image + "-build.tar.gz"
-			if err := uploadTar(ctx, path, buildFile, buildFile, cfg); err != nil {
-				deleteFiles(ctx, executionFiles, uploadedFiles, cfg)
-				log.Printf("Failed to upload build context; err=%v", err)
-				return
-			}
-			uploadedFiles = append(uploadedFiles, buildFile)
+			eg.Go(func() error {
+				return buildImage(egCtx, path, image, cfg)
+			})
 		}
+	}
 
-		name := s3key + "/" + filepath.Base(path) + ".py"
-		if err := upload(ctx, filepath.Join(path, cfg.ComputationFile), name, cfg); err != nil {
-			deleteFiles(ctx, executionFiles, uploadedFiles, cfg)
-			log.Printf("Failed to upload computation file; err=%v", err)
-			return
-		}
-		uploadedFiles = append(uploadedFiles, name)
+	if err := eg.Wait(); err != nil {
+		log.Printf("Error during pipeline execution; err=%v", err)
+		return
 	}
 
 	workflow, err = runArgo(ctx, workflow, pipeline.Sink, pipeline.Id, execution.ID, client, db, hub)
@@ -621,13 +662,13 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 		return
 	}
 
-	if err := downloadFiles(ctx, pipeline.Sink, executionFiles, cfg); err != nil {
+	if err := downloadFiles(ctx, pipeline.Sink, s3key, cfg); err != nil {
 		log.Printf("Failed to download files; err=%v", err)
 		return
 	}
 }
 
-func cloudExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Config, client clientcmd.ClientConfig, db *sql.DB, hub *Hub) {
+func cloudExecute(pipeline *zjson.Pipeline, id int64, executionId string, build bool, cfg Config, client clientcmd.ClientConfig, db *sql.DB, hub *Hub) {
 	ctx := context.Background()
 	defer log.Printf("Completed")
 
@@ -646,7 +687,7 @@ func cloudExecute(pipeline *zjson.Pipeline, id int64, executionId string, cfg Co
 
 	s3key := pipeline.Id + "/" + executionId
 
-	workflow, _, err := translate(ctx, pipeline, "org", cfg, s3key)
+	workflow, _, err := translate(ctx, pipeline, "org", s3key, build, cfg)
 	if err != nil {
 		log.Printf("Failed to translate the pipeline; err=%v", err)
 		return
