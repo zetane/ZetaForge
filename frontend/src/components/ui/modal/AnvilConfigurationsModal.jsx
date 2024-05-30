@@ -116,8 +116,8 @@ function AddRow() {
   const [config, setConfig] = useState({
     name: "",
     host: "",
-    anvilPort: "",
-    s3Port: "",
+    anvilPort: 0,
+    s3Port: 0,
   });
 
   function handleKeyDown(event) {
