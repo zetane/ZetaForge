@@ -238,7 +238,6 @@ func kubectlCheckPods(ctx context.Context, clientConfig *rest.Config) error {
 
 func migrate(ctx context.Context, resources map[string]string, config Config, clientConfig *rest.Config, db *sql.DB) error {
 	setupVersion, err := getSetupVersion(ctx, db)
-	log.Println(setupVersion)
 	var version string
 	if err != nil {
 		version = config.SetupVersion

@@ -5,7 +5,6 @@ import (
 	"context"
 	"database/sql"
 	"embed"
-	"encoding/base64"
 	"encoding/json"
 	"io"
 	"log"
@@ -27,7 +26,6 @@ import (
 	"github.com/pressly/goose/v3"
 	"github.com/xeipuuv/gojsonschema"
 	"k8s.io/client-go/tools/clientcmd"
-	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/getsentry/sentry-go"
 	sentrygin "github.com/getsentry/sentry-go/gin"
@@ -50,22 +48,11 @@ type Config struct {
 	Database        string
 	SetupVersion    string
 	Local           Local `json:"Local,omitempty"`
-	Cloud           Cloud `json:"Cloud,omitempty"`
 }
 
 type Local struct {
 	BucketPort int
 	Driver     string
-}
-
-type Cloud struct {
-	Registry     string
-	RegistryAddr string
-	RegistryUser string
-	RegistryPass string
-	ClusterIP    string
-	Token        string
-	CaCert       string
 }
 
 type WebSocketWriter struct {
@@ -166,13 +153,11 @@ func main() {
 		log.Fatalf("Failed to migrate database; err=%v", err)
 	}
 
-	var client clientcmd.ClientConfig
+	client := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+		clientcmd.NewDefaultClientConfigLoadingRules(),
+		&clientcmd.ConfigOverrides{},
+	)
 	if config.IsLocal {
-		client = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
-			clientcmd.NewDefaultClientConfigLoadingRules(),
-			&clientcmd.ConfigOverrides{},
-		)
-
 		// Switching to Cobra if we need more arguments
 		if len(os.Args) > 1 {
 			if os.Args[1] == "--uninstall" {
@@ -182,27 +167,6 @@ func main() {
 			os.Exit(1)
 		}
 		setup(ctx, config, client, db)
-	} else {
-		cacert, err := base64.StdEncoding.DecodeString(config.Cloud.CaCert)
-		if err != nil {
-			log.Fatalf("Invalid CA certificate; err=%v", err)
-		}
-
-		cfg := clientcmdapi.NewConfig()
-		cfg.Clusters["zetacluster"] = &clientcmdapi.Cluster{
-			Server:                   "https://" + config.Cloud.ClusterIP,
-			CertificateAuthorityData: cacert,
-		}
-		cfg.AuthInfos["zetaauth"] = &clientcmdapi.AuthInfo{
-			Token: config.Cloud.Token,
-		}
-		cfg.Contexts["zetacontext"] = &clientcmdapi.Context{
-			Cluster:  "zetacluster",
-			AuthInfo: "zetaauth",
-		}
-		cfg.CurrentContext = "zetacontext"
-
-		client = clientcmd.NewDefaultClientConfig(*cfg, &clientcmd.ConfigOverrides{})
 	}
 
 	hub := newHub()

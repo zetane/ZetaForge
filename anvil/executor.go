@@ -39,12 +39,13 @@ import (
 const BUCKET = "zetaforge"
 
 type Endpoint struct {
-	Bucket string
-	S3Port int
+	Address string
+	Bucket  string
+	S3Port  int
 }
 
 func (endpoint *Endpoint) ResolveEndpoint(ctx context.Context, params s3.EndpointParameters) (endpoints.Endpoint, error) {
-	uri, err := url.Parse(fmt.Sprintf("http://localhost:%d/%s", endpoint.S3Port, endpoint.Bucket))
+	uri, err := url.Parse(fmt.Sprintf("http://%s:%d/%s", endpoint.Address, endpoint.S3Port, endpoint.Bucket))
 	return endpoints.Endpoint{URI: *uri}, err
 }
 
@@ -58,7 +59,11 @@ func s3Client(ctx context.Context, cfg Config) (*s3.Client, error) {
 		return &s3.Client{}, err
 	}
 	client := s3.NewFromConfig(awsConfig, func(o *s3.Options) {
-		o.EndpointResolverV2 = &Endpoint{Bucket: BUCKET, S3Port: cfg.Local.BucketPort}
+		if cfg.IsLocal {
+			o.EndpointResolverV2 = &Endpoint{Address: "localhost", Bucket: BUCKET, S3Port: cfg.Local.BucketPort}
+		} else {
+			o.EndpointResolverV2 = &Endpoint{Address: "weed", Bucket: BUCKET, S3Port: cfg.Local.BucketPort}
+		}
 	})
 
 	return client, nil
@@ -247,8 +252,6 @@ func streaming(ctx context.Context, sink string, name string, room string, clien
 		return
 	}
 
-	namespace, _, err := client.Namespace()
-
 	if err != nil {
 		log.Printf("Log stream error; err=%v", err)
 		return
@@ -257,7 +260,7 @@ func streaming(ctx context.Context, sink string, name string, room string, clien
 	serviceClient := cli.NewWorkflowServiceClient()
 	containerStream := func(containerName string) {
 		stream, err := serviceClient.WorkflowLogs(ctx, &workflowpkg.WorkflowLogRequest{
-			Namespace: namespace,
+			Namespace: "default",
 			Name:      name,
 			LogOptions: &corev1.PodLogOptions{
 				Container: containerName,
@@ -335,15 +338,13 @@ func runArgo(ctx context.Context, workflow *wfv1.Workflow, sink string, pipeline
 		return nil, err
 	}
 
-	namespace, _, err := client.Namespace()
-
 	if err != nil {
 		return nil, err
 	}
 
 	serviceClient := cli.NewWorkflowServiceClient()
 	workflow, err = serviceClient.CreateWorkflow(ctx, &workflowpkg.WorkflowCreateRequest{
-		Namespace: namespace,
+		Namespace: "default",
 		Workflow:  workflow,
 	})
 
@@ -357,7 +358,7 @@ func runArgo(ctx context.Context, workflow *wfv1.Workflow, sink string, pipeline
 	for {
 		workflow, err = serviceClient.GetWorkflow(ctx, &workflowpkg.WorkflowGetRequest{
 			Name:      workflow.Name,
-			Namespace: namespace,
+			Namespace: "default",
 		})
 
 		if err != nil {
@@ -381,14 +382,15 @@ func runArgo(ctx context.Context, workflow *wfv1.Workflow, sink string, pipeline
 	}
 
 	if workflow.Status.Phase != wfv1.WorkflowSucceeded {
-		errorCode := ""
+		errorCode := "workflow: " + workflow.Status.Message + ";"
 		for name, node := range workflow.Status.Nodes {
 			if node.Type == wfv1.NodeTypePod {
 				if node.Phase == wfv1.NodeFailed || node.Phase == wfv1.NodeError {
-					errorCode += name + ": " + node.Message
+					errorCode += name + ": " + node.Message + ";"
 				}
 			}
 		}
+
 		return workflow, errors.New(errorCode)
 	}
 
@@ -410,8 +412,6 @@ func deleteArgo(ctx context.Context, name string, client clientcmd.ClientConfig)
 		return
 	}
 
-	namespace, _, err := client.Namespace()
-
 	if err != nil {
 		log.Printf("Failed to delete workflow %s; err=%v", name, err)
 		return
@@ -420,7 +420,7 @@ func deleteArgo(ctx context.Context, name string, client clientcmd.ClientConfig)
 	serviceClient := cli.NewWorkflowServiceClient()
 	_, err = serviceClient.DeleteWorkflow(ctx, &workflowpkg.WorkflowDeleteRequest{
 		Name:      name,
-		Namespace: namespace,
+		Namespace: "default",
 		Force:     false,
 	})
 
@@ -685,6 +685,11 @@ func cloudExecute(pipeline *zjson.Pipeline, id int64, executionId string, build 
 	}
 	defer hub.CloseRoom(pipeline.Id)
 
+	if err := upload(ctx, cfg.EntrypointFile, cfg.EntrypointFile, cfg); err != nil { // should never fail
+		log.Printf("Failed to upload entrypoint file; err=%v", err)
+		return
+	}
+
 	s3key := pipeline.Id + "/" + executionId
 
 	workflow, _, err := translate(ctx, pipeline, "org", s3key, build, cfg)
@@ -699,9 +704,9 @@ func cloudExecute(pipeline *zjson.Pipeline, id int64, executionId string, build 
 	}
 
 	workflow, err = runArgo(ctx, workflow, "", pipeline.Id, execution.ID, client, db, hub)
-	if workflow != nil {
+	/*if workflow != nil {
 		defer deleteArgo(ctx, workflow.Name, client)
-	}
+	}*/
 	if err != nil {
 		log.Printf("Error during pipeline execution; err=%v", err)
 		return

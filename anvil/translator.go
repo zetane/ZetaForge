@@ -11,9 +11,6 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"github.com/go-cmd/cmd"
-	"github.com/google/go-containerregistry/pkg/authn"
-	"github.com/google/go-containerregistry/pkg/name"
-	"github.com/google/go-containerregistry/pkg/v1/remote"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -55,44 +52,13 @@ func checkImage(ctx context.Context, tag string, cfg Config) (bool, error) {
 			return false, nil
 		}
 	} else {
-		repo, err := name.NewRepository(cfg.Cloud.RegistryAddr)
-		if err != nil {
-			return false, err
-		}
-
-		auth := authn.FromConfig(
-			authn.AuthConfig{
-				Username: cfg.Cloud.RegistryUser,
-				Password: cfg.Cloud.RegistryPass,
-			},
-		)
-
-		data, err := remote.List(repo, remote.WithAuth(auth))
-
-		if err != nil {
-			return false, err
-		}
-
-		for _, tagName := range data {
-			if tag == cfg.Cloud.RegistryAddr+":"+tagName {
-				return true, nil
-			}
-		}
-
-		return false, nil
+		return true, nil
 	}
 }
 
 func blockTemplate(block *zjson.Block, blockKey string, organization string, key string, cfg Config) *wfv1.Template {
-	var image string
-	var computationName string
-	if cfg.IsLocal {
-		image = "zetaforge/" + block.Action.Container.Image + ":" + block.Action.Container.Version
-		computationName = blockKey + ".py"
-	} else {
-		image = cfg.Cloud.RegistryAddr + ":" + organization + "-" + block.Action.Container.Image + "-" + block.Action.Container.Version
-		computationName = organization + "-" + blockKey + ".py"
-	}
+	image := "localhost:31111/zetaforge/" + block.Action.Container.Image + ":" + block.Action.Container.Version //TODO
+	computationName := blockKey + ".py"
 	entrypoint := wfv1.Artifact{
 		Name: "entrypoint",
 		Path: cfg.WorkDir + "/" + cfg.EntrypointFile,
@@ -135,13 +101,13 @@ func kanikoTemplate(block *zjson.Block, organization string, cfg Config) *wfv1.T
 	if cfg.IsLocal {
 		return nil
 	} else {
-		name := organization + "-" + block.Action.Container.Image + "-" + block.Action.Container.Version
+		name := "zetaforge/" + block.Action.Container.Image + ":" + block.Action.Container.Version
 		cmd := []string{
 			"/kaniko/executor",
 			"--context",
 			"tar:///workspace/context.tar.gz",
 			"--destination",
-			cfg.Cloud.RegistryAddr + ":" + name,
+			"registry:" + name,
 			"--compressed-caching=false",
 			"--snapshotMode=redo",
 			"--use-new-run",
@@ -151,12 +117,6 @@ func kanikoTemplate(block *zjson.Block, organization string, cfg Config) *wfv1.T
 			Container: &corev1.Container{
 				Image:   cfg.KanikoImage,
 				Command: cmd,
-				VolumeMounts: []corev1.VolumeMount{
-					{
-						Name:      "kaniko-secret",
-						MountPath: "/kaniko/.docker",
-					},
-				},
 			},
 			Inputs: wfv1.Inputs{Artifacts: []wfv1.Artifact{
 				{
@@ -172,22 +132,6 @@ func kanikoTemplate(block *zjson.Block, organization string, cfg Config) *wfv1.T
 					},
 				},
 			}},
-			Volumes: []corev1.Volume{
-				{
-					Name: "kaniko-secret",
-					VolumeSource: corev1.VolumeSource{
-						Secret: &corev1.SecretVolumeSource{
-							SecretName: cfg.Cloud.Registry,
-							Items: []corev1.KeyToPath{
-								{
-									Key:  ".dockerconfigjson",
-									Path: "config.json",
-								},
-							},
-						},
-					},
-				},
-			},
 		}
 	}
 
@@ -202,6 +146,7 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName:      pipeline.Id + "-",
 			CreationTimestamp: metav1.Now(),
+			Namespace:         "default",
 		},
 		Spec: wfv1.WorkflowSpec{
 			ArtifactRepositoryRef: &wfv1.ArtifactRepositoryRef{
@@ -291,24 +236,12 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 			})
 		}
 
-		var filesName string
-		if cfg.IsLocal {
-			filesName = key
-		} else {
-			filesName = organization + "/" + key
-			workflow.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
-				{
-					Name: cfg.Cloud.Registry,
-				},
-			}
-		}
-
 		template.Inputs.Artifacts = append(template.Inputs.Artifacts, wfv1.Artifact{
 			Name: "in",
 			Path: cfg.FileDir,
 			ArtifactLocation: wfv1.ArtifactLocation{
 				S3: &wfv1.S3Artifact{
-					Key: filesName,
+					Key: key,
 				},
 			},
 			Archive: &wfv1.ArchiveStrategy{
@@ -320,7 +253,7 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 			Path: cfg.FileDir,
 			ArtifactLocation: wfv1.ArtifactLocation{
 				S3: &wfv1.S3Artifact{
-					Key: filesName,
+					Key: key,
 				},
 			},
 			Archive: &wfv1.ArchiveStrategy{
