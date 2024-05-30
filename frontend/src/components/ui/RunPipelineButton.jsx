@@ -11,7 +11,7 @@ import { useImmerAtom } from "jotai-immer";
 import { useRef, useState } from "react";
 import { uuidv7 } from "uuidv7";
 import ClosableModal from "./modal/ClosableModal";
-import { activeConfiguration } from "@/atoms/anvilHost";
+import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 
 export default function RunPipelineButton({ modalPopper, children, action }) {
   const [editor] = useAtom(drawflowEditorAtom);
@@ -19,7 +19,7 @@ export default function RunPipelineButton({ modalPopper, children, action }) {
   const [validationErrorMsg, setValidationErrorMsg] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [mixpanelService] = useAtom(mixpanelAtom)
-  const [configuration] = useAtom(activeConfiguration);
+  const [configuration] = useAtom(activeConfigurationAtom);
 
   const uploadParameterBlocks = trpc.uploadParameterBlocks.useMutation();
 

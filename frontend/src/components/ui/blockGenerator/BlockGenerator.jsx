@@ -3,8 +3,7 @@ import { Modal } from "@carbon/react";
 import { useImmerAtom } from "jotai-immer";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FileBlock } from "./FileBlock";
-
-import { activeConfiguration } from "@/atoms/anvilHost";
+import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { useAtom } from "jotai";
 
 const isTypeDisabled = (action) => {
@@ -35,7 +34,7 @@ const checkPath = async (path, count, setIframeSrc) => {
 
 const BlockGenerator = ({ block, openView, id, historySink, pipelineAtom }) => {
   const [_, setFocusAction] = useImmerAtom(pipelineAtom)
-  const [configuration] = useAtom(activeConfiguration)
+  const [configuration] = useAtom(activeConfigurationAtom)
 
   const styles = {
     top: `${block.views.node.pos_y}px`,

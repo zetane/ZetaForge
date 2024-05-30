@@ -24,7 +24,7 @@ import PipelineNameLabel from "./PipelineNameLabel";
 import RunPipelineButton from "./RunPipelineButton";
 import SaveAsPipelineButton from "./SaveAsPipelineButton";
 import SavePipelineButton from "./SavePipelineButton";
-import AnvilConfigModal from "./modal/AnvilConfigModal";
+import AnvilConfigurationsModal from "./modal/AnvilConfigurationsModal";
 import ApiKeysModal from "./modal/ApiKeysModal";
 
 export default function Navbar({ children }) {
@@ -134,7 +134,7 @@ export default function Navbar({ children }) {
             <span>API Keys</span>
           </HeaderMenuItem>
           <HeaderMenuItem
-            onClick={() => modalPopper(<AnvilConfigModal />)}>
+            onClick={() => modalPopper(<AnvilConfigurationsModal />)}>
             Anvil Configurations
           </HeaderMenuItem>
           <HeaderMenuItem label="Theme" onClick={() => setDarkMode(!darkMode)}>

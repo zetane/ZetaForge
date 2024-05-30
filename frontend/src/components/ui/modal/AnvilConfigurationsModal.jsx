@@ -1,19 +1,19 @@
-import { defaultAnvilConfiguration, userAnvilConfigurations, addConfiguration, removeConfiguration, activeIndex } from "@/atoms/anvilHost";
-import { IconButton, NumberInput, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableSelectRow, TextInput } from "@carbon/react";
+import { defaultAnvilConfigurationAtom, userAnvilConfigurationsAtom, addConfigurationAtom, removeConfigurationAtom, activeIndexAtom } from "@/atoms/anvilConfigurationsAtom";
+import { Button, IconButton, NumberInput, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableSelectRow, TextInput } from "@carbon/react";
 import { useAtom } from "jotai";
 import ClosableModal from "./ClosableModal";
 import { Add, TrashCan } from "@carbon/icons-react";
 import { useState } from "react";
 
-export default function AnvilConfigModal() {
-  const [defaultConfiguration] = useAtom(defaultAnvilConfiguration)
-  const [userConfigurations] = useAtom(userAnvilConfigurations)
+export default function AnvilConfigurationsModal() {
+  const [defaultAnvilConfiguration] = useAtom(defaultAnvilConfigurationAtom)
+  const [userAnvilConfigurations] = useAtom(userAnvilConfigurationsAtom)
 
-  const defaultRows = [defaultConfiguration].map(c => ({
+  const defaultRows = [defaultAnvilConfiguration].map(c => ({
     configuration: c,
     deletable: false
   }))
-  const userRows = userConfigurations.map((c, i) => ({
+  const userRows = userAnvilConfigurations.map((c, i) => ({
     configuration: c,
     removeable: true,
     removeIndex: i
@@ -61,11 +61,11 @@ function ConfigRows({ rows }) {
 }
 
 function ConfigRow({ configuration, removeable, removeIndex, selectIndex }) {
-  const [, removeConfig] = useAtom(removeConfiguration)
-  const [active, setActive] = useAtom(activeIndex)
+  const [, removeConfiguration] = useAtom(removeConfigurationAtom)
+  const [active, setActive] = useAtom(activeIndexAtom)
 
   function handleRemoveConfiguration() {
-    removeConfig(removeIndex)
+    removeConfiguration(removeIndex)
   }
 
   function handleSelectConfiguration() {
@@ -75,7 +75,7 @@ function ConfigRow({ configuration, removeable, removeIndex, selectIndex }) {
   return <TableRow>
     <TableSelectRow radio checked={active == selectIndex} onSelect={handleSelectConfiguration} />
     <ConfigCells configuration={configuration} />
-    {removeable ? <TableCell><IconButton onClick={handleRemoveConfiguration} kind="ghost" size="sm"><TrashCan /></IconButton></TableCell> : <TableCell />}
+    {removeable ? <TableCell><Button onClick={handleRemoveConfiguration} renderIcon={TrashCan} hasIconOnly iconDescription="Remove" tooltipAlignment="end" kind="ghost" size="sm"/></TableCell> : <TableCell />}
   </TableRow>
 }
 
@@ -84,13 +84,19 @@ function ConfigCells({ configuration }) {
 }
 
 function AddRow() {
-  const [, addConfig] = useAtom(addConfiguration)
+  const [, addConfig] = useAtom(addConfigurationAtom)
   const [config, setConfig] = useState({
     name: "",
     host: "",
     anvilPort: "",
     s3Port: "",
   })
+
+  function handleKeyDown(event) {
+    if (event.key === "Enter"){
+      addConfig(config);
+    }
+  }
 
   function handleAddConfiguration() {
     addConfig(config)
@@ -103,12 +109,12 @@ function AddRow() {
     }))
   }
 
-  return <TableRow>
+  return <TableRow onKeyDown={handleKeyDown}>
     <TableCell />
     <TableCell><TextInput size="sm" value={config.name} onChange={(e) => handleInputChange("name", e.target.value)} /></TableCell>
     <TableCell><TextInput size="sm" alue={config.host} onChange={(e) => handleInputChange("host", e.target.value)} /></TableCell>
     <TableCell><NumberInput size="sm" allowEmpty hideSteppers min={0} max={65535} value={config.anvilPort} onChange={(e) => handleInputChange("anvilPort", e.target.value)} /></TableCell>
     <TableCell><NumberInput size="sm" allowEmpty hideSteppers min={0} max={65535} value={config.s3Port} onChange={(e) => handleInputChange("s3Port", e.target.value)} /></TableCell>
-    <TableCell><IconButton onClick={handleAddConfiguration} kind="ghost" size="sm"><Add /></IconButton></TableCell>
+    <TableCell><Button onClick={handleAddConfiguration} renderIcon={Add} hasIconOnly iconDescription="Add" tooltipAlignment="end" kind="ghost" size="sm"/></TableCell>
   </TableRow>
 }
