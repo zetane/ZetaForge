@@ -1,5 +1,6 @@
 import { atom } from "jotai";
 import config from "../../config";
+import { atomWithStorage } from "jotai/utils";
 
 export const defaultAnvilConfigurationAtom = atom(() => ({
     name: "Default",
@@ -7,7 +8,7 @@ export const defaultAnvilConfigurationAtom = atom(() => ({
     anvilPort: config.anvil.port,
     s3Port: config.s3.port,
 }))
-export const userAnvilConfigurationsAtom = atom([]);
+export const userAnvilConfigurationsAtom = atomWithStorage("userAnvilConfigurationsAtom", []);
 export const activeIndexAtom = atom(0);
 export const activeConfigurationAtom = atom((get) => [get(defaultAnvilConfigurationAtom), ...get(userAnvilConfigurationsAtom)][get(activeIndexAtom)])
 

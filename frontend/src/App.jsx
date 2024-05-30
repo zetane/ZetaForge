@@ -9,13 +9,10 @@ import LibrarySwitcher from '@/components/ui/library/LibrarySwitcher';
 import ModalWrapper from '@/components/ui/modal/ModalWrapper';
 import ToastWrapper from './components/ui/ToastWrapper';
 import './styles/globals.scss';
-import { Provider } from 'jotai';
-import store from './atoms/store';
 
 
 export default function App() {
   return (
-    <Provider store={store}>
       <ProviderInjector>
         <ForgeTheme>
           <Navbar >
@@ -30,6 +27,5 @@ export default function App() {
           <ToastWrapper />
         </ForgeTheme>
       </ProviderInjector>
-    </Provider>
   );
 }
