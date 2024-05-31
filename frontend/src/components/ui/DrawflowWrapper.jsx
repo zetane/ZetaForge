@@ -2,6 +2,7 @@ import { drawflowEditorAtom } from '@/atoms/drawflowAtom';
 import { blockEditorRootAtom, isBlockEditorOpenAtom } from '@/atoms/editorAtom';
 import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { pipelineConnectionsAtom } from "@/atoms/pipelineConnectionsAtom";
+import { pipelinePositionAtom } from "@/atoms/pipelinePositionAtom";
 import Drawflow from '@/components/ZetaneDrawflowEditor';
 import BlockGenerator from '@/components/ui/blockGenerator/BlockGenerator';
 import { genJSON, generateId, replaceIds } from '@/utils/blockUtils';
@@ -37,6 +38,7 @@ export default function DrawflowWrapper() {
   const [editor, setEditor] = useAtom(drawflowEditorAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const [pipelineConnections, setPipelineConnectionsAtom] = useImmerAtom(pipelineConnectionsAtom);
+  const [pipelinePosition, setPipelinePositionAtom] = useImmerAtom(pipelinePositionAtom);
   const setBlockEditorRoot = useSetAtom(blockEditorRootAtom);
   const setEditorOpen = useSetAtom(isBlockEditorOpenAtom);
   const [renderNodes, setRenderNodes] = useState([])
@@ -147,6 +149,9 @@ export default function DrawflowWrapper() {
       drawflowUtils.setPipeline = setPipeline;
       drawflowUtils.pipeline = pipeline;
       drawflowUtils.updateConnectionList = setPipelineConnectionsAtom;
+      drawflowUtils.updatePosition = setPipelinePositionAtom;
+      // drawflowUtils.zoomData = pipelinePosition;
+      // drawflowUtils.setZoom = setPipelinePositionAtom;
 
       /* Update data Nodes */
       node.addEventListener('dblclick', drawflowUtils.dblclick)
@@ -203,6 +208,17 @@ export default function DrawflowWrapper() {
     console.log("pipeline: ", pipeline.data)
   }, [pipeline.data])
 
+  // useEffect(() => {
+    // console.log("zoom from drawflowwrapper: ",
+    //   drawflowUtils.zoom,
+    //   drawflowUtils.zoom_max,
+    //   drawflowUtils.zoom_min,
+    //   drawflowUtils.zoom_value,
+    //   drawflowUtils.zoom_last_value,
+    // )
+    // Object.assign(drawflowUtils, { ...pipelinePosition })
+  // }, [pipelinePosition])
+
   useEffect(() => {
     if (renderNodes.length) {
       // Note: This code is super finicky because it's our declarative (React)
@@ -211,14 +227,14 @@ export default function DrawflowWrapper() {
       // IN THIS ORDER
       // because they programmatically
       // re-draw the connections in the graph
-      for (const [id, block] of Object.entries(pipeline.data)) {
-        const json = genJSON(block, id)
-        drawflowUtils.addNode_from_JSON(json)
-      }
+      // for (const [id, block] of Object.entries(pipeline.data)) {
+      //   const json = genJSON(block, id)
+      //   drawflowUtils.addNode_from_JSON(json)
+      // }
 
       try {
         drawflowUtils.connection_list = pipelineConnections;
-        console.log(pipelineConnections)
+        console.log("pipeline connections:", pipelineConnections)
         drawflowUtils.addConnection();
       } catch (e) {
         console.log(e)
@@ -242,8 +258,6 @@ export default function DrawflowWrapper() {
         try {
           if (Object.getOwnPropertyNames(pipeline.data).length !== 0) {
             const pipelineSpecs = drawflowUtils.convert_drawflow_to_block(pipeline.name, pipeline.data);
-            // console.log("pipeline.data: ", pipeline.data)
-            // console.log("pipelineSpecs: ", pipelineSpecs)
             // note that we are writing to the buffer, not the load path
             pipelineSpecs['sink'] = pipeline.buffer;
             pipelineSpecs['build'] = pipeline.buffer;
@@ -254,10 +268,7 @@ export default function DrawflowWrapper() {
               buffer: pipeline.buffer,
               writePath: pipeline.buffer,
             };
-            
-            // console.log("save data: ", saveData)
             const response = await savePipeline.mutateAsync(saveData);
-            // console.log("response: ", response)
             const { dirPath, specs } = response;
           }
         } catch (error) {

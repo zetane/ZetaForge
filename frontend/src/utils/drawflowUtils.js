@@ -6,6 +6,7 @@ exports.container = null;
 exports.precanvas = null;
 exports.connection_list = {};
 exports.updateConnectionList = null;
+exports.pointData = {};
 
 exports.nodeId = 1;
 exports.ele_selected = null;
@@ -95,11 +96,18 @@ exports.addConnection = () => {
   for (let svg in exports.connection_list) {
     if (!exports.container.querySelector(svg)) {
       const connection = document.createElementNS('http://www.w3.org/2000/svg', "svg");
-      const path = document.createElementNS('http://www.w3.org/2000/svg', "path");
-      path.classList.add("main-path");
-      path.setAttributeNS(null, 'd', '');
       connection.classList.add(...svg.split(".").filter(Boolean));
-      connection.appendChild(path);
+
+      if (exports.connection_list[svg].path) {
+        for (const item of exports.connection_list[svg].path) {
+          connection.appendChild(item);
+        }
+      } else {
+        const path = document.createElementNS('http://www.w3.org/2000/svg', "path");
+        path.classList.add("main-path");
+        path.setAttributeNS(null, 'd', '');
+        connection.appendChild(path);
+      }
       exports.precanvas.appendChild(connection);
       exports.updateConnectionNodes('node-' + exports.connection_list[svg].output_id);
       exports.updateConnectionNodes('node-' + exports.connection_list[svg].input_id);
@@ -401,12 +409,16 @@ exports.position = (e) => {
       return item.block === nodeUpdateIn && item.variable === input_class;
     });
 
-    exports.setPipeline((draft) => {
-      draft.data[nodeId].outputs[output_class].connections[searchConnection].points[numberPointPosition] = { pos_x: pos_x, pos_y: pos_y };
-    })
+    exports.pointData = {
+      nodeId,
+      output_class,
+      searchConnection,
+      numberPointPosition,
+      pos_x,
+      pos_y,
+    };
 
     const parentSelected = exports.ele_selected.parentElement.classList[2].slice(9);
-
     exports.updateConnectionNodes(parentSelected);
   }
 
@@ -519,14 +531,31 @@ exports.dragEnd = (e) => {
     exports.setPipeline((draft) => {
       draft.data[nodeId].views.node.pos_x = exports.node_selected.offsetLeft;
       draft.data[nodeId].views.node.pos_y = exports.node_selected.offsetTop;
+
+      for (let svg in exports.connection_list) {
+        if (svg.includes(nodeId)) {
+          exports.updateConnectionList((draft) => {
+            console.log('children from node release: ', svg, exports.container.querySelector(svg)?.children)
+            draft[svg].path = Array.from(exports.container.querySelector(svg)?.children);
+          })
+        }
+      }
     })    
   }
-  console.log("ended")
+
+  if (Object.keys(exports.pointData)?.length) { // update point position in pipeline
+    const { nodeId, output_class, searchConnection, numberPointPosition, pos_x, pos_y } = exports.pointData;
+    exports.setPipeline((draft) => {
+      draft.data[nodeId].outputs[output_class].connections[searchConnection].points[numberPointPosition] = { pos_x: pos_x, pos_y: pos_y };
+    })
+  }
+  
   exports.drag = false;
   exports.drag_point = false;
   exports.connection = false;
   exports.ele_selected = null;
   exports.editor_selected = false;
+  exports.pointData = {};
   // this.dispatch('mouseUp', e);
 }
 
