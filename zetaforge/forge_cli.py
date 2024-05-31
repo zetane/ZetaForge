@@ -5,7 +5,6 @@ from pathlib import Path
 from .__init__ import __version__
 from colorama import init, Fore, Style
 from .mixpanel_client import mixpanel_client
-from .zetahelper import block_maker
 
 EXECUTABLES_PATH = os.path.join(Path(__file__).parent, 'executables')
 FRONT_END = os.path.join(EXECUTABLES_PATH, "frontend")

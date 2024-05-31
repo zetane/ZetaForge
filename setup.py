@@ -4,8 +4,8 @@ import os
 from setuptools import find_packages, setup
 
 version = {}
-with open("zetaforge/__init__.py") as fp:
-    exec(fp.read(), version)
+# with open("zetaforge/__init__.py") as fp:
+#     exec(fp.read(), version)
 
 def get_package_version():
     # Specify the path to the package.json file
@@ -22,7 +22,7 @@ def get_package_version():
         if version:
             # Set the __version__ variable in your package's __init__.py
             with open("zetaforge/__init__.py", "w") as fp:
-                fp.write(f"__version__ = '{version}'\n")
+                fp.write(f"from .block_maker import block_maker\n__version__ = '{version}'\n")
             return version
         else:
             raise ValueError("Version not found in package.json")
@@ -57,4 +57,4 @@ setup(
         "langchain-openai==0.1.2",
         "sentry-sdk===2.0.1"],
     include_package_data=True,
-    package_data={'zetaforge': ['utils/*', 'executables/*'],},)
+    package_data={'zetaforge': ['utils/*', 'executables/*', "block_maker/*"],},)

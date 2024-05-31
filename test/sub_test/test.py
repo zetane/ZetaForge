@@ -1,6 +1,4 @@
-from zetaforge.zetahelper import block_maker
-
-
+from zetaforge import block_maker
 def my_function(a, b, c):
     import boto3
     import pandas as pd
