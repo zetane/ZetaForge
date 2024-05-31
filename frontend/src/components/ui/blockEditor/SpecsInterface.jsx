@@ -6,7 +6,7 @@ import { useImmerAtom } from 'jotai-immer';
 import { useEffect, useMemo } from 'react';
 import { useImmer } from 'use-immer';
 
-const HIDDEN_SPEC_KEYS = ['connections', 'relays', 'command_line', 'pos_x', 'pos_y', 'pos_z', 'parameters']
+const HIDDEN_SPEC_KEYS = ['connections', 'relays', 'command_line', 'pos_x', 'pos_y', 'pos_z', 'parameters', 'system_versions']
 
 const flattenSpecs = (data, prefix = '', path = []) => {
   let fields = [];
