@@ -1,0 +1,77 @@
+{
+    "information": {
+        "id": "my-custom-block",
+        "name": "My Custom Block",
+        "description": "Test Package",
+        "system_versions": [
+            "0.1"
+        ],
+        "block_version": "1.0",
+        "block_source": "code",
+        "block_type": "compute"
+    },
+    "inputs": {
+        "a": {
+            "type": "Any",
+            "connections": [],
+            "relays": []
+        },
+        "b": {
+            "type": "Any",
+            "connections": [],
+            "relays": []
+        },
+        "c": {
+            "type": "Any",
+            "connections": [],
+            "relays": []
+        }
+    },
+    "outputs": {
+        "a": {
+            "type": "Any",
+            "connections": [],
+            "relays": []
+        },
+        "b": {
+            "type": "Any",
+            "connections": [],
+            "relays": []
+        },
+        "c": {
+            "type": "Any",
+            "connections": [],
+            "relays": []
+        },
+        "my-list": {
+            "type": "Any",
+            "connections": [],
+            "relays": []
+        }
+    },
+    "action": {
+        "container": {
+            "image": "my-custom-block",
+            "version": "latest",
+            "command_line": [
+                "python",
+                "entrypoint.py"
+            ]
+        }
+    },
+    "views": {
+        "node": {
+            "behavior": "modal",
+            "active": "True",
+            "title_bar": {
+                "background_color": "#228B22"
+            },
+            "preview": {},
+            "html": "",
+            "pos_x": "0",
+            "pos_y": "0",
+            "pos_z": "999"
+        }
+    },
+    "events": {}
+}
