@@ -3,7 +3,7 @@ import { trpc } from '@/utils/trpc';
 import { Save } from "@carbon/icons-react";
 import { Button, TextArea, TextInput } from '@carbon/react';
 import { useImmerAtom } from 'jotai-immer';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useImmer } from 'use-immer';
 
 const HIDDEN_SPEC_KEYS = ['connections', 'relays', 'command_line', 'pos_x', 'pos_y', 'pos_z', 'parameters']
@@ -37,6 +37,10 @@ export default function SpecsInterface({ blockPath, blockKey }) {
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const [blockSpecsBuffer, setBlockSpecsBuffer] = useImmer(pipeline.data[blockKey]);
   const flattenedSpecs = useMemo(() => flattenSpecs(blockSpecsBuffer), [blockSpecsBuffer]);
+
+  useEffect(() => {
+    setBlockSpecsBuffer(pipeline.data[blockKey]);
+  },[pipeline])
 
   const saveBlockSpecs = trpc.saveBlockSpecs.useMutation();
 
