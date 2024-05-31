@@ -200,8 +200,7 @@ export default function DrawflowWrapper() {
               writePath: pipeline.buffer
             };
     
-            const response = await savePipeline.mutateAsync(saveData);
-            const { dirPath, specs } = response;
+            await savePipeline.mutateAsync(saveData);
           }
         } catch (error) {
           console.error("Error saving pipeline:", error);
