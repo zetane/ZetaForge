@@ -19,13 +19,10 @@ import DirectoryViewer from "./DirectoryViewer";
 import SpecsInterface from "./SpecsInterface";
 import TestLogs from "./TestLogs";
 
-export default function Editor() {
+export default function Editor({blockKey, blockPath}) {
   const minizedStyles = "inset-y-16 right-0 w-1/2"
   const maximizedStyles = "inset-y-11 right-0 w-full"
   const [pipeline] = useAtom(pipelineAtom);
-  const [blockPath] = useAtom(blockEditorRootAtom);
-  const relPath = blockPath.replaceAll('\\', '/')
-  const blockKey = relPath.split("/").pop();
   const blockName = pipeline.data[blockKey].information.name;
   const blockLogs = `${blockPath}/logs.txt`
   const setBlockEditorOpen = useSetAtom(isBlockEditorOpenAtom);
