@@ -55,7 +55,6 @@ const LogsViewer = ({ filePath, blockPath, blockKey }) => {
       <Button
         renderIcon={PlayFilled}
         iconDescription="Run test"
-        tooltipPosition="bottom"
         size="sm"
         onClick={handleDockerCommands}
         title="Run test from this block folder"

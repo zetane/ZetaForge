@@ -328,7 +328,6 @@ export default function DirectoryViewer({
             renderIcon={FolderOpen}
             size="sm"
             iconDescription="Import folder"
-            tooltipPosition="right"
             onClick={handleFolderImport}
             title="Import folder into your block folder"
           >
@@ -338,7 +337,6 @@ export default function DirectoryViewer({
             renderIcon={DocumentDownload}
             size="sm"
             iconDescription="Import files"
-            tooltipPosition="bottom"
             onClick={handleFileImport}
             title="Import files into your block folder"
           >
