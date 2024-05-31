@@ -56,8 +56,13 @@ func checkImage(ctx context.Context, tag string, cfg Config) (bool, error) {
 	}
 }
 
-func blockTemplate(block *zjson.Block, blockKey string, organization string, key string, cfg Config) *wfv1.Template {
-	image := "localhost:31111/zetaforge/" + block.Action.Container.Image + ":" + block.Action.Container.Version //TODO
+func blockTemplate(block *zjson.Block, blockKey string, key string, cfg Config) *wfv1.Template {
+	var image string
+	if cfg.IsLocal {
+		image = "zetaforge/" + block.Action.Container.Image + ":" + block.Action.Container.Version
+	} else {
+		image = "localhost:31111/zetaforge/" + block.Action.Container.Image + ":" + block.Action.Container.Version
+	}
 	computationName := blockKey + ".py"
 	entrypoint := wfv1.Artifact{
 		Name: "entrypoint",
@@ -97,7 +102,7 @@ func blockTemplate(block *zjson.Block, blockKey string, organization string, key
 	}
 }
 
-func kanikoTemplate(block *zjson.Block, organization string, cfg Config) *wfv1.Template {
+func kanikoTemplate(block *zjson.Block, cfg Config) *wfv1.Template {
 	if cfg.IsLocal {
 		return nil
 	} else {
@@ -163,11 +168,11 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 	templates := make(map[string]*wfv1.Template)
 	for id, block := range pipeline.Pipeline {
 		blockKey := id
-		template := blockTemplate(&block, blockKey, organization, key, cfg)
+		template := blockTemplate(&block, blockKey, key, cfg)
 		task := wfv1.DAGTask{Name: template.Name, Template: template.Name}
 
 		if len(block.Action.Container.Image) > 0 {
-			kaniko := kanikoTemplate(&block, organization, cfg)
+			kaniko := kanikoTemplate(&block, cfg)
 			built, err := checkImage(ctx, template.Container.Image, cfg)
 			if err != nil {
 				return &workflow, blocks, err

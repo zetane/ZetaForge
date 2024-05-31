@@ -25,7 +25,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	endpoints "github.com/aws/smithy-go/endpoints"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
@@ -62,7 +61,7 @@ func s3Client(ctx context.Context, cfg Config) (*s3.Client, error) {
 		if cfg.IsLocal {
 			o.EndpointResolverV2 = &Endpoint{Address: "localhost", Bucket: BUCKET, S3Port: cfg.Local.BucketPort}
 		} else {
-			o.EndpointResolverV2 = &Endpoint{Address: "weed", Bucket: BUCKET, S3Port: cfg.Local.BucketPort}
+			o.EndpointResolverV2 = &Endpoint{Address: "weed", Bucket: BUCKET, S3Port: 8333}
 		}
 	})
 
@@ -140,47 +139,6 @@ func downloadFiles(ctx context.Context, sink string, prefix string, cfg Config) 
 	return nil
 }
 
-func deleteFiles(ctx context.Context, prefix string, extraFiles []string, cfg Config) {
-	log.Printf("Deleting: %s", prefix)
-	client, err := s3Client(ctx, cfg)
-	if err != nil {
-		log.Printf("Failed to delete files; err=%v", err)
-		return
-	}
-
-	params := &s3.DeleteObjectsInput{
-		Bucket: aws.String(BUCKET),
-		Delete: &s3types.Delete{
-			Objects: []s3types.ObjectIdentifier{},
-		},
-	}
-
-	res, err := client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
-		Bucket: aws.String(BUCKET),
-		Prefix: aws.String(prefix),
-	})
-	if err != nil {
-		log.Printf("Failed to delete files; err=%v", err)
-	}
-
-	for _, content := range res.Contents {
-		params.Delete.Objects = append(params.Delete.Objects, s3types.ObjectIdentifier{
-			Key: content.Key,
-		})
-	}
-
-	for _, file := range extraFiles {
-		params.Delete.Objects = append(params.Delete.Objects, s3types.ObjectIdentifier{
-			Key: aws.String(file),
-		})
-	}
-
-	_, err = client.DeleteObjects(ctx, params)
-	if err != nil {
-		log.Printf("Failed to delete files; err=%v", err)
-	}
-}
-
 func history(sinkPath string) error {
 	if err := os.MkdirAll(sinkPath, 0755); err != nil {
 		return err
@@ -246,11 +204,6 @@ func streaming(ctx context.Context, sink string, name string, room string, clien
 			Context: ctx,
 		},
 	)
-
-	if err != nil {
-		log.Printf("Log stream error; err=%v", err)
-		return
-	}
 
 	if err != nil {
 		log.Printf("Log stream error; err=%v", err)
@@ -338,10 +291,6 @@ func runArgo(ctx context.Context, workflow *wfv1.Workflow, sink string, pipeline
 		return nil, err
 	}
 
-	if err != nil {
-		return nil, err
-	}
-
 	serviceClient := cli.NewWorkflowServiceClient()
 	workflow, err = serviceClient.CreateWorkflow(ctx, &workflowpkg.WorkflowCreateRequest{
 		Namespace: "default",
@@ -406,11 +355,6 @@ func deleteArgo(ctx context.Context, name string, client clientcmd.ClientConfig)
 			Context: ctx,
 		},
 	)
-
-	if err != nil {
-		log.Printf("Failed to delete workflow %s; err=%v", name, err)
-		return
-	}
 
 	if err != nil {
 		log.Printf("Failed to delete workflow %s; err=%v", name, err)
@@ -704,9 +648,9 @@ func cloudExecute(pipeline *zjson.Pipeline, id int64, executionId string, build 
 	}
 
 	workflow, err = runArgo(ctx, workflow, "", pipeline.Id, execution.ID, client, db, hub)
-	/*if workflow != nil {
+	if workflow != nil {
 		defer deleteArgo(ctx, workflow.Name, client)
-	}*/
+	}
 	if err != nil {
 		log.Printf("Error during pipeline execution; err=%v", err)
 		return
