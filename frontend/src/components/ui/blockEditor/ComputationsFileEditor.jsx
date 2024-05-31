@@ -225,8 +225,8 @@ export default function ComputationsFileEditor({ fetchFileSystem }) {
               <RadioButton
                 checked={index.data === i}
                 onChange={() => handleGenerate(i)}
+                labelText={`Select Code #${i}`}
               />
-              <div className='ml-2'>Select Code #{i}</div>
             </div>
             <div
               className="relative"
