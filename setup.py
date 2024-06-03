@@ -10,7 +10,6 @@ with open("zetaforge/__init__.py") as fp:
 def get_package_version():
     # Specify the path to the package.json file
     package_json_path = os.path.join(os.path.dirname(__file__), 'frontend', 'package.json')
-    
     try:
         # Read the contents of package.json
         with open(package_json_path, 'r') as file:
@@ -34,11 +33,6 @@ def get_package_version():
 
 
 setup(
-    name = "zetaforge",
-    author="Zetane",
-    author_email="info@zetane.com",
-    description = "zetaforge installer",
-    long_description_content_type="text/markdown",
     version = get_package_version(),
     entry_points={
         'console_scripts': [
@@ -46,15 +40,5 @@ setup(
         ]
     },
     packages=find_packages(include=('zetaforge',)),
-    python_requires='>=3.7',
-    install_requires = [
-        'setuptools==69.0.2',
-        'requests==2.31.0', 
-        'boto3==1.34.79', 
-        'colorama==0.4.6', 
-        'mixpanel==4.10.1', 
-        "langchain==0.1.15", 
-        "langchain-openai==0.1.2",
-        "sentry-sdk===2.0.1"],
     include_package_data=True,
     package_data={'zetaforge': ['utils/*', 'executables/*'],},)
