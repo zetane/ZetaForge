@@ -2,7 +2,10 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"io"
+	"net/http"
 	"path/filepath"
 
 	"server/zjson"
@@ -14,6 +17,15 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+type Catalog struct {
+	Repositories []string `json:"repositories"`
+}
+
+type TagList struct {
+	Name string   `json:"name"`
+	Tags []string `json:"tags"`
+}
 
 func checkImage(ctx context.Context, tag string, cfg Config) (bool, error) {
 	if cfg.IsLocal {
@@ -52,7 +64,46 @@ func checkImage(ctx context.Context, tag string, cfg Config) (bool, error) {
 			return false, nil
 		}
 	} else {
-		return true, nil
+		response, err := http.Get("http://registry:5000/v2/_catalog")
+		if err != nil {
+			return false, err
+		}
+
+		defer response.Body.Close()
+
+		body, err := io.ReadAll(response.Body)
+		if err != nil {
+			return false, err
+		}
+
+		var catalog Catalog
+		if err := json.Unmarshal(body, &catalog); err != nil {
+			return false, err
+		}
+
+		for _, name := range catalog.Repositories {
+			response, err := http.Get("http://registry:5000/v2/" + name + "/tags/list")
+			if err != nil {
+				return false, err
+			}
+
+			defer response.Body.Close()
+			body, err := io.ReadAll(response.Body)
+			if err != nil {
+				return false, err
+			}
+			var tagList TagList
+			if err := json.Unmarshal(body, &tagList); err != nil {
+				return false, err
+			}
+			for _, tagName := range tagList.Tags {
+				if tag == "localhost:31111/"+name+":"+tagName {
+					return true, nil
+				}
+			}
+		}
+
+		return false, nil
 	}
 }
 
