@@ -1269,12 +1269,7 @@ export default class Drawflow {
   }
 
   ioChanged(graphIO, jsonIO) {
-    for (const key in graphIO) {
-      if (!jsonIO.hasOwnProperty(key)) {
-        return true
-      }
-    }
-    return false
+    return Object.keys(graphIO) != Object.keys(jsonIO);
   }
 
   addNode_from_JSON(json) {

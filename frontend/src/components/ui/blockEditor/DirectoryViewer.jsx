@@ -1,6 +1,6 @@
-import { compilationErrorToastAtom } from '@/atoms/compilationErrorToast';
 import { drawflowEditorAtom } from '@/atoms/drawflowAtom';
 import { pipelineAtom } from '@/atoms/pipelineAtom';
+import { CHAT_HISTORY_FILE_NAME, SPECS_FILE_NAME } from '@/utils/constants';
 import { updateSpecs } from '@/utils/specs';
 import { trpc } from '@/utils/trpc';
 import {
@@ -8,34 +8,29 @@ import {
   DocumentDownload,
   Folder,
   FolderOpen,
-  PlayFilled,
   Save,
 } from "@carbon/icons-react";
 import { Button, Modal, TreeNode, TreeView } from "@carbon/react";
 import { useAtom } from 'jotai';
 import { useImmerAtom } from 'jotai-immer';
 import { useCallback, useEffect, useRef, useState } from "react";
-import { EditorCodeMirror } from "./CodeMirrorComponents";
+import { EditorCodeMirror, ViewerCodeMirror } from "./CodeMirrorComponents";
+import ComputationsFileEditor from "./ComputationsFileEditor";
 import Splitter from "./Splitter";
 
-function DirectoryViewer({
-  fileSystemProp,
+const EDIT_ONLY_FILES = [SPECS_FILE_NAME, CHAT_HISTORY_FILE_NAME] //TODO use the new spec file name
+export default function DirectoryViewer({
   blockPath,
-  lastGeneratedIndex,
-  handleDockerCommands,
-  fetchFileSystem,
-  blockFolderName,
+  blockKey,
 }) {
   const serverAddress = "http://localhost:3330";
   const [fileSystem, setFileSystem] = useState({});
   const [currentFile, setCurrentFile] = useState({});
-  const [navWidth, setNavWidth] = useState(300); // Initial width of the navigation pane
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [pendingFile, setPendingFile] = useState(null);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const [editor] = useAtom(drawflowEditorAtom);
-  const [compilationErrorToast, setCompilationErrorToast] = useAtom(compilationErrorToastAtom)
 
   const fileInputRef = useRef(null);
   const folderInputRef = useRef(null);
@@ -43,23 +38,44 @@ function DirectoryViewer({
   const compileComputation = trpc.compileComputation.useMutation();
   const saveBlockSpecs = trpc.saveBlockSpecs.useMutation();
 
-  // let generated_from_index = '';
-
   useEffect(() => {
-    setFileSystem(fileSystemProp);
-  }, [fileSystemProp]);
+    fetchFileSystem()
+  }, [pipeline]);
 
   const handleFileImport = () => {
     fileInputRef.current.click();
   };
+
+  const fetchFileSystem = useCallback(async () => {
+    try {
+      const response = await fetch(`${serverAddress}/get-directory-tree`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ folder: blockPath }),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const inserted_data = {
+        [blockKey]: { content: data, expanded: true, type: "folder" },
+      };
+      setFileSystem(inserted_data);
+    } catch (error) {
+      console.error("Error fetching file system:", error);
+    }
+  }, [blockPath]);
 
   const handleFileChange = async (event) => {
     const files = event.target.files;
     const formData = new FormData();
 
     for (let i = 0; i < files.length; i++) {
-      formData.append("files", files[i]); // Append files only
-      formData.append("paths", files[i].name); // Use file name as path
+      formData.append("files", files[i]);
+      formData.append("paths", files[i].name);
     }
 
     formData.append("blockPath", blockPath);
@@ -86,8 +102,8 @@ function DirectoryViewer({
     const formData = new FormData();
 
     for (let i = 0; i < files.length; i++) {
-      formData.append("files", files[i]); // Append files
-      formData.append("paths", files[i].webkitRelativePath); // Use relative path
+      formData.append("files", files[i])
+      formData.append("paths", files[i].webkitRelativePath);
     }
 
     formData.append("blockPath", blockPath);
@@ -108,7 +124,6 @@ function DirectoryViewer({
   const handleModalConfirm = (e) => {
     saveChanges(e);
     if (pendingFile) {
-      // Split the path and navigate through the file system
       const relPath = pendingFile.replaceAll('\\', '/')
       const pathSegments = relPath.split("/");
       let fileContent = fileSystem;
@@ -116,10 +131,8 @@ function DirectoryViewer({
       for (let i = 0; i < pathSegments.length; i++) {
         const segment = pathSegments[i];
         if (i === pathSegments.length - 1) {
-          // Last segment, this is the file
           fileContent = fileContent[segment].content;
         } else {
-          // Navigate deeper into the directory structure
           fileContent = fileContent[segment].content;
         }
       }
@@ -127,30 +140,22 @@ function DirectoryViewer({
       setCurrentFile({ path: pendingFile, content: fileContent });
     }
     setIsModalOpen(false);
-    setPendingFile(null); // Reset pending file state
+    setPendingFile(null);
   };
 
-  // Function to handle modal cancel
   const handleModalCancel = () => {
     setIsModalOpen(false);
   };
-
-  const handleDrag = useCallback((e) => {
-    const newWidth = e.clientX - 22.5;
-    setNavWidth(newWidth);
-  }, []);
 
   const onToggle = (folderPath) => {
     setFileSystem((prevFileSystem) => {
       const toggleFolder = (pathSegments, fileSystem) => {
         if (!fileSystem || typeof fileSystem !== "object") {
-          // Safety check to prevent accessing properties of undefined
           return fileSystem;
         }
 
         const [currentSegment, ...remainingSegments] = pathSegments;
         if (!fileSystem[currentSegment]) {
-          // If the current segment does not exist in the file system
           console.error(
             `No such folder: ${currentSegment} in path ${folderPath}`,
           );
@@ -158,7 +163,6 @@ function DirectoryViewer({
         }
 
         if (!remainingSegments.length) {
-          // If this is the target folder
           return {
             ...fileSystem,
             [currentSegment]: {
@@ -167,7 +171,6 @@ function DirectoryViewer({
             },
           };
         } else {
-          // If there are more segments, continue the recursion
           return {
             ...fileSystem,
             [currentSegment]: {
@@ -187,15 +190,13 @@ function DirectoryViewer({
   };
 
   const onChange = (newValue) => {
-    setUnsavedChanges(true); // Indicate that there are unsaved changes
+    setUnsavedChanges(true);
 
-    // Update currentFile with the new content
     setCurrentFile((prevCurrentFile) => ({
       ...prevCurrentFile,
       content: newValue,
     }));
 
-    // Update the fileSystem state to reflect the change in the file's content
     setFileSystem((prevFileSystem) => {
       const relPath = currentFile.path.replaceAll('\\', '/')
       const pathSegments = relPath.split("/");
@@ -206,13 +207,11 @@ function DirectoryViewer({
         const segment = pathSegments[i];
 
         if (i === pathSegments.length - 1) {
-          // If it's the file, update its content
           currentLevel[segment] = {
             ...currentLevel[segment],
             content: newValue,
           };
         } else {
-          // Navigate deeper into the directory structure
           currentLevel = currentLevel[segment].content;
         }
       }
@@ -226,7 +225,6 @@ function DirectoryViewer({
   }
 
   const saveChanges = (e) => {
-    // Check if there is a current file selected
     if (!currentFile || !currentFile.path) {
       console.error("No file selected");
       return;
@@ -251,9 +249,9 @@ function DirectoryViewer({
         if (isComputation(currentFile.path)) {
           try {
             const newSpecsIO = await compileComputation.mutateAsync({ blockPath: blockPath });
-            const newSpecs = await updateSpecs(blockFolderName, newSpecsIO, pipeline.data, editor);
+            const newSpecs = await updateSpecs(blockKey, newSpecsIO, pipeline.data, editor);
             setPipeline((draft) => {
-              draft.data[blockFolderName] = newSpecs;
+              draft.data[blockKey] = newSpecs;
             })
             await saveBlockSpecs.mutateAsync({ blockPath: blockPath, blockSpecs: newSpecs });
             fetchFileSystem();
@@ -274,26 +272,23 @@ function DirectoryViewer({
     const currentPath = parentPath ? `${parentPath}/${folder}` : folder;
 
     const specialFiles = [
-      "computations.py",
+      "computations.py", "Dockerfile", "requirements.txt"
     ];
 
     const isSpecialFile = specialFiles.includes(folder);
-    const textStyle = isSpecialFile ? { color: "darkorange" } : {};
+    const textStyle = isSpecialFile ? { color: "darkorange", paddingRight: "4px", paddingLeft: "4px" } : {};
 
     const handleFileClick = (filePath) => {
-      // Check for unsaved changes as before
       if (unsavedChanges) {
         setPendingFile(filePath);
         setIsModalOpen(true);
       } else {
         if (filePath.endsWith(".html")) {
-          // Open HTML file in a new tab
-          const fileContent = folderData.content; // Assuming this is your file content
+          const fileContent = folderData.content;
           const blob = new Blob([fileContent], { type: "text/html" });
           const url = URL.createObjectURL(blob);
           window.open(url, "_blank");
         } else {
-          // Existing logic for non-HTML files
           setCurrentFile({ path: filePath, content: folderData.content });
         }
       }
@@ -323,7 +318,7 @@ function DirectoryViewer({
           )}
       </TreeNode>
     );
-  }
+  } 
 
   return (
     <div className="flex h-full">
@@ -333,35 +328,19 @@ function DirectoryViewer({
             renderIcon={FolderOpen}
             size="sm"
             iconDescription="Import folder"
-            tooltipPosition="bottom"
-            hasIconOnly
             onClick={handleFolderImport}
             title="Import folder into your block folder"
           >
-            Import Folder
+            Add Folder
           </Button>
           <Button
             renderIcon={DocumentDownload}
             size="sm"
             iconDescription="Import files"
-            tooltipPosition="bottom"
-            hasIconOnly
             onClick={handleFileImport}
             title="Import files into your block folder"
           >
-            Import Files
-          </Button>
-
-          <Button
-            renderIcon={PlayFilled}
-            iconDescription="Run test"
-            tooltipPosition="bottom"
-            hasIconOnly
-            size="sm"
-            onClick={handleDockerCommands}
-            title="Run test from this block folder"
-          >
-            Run
+            Add Files
           </Button>
 
           <input
@@ -381,34 +360,17 @@ function DirectoryViewer({
             hidden
           />
         </div>
-        {lastGeneratedIndex !== undefined &&
-          lastGeneratedIndex !== null &&
-          lastGeneratedIndex.toString() !== "" ? (
-          <div>
-            <div
-              style={{
-                marginBottom: "0px",
-                marginTop: "15px",
-                textAlign: "left",
-              }}
-            >
-              {"Generated from: "}
-              <span>{lastGeneratedIndex.toString()}</span>
-            </div>
-          </div>
-        ) : null}
-
-        <div className="w-64 overflow-y-auto mt-1">
-          <TreeView selected={currentFile.file} hideLabel>
+        <div className="w-80 overflow-y-auto mt-1">
+          <TreeView label="directory view" selected={currentFile.file} hideLabel>
             {Object.entries(fileSystem).map(([folder, folderData]) =>
               renderTreeNodes(folder, folderData),
             )}
           </TreeView>
         </div>
       </div>
-      <Splitter onDrag={handleDrag} />
+      <Splitter />
       <div className="w-full min-w-0 flex flex-col">
-        <span className="text-xl text-gray-30">
+        <span className="text-md text-gray-30 mt-2">
           {currentFile.path ? <span>{currentFile.path}</span> : null}
         </span>
         {fileSystem === null ? (
@@ -416,22 +378,33 @@ function DirectoryViewer({
         ) : (
           currentFile &&
           currentFile.path && (
-            <div className="relative overflow-y-auto">
-              <EditorCodeMirror
-                key={currentFile.path}
-                code={currentFile.content || ""}
-                onChange={(newValue) => onChange(newValue)}
-              />
-              <div className="absolute right-0 top-0">
-                <Button
-                  renderIcon={Save}
-                  iconDescription="Save code"
-                  hasIconOnly
-                  size="md"
-                  kind="ghost"
-                  onClick={saveChanges}
+              <div className="relative overflow-y-auto mt-6 px-5">
+              {currentFile.path.endsWith("computations.py") ? (
+                <ComputationsFileEditor fetchFileSystem={fetchFileSystem} />
+                ) : EDIT_ONLY_FILES.some(fileName =>
+                currentFile.path.endsWith(fileName)) ? (
+                      <ViewerCodeMirror
+                  code={currentFile.content || ""}
                 />
-              </div>
+              ) : (
+                <>
+                  <EditorCodeMirror
+                    key={currentFile.path}
+                    code={currentFile.content || ""}
+                    onChange={(newValue) => onChange(newValue)}
+                  />
+                  <div className="absolute right-8 top-2">
+                    <Button
+                      renderIcon={Save}
+                      iconDescription="Save code"
+                      tooltipPosition="left"
+                      hasIconOnly
+                      size="md"
+                      onClick={saveChanges}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           )
         )}
@@ -450,5 +423,3 @@ function DirectoryViewer({
     </div>
   );
 }
-
-export default DirectoryViewer;

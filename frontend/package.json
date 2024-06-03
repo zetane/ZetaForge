@@ -29,9 +29,11 @@
   "dependencies": {
     "@sentry/electron": "^4.22.0",
     "@sentry/react": "^7.112.2",
+    "@uiw/codemirror-theme-github": "^4.21.25",
     "electron-trpc": "^0.5.2",
     "electron-updater": "^6.1.1",
     "getmac": "^6.6.0",
+    "use-immer": "^0.9.0",
     "uuidv7": "^0.6.3"
   },
   "devDependencies": {
@@ -53,7 +55,7 @@
     "@types/sha256": "^0.2.2",
     "@uiw/codemirror-extensions-langs": "^4.21.21",
     "@uiw/codemirror-theme-basic": "^4.21.24",
-    "@uiw/codemirror-theme-vscode": "^4.21.21",
+    "@uiw/codemirror-theme-vscode": "^4.21.25",
     "@uiw/react-codemirror": "^4.21.21",
     "@vitejs/plugin-react": "^4.0.4",
     "autoprefixer": "^10.4.16",

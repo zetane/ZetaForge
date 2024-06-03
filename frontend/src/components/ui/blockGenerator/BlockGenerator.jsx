@@ -1,7 +1,9 @@
-import { useCallback, useRef, useState, useEffect } from "react";
-import { Code, View } from "@carbon/icons-react"
-import { FileBlock } from "./FileBlock";
+import { Code, View } from "@carbon/icons-react";
+import { Modal } from "@carbon/react";
 import { useImmerAtom } from "jotai-immer";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { FileBlock } from "./FileBlock";
+
 
 const isTypeDisabled = (action) => {
   if (!action.parameters) {
@@ -72,6 +74,7 @@ const BlockGenerator = ({ block, openView, id, historySink, pipelineAtom}) => {
             openView={openView}
             actions={!disabled} 
             src={iframeSrc}
+            blockEvents={block.events}
           />
           <div className="block-body">
             <div className="block-io">
@@ -97,21 +100,44 @@ const BlockPreview = ({id, src}) => {
   )
 }
 
-const BlockTitle = ({ name, id, color, openView, actions, src}) => {
+
+const BlockTitle = ({ name, id, color, openView, actions, src, blockEvents }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleViewClick = () => {
+    if (!src) {
+      setIsOpen(true)
+    } else {
+      window.open(src, '_blank');
+    }
+  };
+
   let actionContainer = (
     <div className="action-container">
       <button id="btn_open_code" className="view-btn" onClick={() => openView(id)}><Code size={20}/></button>
-      <a href={src} target="_blank" rel="noopener noreferrer"><button id="btn_show_view" className="view-btn"><View size={20}/></button></a>
+      <button id="btn_show_view" className="view-btn" onClick={handleViewClick}><View size={20}/></button>
     </div>
-  )
+  );
 
   return (
     <div className="title-box" style={{ backgroundColor: color }}>
       <span>{name}</span>
-      { actions && actionContainer }
+      {actions && actionContainer}
+
+      <Modal
+        modalHeading="Block Events"
+        passiveModal={true}
+        open={isOpen}
+        onRequestClose={() => setIsOpen(false)}
+      >
+        <div className="flex flex-col gap-4 p-3">
+          {JSON.stringify(blockEvents, null, 2)}
+        </div>
+      </Modal>
     </div>
-  )
+  );
 };
+
 const parseHtmlToInputs = (html) => {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
@@ -242,9 +268,9 @@ const InputField = ({ type, value, name, step, parameterName, onChange }) => {
             onChange={handleChange}
             className="input-element"
             style={{
-              minWidth: '200px', // Set the minimum width
+              minWidth: '200px', 
               padding: '10px',
-              paddingRight: '28px' // Make room for the toggle icon
+              paddingRight: '28px'
             }}
           />
           <button
