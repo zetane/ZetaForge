@@ -12,10 +12,12 @@ import { useImmerAtom } from "jotai-immer";
 import { useRef, useState } from "react";
 import { uuidv7 } from "uuidv7";
 import ClosableModal from "./modal/ClosableModal";
+import { workspaceAtom } from "@/atoms/pipelineAtom";
 
 export default function RunPipelineButton({modalPopper, children, action}) {
   const [editor] = useAtom(drawflowEditorAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
+  const [workspace, setWorkspace] = useImmerAtom(workspaceAtom)
   const [validationErrorMsg, setValidationErrorMsg] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [mixpanelService] = useAtom(mixpanelAtom)
@@ -83,12 +85,12 @@ export default function RunPipelineButton({modalPopper, children, action}) {
 
       const res = await mutation.mutateAsync(execution)
       if (res.status == 201) {
-        const executionId = res.data?.executionId
         setPipeline((draft) => {
           draft.socketUrl = `${import.meta.env.VITE_WS_EXECUTOR}/ws/${executionId}`;
-          draft.history = pipeline.id + "/" + executionId
-          draft.saveTime = Date.now()
           draft.log = []
+        })
+        setWorkspace((draft) => {
+          draft.fetchInterval = 1 * 1000;
         })
       }
       try {

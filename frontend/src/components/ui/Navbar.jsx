@@ -31,54 +31,37 @@ import { PipelineLogs } from "./PipelineLogs";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import StopPipelineButton from "./StopPipelineButton";
-
-const loadNewPipeline = (pipeline) => {
-  if (!pipeline )  { return }
-  const pipelineData = JSON.parse(pipeline.PipelineJson)
-
-  const bufferPath = `${window.cache.local}${pipelineData.id}`;
-  const executionId = pipeline.Execution
-
-  const loadedPipeline = {
-    name: pipelineData.name ? pipelineData.name : pipelineData.id,
-    path: pipelineData.sink ? pipelineData.sink : null,
-    saveTime: Date.now(),
-    buffer: bufferPath,
-    data: pipelineData.pipeline,
-    id: pipelineData.id,
-    history: pipelineData.id + "/" + executionId,
-    record: pipeline
-  }
-
-  const newPipeline = pipelineFactory(window.cache.local, loadedPipeline)
-
-  return newPipeline
-};
+import { useLoadServerPipeline } from "./useLoadPipeline";
 
 export default function Navbar({ children }) {
   const [darkMode, setDarkMode] = useAtom(darkModeAtom);
   const [modalContent, setModalContent] = useAtom(modalContentAtom);
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
+  const loadPipeline = useLoadServerPipeline();
+  console.log("ws: ", workspace)
 
   // TODO: Figure out how to get SQLC to emit the same struct for two different queries
   const { pending, error, data } = useQuery({
-    queryKey: ['pipelines'],
-    queryFn: async () => { return axios.get(`${import.meta.env.VITE_EXECUTOR}/pipeline/filter?limit=100000&offset=0`)}
+    queryKey: ['pipelines', workspace.fetchInterval],
+    queryFn: async () => { return axios.get(`${import.meta.env.VITE_EXECUTOR}/pipeline/filter?limit=100000&offset=0`)},
+    refetchInterval: workspace.fetchInterval
   })
   const allPipelines = data?.data;
 
   useEffect(() => {
     const addPipelines = {}
+    const addExecutions = {}
     const iters = allPipelines || []
-    console.log(iters)
     for (const serverPipeline of iters) {
-      const loaded = loadNewPipeline(serverPipeline)
+      const loaded = loadPipeline(serverPipeline)
       addPipelines[loaded.id] = loaded
+      addExecutions[loaded.record.Execution] = loaded
     }
     setWorkspace((draft) => {
       const mergedPipelines = Object.assign(draft.pipelines, addPipelines)
       draft.pipelines = mergedPipelines
+      draft.executions = addExecutions
     })
   }, [allPipelines])
 

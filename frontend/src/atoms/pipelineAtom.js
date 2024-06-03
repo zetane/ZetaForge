@@ -2,6 +2,15 @@ import { atom } from 'jotai'
 import { withImmer } from 'jotai-immer';
 import { customAlphabet } from "nanoid";
 import rfdc from 'rfdc';
+import { hex_sha1 } from '@/utils/sha1';
+
+export const pipelineKey = (id, data) => {
+  let hash = ""
+  if (data && data != "") {
+    hash = hex_sha1(JSON.stringify(data))
+  }
+  return id + "." + hash
+}
 
 export const pipelineFactory = (cachePath, pipeline=null) => {
   const nanoid = customAlphabet('1234567890abcedfghijklmnopqrstuvwxyz', 12)
@@ -27,21 +36,24 @@ export const pipelineFactory = (cachePath, pipeline=null) => {
 }
 
 const initPipeline = pipelineFactory(window.cache.local)
+const emptyKey = `${initPipeline.id}.`
 
 export const workspaceAtom = atom({
-  tabs: [initPipeline.id],
-  pipelines: {[initPipeline.id]: initPipeline},
-  active: initPipeline.id
+  tabs: [emptyKey],
+  pipelines: {[emptyKey]: initPipeline},
+  executions: {},
+  active: emptyKey,
+  fetchInterval: 10 * 1000
 })
 
 export const getRunning = (workspace) => {
-  console.log(workspace)
-  let pipelines = []
-  if (workspace) {
-    pipelines = workspace.pipelines
+  const running = [];
+  for (const [key, pipeline] of Object.entries(workspace.executions)) {
+    if (pipeline.record.Status == "Running") {
+      running.push(pipeline)
+    }
   }
-  return Object.values(pipelines).filter(pipeline => pipeline.record
-    && pipeline.record.Status == "Running")
+  return running
 }
 
 const pipelineAtomWithImmer = atom(
@@ -52,7 +64,11 @@ const pipelineAtomWithImmer = atom(
   (get, set, newPipeline) => {
     const workspace = get(workspaceAtom);
     const newWorkspace = rfdc({proto: true})(workspace)
-    newWorkspace.pipelines[newPipeline.id] = newPipeline;
+    let key = `${newPipeline.id}.`
+    if (newPipeline.record) {
+      key = pipelineKey(newPipeline.id, newPipeline.record.Hash)
+    }
+    newWorkspace.pipelines[key] = newPipeline;
     set(workspaceAtom, newWorkspace)
   }
 );

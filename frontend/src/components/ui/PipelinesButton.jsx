@@ -23,15 +23,20 @@ export default function PipelinesButton() {
   };
 
   useEffect(() => {
-    setExecutions(getRunning(workspace))
+    const runs = getRunning(workspace)
+    /*/
+    if (runs == 0 && workspace.fetchInterval == 1000) {
+      setWorkspace((draft) => {
+        draft.fetchInterval = 10 * 1000
+      })
+      }*/
+    setExecutions(runs)
   }, [workspace?.pipelines])
 
   let count = 0;
   if (executions) {
     count = executions.length
   }
-
-  console.log("exes: ", executions)
 
   let grid = (<ExecutionDataGrid executions={executions}/>);
 

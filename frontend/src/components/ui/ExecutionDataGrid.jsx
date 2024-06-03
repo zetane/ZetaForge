@@ -8,16 +8,16 @@ import { useLoadPipeline, useLoadServerPipeline } from "./useLoadPipeline";
 export const ExecutionDataGrid = ({executions}) => {
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
   const loadPipeline = useLoadServerPipeline();
-  console.log("y: ", executions)
 
   const items = []
 
   const selectPipeline = (pipeline) => {
     const loadedPipeline = loadPipeline(pipeline);
+    const key = loadedPipeline.id + "." + loadedPipeline.record.Hash
 
     setWorkspace((draft) => {
-      draft.tabs.push(loadedPipeline.id)
-      draft.active = loadedPipeline.id
+      draft.tabs.push(key)
+      draft.active = key
     })
   }
 
@@ -30,8 +30,8 @@ export const ExecutionDataGrid = ({executions}) => {
 
     items.push({
       id: pipeline.id,
-      pipeline: pipeline.id,
-      name: <Link href="#" onClick={() => {selectPipeline(pipeline)}}>{friendlyName}</Link>,
+      pipeline: friendlyName,
+      name: <Link href="#" onClick={() => {selectPipeline(pipeline)}}>{executionId}</Link>,
       created: new Date(record?.Created * 1000).toLocaleString(),
       status: record?.Status,
       deployed: record?.Deployed,
@@ -42,7 +42,7 @@ export const ExecutionDataGrid = ({executions}) => {
   const headers = [
     {
       key: 'name',
-      header: 'Name',
+      header: 'ExecutionId',
     },
     {
       key: 'pipeline',

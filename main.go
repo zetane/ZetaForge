@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -89,6 +90,111 @@ func createLogger(pipelineId string, file io.Writer, messageFunc func(string, st
 	return io.MultiWriter(os.Stdout, wsWriter, file)
 }
 
+func Initialize(obj interface{}) interface{} {
+	v := reflect.ValueOf(obj)
+	if v.Kind() != reflect.Ptr {
+		panic("niltoempty: expected pointer")
+	}
+
+	initializeNils(v, map[uintptr]bool{})
+
+	return obj
+}
+
+func initializeNils(v reflect.Value, visited map[uintptr]bool) {
+	if checkVisited(v, visited) {
+		return
+	}
+
+	switch v.Kind() {
+	case reflect.Pointer:
+		if !v.IsNil() {
+			initializeNils(v.Elem(), visited)
+		}
+	case reflect.Slice:
+		// Initialize a nil slice.
+		if v.IsNil() {
+			v.Set(reflect.MakeSlice(v.Type(), 0, 0))
+			break
+		}
+
+		// Recursively iterate over slice items.
+		for i := 0; i < v.Len(); i++ {
+			item := v.Index(i)
+			initializeNils(item, visited)
+		}
+
+	case reflect.Map:
+		// Initialize a nil map.
+		if v.IsNil() {
+			v.Set(reflect.MakeMap(v.Type()))
+			break
+		}
+
+		// Recursively iterate over map items.
+		iter := v.MapRange()
+		for iter.Next() {
+			// Map element (value) can't be set directly.
+			// we have to alloc addressable replacement for it
+			elemType := iter.Value().Type()
+			subv := reflect.New(elemType).Elem()
+
+			// copy its original value
+			subv.Set(iter.Value())
+
+			// replace nil slices and maps inside
+			initializeNils(subv, visited)
+
+			// and set the replacement back in map
+			v.SetMapIndex(iter.Key(), subv)
+		}
+
+	case reflect.Interface:
+		// Dereference interface{}.
+		if v.IsNil() {
+			break
+		}
+
+		valueUnderInterface := reflect.ValueOf(v.Interface())
+		elemType := valueUnderInterface.Type()
+		subv := reflect.New(elemType).Elem()
+		subv.Set(valueUnderInterface)
+
+		initializeNils(subv, visited)
+
+		v.Set(subv)
+
+	// Recursively iterate over array elements.
+	case reflect.Array:
+		for i := 0; i < v.Len(); i++ {
+			elem := v.Index(i)
+			initializeNils(elem, visited)
+		}
+
+	// Recursively iterate over struct fields.
+	case reflect.Struct:
+		for i := 0; i < v.NumField(); i++ {
+			field := v.Field(i)
+			initializeNils(field, visited)
+		}
+	}
+
+}
+
+func checkVisited(v reflect.Value, visited map[uintptr]bool) bool {
+	kind := v.Kind()
+	if kind == reflect.Map || kind == reflect.Ptr || kind == reflect.Slice {
+		if v.IsNil() {
+			return false
+		}
+		p := v.Pointer()
+		wasVisited := visited[p]
+		visited[p] = true
+		return wasVisited
+	}
+	return false
+}
+
 func validateJson[D any](body io.ReadCloser) (D, HTTPError) {
 	var data D
 	schema, err := json.Marshal(jsonschema.Reflect(data))
@@ -120,6 +226,8 @@ func validateJson[D any](body io.ReadCloser) (D, HTTPError) {
 	if err := json.Unmarshal(buffer.Bytes(), &data); err != nil {
 		return data, InternalServerError{err.Error()}
 	}
+
+	log.Printf("json: %v", data)
 
 	return data, nil
 }
@@ -249,10 +357,15 @@ func main() {
 		} else {
 			go cloudExecute(&execution.Pipeline, res.ID, execution.Id, execution.Build, config, client, db, hub)
 		}
+		response, err := newResponsePipeline(res)
+		if err != nil {
+			ctx.String(err.Status(), err.Error())
+			return
+		}
 		newRes := make(map[string]any)
 		newRes["executionId"] = execution.Id
 		newRes["history"] = sink
-		newRes["pipeline"] = res
+		newRes["pipeline"] = response
 		ctx.JSON(http.StatusCreated, newRes)
 	})
 	router.GET("/rooms", func(ctx *gin.Context) {
@@ -336,7 +449,13 @@ func main() {
 			return
 		}
 
-		ctx.JSON(http.StatusCreated, newResponsePipeline(res))
+		response, err := newResponsePipeline(res)
+		if err != nil {
+			ctx.String(err.Status(), err.Error())
+			return
+		}
+
+		ctx.JSON(http.StatusCreated, response)
 	})
 	pipeline.GET("/list", func(ctx *gin.Context) {
 		res, err := listAllPipelines(ctx.Request.Context(), db, "org")
@@ -349,7 +468,12 @@ func main() {
 
 		var response []ResponsePipeline
 		for _, pipeline := range res {
-			response = append(response, newResponsePipeline(pipeline))
+			newRes, err := newResponsePipeline(pipeline)
+			if err != nil {
+				ctx.String(err.Status(), err.Error())
+				return
+			}
+			response = append(response, newRes)
 		}
 
 		ctx.JSON(http.StatusOK, response)
@@ -382,7 +506,11 @@ func main() {
 
 		var response []ResponsePipelineExecution
 		for _, execution := range res {
-			response = append(response, newResponsePipelineExecution(execution))
+			newRes, err := newResponsePipelineExecution(execution)
+			if err != nil {
+				ctx.String(err.Status(), err.Error())
+			}
+			response = append(response, newRes)
 		}
 
 		ctx.JSON(http.StatusOK, response)

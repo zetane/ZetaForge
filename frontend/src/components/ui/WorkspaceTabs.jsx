@@ -10,9 +10,10 @@ export default function WorkspaceTabs() {
 
   useEffect(() => {
     const pipelineTabs = Object.values(workspace.tabs).map((key) => {
+      const [id, hash] = key.split(".")
       const pipeline = workspace.pipelines[key]
       let label = pipeline?.name
-      return {id: pipeline.id, label: pipeline?.name, panel: <TabPanel/>}
+      return {id: key, label: pipeline?.name, panel: <TabPanel/>}
     })
     setRenderedTabs(pipelineTabs)
     for (let i = 0; i < workspace.tabs.length; i++) {

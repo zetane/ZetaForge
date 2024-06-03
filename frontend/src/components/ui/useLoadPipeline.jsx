@@ -2,7 +2,7 @@ import { useImmerAtom } from "jotai-immer";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { trpc } from "@/utils/trpc";
 import { getDirectoryPath } from "@/../utils/fileUtils";
-import { workspaceAtom, pipelineFactory } from "@/atoms/pipelineAtom";
+import { workspaceAtom, pipelineFactory, pipelineKey } from "@/atoms/pipelineAtom";
 
 export const useLoadPipeline = () => {
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
@@ -45,11 +45,12 @@ export const useLoadPipeline = () => {
     }
 
     const newPipeline = pipelineFactory(window.cache.local, loadedPipeline)
+    const key = pipelineKey(newPipeline.id, null)
 
     setWorkspace(draft => {
-      draft.tabs.push(newPipeline.id)
-      draft.pipelines[newPipeline.id] = newPipeline
-      draft.active = newPipeline.id
+      draft.tabs.push(key)
+      draft.pipelines[key] = newPipeline
+      draft.active = key
     })
   };
 
@@ -58,27 +59,12 @@ export const useLoadPipeline = () => {
 
 export const useLoadServerPipeline = () => {
   const loadPipeline = (pipeline) => {
-    if (!pipeline || !pipeline.record)  { return }
-    const record = pipeline.record;
-    const pipelineData = JSON.parse(record.PipelineJson)
+    if (!pipeline)  { return }
+    console.log(pipeline)
+    const pipelineData = JSON.parse(pipeline.PipelineJson)
 
-    // writes from server location to user local cache
-    // TODO: make this work, right now this will ONLY WORK FOR LOCAL VERSION
-    /*
-
-    data['build'] = bufferPath
-    data['sink'] = bufferPath
-
-    const cacheData = {
-      specs: data,
-      name: data.name,
-      buffer: fromPath,
-      writePath: bufferPath
-    };
-    await savePipelineMutation.mutateAsync(cacheData);
-    */
     const bufferPath = `${window.cache.local}${pipelineData.id}`;
-    const executionId = record.Execution
+    const executionId = pipeline.Execution
 
     const loadedPipeline = {
       name: pipelineData.name ? pipelineData.name : pipelineData.id,
@@ -88,7 +74,7 @@ export const useLoadServerPipeline = () => {
       data: pipelineData.pipeline,
       id: pipelineData.id,
       history: pipelineData.id + "/" + executionId,
-      record: record
+      record: pipeline
     }
 
     const newPipeline = pipelineFactory(window.cache.local, loadedPipeline)

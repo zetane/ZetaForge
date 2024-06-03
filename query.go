@@ -46,30 +46,48 @@ type ResponseExecution struct {
 	Execution string
 }
 
-func newResponsePipeline(pipeline zdatabase.Pipeline) ResponsePipeline {
+func newResponsePipeline(pipeline zdatabase.Pipeline) (ResponsePipeline, HTTPError) {
+	var data zjson.Pipeline
+	if err := json.Unmarshal([]byte(pipeline.Json), &data); err != nil {
+		return ResponsePipeline{}, InternalServerError{err.Error()}
+	}
+	jsonData, err := json.MarshalIndent(Initialize(&data), "", "  ")
+	if err != nil {
+		return ResponsePipeline{}, InternalServerError{err.Error()}
+	}
+
 	return ResponsePipeline{
 		Organization: pipeline.Organization,
 		Created:      pipeline.Created,
 		Uuid:         pipeline.Uuid,
 		Hash:         pipeline.Hash,
-		Json:         pipeline.Json,
+		Json:         string(jsonData),
 		Deployed:     pipeline.Deployed,
-	}
+	}, nil
 }
 
-func newResponsePipelineExecution(filterPipeline zdatabase.FilterPipelinesRow) ResponsePipelineExecution {
+func newResponsePipelineExecution(filterPipeline zdatabase.FilterPipelinesRow) (ResponsePipelineExecution, HTTPError) {
+	var data zjson.Pipeline
+	if err := json.Unmarshal([]byte(filterPipeline.Json), &data); err != nil {
+		return ResponsePipelineExecution{}, InternalServerError{err.Error()}
+	}
+	jsonData, err := json.MarshalIndent(Initialize(&data), "", "  ")
+	if err != nil {
+		return ResponsePipelineExecution{}, InternalServerError{err.Error()}
+	}
+
 	return ResponsePipelineExecution{
 		Organization: filterPipeline.Organization,
 		Created:      filterPipeline.Created,
 		Uuid:         filterPipeline.Uuid,
 		Hash:         filterPipeline.Hash,
-		PipelineJson: filterPipeline.Json,
+		PipelineJson: string(jsonData),
 		Deployed:     filterPipeline.Deployed,
 		Status:       filterPipeline.Status,
 		Completed:    filterPipeline.Created,
 		Workflow:     filterPipeline.Workflow.String,
 		Execution:    filterPipeline.Executionid,
-	}
+	}, nil
 }
 
 func newResponseExecution(execution zdatabase.Execution, hash string) ResponseExecution {
@@ -126,10 +144,11 @@ func newResponseExecutionsRow(execution zdatabase.Execution) ResponseExecution {
 }
 
 func createPipeline(ctx context.Context, db *sql.DB, organization string, pipeline zjson.Pipeline) (zdatabase.Pipeline, HTTPError) {
-	jsonData, err := json.Marshal(pipeline)
+	jsonData, err := json.MarshalIndent(Initialize(&pipeline), "", "  ")
 	if err != nil {
 		return zdatabase.Pipeline{}, InternalServerError{err.Error()}
 	}
+	fmt.Println(string(jsonData))
 
 	hash := fmt.Sprintf("%x", sha1.Sum([]byte(jsonData)))
 	log.Printf("Hash %v", hash)
@@ -147,6 +166,9 @@ func createPipeline(ctx context.Context, db *sql.DB, organization string, pipeli
 		Uuid:         pipeline.Id,
 		Hash:         hash,
 	})
+	if err == nil {
+		log.Printf("res: %v", res)
+	}
 	if err == sql.ErrNoRows {
 		res, err = qtx.CreatePipeline(ctx, zdatabase.CreatePipelineParams{
 			Organization: organization,
@@ -157,6 +179,7 @@ func createPipeline(ctx context.Context, db *sql.DB, organization string, pipeli
 		if err != nil {
 			return zdatabase.Pipeline{}, InternalServerError{err.Error()}
 		}
+		log.Printf("create: %v", res)
 	} else if err != nil {
 		return zdatabase.Pipeline{}, InternalServerError{err.Error()}
 	}

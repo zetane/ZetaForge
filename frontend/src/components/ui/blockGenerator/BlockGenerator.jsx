@@ -157,8 +157,6 @@ const InputField = ({ type, value, name, step, parameterName, onChange, id }) =>
       }
     });
 
-    console.log(inputRef.current)
-
     if (inputRef?.current) {
       resizeObserver.observe(inputRef.current)
     }
