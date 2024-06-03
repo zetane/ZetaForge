@@ -226,6 +226,9 @@ func main() {
 
 	router.Use(sentrygin.New(sentrygin.Options{}))
 
+	router.GET("/ping", func(ctx *gin.Context) {
+		ctx.String(http.StatusOK, "pong")
+	})
 	router.POST("/execute", func(ctx *gin.Context) {
 		execution, err := validateJson[zjson.Execution](ctx.Request.Body)
 		if err != nil {
