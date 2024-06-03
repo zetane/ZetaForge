@@ -100,3 +100,8 @@ type Execution struct {
 	Pipeline Pipeline `json:"pipeline"`
 	Build    bool     `json:"build"`
 }
+
+type BuildContextStatus struct {
+	BlockKey string `json:"blockKey"`
+	Status   bool   `json:"status"`
+}

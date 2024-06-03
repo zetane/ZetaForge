@@ -84,15 +84,8 @@ func checkImage(ctx context.Context, tag string, cfg Config) (bool, error) {
 }
 
 func blockTemplate(block *zjson.Block, blockKey string, organization string, key string, cfg Config) *wfv1.Template {
-	var image string
-	var computationName string
-	if cfg.IsLocal {
-		image = "zetaforge/" + block.Action.Container.Image + ":" + block.Action.Container.Version
-		computationName = blockKey + ".py"
-	} else {
-		image = cfg.Cloud.RegistryAddr + ":" + organization + "-" + block.Action.Container.Image + "-" + block.Action.Container.Version
-		computationName = organization + "-" + blockKey + ".py"
-	}
+	image := getImage(block, cfg)
+	computationName := getComputaionName(blockKey, organization, cfg)
 	entrypoint := wfv1.Artifact{
 		Name: "entrypoint",
 		Path: cfg.WorkDir + "/" + cfg.EntrypointFile,
@@ -354,4 +347,20 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 	workflow.Spec.Templates = append(workflow.Spec.Templates, dag)
 
 	return &workflow, blocks, nil
+}
+
+func getImage(block *zjson.Block, cfg Config) string {
+	if cfg.IsLocal {
+		return "zetaforge/" + block.Action.Container.Image + ":" + block.Action.Container.Version
+	} else {
+		return cfg.Cloud.RegistryAddr + ":" + "org" + "-" + block.Action.Container.Image + "-" + block.Action.Container.Version
+	}
+}
+
+func getComputaionName(blockKey string, organization string, cfg Config) string {
+	if cfg.IsLocal {
+		return blockKey + ".py"
+	} else {
+		return organization + "-" + blockKey + ".py"
+	}
 }

@@ -451,14 +451,25 @@ func main() {
 			ctx.String(err.Status(), err.Error())
 		}
 	})
+	router.POST("/buildContextStatus", func(ctx *gin.Context) {
+		pipeline, err := validateJson[zjson.Pipeline](ctx.Request.Body)
+		if err != nil {
+			log.Printf("Invalid json request; err=%v", err)
+			ctx.String(err.Status(), err.Error())
+			return
+		}
+
+		buildContextStatus := getBuildContextStatus(&pipeline, config)
+
+		ctx.JSON(http.StatusOK, buildContextStatus)
+	})
+
 	execution := router.Group("/execution")
 	execution.GET("/running", func(ctx *gin.Context) {
 		res, err := listRunningExecutions(ctx.Request.Context(), db)
 
 		if err != nil {
 			log.Printf("Failed to get running executions; err=%v", err)
-			ctx.String(err.Status(), err.Error())
-			return
 		}
 
 		var response []ResponseExecution
