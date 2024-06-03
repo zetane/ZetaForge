@@ -63,7 +63,7 @@ export default function Navbar({ children }) {
           const message = splitMess[1].trim()
           const tagAndObject = message.split("|||")
           const tag = tagAndObject[0].trim()
-          
+
           if (tag == "outputs") {
             try {
               const outs = JSON.parse(tagAndObject[1]);
@@ -128,7 +128,7 @@ export default function Navbar({ children }) {
             <LoadBlockButton />
         </HeaderMenu>
         <HeaderMenu menuLinkName="Settings">
-          <HeaderMenuItem 
+          <HeaderMenuItem
           onClick={() => modalPopper(<ApiKeysModal />)}>
             <Password  size={16} className="mx-1 align-middle"></Password>
             <span>API Keys</span>
@@ -144,7 +144,7 @@ export default function Navbar({ children }) {
         <HeaderMenuItem onClick={() => window.open('https://discord.gg/zetaforge')}>
           Discord
         </HeaderMenuItem>
-        <HeaderMenuItem onClick={() => window.open('https://zetane/docs/')}>
+        <HeaderMenuItem onClick={() => window.open('https://zetane.com/docs/')}>
           Docs
         </HeaderMenuItem>
         </HeaderMenu>
