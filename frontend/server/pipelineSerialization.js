@@ -67,22 +67,22 @@ export async function copyPipeline(pipelineSpecs, pipelineName, fromDir, toDir) 
       // for folder names so there's a chance that we will
       // fail to find the correct key and need to fall back
       // to fetching a common folder name
-      
+
       existingBlockPath = fromBlockIndex[blockSpec.information.id]
     }
     if (!existingBlockPath) {
       // If we still can't find a path
       // we try to fall back to the block source path
       existingBlockPath = blockSpec.information.block_source
-      if(app.isPackaged) {
+      if (app.isPackaged) {
         existingBlockPath = path.join(process.resourcesPath, existingBlockPath)
       }
     }
-    
+
     console.log(`saving ${key} from ${existingBlockPath} to ${newBlockPath}`)
     if (existingBlockPath != newBlockPath) {
       // if it's the same folder, don't try to copy it
-      await fs.cp(existingBlockPath, newBlockPath, {recursive: true})
+      await fs.cp(existingBlockPath, newBlockPath, { recursive: true })
       await fs.writeFile(path.join(newBlockPath, SPECS_FILE_NAME), JSON.stringify(blockSpec, null, 2))
     }
   }
@@ -96,7 +96,7 @@ export async function copyPipeline(pipelineSpecs, pipelineName, fromDir, toDir) 
     JSON.stringify(pipelineSpecs, null, 2)
   );
 
-  return {specs: pipeline_specs, dirPath: writePipelineDirectory}
+  return { specs: pipeline_specs, dirPath: writePipelineDirectory }
 }
 
 async function getBlockIndex(blockDirectories) {
@@ -167,7 +167,7 @@ export async function getPipelineBlockPath(pipelinePath, blockId) {
 }
 
 
-export async function uploadBlocks(pipelineId, executionId, pipelineSpecs, buffer) {
+export async function uploadBlocks(pipelineId, executionId, pipelineSpecs, buffer, anvilConfiguration) {
   const nodes = pipelineSpecs.pipeline;
   for (const nodeId in nodes) {
     const node = nodes[nodeId];
@@ -185,7 +185,7 @@ export async function uploadBlocks(pipelineId, executionId, pipelineSpecs, buffe
           const awsKey = `${pipelineId}/${executionId}/${fileName}`;
 
           if (filePath && filePath.trim()) {
-            await checkAndUpload(awsKey, filePath);
+            await checkAndUpload(awsKey, filePath, anvilConfiguration);
             param.value = `"${fileName}"`;
           }
         }
@@ -193,7 +193,7 @@ export async function uploadBlocks(pipelineId, executionId, pipelineSpecs, buffe
     } else if (container) {
       const computationFile = path.join(buffer, "/", nodeId, "/computations.py");
       const awsKey = `${pipelineId}/${executionId}/${nodeId}.py`;
-      await checkAndUpload(awsKey, computationFile)
+      await checkAndUpload(awsKey, computationFile, anvilConfiguration)
     }
   }
   return pipelineSpecs;
