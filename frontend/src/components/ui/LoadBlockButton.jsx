@@ -26,6 +26,7 @@ export default function LoadBlockButton() {
     const id = generateId(block);
     block = replaceIds(block, id)
     block = centerBlockPosition(block)
+    block = removeConnections(block);
     const newPipeline = getPipelineFormat(pipeline)
     let newPipelineData = JSON.parse(JSON.stringify(pipeline.data))
     newPipelineData[id] = block
@@ -79,6 +80,15 @@ export default function LoadBlockButton() {
   const centerBlockPosition = (block) => {
     block.views.node.pos_x = ((editor.precanvas.clientWidth / 2) - editor.precanvas.getBoundingClientRect().x) / editor.zoom;
     block.views.node.pos_y = ((editor.precanvas.clientHeight / 2) - editor.precanvas.getBoundingClientRect().y) / editor.zoom;
+    return block;
+  }
+
+  const removeConnections = (block) => {
+    for (const k of ["inputs", "outputs"]) {
+      for (const ioKey in block[k]) {
+        block[k][ioKey].connections = [];
+      }
+    }
     return block;
   }
 
