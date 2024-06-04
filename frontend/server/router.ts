@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { compileComputation, runTest, saveBlockSpecs } from './blockSerialization.js';
 import { getHistory, getIndex, updateHistory, updateIndex } from "./chat.js";
 import { readPipelines, readSpecs } from "./fileSystem.js";
-import { copyPipeline, getBlockPath, removeBlock, saveBlock, saveSpec } from './pipelineSerialization.js';
+import { copyPipeline, getBlockPath, removeBlock, saveBlock, saveSpec, uploadBlocks } from './pipelineSerialization.js';
 import { publicProcedure, router } from './trpc';
 
 export const appRouter = router({
