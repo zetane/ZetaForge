@@ -329,7 +329,7 @@ export default function Editor() {
         </div>
       </div>
       <Tabs>
-        <TabList fullWidth className='shrink-0 max-w-[40rem] mx-auto'>
+        <TabList fullWidth className='shrink-0 max-w-[40rem] mx-auto' aria-label='Editor tabs'>
           <Tab onClick={handleTabClick}>
             Workspace
           </Tab>

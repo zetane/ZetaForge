@@ -7,6 +7,7 @@ exports.precanvas = null;
 exports.connection_list = {};
 exports.updateConnectionList = null;
 exports.pointData = {};
+exports.updatePosition = null;
 
 exports.nodeId = 1;
 exports.ele_selected = null;
@@ -103,10 +104,14 @@ exports.addConnection = () => {
           connection.appendChild(item);
         }
       } else {
+        // redundant ?
         const path = document.createElementNS('http://www.w3.org/2000/svg', "path");
         path.classList.add("main-path");
         path.setAttributeNS(null, 'd', '');
         connection.appendChild(path);
+        exports.updateConnectionList((draft) => {
+          draft[svg].path = [path];
+        })
       }
       exports.precanvas.appendChild(connection);
       exports.updateConnectionNodes('node-' + exports.connection_list[svg].output_id);
@@ -489,17 +494,21 @@ exports.dragEnd = (e) => {
 
           var id_input = input_id.slice(5);
           var id_output = output_id.slice(5);
-          exports.connection_ele.remove();
-          exports.connection_ele = null;
+
 
           exports.updateConnectionList((draft) => {
             draft[svgName] = {
               input_id: id_input,
               input_class: input_class,
               output_id: id_output,
-              output_class: output_class
+              output_class: output_class,
+              path: Array.from(exports.connection_ele.children),
             }
           })
+
+          exports.connection_ele.remove();
+          exports.connection_ele = null;
+
           exports.setPipeline((draft) => {
             draft.data[id_output].outputs[output_class].connections.push({variable: input_class, block: id_input});
             draft.data[id_input].inputs[input_class].connections.push({variable: output_class, block: id_output});
@@ -535,7 +544,6 @@ exports.dragEnd = (e) => {
       for (let svg in exports.connection_list) {
         if (svg.includes(nodeId)) {
           exports.updateConnectionList((draft) => {
-            console.log('children from node release: ', svg, exports.container.querySelector(svg)?.children)
             draft[svg].path = Array.from(exports.container.querySelector(svg)?.children);
           })
         }
@@ -617,6 +625,30 @@ exports.zoom_enter = (e) =>{
     // Zoom In
     exports.zoom_in();
   }
+
+  exports.updatePosition((draft) => {
+    draft.zoom = exports.zoom;
+    draft.zoom_max = exports.zoom_max;
+    draft.zoom_min = exports.zoom_min;
+    draft.zoom_value = exports.zoom_value;
+    draft.zoom_last_value = exports.zoom_last_value;
+    draft.canvas_x = exports.canvas_x;
+    draft.canvas_y = exports.canvas_y;
+    draft.precanvasStyle = exports.precanvas.style.transform;
+  })
+
+  console.log(`
+    exports.zoom ${exports.zoom}
+    exports.zoom_max ${exports.zoom_max}
+    exports.zoom_min ${exports.zoom_min}
+    exports.zoom_value ${exports.zoom_value}
+    exports.zoom_last_value ${exports.zoom_last_value}
+    exports.canvas_x: ${exports.canvas_x}
+    exports.canvas_y: ${exports.canvas_y}
+    exports.precanvas.style: ${exports.precanvas.style.transform}
+  `)
+
+  // exports.precanvas.style.setProperty('transform', "")
 }
 
 exports.zoom_refresh = () => {
@@ -1053,6 +1085,11 @@ exports.createReroutePoint = (ele) => {
     ele.parentElement.appendChild(point);
   }
 
+  exports.updateConnectionList((draft) => {
+    const svgName = "." + ele.parentElement.classList.value.split(" ").join(".");
+    draft[svgName].path = Array.from(ele.parentElement.children)
+  })
+
   const nodeId = nodeUpdate.slice(5);
 
   exports.setPipeline((draft) => {
@@ -1100,6 +1137,16 @@ exports.removeReroutePoint = (ele) => {
     if (exports.reroute_fix_curvature) {
       const numberMainPath = ele.parentElement.querySelectorAll(".main-path").length
       ele.parentElement.children[numberMainPath - 1].remove();
+
+      exports.updateConnectionList((draft) => {
+        const svgName = "." + ele?.parentElement?.classList?.value?.split(" ")?.join(".");
+        draft[svgName].path.splice(numberMainPath - 1, 1);
+        const searchPoint = draft[svgName].path.findIndex(function (item, i) {
+          return item === ele;
+        });
+        draft[svgName].path.splice(searchPoint, 1);      
+      })
+
       numberPointPosition -= numberMainPath;
       if (numberPointPosition < 0) {
         numberPointPosition = 0;

@@ -150,8 +150,8 @@ export default function DrawflowWrapper() {
       drawflowUtils.pipeline = pipeline;
       drawflowUtils.updateConnectionList = setPipelineConnectionsAtom;
       drawflowUtils.updatePosition = setPipelinePositionAtom;
+      // Object.assign(drawflowUtils, { ...pipelinePosition })
       // drawflowUtils.zoomData = pipelinePosition;
-      // drawflowUtils.setZoom = setPipelinePositionAtom;
 
       /* Update data Nodes */
       node.addEventListener('dblclick', drawflowUtils.dblclick)
@@ -189,9 +189,21 @@ export default function DrawflowWrapper() {
       // constructedEditor.on('connectionRemoved', (connection) => removeConnection(connection, pipelineRef.current));
       // constructedEditor.on('drawingConnection', (node) => drawflowUtils.drawConnection(node, constructedEditor, drawflowCanvas.current));
       // constructedEditor.on('updateConnection', ({eX, eY}) => drawflowUtils.updateConnection(eX, eY, constructedEditor, drawflowCanvas.current));
-    //   setEditor(constructedEditor);
+      setEditor(drawflowUtils);
     // }
   }, []);
+
+  // const updateDrawFlowPosition = () => {
+  //   drawflowUtils.zoom = pipelinePosition.zoom;
+  //   drawflowUtils.zoom_max = pipelinePosition.zoom_max;
+  //   drawflowUtils.zoom_min = pipelinePosition.zoom_min;
+  //   drawflowUtils.zoom_value = pipelinePosition.zoom_value;
+  //   drawflowUtils.zoom_last_value = pipelinePosition.zoom_last_value;
+  //   drawflowUtils.canvas_x = pipelinePosition.canvas_x;
+  //   drawflowUtils.canvas_y = pipelinePosition.canvas_y;
+  //   drawflowUtils.precanvas.style.setProperty("transform", pipelinePosition.precanvasStyle)
+  //   console.log("pipelinePosition: ", pipelinePosition)
+  // }
 
   useEffect(() => {
     const nodes = Object.entries(pipeline.data).map(([key, block]) => {
@@ -206,6 +218,8 @@ export default function DrawflowWrapper() {
     drawflowUtils.pipeline = pipeline;
     setRenderNodes(nodes)
     console.log("pipeline: ", pipeline.data)
+    // updateDrawFlowPosition();
+    // Object.assign(drawflowUtils, { ...pipelinePosition })
   }, [pipeline.data])
 
   // useEffect(() => {
