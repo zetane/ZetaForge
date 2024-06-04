@@ -60,10 +60,10 @@ export default class Drawflow {
 
   start() {
     // console.info("Start Drawflow!!");
-    this.container.classList.add("parent-drawflow");
+    // this.container.classList.add("parent-drawflow");
     // this.container.tabIndex = 0;
     //this.precanvas = document.createElement('div');
-    this.precanvas.classList.add("drawflow");
+    // this.precanvas.classList.add("drawflow");
     //this.container.appendChild(this.precanvas);
 
     /* Mouse and Touch Actions */

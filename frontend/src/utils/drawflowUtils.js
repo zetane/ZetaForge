@@ -57,8 +57,6 @@ exports.prevDiff = -1;
 
 exports.removeNodeSubscribers = [];
 
-
-// exports.drawConnection = (node, editor, drawflowCanvas) => {
 exports.drawConnection = (node) => {
     const connection = document.createElementNS('http://www.w3.org/2000/svg', "svg");
     exports.connection_ele = connection;
@@ -68,9 +66,8 @@ exports.drawConnection = (node) => {
     connection.classList.add("connection");
     connection.appendChild(path);
     exports.precanvas.appendChild(connection);
-    const id_output = node.parentElement.parentElement.id.slice(5);
-    const output_class = node.classList[1];
-    // editor.dispatch('connectionStart', { output_id: id_output, output_class: output_class });
+    // const id_output = node.parentElement.parentElement.id.slice(5);
+    // const output_class = node.classList[1];
 }
 
 exports.updateConnection = (eX, eY, editor, drawflowCanvas) => {
@@ -182,7 +179,6 @@ exports.remove_event = (e) => {
 /* End Mobile Zoom */
 
 exports.click = (e) => {
-  // this.dispatch('click', e);
   if (exports.editor_mode === 'fixed') {
     e.preventDefault();
     if (e.target.classList[0] === 'parent-drawflow' || e.target.classList[0] === 'drawflow') {
@@ -214,7 +210,6 @@ exports.click = (e) => {
       if (exports.node_selected != null) {
         exports.node_selected.classList.remove("selected");
         if (exports.node_selected != exports.ele_selected) {
-          // this.dispatch('nodeUnselected', true);
         }
       }
       if (exports.connection_selected != null) {
@@ -223,7 +218,6 @@ exports.click = (e) => {
         exports.connection_selected = null;
       }
       if (exports.node_selected != exports.ele_selected) {
-        // exports.dispatch('nodeSelected', exports.ele_selected.id.slice(5));
       }
       exports.node_selected = exports.ele_selected;
       exports.node_selected.classList.add("selected");
@@ -242,21 +236,18 @@ exports.click = (e) => {
       if (exports.node_selected != null) {
         exports.node_selected.classList.remove("selected");
         exports.node_selected = null;
-        // this.dispatch('nodeUnselected', true);
       }
       if (exports.connection_selected != null) {
         exports.connection_selected.classList.remove("selected");
         exports.removeReouteConnectionSelected();
         exports.connection_selected = null;
       }
-      // this.dispatch('drawingConnection', e.target)
       exports.drawConnection(e.target);
       break;
     case 'parent-drawflow':
       if (exports.node_selected != null) {
         exports.node_selected.classList.remove("selected");
         exports.node_selected = null;
-        // this.dispatch('nodeUnselected', true);
       }
       if (exports.connection_selected != null) {
         exports.connection_selected.classList.remove("selected");
@@ -269,7 +260,6 @@ exports.click = (e) => {
       if (exports.node_selected != null) {
         exports.node_selected.classList.remove("selected");
         exports.node_selected = null;
-        // exports.dispatch('nodeUnselected', true);
       }
       if (exports.connection_selected != null) {
         exports.connection_selected.classList.remove("selected");
@@ -282,7 +272,6 @@ exports.click = (e) => {
       if (exports.node_selected != null) {
         exports.node_selected.classList.remove("selected");
         exports.node_selected = null;
-        // exports.dispatch('nodeUnselected', true);
       }
       if (exports.connection_selected != null) {
         exports.connection_selected.classList.remove("selected");
@@ -293,7 +282,6 @@ exports.click = (e) => {
       exports.connection_selected.classList.add("selected");
       const listclassConnection = exports.connection_selected.parentElement.classList;
       if (listclassConnection.length > 1) {
-        // this.dispatch('connectionSelected', { output_id: listclassConnection[2].slice(14), input_id: listclassConnection[1].slice(13), output_class: listclassConnection[3], input_class: listclassConnection[4] });
         if (exports.reroute_fix_curvature) {
           exports.connection_selected.parentElement.querySelectorAll(".main-path").forEach((item, i) => {
             item.classList.add("selected");
@@ -318,7 +306,6 @@ exports.click = (e) => {
       if (exports.node_selected != null) {
         exports.node_selected.classList.remove("selected");
         exports.node_selected = null;
-        // this.dispatch('nodeUnselected', true);
       }
       if (exports.connection_selected != null) {
         exports.connection_selected.classList.remove("selected");
@@ -345,7 +332,6 @@ exports.click = (e) => {
   if (['input', 'output', 'main-path'].includes(exports.ele_selected.classList[0])) {
     e.preventDefault();
   }
-  // this.dispatch('clickEnd', e);
 }
 
 exports.position = (e) => {
@@ -359,13 +345,11 @@ exports.position = (e) => {
 
 
   if (exports.connection) {
-    // this.dispatch("updateConnection", {eX: e_pos_x, eY: e_pos_y})
     exports.updateConnection(e_pos_x, e_pos_y);
   }
   if (exports.editor_selected) {
     x = exports.canvas_x + (-(exports.pos_x - e_pos_x))
     y = exports.canvas_y + (-(exports.pos_y - e_pos_y))
-    // this.dispatch('translate', { x: x, y: y });
     exports.precanvas.style.transform = "translate(" + x + "px, " + y + "px) scale(" + exports.zoom + ")";
   }
   if (exports.drag) {
@@ -431,7 +415,6 @@ exports.position = (e) => {
     exports.mouse_x = e_pos_x;
     exports.mouse_y = e_pos_y;
   }
-  // this.dispatch('mouseMove', { x: e_pos_x, y: e_pos_y });
 }
 
 exports.dragEnd = (e) => {
@@ -447,14 +430,12 @@ exports.dragEnd = (e) => {
 
   if (exports.drag) {
     if (exports.pos_x_start != e_pos_x || exports.pos_y_start != e_pos_y) {
-      // exports.dispatch('nodeMoved', exports.ele_selected.id.slice(5));
     }
   }
 
   if (exports.drag_point) {
     exports.ele_selected.classList.remove("selected");
     if (exports.pos_x_start != e_pos_x || exports.pos_y_start != e_pos_y) {
-      // this.dispatch('rerouteMoved', this.ele_selected.parentElement.classList[2].slice(14));
     }
   }
 
@@ -515,21 +496,18 @@ exports.dragEnd = (e) => {
           })
 
         } else {
-          // this.dispatch('connectionCancel', true);
           exports.connection_ele.remove();
         }
 
         exports.connection_ele = null;
       } else {
         // Connection exists Remove Connection;
-        // exports.dispatch('connectionCancel', true);
         exports.connection_ele.remove();
         exports.connection_ele = null;
       }
 
     } else {
-      // Remove Connection;
-      // this.dispatch('connectionCancel', true);
+      // Remove Connection;;
       exports.connection_ele.remove();
       exports.connection_ele = null;
     }
@@ -564,11 +542,9 @@ exports.dragEnd = (e) => {
   exports.ele_selected = null;
   exports.editor_selected = false;
   exports.pointData = {};
-  // this.dispatch('mouseUp', e);
 }
 
 exports.contextmenu = (e) => {
-  // this.dispatch('contextmenu', e);
   e.preventDefault();
   if (exports.editor_mode === 'fixed' || exports.editor_mode === 'view') {
     return false;
@@ -599,7 +575,6 @@ exports.contextmenuDel = () => {
 }
 
 exports.key = (e) => {
-  // this.dispatch('keydown', e);
   if (exports.editor_mode === 'fixed' || exports.editor_mode === 'view') {
     return false;
   }
@@ -637,22 +612,19 @@ exports.zoom_enter = (e) =>{
     draft.precanvasStyle = exports.precanvas.style.transform;
   })
 
-  console.log(`
-    exports.zoom ${exports.zoom}
-    exports.zoom_max ${exports.zoom_max}
-    exports.zoom_min ${exports.zoom_min}
-    exports.zoom_value ${exports.zoom_value}
-    exports.zoom_last_value ${exports.zoom_last_value}
-    exports.canvas_x: ${exports.canvas_x}
-    exports.canvas_y: ${exports.canvas_y}
-    exports.precanvas.style: ${exports.precanvas.style.transform}
-  `)
-
-  // exports.precanvas.style.setProperty('transform', "")
+  // console.log(`
+  //   exports.zoom ${exports.zoom}
+  //   exports.zoom_max ${exports.zoom_max}
+  //   exports.zoom_min ${exports.zoom_min}
+  //   exports.zoom_value ${exports.zoom_value}
+  //   exports.zoom_last_value ${exports.zoom_last_value}
+  //   exports.canvas_x: ${exports.canvas_x}
+  //   exports.canvas_y: ${exports.canvas_y}
+  //   exports.precanvas.style: ${exports.precanvas.style.transform}
+  // `)
 }
 
 exports.zoom_refresh = () => {
-  // exports.dispatch('zoom', exports.zoom);
   exports.canvas_x = (exports.canvas_x / exports.zoom_last_value) * exports.zoom;
   exports.canvas_y = (exports.canvas_y / exports.zoom_last_value) * exports.zoom;
   exports.zoom_last_value = exports.zoom;
@@ -1044,6 +1016,7 @@ exports.updateAllConnections = () => {
   const nodes = exports.pipeline.data;
   Object.keys(nodes).forEach(nodeId => {
     // Update connections for each node
+    // console.log("'node-' + nodeId): ", 'node-' + nodeId)
     exports.updateConnectionNodes('node-' + nodeId);
   });
 }
@@ -1157,7 +1130,6 @@ exports.removeReroutePoint = (ele) => {
     draft.data[nodeId].outputs[output_class].connections[searchConnection].points.splice(numberPointPosition, 1);
   
     ele.remove();
-    // this.dispatch('removeReroute', nodeId);
     exports.updateConnectionNodes(nodeUpdate);
   })
 }
@@ -1222,7 +1194,6 @@ exports.removeSingleConnection = (id_output, id_input, output_class, input_class
         draft.data[id_input].inputs[input_class].connections.splice(index_in, 1);
       })
 
-      // exports.dispatch('connectionRemoved', { output_id: id_output, input_id: id_input, output_class: output_class, input_class: input_class });
       return true;
 
     } else {
@@ -1235,23 +1206,24 @@ exports.removeSingleConnection = (id_output, id_input, output_class, input_class
 
 exports.removeConnectionNodeId = (id) => {
   // DELETE all connections associated with this id with setpipeline
+  const nodeId = id.slice(5);
   exports.setPipeline((draft) => {
     const connectionList = []
     
     for (let connection in exports.connection_list) {
-      if (connection.includes(id)) {
+      if (connection.includes(nodeId)) {
         const { input_id, input_class, output_id, output_class } = exports.connection_list[connection];
         connectionList.push(connection);
         
         // Remove connection data from output property of connecting block
-        if (input_id === id) {
+        if (input_id === nodeId) {
           const index_out = draft.data[output_id].outputs[output_class].connections.findIndex(function (item, i) {
             return item.variable === input_class && item.block === input_id;
           });
           draft.data[output_id].outputs[output_class].connections.splice(index_out, 1);
 
         // Remove connection data from input property of connecting block
-        } else if (output_id === id) {
+        } else if (output_id === nodeId) {
           const index_in = draft.data[input_id].inputs[input_class].connections.findIndex(function (item, i) {
             return item.variable === output_class && item.block === output_id;
           });
@@ -1263,12 +1235,13 @@ exports.removeConnectionNodeId = (id) => {
     exports.updateConnectionList((connectionListDraft) => {
       connectionList.forEach((connection) => {
         if (connectionListDraft[connection]) {
+          exports.container.querySelector(connection).remove()
           delete connectionListDraft[connection];
         }
       })
     })
 
-    delete draft.data[id]
+    delete draft.data[nodeId]
   })
 
   // const idSearchIn = 'node_in_' + id;
@@ -1291,7 +1264,6 @@ exports.removeConnectionNodeId = (id) => {
 
   //   elemsOut[i].remove();
 
-  //   // exports.dispatch('connectionRemoved', { output_id: listclass[2].slice(14), input_id: listclass[1].slice(13), output_class: listclass[3], input_class: listclass[4] });
   // }
 
   // const elemsIn = exports.container.querySelectorAll(`.${idSearchIn}`);
@@ -1312,7 +1284,6 @@ exports.removeConnectionNodeId = (id) => {
 
   //   elemsIn[i].remove();
 
-  //   // this.dispatch('connectionRemoved', { output_id: listclass[2].slice(14), input_id: listclass[1].slice(13), output_class: listclass[3], input_class: listclass[4] });
   // }
 }
 
@@ -1333,7 +1304,6 @@ exports.import = (data, notifi = true) => {
   exports.drawflow = JSON.parse(JSON.stringify(data));
   exports.load();
   if (notifi) {
-    // this.dispatch('import', 'import');
   }
 }
 exports.convert_drawflow_to_block = (name, blockGraph) => {
@@ -1369,43 +1339,42 @@ exports.getChildrenAsArray = (obj, parentKey) => {
   return result;
 }
 
-exports.renameKeyInArrayOfObjects = (array, oldKey, newKey) => {
-  // Create a deep copy of the array
-  let copiedArray = JSON.parse(JSON.stringify(array));
-  for (let obj of copiedArray) {
-      if (obj.hasOwnProperty(oldKey)) {
-          obj[newKey] = obj[oldKey];
-          delete obj[oldKey];
-      }
-  }
-  return copiedArray;
-}
+// exports.renameKeyInArrayOfObjects = (array, oldKey, newKey) => {
+//   // Create a deep copy of the array
+//   let copiedArray = JSON.parse(JSON.stringify(array));
+//   for (let obj of copiedArray) {
+//       if (obj.hasOwnProperty(oldKey)) {
+//           obj[newKey] = obj[oldKey];
+//           delete obj[oldKey];
+//       }
+//   }
+//   return copiedArray;
+// }
 
-exports.addNode_from_JSON = (json) => {
-  const graph = exports.drawflow.drawflow[exports.module].data;
-  const id = json.id;
-  if (graph.hasOwnProperty(id) && exports.ioChanged(graph[id].inputs, json.inputs) && exports.ioChanged(graph[id].outputs, json.outputs)) {
-    // Inbound data from react managed inputs
-    // This happens because react re-renders twice
-    // And we have to make sure that if the user has mutated
-    // the DOM that we don't overwrite with unmanaged data,
-    // specifically dynamic graph connections are only stored 
-    // in the node.inputs and node.outputs json object,
-    // not the react data structure
+// exports.addNode_from_JSON = (json) => {
+//   const graph = exports.drawflow.drawflow[exports.module].data;
+//   const id = json.id;
+//   if (graph.hasOwnProperty(id) && exports.ioChanged(graph[id].inputs, json.inputs) && exports.ioChanged(graph[id].outputs, json.outputs)) {
+//     // Inbound data from react managed inputs
+//     // This happens because react re-renders twice
+//     // And we have to make sure that if the user has mutated
+//     // the DOM that we don't overwrite with unmanaged data,
+//     // specifically dynamic graph connections are only stored 
+//     // in the node.inputs and node.outputs json object,
+//     // not the react data structure
 
-    // TODO: connections and svgs managed in react
-    // which essentially means a full port of drawflow
-    return id;
-  } else {
-    graph[id] = json
-  }
-  // this.dispatch('nodeCreated', json);
-  return id;
-}
+//     // TODO: connections and svgs managed in react
+//     // which essentially means a full port of drawflow
+//     return id;
+//   } else {
+//     graph[id] = json
+//   }
+//   return id;
+// }
 
-exports.ioChanged = (graphIO, jsonIO) => {
-  return JSON.stringify(graphIO) === JSON.stringify(jsonIO);
-}
+// exports.ioChanged = (graphIO, jsonIO) => {
+//   return JSON.stringify(graphIO) === JSON.stringify(jsonIO);
+// }
 
 exports.getModuleFromNodeId = (id) => {
   var nameModule;
@@ -1421,7 +1390,7 @@ exports.getModuleFromNodeId = (id) => {
 }
 
 // used somewhere else
-exports.removeNodeOutputConnections = (id, output_class) => {
+exports.removeNodeOutputConnections = (id, output_class) => { //check
   const infoNode = exports.getNodeFromId(id)
   const removeOutputs = [];
   Object.keys(infoNode.outputs[output_class].connections).map(function (key, index) {
@@ -1436,7 +1405,7 @@ exports.removeNodeOutputConnections = (id, output_class) => {
 }
 
 // used somewhere else
-exports.removeNodeInputConnections = (id, input_class) => {
+exports.removeNodeInputConnections = (id, input_class) => { //check
   const infoNode = exports.getNodeFromId(id)
   const removeInputs = [];
   Object.keys(infoNode.inputs[input_class].connections).map(function (key, index) {
@@ -1451,7 +1420,6 @@ exports.removeNodeInputConnections = (id, input_class) => {
 }
 
 exports.removeReouteConnectionSelected = () => {
-  // this.dispatch('connectionUnselected', true);
   if (exports.reroute_fix_curvature) {
     exports.connection_selected.parentElement.querySelectorAll(".main-path").forEach((item, i) => {
       item.classList.remove("selected");
