@@ -23,7 +23,7 @@
     "preview": "vite preview",
     "pree2e": "vite build --mode=test",
     "e2e": "playwright test",
-    "lint": "lint",
+    "lint": "eslint .",
     "format": "prettier --check ."
   },
   "dependencies": {
