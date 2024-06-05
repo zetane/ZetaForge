@@ -192,7 +192,7 @@ export async function executePipeline(
   specs["name"] = name;
   specs["id"] = id;
 
-  if (anvilConfiguration.host !== "localhost") {
+  if (anvilConfiguration.host !== "127.0.0.1") {
     // TODO how can we make this check better
     await uploadBuildContexts(anvilConfiguration, specs, buffer);
   }
@@ -258,7 +258,7 @@ async function uploadBuildContexts(configuration, pipelineSpecs, buffer) {
   );
 
   buildContextStatus.forEach((status) => {
-    if (status.status) {
+    if (!status.status) {
       const blockPath = path.join(buffer, status.blockKey)
       checkAndUpload(status.s3Key, blockPath, configuration);
     }
