@@ -1,1 +1,7 @@
 src/components/ZetaneDrawflowEditor.js
+.cache/*
+core/*
+dist/*
+dist-electron/*
+electron/*
+release/*
