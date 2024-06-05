@@ -52,7 +52,7 @@ export default function DrawflowWrapper() {
   
   // Redraw the connections when resizing textarea
   useEffect(() => {
-    // if (!editor) return;
+    if (!editor) return;
 
     const resizeObserver = new ResizeObserver(entries => {
         entries.forEach(entry => {
@@ -149,6 +149,7 @@ export default function DrawflowWrapper() {
       drawflowUtils.setPipeline = setPipeline;
       drawflowUtils.pipeline = pipeline;
       drawflowUtils.updateConnectionList = setPipelineConnectionsAtom;
+      drawflowUtils.pipelinePosition = pipelinePosition;
       drawflowUtils.updatePosition = setPipelinePositionAtom;
       // Object.assign(drawflowUtils, { ...pipelinePosition })
       // drawflowUtils.zoomData = pipelinePosition;
@@ -189,21 +190,19 @@ export default function DrawflowWrapper() {
       // constructedEditor.on('connectionRemoved', (connection) => removeConnection(connection, pipelineRef.current));
       // constructedEditor.on('drawingConnection', (node) => drawflowUtils.drawConnection(node, constructedEditor, drawflowCanvas.current));
       // constructedEditor.on('updateConnection', ({eX, eY}) => drawflowUtils.updateConnection(eX, eY, constructedEditor, drawflowCanvas.current));
+      
       setEditor(drawflowUtils);
     // }
   }, []);
 
-  // const updateDrawFlowPosition = () => {
-  //   drawflowUtils.zoom = pipelinePosition.zoom;
-  //   drawflowUtils.zoom_max = pipelinePosition.zoom_max;
-  //   drawflowUtils.zoom_min = pipelinePosition.zoom_min;
-  //   drawflowUtils.zoom_value = pipelinePosition.zoom_value;
-  //   drawflowUtils.zoom_last_value = pipelinePosition.zoom_last_value;
-  //   drawflowUtils.canvas_x = pipelinePosition.canvas_x;
-  //   drawflowUtils.canvas_y = pipelinePosition.canvas_y;
-  //   drawflowUtils.precanvas.style.setProperty("transform", pipelinePosition.precanvasStyle)
-  //   console.log("pipelinePosition: ", pipelinePosition)
-  // }
+  const updateDrawFlowPosition = () => {
+    if (editor && pipelinePosition) {
+      const { precanvasStyle, ...rest } = pipelinePosition;
+      Object.assign(editor, { ...rest })
+      editor.precanvas.style.setProperty("transform", pipelinePosition.precanvasStyle)
+      console.log("pipelinePosition: ", pipelinePosition)
+    }
+  }
 
   useEffect(() => {
     const nodes = Object.entries(pipeline.data).map(([key, block]) => {
@@ -219,19 +218,12 @@ export default function DrawflowWrapper() {
     setRenderNodes(nodes)
     console.log("pipeline: ", pipeline.data)
     // updateDrawFlowPosition();
-    // Object.assign(drawflowUtils, { ...pipelinePosition })
   }, [pipeline.data])
 
-  // useEffect(() => {
-    // console.log("zoom from drawflowwrapper: ",
-    //   drawflowUtils.zoom,
-    //   drawflowUtils.zoom_max,
-    //   drawflowUtils.zoom_min,
-    //   drawflowUtils.zoom_value,
-    //   drawflowUtils.zoom_last_value,
-    // )
-    // Object.assign(drawflowUtils, { ...pipelinePosition })
-  // }, [pipelinePosition])
+  useEffect(() => {
+    // console.log("updated")
+    // updateDrawFlowPosition();
+  }, [pipelinePosition])
 
   useEffect(() => {
     if (renderNodes.length) {
@@ -247,9 +239,9 @@ export default function DrawflowWrapper() {
       // }
 
       try {
-        drawflowUtils.connection_list = pipelineConnections;
-        console.log("pipeline connections:", pipelineConnections)
-        drawflowUtils.addConnection();
+        editor.connection_list = pipelineConnections;
+        console.log("pipeline connections:", editor.connection_list)
+        editor.addConnection();
       } catch (e) {
         console.log(e)
       }
@@ -311,49 +303,49 @@ export default function DrawflowWrapper() {
     // Loads block to graph
     event.preventDefault()
 
-    if (drawflowUtils?.ele_selected?.classList[0] === 'input-element') {
+    if (editor?.ele_selected?.classList[0] === 'input-element') {
       return;
     }
 
     const jsonData = event.dataTransfer.getData("block");
     const spec = JSON.parse(jsonData)
-    const block = setBlockPos(drawflowUtils, spec, event.clientX, event.clientY)
-    addBlockToPipeline(block, drawflowUtils)
+    const block = setBlockPos(editor, spec, event.clientX, event.clientY)
+    addBlockToPipeline(block, editor)
   };
 
   const setBlockPos = (editor, block, posX, posY) => {
-    if (drawflowUtils.editor_mode === "fixed") {
+    if (editor.editor_mode === "fixed") {
       return block;
     }
     block.views.node.pos_x =
       posX *
-        (drawflowUtils.precanvas.clientWidth /
-          (drawflowUtils.precanvas.clientWidth * drawflowUtils.zoom)) -
-      drawflowUtils.precanvas.getBoundingClientRect().x *
-        (drawflowUtils.precanvas.clientWidth /
-          (drawflowUtils.precanvas.clientWidth * drawflowUtils.zoom));
+        (editor.precanvas.clientWidth /
+          (editor.precanvas.clientWidth * editor.zoom)) -
+      editor.precanvas.getBoundingClientRect().x *
+        (editor.precanvas.clientWidth /
+          (editor.precanvas.clientWidth * editor.zoom));
     block.views.node.pos_y =
       posY *
-        (drawflowUtils.precanvas.clientHeight /
-          (drawflowUtils.precanvas.clientHeight * drawflowUtils.zoom)) -
-      drawflowUtils.precanvas.getBoundingClientRect().y *
-        (drawflowUtils.precanvas.clientHeight /
-          (drawflowUtils.precanvas.clientHeight * drawflowUtils.zoom));
+        (editor.precanvas.clientHeight /
+          (editor.precanvas.clientHeight * editor.zoom)) -
+      editor.precanvas.getBoundingClientRect().y *
+        (editor.precanvas.clientHeight /
+          (editor.precanvas.clientHeight * editor.zoom));
 
     return block
   }
 
-  const removeNodeToDrawflow = (id, pipeline) => {
-    let newNodes = {}
-    for (const [key, node] of Object.entries(pipeline.data)) {
-      if (key !== id) {
-        newNodes[key] = node
-      }
-    }
-    setPipeline((draft) => {
-      draft.data = newNodes;
-    })
-  };
+  // const removeNodeToDrawflow = (id, pipeline) => {
+  //   let newNodes = {}
+  //   for (const [key, node] of Object.entries(pipeline.data)) {
+  //     if (key !== id) {
+  //       newNodes[key] = node
+  //     }
+  //   }
+  //   setPipeline((draft) => {
+  //     draft.data = newNodes;
+  //   })
+  // };
 
   const openView = async (id) => {
     const root = await getBlockPath.mutateAsync({

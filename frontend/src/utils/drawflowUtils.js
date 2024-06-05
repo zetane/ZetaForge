@@ -8,6 +8,7 @@ exports.connection_list = {};
 exports.updateConnectionList = null;
 exports.pointData = {};
 exports.updatePosition = null;
+exports.pipelinePosition = {}
 
 exports.nodeId = 1;
 exports.ele_selected = null;
@@ -351,6 +352,17 @@ exports.position = (e) => {
     x = exports.canvas_x + (-(exports.pos_x - e_pos_x))
     y = exports.canvas_y + (-(exports.pos_y - e_pos_y))
     exports.precanvas.style.transform = "translate(" + x + "px, " + y + "px) scale(" + exports.zoom + ")";
+    exports.updatePosition((draft) => {
+      console.log("from position change")
+      // draft.zoom = exports.zoom;
+      // draft.zoom_max = exports.zoom_max;
+      // draft.zoom_min = exports.zoom_min;
+      // draft.zoom_value = exports.zoom_value;
+      // draft.zoom_last_value = exports.zoom_last_value;
+      // draft.canvas_x = exports.canvas_x;
+      // draft.canvas_y = exports.canvas_y;
+      draft.precanvasStyle = exports.precanvas.style.transform;
+    })  
   }
   if (exports.drag) {
     e.preventDefault();
@@ -443,6 +455,18 @@ exports.dragEnd = (e) => {
     exports.canvas_x = exports.canvas_x + (-(exports.pos_x - e_pos_x));
     exports.canvas_y = exports.canvas_y + (-(exports.pos_y - e_pos_y));
     exports.editor_selected = false;
+
+    exports.updatePosition((draft) => {
+      console.log("from drag")
+      draft.zoom = exports.zoom;
+      draft.zoom_max = exports.zoom_max;
+      draft.zoom_min = exports.zoom_min;
+      draft.zoom_value = exports.zoom_value;
+      draft.zoom_last_value = exports.zoom_last_value;
+      draft.canvas_x = exports.canvas_x;
+      draft.canvas_y = exports.canvas_y;
+      draft.precanvasStyle = exports.precanvas.style.transform;
+    })  
   }
 
   if (exports.connection === true) {
@@ -602,6 +626,7 @@ exports.zoom_enter = (e) =>{
   }
 
   exports.updatePosition((draft) => {
+    // console.log("from zoom")
     draft.zoom = exports.zoom;
     draft.zoom_max = exports.zoom_max;
     draft.zoom_min = exports.zoom_min;
@@ -668,10 +693,10 @@ exports.updateConnectionNodes = (id) => {
   Object.keys(elemsOut).map(function (item, index) {
     if (elemsOut[item].querySelector('.point') === null) {
 
-      var elemtsearchId_out = exports.container.querySelector(`#${id}`);
+      var elemtsearchId_out = container.querySelector(`#${id}`);
 
       var id_search = elemsOut[item].classList[1].replace('node_in_', '');
-      var elemtsearchId = exports.container.querySelector(`#${id_search}`);
+      var elemtsearchId = container.querySelector(`#${id_search}`);
 
       var elemtsearch = elemtsearchId.querySelectorAll('.' + elemsOut[item].classList[4])[0]
 
@@ -686,7 +711,7 @@ exports.updateConnectionNodes = (id) => {
       var x = eX;
       var y = eY;
 
-      const lineCurve = exports.createCurvature(line_x, line_y, x, y, curvature, 'openclose');
+      const lineCurve = createCurvature(line_x, line_y, x, y, curvature, 'openclose');
       elemsOut[item].children[0].setAttributeNS(null, 'd', lineCurve);
     } else {
       const points = elemsOut[item].querySelectorAll('.point');
@@ -695,7 +720,7 @@ exports.updateConnectionNodes = (id) => {
       points.forEach((item, i) => {
         if (i === 0 && ((points.length - 1) === 0)) {
 
-          var elemtsearchId_out = exports.container.querySelector(`#${id}`);
+          var elemtsearchId_out = container.querySelector(`#${id}`);
           var elemtsearch = item;
 
           var eX = (elemtsearch.getBoundingClientRect().x - precanvas.getBoundingClientRect().x) * precanvasWitdhZoom + rerouteWidth;
@@ -707,13 +732,13 @@ exports.updateConnectionNodes = (id) => {
           var x = eX;
           var y = eY;
 
-          var lineCurveSearch = exports.createCurvature(line_x, line_y, x, y, reroute_curvature_start_end, 'open');
+          var lineCurveSearch = createCurvature(line_x, line_y, x, y, reroute_curvature_start_end, 'open');
           linecurve += lineCurveSearch;
           reoute_fix.push(lineCurveSearch);
 
           var elemtsearchId_out = item;
           var id_search = item.parentElement.classList[1].replace('node_in_', '');
-          var elemtsearchId = exports.container.querySelector(`#${id_search}`);
+          var elemtsearchId = container.querySelector(`#${id_search}`);
           var elemtsearch = elemtsearchId.querySelectorAll('.' + item.parentElement.classList[4])[0]
 
           var elemtsearchIn = elemtsearchId.querySelectorAll('.' + item.parentElement.classList[4])[0]
@@ -726,13 +751,13 @@ exports.updateConnectionNodes = (id) => {
           var x = eX;
           var y = eY;
 
-          var lineCurveSearch = exports.createCurvature(line_x, line_y, x, y, reroute_curvature_start_end, 'close');
+          var lineCurveSearch = createCurvature(line_x, line_y, x, y, reroute_curvature_start_end, 'close');
           linecurve += lineCurveSearch;
           reoute_fix.push(lineCurveSearch);
 
         } else if (i === 0) {
 
-          var elemtsearchId_out = exports.container.querySelector(`#${id}`);
+          var elemtsearchId_out = container.querySelector(`#${id}`);
           var elemtsearch = item;
 
           var eX = (elemtsearch.getBoundingClientRect().x - precanvas.getBoundingClientRect().x) * precanvasWitdhZoom + rerouteWidth;
@@ -745,7 +770,7 @@ exports.updateConnectionNodes = (id) => {
           var x = eX;
           var y = eY;
 
-          var lineCurveSearch = exports.createCurvature(line_x, line_y, x, y, reroute_curvature_start_end, 'open');
+          var lineCurveSearch = createCurvature(line_x, line_y, x, y, reroute_curvature_start_end, 'open');
           linecurve += lineCurveSearch;
           reoute_fix.push(lineCurveSearch);
 
@@ -760,7 +785,7 @@ exports.updateConnectionNodes = (id) => {
           var x = eX;
           var y = eY;
 
-          var lineCurveSearch = exports.createCurvature(line_x, line_y, x, y, reroute_curvature, 'other');
+          var lineCurveSearch = createCurvature(line_x, line_y, x, y, reroute_curvature, 'other');
           linecurve += lineCurveSearch;
           reoute_fix.push(lineCurveSearch);
 
@@ -769,7 +794,7 @@ exports.updateConnectionNodes = (id) => {
           var elemtsearchId_out = item;
 
           var id_search = item.parentElement.classList[1].replace('node_in_', '');
-          var elemtsearchId = exports.container.querySelector(`#${id_search}`);
+          var elemtsearchId = container.querySelector(`#${id_search}`);
           var elemtsearch = elemtsearchId.querySelectorAll('.' + item.parentElement.classList[4])[0]
 
           var elemtsearchIn = elemtsearchId.querySelectorAll('.' + item.parentElement.classList[4])[0]
@@ -780,7 +805,7 @@ exports.updateConnectionNodes = (id) => {
           var x = eX;
           var y = eY;
 
-          var lineCurveSearch = exports.createCurvature(line_x, line_y, x, y, reroute_curvature_start_end, 'close');
+          var lineCurveSearch = createCurvature(line_x, line_y, x, y, reroute_curvature_start_end, 'close');
           linecurve += lineCurveSearch;
           reoute_fix.push(lineCurveSearch);
 
@@ -795,7 +820,7 @@ exports.updateConnectionNodes = (id) => {
           var x = eX;
           var y = eY;
 
-          var lineCurveSearch = exports.createCurvature(line_x, line_y, x, y, reroute_curvature, 'other');
+          var lineCurveSearch = createCurvature(line_x, line_y, x, y, reroute_curvature, 'other');
           linecurve += lineCurveSearch;
           reoute_fix.push(lineCurveSearch);
         }
@@ -813,14 +838,14 @@ exports.updateConnectionNodes = (id) => {
     }
   })
 
-  const elems = exports.container.querySelectorAll(`.${idSearch}`);
+  const elems = container.querySelectorAll(`.${idSearch}`);
   Object.keys(elems).map(function (item, index) {
 
     if (elems[item].querySelector('.point') === null) {
-      var elemtsearchId_in = exports.container.querySelector(`#${id}`);
+      var elemtsearchId_in = container.querySelector(`#${id}`);
 
       var id_search = elems[item].classList[2].replace('node_out_', '');
-      var elemtsearchId = exports.container.querySelector(`#${id_search}`);
+      var elemtsearchId = container.querySelector(`#${id_search}`);
       var elemtsearch = elemtsearchId.querySelectorAll('.' + elems[item].classList[3])[0]
 
       var line_x = elemtsearch.offsetWidth / 2 + (elemtsearch.getBoundingClientRect().x - precanvas.getBoundingClientRect().x) * precanvasWitdhZoom;
@@ -830,7 +855,7 @@ exports.updateConnectionNodes = (id) => {
       var x = elemtsearchId_in.offsetWidth / 2 + (elemtsearchId_in.getBoundingClientRect().x - precanvas.getBoundingClientRect().x) * precanvasWitdhZoom;
       var y = elemtsearchId_in.offsetHeight / 2 + (elemtsearchId_in.getBoundingClientRect().y - precanvas.getBoundingClientRect().y) * precanvasHeightZoom;
 
-      const lineCurve = exports.createCurvature(line_x, line_y, x, y, curvature, 'openclose');
+      const lineCurve = createCurvature(line_x, line_y, x, y, curvature, 'openclose');
       elems[item].children[0].setAttributeNS(null, 'd', lineCurve);
 
     } else {
@@ -840,7 +865,7 @@ exports.updateConnectionNodes = (id) => {
       points.forEach((item, i) => {
         if (i === 0 && ((points.length - 1) === 0)) {
 
-          var elemtsearchId_out = exports.container.querySelector(`#${id}`);
+          var elemtsearchId_out = container.querySelector(`#${id}`);
           var elemtsearch = item;
 
           var line_x = (elemtsearch.getBoundingClientRect().x - precanvas.getBoundingClientRect().x) * precanvasWitdhZoom + rerouteWidth;
@@ -853,13 +878,13 @@ exports.updateConnectionNodes = (id) => {
           var x = eX;
           var y = eY;
 
-          var lineCurveSearch = exports.createCurvature(line_x, line_y, x, y, reroute_curvature_start_end, 'close');
+          var lineCurveSearch = createCurvature(line_x, line_y, x, y, reroute_curvature_start_end, 'close');
           linecurve += lineCurveSearch;
           reoute_fix.push(lineCurveSearch);
 
           var elemtsearchId_out = item;
           var id_search = item.parentElement.classList[2].replace('node_out_', '');
-          var elemtsearchId = exports.container.querySelector(`#${id_search}`);
+          var elemtsearchId = container.querySelector(`#${id_search}`);
           var elemtsearch = elemtsearchId.querySelectorAll('.' + item.parentElement.classList[3])[0]
 
           var elemtsearchOut = elemtsearchId.querySelectorAll('.' + item.parentElement.classList[3])[0]
@@ -871,7 +896,7 @@ exports.updateConnectionNodes = (id) => {
           var x = eX;
           var y = eY;
 
-          var lineCurveSearch = exports.createCurvature(line_x, line_y, x, y, reroute_curvature_start_end, 'open');
+          var lineCurveSearch = createCurvature(line_x, line_y, x, y, reroute_curvature_start_end, 'open');
           linecurve += lineCurveSearch;
           reoute_fix.push(lineCurveSearch);
 
@@ -880,7 +905,7 @@ exports.updateConnectionNodes = (id) => {
           // FIRST
           var elemtsearchId_out = item;
           var id_search = item.parentElement.classList[2].replace('node_out_', '');
-          var elemtsearchId = exports.container.querySelector(`#${id_search}`);
+          var elemtsearchId = container.querySelector(`#${id_search}`);
           var elemtsearch = elemtsearchId.querySelectorAll('.' + item.parentElement.classList[3])[0]
           var elemtsearchOut = elemtsearchId.querySelectorAll('.' + item.parentElement.classList[3])[0]
           var line_x = elemtsearchOut.offsetWidth / 2 + (elemtsearchOut.getBoundingClientRect().x - precanvas.getBoundingClientRect().x) * precanvasWitdhZoom;
@@ -891,7 +916,7 @@ exports.updateConnectionNodes = (id) => {
           var x = eX;
           var y = eY;
 
-          var lineCurveSearch = exports.createCurvature(line_x, line_y, x, y, reroute_curvature_start_end, 'open');
+          var lineCurveSearch = createCurvature(line_x, line_y, x, y, reroute_curvature_start_end, 'open');
           linecurve += lineCurveSearch;
           reoute_fix.push(lineCurveSearch);
 
@@ -906,7 +931,7 @@ exports.updateConnectionNodes = (id) => {
           var x = eX;
           var y = eY;
 
-          var lineCurveSearch = exports.createCurvature(line_x, line_y, x, y, reroute_curvature, 'other');
+          var lineCurveSearch = createCurvature(line_x, line_y, x, y, reroute_curvature, 'other');
           linecurve += lineCurveSearch;
           reoute_fix.push(lineCurveSearch);
 
@@ -915,7 +940,7 @@ exports.updateConnectionNodes = (id) => {
           var elemtsearchId_out = item;
 
           var id_search = item.parentElement.classList[1].replace('node_in_', '');
-          var elemtsearchId = exports.container.querySelector(`#${id_search}`);
+          var elemtsearchId = container.querySelector(`#${id_search}`);
           var elemtsearch = elemtsearchId.querySelectorAll('.' + item.parentElement.classList[4])[0]
 
           var elemtsearchIn = elemtsearchId.querySelectorAll('.' + item.parentElement.classList[4])[0]
@@ -927,7 +952,7 @@ exports.updateConnectionNodes = (id) => {
           var x = eX;
           var y = eY;
 
-          var lineCurveSearch = exports.createCurvature(line_x, line_y, x, y, reroute_curvature_start_end, 'close');
+          var lineCurveSearch = createCurvature(line_x, line_y, x, y, reroute_curvature_start_end, 'close');
           linecurve += lineCurveSearch;
           reoute_fix.push(lineCurveSearch);
 
@@ -943,7 +968,7 @@ exports.updateConnectionNodes = (id) => {
           var x = eX;
           var y = eY;
 
-          var lineCurveSearch = exports.createCurvature(line_x, line_y, x, y, reroute_curvature, 'other');
+          var lineCurveSearch = createCurvature(line_x, line_y, x, y, reroute_curvature, 'other');
           linecurve += lineCurveSearch;
           reoute_fix.push(lineCurveSearch);
         }
@@ -1419,14 +1444,14 @@ exports.removeNodeInputConnections = (id, input_class) => { //check
   });
 }
 
-exports.removeReouteConnectionSelected = () => {
+exports.removeReouteConnectionSelected = () => { // fine?
   if (exports.reroute_fix_curvature) {
     exports.connection_selected.parentElement.querySelectorAll(".main-path").forEach((item, i) => {
       item.classList.remove("selected");
     });
   }
 }
-exports.getNodeFromId = (id) => {
+exports.getNodeFromId = (id) => { // check
   var moduleName = exports.getModuleFromNodeId(id)
   return JSON.parse(JSON.stringify(exports.drawflow.drawflow[moduleName].data[id]));
 }
