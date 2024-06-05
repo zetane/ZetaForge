@@ -5,10 +5,9 @@ import { mixpanelAtom } from "@/atoms/mixpanelAtom";
 import generateSchema from '@/utils/schemaValidation';
 import { trpc } from "@/utils/trpc";
 import { Button } from "@carbon/react";
-import axios from "axios";
 import { useAtom } from "jotai";
 import { useImmerAtom } from "jotai-immer";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { uuidv7 } from "uuidv7";
 import ClosableModal from "./modal/ClosableModal";
 import { workspaceAtom } from "@/atoms/pipelineAtom";
@@ -81,46 +80,22 @@ const usePostExecution = (queryClient, configuration, setWorkspace, loadServerPi
   return mutation;
 };
 
-const buildSortKeys = (specs) => {
-  for (const blockId in specs.pipeline) {
-    const orderObject = {
-      input: [],
-      output: [],
-    };
 
-    const block = specs.pipeline[blockId];
-    const inputKeys = Object.keys(block.inputs);
-    const outputKeys = Object.keys(block.outputs);
-
-    orderObject.input = (inputKeys);
-    orderObject.output = (outputKeys);
-
-    block.views.node.order = orderObject
-  }
-
-  return specs
-}
-
-export default function RunPipelineButton({ modalPopper, children, action }) {
+export default function RunPipelineButton({ children, action }) {
   const [editor] = useAtom(drawflowEditorAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
-  const [workspace, setWorkspace] = useImmerAtom(workspaceAtom)
   const [validationErrorMsg, setValidationErrorMsg] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [mixpanelService] = useAtom(mixpanelAtom)
   const [configuration] = useAtom(activeConfigurationAtom);
-  const queryClient = useQueryClient();
-  const loadServerPipeline = useLoadServerPipeline();
+  const executePipeline = trpc.executePipeline.useMutation();
 
-  const postExecution = usePostExecution(queryClient, configuration, setWorkspace, loadServerPipeline);
-  const uploadParameterBlocks = trpc.uploadParameterBlocks.useMutation();
-
-  const runPipeline = async (editor, pipeline) => {
+  const runPipeline = async () => {
     // check if pipeline structure exists
     if (!pipeline.data || !Object.keys(pipeline.data).length) return null;
     setValidationErrorMsg([])
 
-    let pipelineSpecs = editor.convert_drawflow_to_block(pipeline.name, pipeline.data);
+    const pipelineSpecs = editor.convert_drawflow_to_block(pipeline.name, pipeline.data);
     const executionId = uuidv7();
 
     try {
@@ -134,57 +109,65 @@ export default function RunPipelineButton({ modalPopper, children, action }) {
       return null;
     }
 
+    
+    if (!validateSchema()) return;
+    if (!(await execute(pipelineSpecs, executionId))) return;
+
+    setPipeline((draft) => {
+      draft.socketUrl = `ws://${configuration.host}:${configuration.anvilPort}/ws/${draft.id}`;
+      draft.history = `${draft.id}/${executionId}`;
+      draft.saveTime = Date.now();
+      draft.log = [];
+    })
+
+    trackMixpanelRunCreated();
+  };
+
+  const execute = async (pipelineSpecs, executionId) => {
     try {
-      pipelineSpecs = await uploadParameterBlocks.mutateAsync({
-        pipelineId: pipeline.id,
+      const rebuild = (action == "Rebuild")
+      await executePipeline.mutateAsync({
+        id: pipeline.id,
         executionId: executionId,
-        pipelineSpecs: pipelineSpecs,
+        specs: pipelineSpecs,
+        path: pipeline.path,
         buffer: pipeline.buffer,
+        name: pipeline.name,
+        rebuild: rebuild,
         anvilConfiguration: configuration,
       });
+      return true
     } catch (error) {
-      setValidationErrorMsg([`Failed to upload files to anvil server: ${error}`])
+      console.error(`Pipeline execution failed: ${error}`)
+      setValidationErrorMsg(["Pipeline exectuion failed"])
       setIsOpen(true)
-      return null;
+      return false
     }
+  }
 
+  const validateSchema = () => {
     const schema = generateSchema(pipeline.data);
     const results = schema.safeParse(pipeline.data);
 
     if (!results.success) {
-      setValidationErrorMsg(prev => {
+      setValidationErrorMsg(() => {
         return results.error.issues.map(block => `${block.path[0]}: ${block.message}`)
       })
       setIsOpen(true)
-      return null;
+      return false;
     } else {
       setValidationErrorMsg([]);
+      return true;
     }
+  }
 
-    try {
-      const sortedPipeline = buildSortKeys(pipelineSpecs)
-      // tries to put history in a user path if it exists, if not
-      // will put it into the buffer path (.cache)
-      sortedPipeline['sink'] = pipeline.path ? pipeline.path : pipeline.buffer
-      // Pull containers from the buffer to ensure the most recent ones
-      // In the case where a user has a savePath but a mod has happened since
-      // Last save
-      sortedPipeline['build'] = pipeline.buffer
-      sortedPipeline['name'] = pipeline.name
-      sortedPipeline['id'] = pipeline.id
-      const rebuild = (action == "Rebuild")
-      const execution = {
-        id: executionId,
-        pipeline: sortedPipeline,
-        build: rebuild
+  const trackMixpanelRunCreated = () => {
+      try {
+        mixpanelService.trackEvent('Run Created')
+      } catch (err) {
+        console.error("Mixpanel run tracking failed");
       }
-
-      const response = await postExecution.mutateAsync(execution)
-    } catch (error) {
-      setValidationErrorMsg([error.message])
-      setIsOpen(true)
-    }
-  };
+  }
 
   const styles = {
     margin: '5px',
@@ -193,7 +176,7 @@ export default function RunPipelineButton({ modalPopper, children, action }) {
 
   return (
     <>
-      <Button style={styles} size="sm" onClick={() => { runPipeline(editor, pipeline) }}>
+      <Button style={styles} size="sm" onClick={() => runPipeline()}>
         <span>{action}</span>
         {children}
       </Button>

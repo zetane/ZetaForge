@@ -104,4 +104,5 @@ type Execution struct {
 type BuildContextStatus struct {
 	BlockKey string `json:"blockKey"`
 	Status   bool   `json:"status"`
+	S3Key    string `json:"s3Key"`
 }

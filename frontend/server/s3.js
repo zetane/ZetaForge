@@ -66,7 +66,7 @@ async function upload(key, filePath, anvilConfiguration) {
     return res
   } catch (err) {
     const message = 'Could not upload file to S3';
-    console.error(message, err);
+    console.error(message, err, err.stack);
     throw new Error(message);
   }
 }
@@ -85,7 +85,7 @@ async function fileExists(key, anvilConfiguration) {
       return false;
     }
     const message = 'Error checking file existence in S3';
-    console.error(message, err);
+    console.error(message, err, err.stack);
     throw new Error(message);
   }
 }

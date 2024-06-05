@@ -128,7 +128,7 @@ func kanikoTemplate(block *zjson.Block, organization string, cfg Config) *wfv1.T
 	if cfg.IsLocal {
 		return nil
 	} else {
-		name := organization + "-" + block.Action.Container.Image + "-" + block.Action.Container.Version
+		name := getKanikoTemplateName(block, organization)
 		cmd := []string{
 			"/kaniko/executor",
 			"--context",
@@ -154,10 +154,10 @@ func kanikoTemplate(block *zjson.Block, organization string, cfg Config) *wfv1.T
 			Inputs: wfv1.Inputs{Artifacts: []wfv1.Artifact{
 				{
 					Name: "context",
-					Path: "/workspace/context.tar.gz",
+					Path: "/workspace/context",
 					ArtifactLocation: wfv1.ArtifactLocation{
 						S3: &wfv1.S3Artifact{
-							Key: name + "-build.tar.gz",
+							Key: getKanikoBuildContextS3Key(name),
 						},
 					},
 					Archive: &wfv1.ArchiveStrategy{
@@ -363,4 +363,12 @@ func getComputaionName(blockKey string, organization string, cfg Config) string 
 	} else {
 		return organization + "-" + blockKey + ".py"
 	}
+}
+
+func getKanikoTemplateName(block *zjson.Block, organization string) string {
+	return organization + "-" + block.Action.Container.Image + "-" + block.Action.Container.Version
+}
+
+func getKanikoBuildContextS3Key(kanikoTemplateName string) string {
+	return kanikoTemplateName + "-build"
 }
