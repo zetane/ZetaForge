@@ -196,7 +196,7 @@ export const appRouter = router({
       try {
         return await executePipeline(id, executionId, specs, path, buffer, name, rebuild, anvilConfiguration);
       } catch (error) {
-        const message = "Coulld not execute the pipeline"
+        const message = "Could not execute the pipeline"
         console.error(message, error, error.stack)
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
