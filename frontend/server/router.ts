@@ -123,7 +123,7 @@ export const appRouter = router({
       }
 
       if (writePath) {
-        const savePaths = await copyPipeline(specs, name, buffer, writePath);
+        const savePaths = await copyPipeline(specs, buffer, writePath);
         return savePaths;
       }
 
@@ -132,21 +132,20 @@ export const appRouter = router({
   saveBlock: publicProcedure
     .input(z.object({
       pipelineSpec: z.any(),
-      name: z.string(),
       blockSpec: z.any(),
       blockId: z.string(),
       blockPath: z.string(),
       pipelinePath: z.string()
-    }))
-    .mutation(async (opts) => {
-      const { input } = opts;
-      const { pipelineSpec, name, blockSpec, blockId, blockPath, pipelinePath } = input;
+    })) 
+    .mutation(async(opts) => {
+      const {input} = opts;
+      const {pipelineSpec, blockSpec, blockId, blockPath, pipelinePath} = input;
       let savePaths;
       if (blockSpec.action?.container) {
         savePaths = await saveBlock(blockId, blockSpec, blockPath, pipelinePath);
-        await saveSpec(pipelineSpec, pipelinePath, name + ".json")
+        await saveSpec(pipelineSpec, pipelinePath)
       } else if (blockSpec.action?.parameters) {
-        savePaths = await saveSpec(pipelineSpec, pipelinePath, name + ".json")
+        savePaths = await saveSpec(pipelineSpec, pipelinePath)
       }
       return savePaths;
     }),

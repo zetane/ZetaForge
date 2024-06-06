@@ -296,7 +296,9 @@ export default function DrawflowWrapper() {
   const fileInput = useRef();
 
   return (
-    <div id="drawflow" ref={handleDrawflow}
+    <div
+      id="drawflow"
+      ref={handleDrawflow}
       onDrop={(ev) => {
         const blockData = ev.dataTransfer.getData("block");
         const pipelineData = ev.dataTransfer.getData("pipeline");

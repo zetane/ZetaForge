@@ -1,6 +1,6 @@
 import { drawflowEditorAtom } from '@/atoms/drawflowAtom';
 import { pipelineAtom } from '@/atoms/pipelineAtom';
-import { CHAT_HISTORY_FILE_NAME, SPECS_FILE_NAME } from '@/utils/constants';
+import { BLOCK_SPECS_FILE_NAME, CHAT_HISTORY_FILE_NAME } from '@/utils/constants';
 import { updateSpecs } from '@/utils/specs';
 import { trpc } from '@/utils/trpc';
 import {
@@ -18,7 +18,7 @@ import { EditorCodeMirror, ViewerCodeMirror } from "./CodeMirrorComponents";
 import ComputationsFileEditor from "./ComputationsFileEditor";
 import Splitter from "./Splitter";
 
-const EDIT_ONLY_FILES = [SPECS_FILE_NAME, CHAT_HISTORY_FILE_NAME] //TODO use the new spec file name
+const EDIT_ONLY_FILES = [BLOCK_SPECS_FILE_NAME, CHAT_HISTORY_FILE_NAME]
 export default function DirectoryViewer({
   blockPath,
   blockKey,
