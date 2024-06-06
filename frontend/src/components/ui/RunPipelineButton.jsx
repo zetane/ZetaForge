@@ -98,17 +98,11 @@ export default function RunPipelineButton({ children, action }) {
     const pipelineSpecs = editor.convert_drawflow_to_block(pipeline.name, pipeline.data);
     const executionId = uuidv7();
 
-    try {
-      const res = await axios.get(`http://${configuration.host}:${configuration.anvilPort}/ping`)
-      if (res.status != 200) {
-        throw Error()
-      }
-    } catch(error) {
+    if (! (await isAnvilOnline())){
       setValidationErrorMsg(["Seaweed ping did not return ok. Please wait a few seconds and retry."])
       setIsOpen(true)
       return null;
     }
-
     
     if (!validateSchema()) return;
     if (!(await execute(pipelineSpecs, executionId))) return;
@@ -122,6 +116,15 @@ export default function RunPipelineButton({ children, action }) {
 
     trackMixpanelRunCreated();
   };
+
+  const isAnvilOnline = async () => {
+    try {
+    const response = await fetch(`http://${configuration.host}:${configuration.anvilPort}/ping`);
+    return response.ok;
+    } catch {
+      return false
+    }
+  }
 
   const execute = async (pipelineSpecs, executionId) => {
     try {
