@@ -251,15 +251,9 @@ async function uploadBlocks(
 }
 
 async function uploadBuildContexts(configuration, pipelineSpecs, buffer) {
-  const buildContextStatus = await getBuildContextStatus(
-    configuration,
-    pipelineSpecs,
-  );
-
-  buildContextStatus.forEach((status) => {
-    if (!status.status) {
-      const blockPath = path.join(buffer, status.blockKey)
-      checkAndUpload(status.s3Key, blockPath, configuration);
-    }
-  });
+  const buildContextStatuses = await getBuildContextStatus(configuration, pipelineSpecs); 
+  await Promise.all(buildContextStatuses
+    .filter(status => !status.status)
+    .map(status => [path.join(buffer, status.blockKey), status.s3Key])
+    .map(([blockPath, s3Key]) => checkAndUpload(s3Key, blockPath, configuration)))
 }
