@@ -9,7 +9,7 @@ import {
   filterDirectories,
   readJsonToObject,
 } from "./fileSystem.js";
-import { checkAndUpload, checkAndCopy } from "./s3.js";
+import { checkAndUpload, checkAndCopy, uploadDirectory } from "./s3.js";
 import { createExecution, getBuildContextStatus, getConfig } from "./anvil";
 
 export async function saveSpec(spec, writePath) {
@@ -255,5 +255,5 @@ async function uploadBuildContexts(configuration, pipelineSpecs, buffer) {
   await Promise.all(buildContextStatuses
     .filter(status => !status.status)
     .map(status => [path.join(buffer, status.blockKey), status.s3Key])
-    .map(([blockPath, s3Key]) => checkAndUpload(s3Key, blockPath, configuration)))
+    .map(([blockPath, s3Key]) => uploadDirectory(s3Key, blockPath, configuration)))
 }
