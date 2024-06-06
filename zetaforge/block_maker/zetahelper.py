@@ -9,7 +9,7 @@ import os
 import re
 import sys
 from datetime import datetime
-
+import linecache
 # Mapping of import names to package names
 IMPORT_PACKAGE_MAPPING = {
     'cv2': 'opencv-python',
@@ -28,6 +28,44 @@ IMPORT_PACKAGE_MAPPING = {
 STANDARD_LIBRARIES = set(sys.builtin_module_names)
 
 
+def get_function_name(func_str):
+    """
+    Extracts the name of the function from a string representation of a function definition.
+    
+    Args:
+        func_str (str): A string representing a Python function definition.
+    
+    Returns:
+        str: The name of the function, or None if no valid function name is found.
+    """
+    pattern = r'def\s+(\w+)\s*\('
+    match = re.search(pattern, func_str)
+    if match:
+        return match.group(1)
+    else:
+        return None
+
+
+# monkey patch for getting resources via inspect, for cli usage
+def exec_get_source(code, func_name, inspector):
+    getlines = linecache.getlines
+    def monkey_patch(filename, module_globals=None):
+        if filename == '<string>':
+            return code.splitlines(keepends=True)
+        else:
+            return getlines(filename, module_globals)
+    linecache.getlines = monkey_patch
+    
+    try:
+        exec(code, globals())
+        function = globals()[func_name]
+        #you can now use inspect.getsource() on the result of exec() here
+        result = inspector(function)
+        
+    finally:
+        linecache.getlines = getlines
+        return result
+    
 def sanitize(name, max_length=63):
     name = name.lower()
     # Replace any character a lowercase letter, digit, or hyphen with a hyphen
@@ -158,8 +196,16 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 def make_computations(func, additional_imports, block_folder):
     # Extract the source code of the function
-    source_code = inspect.getsource(func)
-
+    func_is_str = False
+    func_name = None
+    source_code = None
+    if isinstance(func, str):
+        func_is_str = True
+        func_name = get_function_name(func)
+        source_code = exec_get_source(func, func_name, inspect.getsource)
+    else:
+        source_code = inspect.getsource(func)
+    print(source_code)
     # Parse the function to get the return statement(s)
     tree = ast.parse(source_code)
     return_nodes = [node for node in ast.walk(tree) if isinstance(node, ast.Return)]
@@ -174,7 +220,11 @@ def make_computations(func, additional_imports, block_folder):
             return_exprs.append(ast.unparse(return_node.value))
 
     # Extract the function's arguments
-    func_signature = inspect.signature(func)
+    func_signature = None
+    if func_is_str:
+        func_signature = exec_get_source(func, func_name, inspect.signature)
+    else:
+        func_signature = inspect.signature(func)
     func_args = ", ".join(func_signature.parameters.keys())
 
     # Extract the function body excluding the first line (def ...)
@@ -220,7 +270,12 @@ def make_requirements(package_names, func, block_folder):
             requirements.add(f"{package_name}=={version}")
 
     # Extracting imports from the function code
-    source_code = inspect.getsource(func)
+    source_code = None
+    if isinstance(func, str):
+        func_name = get_function_name(func)
+        source_code = exec_get_source(func, func_name, inspect.getsource)
+    else:
+        source_code = inspect.getsource(func)
     tree = ast.parse(source_code)
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
@@ -276,8 +331,12 @@ def make_specs(compute_code, name, description, block_folder):
         json.dump(specs, file, indent=4)
 
 def block_maker(func, package_names='', name=None, description='Block generated from a Python function'):
+    
     if name is None:
-        name = func.__name__
+        if(isinstance(func, str)):
+            name = get_function_name(func)
+        else:
+            name = func.__name__
     timestamp = datetime.now().strftime('%Y%m%d-%H%M%S-%f')[:-3]
     block_folder = f"{sanitize(name)}-{timestamp}"
     os.makedirs(block_folder, exist_ok=True)
