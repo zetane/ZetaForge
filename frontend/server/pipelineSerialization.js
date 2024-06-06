@@ -179,7 +179,6 @@ export async function executePipeline(
     buffer,
     anvilHostConfiguration,
   );
-
   // tries to put history in a user path if it exists, if not
   // will put it into the buffer path (.cache)
   specs["sink"] = path ? path : buffer;
@@ -193,7 +192,7 @@ export async function executePipeline(
   specs["id"] = id;
   
   const anvilConfiguration = await getConfig(anvilHostConfiguration)
-  if (!anvilConfiguration.isDev) {
+  if (!anvilConfiguration.isLocal) {
     await uploadBuildContexts(anvilHostConfiguration, specs, buffer);
   }
 
