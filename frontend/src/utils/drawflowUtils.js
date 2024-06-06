@@ -1,15 +1,13 @@
 const exports = {};
 
-exports.setPipeline = null;
 exports.pipeline = null;
-exports.container = null;
-exports.precanvas = null;
+exports.setPipeline = null;
 exports.connection_list = {};
 exports.updateConnectionList = null;
 exports.pointData = {};
-exports.updatePosition = null;
-exports.pipelinePosition = {}
 
+exports.container = null;
+exports.precanvas = null;
 exports.nodeId = 1;
 exports.ele_selected = null;
 exports.node_selected = null;
@@ -72,23 +70,23 @@ exports.drawConnection = (node) => {
 }
 
 exports.updateConnection = (eX, eY, editor, drawflowCanvas) => {
-    const precanvas = exports.precanvas;
-    const zoom = exports.zoom;
-    let precanvasWitdhZoom = precanvas.clientWidth / (precanvas.clientWidth * zoom);
-    precanvasWitdhZoom = precanvasWitdhZoom || 0;
-    let precanvasHeightZoom = precanvas.clientHeight / (precanvas.clientHeight * zoom);
-    precanvasHeightZoom = precanvasHeightZoom || 0;
-    var path = exports.connection_ele.children[0];
+  const precanvas = exports.precanvas;
+  const zoom = exports.zoom;
+  let precanvasWitdhZoom = precanvas.clientWidth / (precanvas.clientWidth * zoom);
+  precanvasWitdhZoom = precanvasWitdhZoom || 0;
+  let precanvasHeightZoom = precanvas.clientHeight / (precanvas.clientHeight * zoom);
+  precanvasHeightZoom = precanvasHeightZoom || 0;
+  var path = exports.connection_ele.children[0];
 
-    var line_x = exports.ele_selected.offsetWidth / 2 + (exports.ele_selected.getBoundingClientRect().x - precanvas.getBoundingClientRect().x) * precanvasWitdhZoom;
-    var line_y = exports.ele_selected.offsetHeight / 2 + (exports.ele_selected.getBoundingClientRect().y - precanvas.getBoundingClientRect().y) * precanvasHeightZoom;
+  var line_x = exports.ele_selected.offsetWidth / 2 + (exports.ele_selected.getBoundingClientRect().x - precanvas.getBoundingClientRect().x) * precanvasWitdhZoom;
+  var line_y = exports.ele_selected.offsetHeight / 2 + (exports.ele_selected.getBoundingClientRect().y - precanvas.getBoundingClientRect().y) * precanvasHeightZoom;
 
-    var x = eX * (precanvas.clientWidth / (precanvas.clientWidth * exports.zoom)) - (precanvas.getBoundingClientRect().x * (precanvas.clientWidth / (precanvas.clientWidth * exports.zoom)));
-    var y = eY * (precanvas.clientHeight / (precanvas.clientHeight * exports.zoom)) - (precanvas.getBoundingClientRect().y * (precanvas.clientHeight / (precanvas.clientHeight * exports.zoom)));
+  var x = eX * (precanvas.clientWidth / (precanvas.clientWidth * exports.zoom)) - (precanvas.getBoundingClientRect().x * (precanvas.clientWidth / (precanvas.clientWidth * exports.zoom)));
+  var y = eY * (precanvas.clientHeight / (precanvas.clientHeight * exports.zoom)) - (precanvas.getBoundingClientRect().y * (precanvas.clientHeight / (precanvas.clientHeight * exports.zoom)));
 
-    var curvature = exports.curvature;
-    var lineCurve = exports.createCurvature(line_x, line_y, x, y, curvature, 'openclose');
-    path.setAttributeNS(null, 'd', lineCurve);
+  var curvature = exports.curvature;
+  var lineCurve = exports.createCurvature(line_x, line_y, x, y, curvature, 'openclose');
+  path.setAttributeNS(null, 'd', lineCurve);
 }
 
 exports.addConnection = () => {
@@ -352,17 +350,10 @@ exports.position = (e) => {
     x = exports.canvas_x + (-(exports.pos_x - e_pos_x))
     y = exports.canvas_y + (-(exports.pos_y - e_pos_y))
     exports.precanvas.style.transform = "translate(" + x + "px, " + y + "px) scale(" + exports.zoom + ")";
-    exports.updatePosition((draft) => {
-      console.log("from position change")
-      // draft.zoom = exports.zoom;
-      // draft.zoom_max = exports.zoom_max;
-      // draft.zoom_min = exports.zoom_min;
-      // draft.zoom_value = exports.zoom_value;
-      // draft.zoom_last_value = exports.zoom_last_value;
-      // draft.canvas_x = exports.canvas_x;
-      // draft.canvas_y = exports.canvas_y;
-      draft.precanvasStyle = exports.precanvas.style.transform;
-    })  
+    // exports.updatePosition((draft) => {
+    //   console.log("from position change")
+    //   draft.precanvasStyle = exports.precanvas.style.transform;
+    // })  
   }
   if (exports.drag) {
     e.preventDefault();
@@ -455,18 +446,6 @@ exports.dragEnd = (e) => {
     exports.canvas_x = exports.canvas_x + (-(exports.pos_x - e_pos_x));
     exports.canvas_y = exports.canvas_y + (-(exports.pos_y - e_pos_y));
     exports.editor_selected = false;
-
-    exports.updatePosition((draft) => {
-      console.log("from drag")
-      draft.zoom = exports.zoom;
-      draft.zoom_max = exports.zoom_max;
-      draft.zoom_min = exports.zoom_min;
-      draft.zoom_value = exports.zoom_value;
-      draft.zoom_last_value = exports.zoom_last_value;
-      draft.canvas_x = exports.canvas_x;
-      draft.canvas_y = exports.canvas_y;
-      draft.precanvasStyle = exports.precanvas.style.transform;
-    })  
   }
 
   if (exports.connection === true) {
@@ -504,9 +483,9 @@ exports.dragEnd = (e) => {
           exports.updateConnectionList((draft) => {
             draft[svgName] = {
               input_id: id_input,
-              input_class: input_class,
+              input_class,
               output_id: id_output,
-              output_class: output_class,
+              output_class,
               path: Array.from(exports.connection_ele.children),
             }
           })
@@ -531,7 +510,7 @@ exports.dragEnd = (e) => {
       }
 
     } else {
-      // Remove Connection;;
+      // Remove Connection;
       exports.connection_ele.remove();
       exports.connection_ele = null;
     }
@@ -625,17 +604,17 @@ exports.zoom_enter = (e) =>{
     exports.zoom_in();
   }
 
-  exports.updatePosition((draft) => {
-    // console.log("from zoom")
-    draft.zoom = exports.zoom;
-    draft.zoom_max = exports.zoom_max;
-    draft.zoom_min = exports.zoom_min;
-    draft.zoom_value = exports.zoom_value;
-    draft.zoom_last_value = exports.zoom_last_value;
-    draft.canvas_x = exports.canvas_x;
-    draft.canvas_y = exports.canvas_y;
-    draft.precanvasStyle = exports.precanvas.style.transform;
-  })
+  // exports.updatePosition((draft) => {
+  //   console.log("from zoom")
+  //   draft.zoom = exports.zoom;
+  //   draft.zoom_max = exports.zoom_max;
+  //   draft.zoom_min = exports.zoom_min;
+  //   draft.zoom_value = exports.zoom_value;
+  //   draft.zoom_last_value = exports.zoom_last_value;
+  //   draft.canvas_x = exports.canvas_x;
+  //   draft.canvas_y = exports.canvas_y;
+  //   draft.precanvasStyle = exports.precanvas.style.transform;
+  // })
 
   // console.log(`
   //   exports.zoom ${exports.zoom}
@@ -1181,15 +1160,6 @@ exports.removeConnection = () => {
   }
 }
 
-// exports.removeNodeId = (id)=> {
-//   exports.removeConnectionNodeId(id);
-//   // var moduleName = exports.getModuleFromNodeId(id.slice(5))
-//   // exports.setPipeline((draft) => {
-//   //   delete draft.data[id.slice(5)];
-//   // })
-//   // delete exports.drawflow.drawflow[moduleName].data[id.slice(5)];
-// }
-
 exports.removeSingleConnection = (id_output, id_input, output_class, input_class) => {
   var nodeOneModule = exports.getModuleFromNodeId(id_output);
   var nodeTwoModule = exports.getModuleFromNodeId(id_input);
@@ -1321,7 +1291,7 @@ exports.removeConnectionNodeId = (id) => {
 // }
 exports.clear = () => {
   exports.precanvas.innerHTML = "";
-  exports.drawflow = { "drawflow": { "Home": { "data": {} } } };
+  // exports.drawflow = { "drawflow": { "Home": { "data": {} } } };
 }
 
 exports.import = (data, notifi = true) => {

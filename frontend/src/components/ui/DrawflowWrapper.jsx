@@ -2,8 +2,8 @@ import { drawflowEditorAtom } from '@/atoms/drawflowAtom';
 import { blockEditorRootAtom, isBlockEditorOpenAtom } from '@/atoms/editorAtom';
 import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { pipelineConnectionsAtom } from "@/atoms/pipelineConnectionsAtom";
-import { pipelinePositionAtom } from "@/atoms/pipelinePositionAtom";
-import Drawflow from '@/components/ZetaneDrawflowEditor';
+// import Drawflow from '@/components/ZetaneDrawflowEditor';
+import Drawflow2 from '../ZetaneDrawFlowEditor_2';
 import BlockGenerator from '@/components/ui/blockGenerator/BlockGenerator';
 import { genJSON, generateId, replaceIds } from '@/utils/blockUtils';
 import { trpc } from "@/utils/trpc";
@@ -12,22 +12,22 @@ import { useAtom, useSetAtom } from 'jotai';
 import { useImmerAtom } from 'jotai-immer';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLoadPipeline } from "./useLoadPipeline";
-import drawflowUtils from '@/utils/drawflowUtils';
+// import drawflowUtils from '@/utils/drawflowUtils';
 
-// const launchDrawflow = (parentDomRef, canvasDomRef, pipeline, setPipeline) => {
-//   if (parentDomRef.className != "parent-drawflow") {
-//     const editor = new Drawflow(parentDomRef, pipeline, setPipeline, canvasDomRef);
+const launchDrawflow = (parentDomRef, canvasDomRef, pipeline, setPipeline, connection_list, setConnectionList) => {
+  if (parentDomRef.className != "parent-drawflow") {
+    const editor = new Drawflow2(parentDomRef, pipeline, setPipeline, canvasDomRef, connection_list, setConnectionList);
 
-//     // editor.reroute = true;
-//     // editor.reroute_fix_curvature = true;
-//     // editor.force_first_input = false;
+    editor.reroute = true;
+    editor.reroute_fix_curvature = true;
+    editor.force_first_input = false;
 
-//     // Start the editor
-//     editor.start();
-//     return editor;
-//   }
-//   return null;
-// };
+    // Start the editor
+    editor.start();
+    return editor;
+  }
+  return null;
+};
 
 const dragOverHandler = (event) => {
   event.preventDefault()
@@ -37,8 +37,7 @@ const dragOverHandler = (event) => {
 export default function DrawflowWrapper() {
   const [editor, setEditor] = useAtom(drawflowEditorAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
-  const [pipelineConnections, setPipelineConnectionsAtom] = useImmerAtom(pipelineConnectionsAtom);
-  const [pipelinePosition, setPipelinePositionAtom] = useImmerAtom(pipelinePositionAtom);
+  const [pipelineConnections, setPipelineConnections] = useImmerAtom(pipelineConnectionsAtom);
   const setBlockEditorRoot = useSetAtom(blockEditorRootAtom);
   const setEditorOpen = useSetAtom(isBlockEditorOpenAtom);
   const [renderNodes, setRenderNodes] = useState([])
@@ -57,7 +56,7 @@ export default function DrawflowWrapper() {
     const resizeObserver = new ResizeObserver(entries => {
         entries.forEach(entry => {
             if (entry.target.classList.contains('textarea-node')) {
-                drawflowUtils.updateAllConnections();
+                editor.updateAllConnections();
             }
         });
     });
@@ -68,141 +67,13 @@ export default function DrawflowWrapper() {
     return () => resizeObserver.disconnect();
   }, [renderNodes]);
 
-
-  // const createConnection = (connection, pipeline) => {
-  //   const {output_id, input_id, output_class, input_class} = connection;
-  //   const outputBlock = pipeline.data[output_id]
-  //   const inputBlock = pipeline.data[input_id]
-  //   if (outputBlock && inputBlock) {
-  //     const outputConn = outputBlock.outputs[output_class]
-  //     const inputConn = inputBlock.inputs[input_class]
-  //     if (outputConn && inputConn) {
-  //       const inputHasOutput = inputConn.connections.some((ele) => {
-  //         return (ele.variable == output_class && ele.block == output_id)
-  //       })
-  //       if (!inputHasOutput) {
-  //         setPipeline((draft) => {
-  //           draft.data[input_id].inputs[input_class].connections.push({
-  //             variable: output_class,
-  //             block: output_id
-  //           })
-  //         })
-  //       }
-
-  //       const outputHasInput = outputConn.connections.some((ele) => {
-  //         return (ele.variable == input_class && ele.block == input_id)
-  //       })
-  //       if (!outputHasInput) {
-  //         setPipeline((draft) => {
-  //           draft.data[output_id].outputs[output_class].connections.push({
-  //            variable: input_class,
-  //            block: input_id
-  //           })
-  //         })
-  //       }
-  //     }
-  //   }
-  // }
-
-  // const removeConnection = (connection, pipeline) => {
-  //   const {output_id, input_id, output_class, input_class} = connection;
-  //   const outputBlock = pipeline.data[output_id]
-  //   const inputBlock = pipeline.data[input_id]
-  //   if (outputBlock && inputBlock) {
-  //     const outputConn = outputBlock.outputs[output_class]
-  //     const inputConn = inputBlock.inputs[input_class]
-  //     if (outputConn && inputConn) {
-  //       const inputHasOutput = inputConn.connections.some((ele) => {
-  //         return (ele.variable == output_class && ele.block == output_id)
-  //       })
-  //       if (inputHasOutput) {
-  //         setPipeline((draft) => {
-  //           const newConns = inputConn.connections.filter((ele) => {
-  //             return (ele.variable != output_class || ele.block != output_id)
-  //           })
-  //           draft.data[input_id].inputs[input_class].connections = newConns;
-  //         })
-  //       }
-
-  //       const outputHasInput = outputConn.connections.some((ele) => {
-  //         return (ele.variable == input_class && ele.block == input_id)
-  //       })
-  //       if (outputHasInput) {
-  //         setPipeline((draft) => {
-  //           const newConns = outputConn.connections.filter((ele) => {
-  //             return (ele.variable != input_class || ele.block != input_id)
-  //           })
-  //           draft.data[output_id].outputs[output_class].connections = newConns;
-  //         })
-  //       }
-  //     }
-  //   }
-  // }
-
   const handleDrawflow = useCallback((node) => {
-    if (node) {
-      drawflowUtils.precanvas = drawflowCanvas.current;
-      drawflowUtils.container = node;
-      drawflowUtils.reroute = true;
-      drawflowUtils.reroute_fix_curvature = true;
-      drawflowUtils.force_first_input = false;
-      drawflowUtils.setPipeline = setPipeline;
-      drawflowUtils.pipeline = pipeline;
-      drawflowUtils.updateConnectionList = setPipelineConnectionsAtom;
-      drawflowUtils.pipelinePosition = pipelinePosition;
-      drawflowUtils.updatePosition = setPipelinePositionAtom;
-      // Object.assign(drawflowUtils, { ...pipelinePosition })
-      // drawflowUtils.zoomData = pipelinePosition;
-
-      /* Update data Nodes */
-      node.addEventListener('dblclick', drawflowUtils.dblclick)
-
-      /* Mouse and Touch Actions */
-      node.addEventListener('mouseup', drawflowUtils.dragEnd)
-      node.addEventListener('mousemove', drawflowUtils.position)
-      node.addEventListener('mousedown', drawflowUtils.click)
-
-      node.addEventListener('touchend', drawflowUtils.dragEnd)
-      node.addEventListener('touchmove', drawflowUtils.position)
-      node.addEventListener('touchstart', drawflowUtils.click)
-
-      /* Context Menu */
-      node.addEventListener('contextmenu', drawflowUtils.contextmenu)
-
-      /* Delete */
-      node.addEventListener('keydown', drawflowUtils.key)
-
-      /* Zoom Mouse */
-      node.addEventListener('wheel', drawflowUtils.zoom_enter)
-
-      /* Mobile zoom */
-      node.addEventListener('onpointerdown', drawflowUtils.pointerdown_handler)
-      node.addEventListener('onpointermove', drawflowUtils.pointermove_handler)
-      node.addEventListener('onpointerup', drawflowUtils.pointerup_handler)
-      node.addEventListener('onpointercancel', drawflowUtils.pointerup_handler)
-      node.addEventListener('onpointerout', drawflowUtils.pointerup_handler)
-      node.addEventListener('onpointerleave', drawflowUtils.pointerup_handler)
-    } else { return }
-    // const constructedEditor = launchDrawflow(node, drawflowCanvas.current, pipeline, setPipeline);
-    // if (constructedEditor) {
-      // constructedEditor.on('nodeRemoved', (id) => removeNodeToDrawflow(id, pipelineRef.current));
-      // constructedEditor.on('connectionCreated', (connection) => createConnection(connection, pipelineRef.current));
-      // constructedEditor.on('connectionRemoved', (connection) => removeConnection(connection, pipelineRef.current));
-      // constructedEditor.on('drawingConnection', (node) => drawflowUtils.drawConnection(node, constructedEditor, drawflowCanvas.current));
-      // constructedEditor.on('updateConnection', ({eX, eY}) => drawflowUtils.updateConnection(eX, eY, constructedEditor, drawflowCanvas.current));
-      
-      setEditor(drawflowUtils);
-    // }
-  }, []);
-
-  const updateDrawFlowPosition = () => {
-    if (editor && pipelinePosition) {
-      const { precanvasStyle, ...rest } = pipelinePosition;
-      Object.assign(editor, { ...rest })
-      editor.precanvas.style.setProperty("transform", pipelinePosition.precanvasStyle)
-      console.log("pipelinePosition: ", pipelinePosition)
+    if (!node) { return }
+    const constructedEditor = launchDrawflow(node, drawflowCanvas.current, pipeline, setPipeline, pipelineConnections, setPipelineConnections);
+    if (constructedEditor) {
+      setEditor(constructedEditor);
     }
-  }
+  }, []);
 
   useEffect(() => {
     const nodes = Object.entries(pipeline.data).map(([key, block]) => {
@@ -214,16 +85,9 @@ export default function DrawflowWrapper() {
                 pipelineAtom={pipelineAtom}
                 />)
     })
-    drawflowUtils.pipeline = pipeline;
     setRenderNodes(nodes)
     console.log("pipeline: ", pipeline.data)
-    // updateDrawFlowPosition();
   }, [pipeline.data])
-
-  useEffect(() => {
-    // console.log("updated")
-    // updateDrawFlowPosition();
-  }, [pipelinePosition])
 
   useEffect(() => {
     if (renderNodes.length) {
@@ -239,6 +103,7 @@ export default function DrawflowWrapper() {
       // }
 
       try {
+        editor.pipeline = pipeline
         editor.connection_list = pipelineConnections;
         console.log("pipeline connections:", editor.connection_list)
         editor.addConnection();
@@ -263,7 +128,7 @@ export default function DrawflowWrapper() {
       const fetchData = async () => {
         try {
           if (Object.getOwnPropertyNames(pipeline.data).length !== 0) {
-            const pipelineSpecs = drawflowUtils.convert_drawflow_to_block(pipeline.name, pipeline.data);
+            const pipelineSpecs = editor.convert_drawflow_to_block(pipeline.name, pipeline.data);
             // note that we are writing to the buffer, not the load path
             pipelineSpecs['sink'] = pipeline.buffer;
             pipelineSpecs['build'] = pipeline.buffer;
@@ -285,7 +150,7 @@ export default function DrawflowWrapper() {
       fetchData();
     } else {
       if (editor) {
-        drawflowUtils.clear()
+        editor.clear()
       }
     }
   }, [renderNodes])
@@ -373,7 +238,7 @@ export default function DrawflowWrapper() {
   return (
     <div
       id="drawflow"
-      className="parent-drawflow"
+      // className="parent-drawflow"
       ref={handleDrawflow}
       tabIndex={0}
       onDrop={(ev) => {
@@ -393,7 +258,7 @@ export default function DrawflowWrapper() {
     >
       <div
         ref={drawflowCanvas}
-        className="drawflow"
+        // className="drawflow"
       >
         {renderNodes}
       </div>
