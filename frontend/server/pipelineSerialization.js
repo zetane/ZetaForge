@@ -10,7 +10,7 @@ import {
   readJsonToObject,
 } from "./fileSystem.js";
 import { checkAndUpload, checkAndCopy } from "./s3.js";
-import { createExecution, getBuildContextStatus } from "./anvil";
+import { createExecution, getBuildContextStatus, getConfig } from "./anvil";
 
 export async function saveSpec(spec, writePath) {
   const pipelineSpecsPath = path.join(writePath, PIPELINE_SPECS_FILE_NAME)
@@ -170,14 +170,14 @@ export async function executePipeline(
   buffer,
   name,
   rebuild,
-  anvilConfiguration,
+  anvilHostConfiguration,
 ) {
   specs = await uploadBlocks(
     id,
     executionId,
     specs,
     buffer,
-    anvilConfiguration,
+    anvilHostConfiguration,
   );
 
   // tries to put history in a user path if it exists, if not
@@ -191,13 +191,13 @@ export async function executePipeline(
   specs["build"] = buffer;
   specs["name"] = name;
   specs["id"] = id;
-
-  if (anvilConfiguration.host !== "127.0.0.1") {
-    // TODO how can we make this check better
-    await uploadBuildContexts(anvilConfiguration, specs, buffer);
+  
+  const anvilConfiguration = await getConfig(anvilHostConfiguration)
+  if (!anvilConfiguration.isDev) {
+    await uploadBuildContexts(anvilHostConfiguration, specs, buffer);
   }
 
-  await createExecution(anvilConfiguration, executionId, specs, rebuild);
+  await createExecution(anvilHostConfiguration, executionId, specs, rebuild);
 }
 
 async function uploadBlocks(

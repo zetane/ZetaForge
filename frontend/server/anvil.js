@@ -1,20 +1,35 @@
 export async function getBuildContextStatus(configuration, pipelineSpecs) {
   const response = await handleRequest(
-    buildPath(DEFAULT_SCHEME, configuration.host, configuration.anvilPort, "buildContextStatus"),
+    buildPath(
+      DEFAULT_SCHEME,
+      configuration.host,
+      configuration.anvilPort,
+      "buildContextStatus",
+    ),
     HttpMethod.POST,
     {},
     pipelineSpecs,
   );
-  
-  const body = await response.json()
 
-  return body
+  const body = await response.json();
+
+  return body;
 }
 
-export async function createExecution(configuration, executionId, pipelineSpecs, rebuild) {
+export async function createExecution(
+  configuration,
+  executionId,
+  pipelineSpecs,
+  rebuild,
+) {
   const sortedPipelines = buildSortKeys(pipelineSpecs);
   const response = await handleRequest(
-    buildPath(DEFAULT_SCHEME, configuration.host, configuration.anvilPort, "execute"),
+    buildPath(
+      DEFAULT_SCHEME,
+      configuration.host,
+      configuration.anvilPort,
+      "execute",
+    ),
     HttpMethod.POST,
     {},
     {
@@ -24,24 +39,42 @@ export async function createExecution(configuration, executionId, pipelineSpecs,
     },
   );
 
-  const body = await response.json()
+  const body = await response.json();
 
-  return body
+  return body;
 }
 
-const DEFAULT_SCHEME = "http"
+export async function getConfig(configuration) {
+  const response = await handleRequest(
+    buildPath(
+      DEFAULT_SCHEME,
+      configuration.host,
+      configuration.anvilPort,
+      "config",
+    ),
+    HttpMethod.GET,
+    {},
+  );
+
+  const body = await response.json();
+
+  return body;
+}
+
+const DEFAULT_SCHEME = "http";
 
 const HttpMethod = {
-  POST: "POST"
-}
+  GET: "GET",
+  POST: "POST",
+};
 
 function buildPath(scheme, host, port, path) {
-  const base = `${scheme}://${host}:${port}`
-  const url = new URL(path, base)
-  return url
+  const base = `${scheme}://${host}:${port}`;
+  const url = new URL(path, base);
+  return url;
 }
 
-async function handleRequest(url, method, headers, body) {
+async function handleRequest(url, method, headers, body = null) {
   try {
     const response = await fetch(url, {
       method: method,
