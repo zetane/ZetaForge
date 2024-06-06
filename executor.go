@@ -64,6 +64,24 @@ func s3Client(ctx context.Context, cfg Config) (*s3.Client, error) {
 	return client, nil
 }
 
+func uploadData(ctx context.Context, data string, key string, cfg Config) error {
+	body := strings.NewReader(data)
+
+	client, err := s3Client(ctx, cfg)
+	if err != nil {
+		return err
+	}
+
+	params := &s3.PutObjectInput{
+		Bucket: aws.String(BUCKET),
+		Key:    aws.String(key),
+		Body:   body,
+	}
+
+	_, err = client.PutObject(ctx, params)
+	return err
+}
+
 func upload(ctx context.Context, source string, key string, cfg Config) error {
 	file, err := os.Open(source)
 	if err != nil {
@@ -208,7 +226,7 @@ func writeFile(path string, content string) error {
 	return file.Close()
 }
 
-func results(path string, pipeline *zjson.Pipeline, workflow *wfv1.Workflow) error {
+func results(ctx context.Context, cfg Config, key string, pipeline *zjson.Pipeline, workflow *wfv1.Workflow) error {
 	for _, node := range workflow.Status.Nodes {
 		if node.Type == "Pod" {
 			block := pipeline.Pipeline[node.TemplateName]
@@ -229,10 +247,10 @@ func results(path string, pipeline *zjson.Pipeline, workflow *wfv1.Workflow) err
 		return err
 	}
 
-	return writeFile(path, string(data))
+	return uploadData(ctx, string(data), key, cfg)
 }
 
-func streaming(ctx context.Context, sink string, name string, room string, client clientcmd.ClientConfig, hub *Hub) {
+func streaming(ctx context.Context, name string, client clientcmd.ClientConfig) {
 	ctx, cli, err := apiclient.NewClientFromOpts(
 		apiclient.Opts{
 			ClientConfigSupplier: func() clientcmd.ClientConfig {
@@ -270,8 +288,6 @@ func streaming(ctx context.Context, sink string, name string, room string, clien
 			return
 		}
 
-		logMap := make(map[string][]string)
-
 		for {
 			event, err := stream.Recv()
 
@@ -294,22 +310,16 @@ func streaming(ctx context.Context, sink string, name string, room string, clien
 			} else {
 				fmt.Println("Invalid input string format")
 			}
-
-			hub.Broadcast <- Message{
-				Room:    room,
-				Content: fmt.Sprintf("[%s]:::: %s", blockId, event.Content),
+			jsonObj := map[string]interface{}{
+				"blockId": blockId,
+				"message": event.Content,
+			}
+			jsonData, err := json.Marshal(jsonObj)
+			if err != nil {
+				fmt.Printf("Failed to cast log to JSON: %v", err)
 			}
 
-			logMap[blockId] = append(logMap[blockId], event.Content)
-		}
-
-		if sink != "" {
-			for podname, logs := range logMap {
-				path := filepath.Join(sink, "logs", podname+"-"+containerName+".log")
-				if err := writeFile(path, strings.Join(logs, "\n")); err != nil {
-					log.Printf("Log stream error; err=%v", err)
-				}
-			}
+			log.Printf("%s", jsonData)
 		}
 	}
 
@@ -318,7 +328,7 @@ func streaming(ctx context.Context, sink string, name string, room string, clien
 	}
 }
 
-func runArgo(ctx context.Context, workflow *wfv1.Workflow, sink string, pipeline string, execution int64, client clientcmd.ClientConfig, db *sql.DB, hub *Hub) (*wfv1.Workflow, error) {
+func runArgo(ctx context.Context, workflow *wfv1.Workflow, execution int64, client clientcmd.ClientConfig, db *sql.DB, hub *Hub) (*wfv1.Workflow, error) {
 	//mixpanelClient is singleton, so a new instance won't be created.
 	mixpanelClient := GetMixpanelClient()
 
@@ -359,7 +369,7 @@ func runArgo(ctx context.Context, workflow *wfv1.Workflow, sink string, pipeline
 	}
 
 	// streams to websocket
-	go streaming(ctx, sink, workflow.Name, pipeline, client, hub)
+	go streaming(ctx, workflow.Name, client)
 	status := string(workflow.Status.Phase)
 
 	for {
@@ -663,24 +673,59 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, build 
 		return
 	}
 
-	if err := history(pipeline.Sink); err != nil {
-		log.Printf("Failed to build history folder; err=%v", err)
-		return
-	}
+	tempLog := filepath.Join(os.TempDir(), executionId+".log")
+	s3Key := pipeline.Id + "/" + executionId
 
-	file, err := os.OpenFile(filepath.Join(pipeline.Sink, "logs", pipeline.Id+".txt"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	file, err := os.OpenFile(tempLog, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Printf("Error creating pipeline log: %v", err)
 	}
 
-	pipelineLogger := createLogger(executionId, file, func(message string, pipelineId string) {
-		if pipelineId != "" {
+	pipelineLogger := createLogger(executionId, file, func(message string, executionId string) {
+		if executionId != "" {
+			// log printf produces a timestamp by default
+			// remove it here
+			parts := strings.SplitN(message, " ", 3)
+			timestamp := ""
+			if len(parts) == 3 {
+				timestamp = parts[0] + " " + parts[1]
+				message = parts[2]
+			}
+
+			content := map[string]interface{}{
+				"executionId": executionId,
+				"time":        timestamp,
+			}
+
+			if strings.HasPrefix(message, "{") && strings.HasSuffix(message, "}\n") {
+				message = strings.TrimSuffix(message, "\n")
+
+				// Parse the JSON string into a map
+				var jsonObj map[string]interface{}
+				err := json.Unmarshal([]byte(message), &jsonObj)
+				if err != nil {
+					fmt.Printf("Failed to log: %s", message)
+					return
+				}
+
+				// Merge the JSON object with the provided object
+				for key, value := range jsonObj {
+					content[key] = value
+				}
+			} else {
+				content["message"] = strings.TrimSuffix(message, "\n")
+			}
+
+			jsonData, err := json.Marshal(content)
+			if err != nil {
+				fmt.Sprintf("Failed to log: %s", message)
+			}
+
 			hub.Broadcast <- Message{
-				Room:    pipelineId,
-				Content: fmt.Sprintf("[%s]:::: %s", pipelineId, message),
+				Room:    executionId,
+				Content: fmt.Sprintf("%s", jsonData),
 			}
 		}
-		//fmt.Printf("[executor]:: %s", message)
 	})
 	log.SetOutput(pipelineLogger)
 
@@ -691,16 +736,12 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, build 
 		log.Printf("Invalid pipeline.json; err=%v", err)
 		return
 	}
-	if err := writeFile(filepath.Join(pipeline.Sink, "pipeline", "pipeline.json"), string(jsonData)); err != nil {
+	if err := uploadData(ctx, string(jsonData), s3Key+"/"+"pipeline.json", cfg); err != nil {
 		log.Printf("Failed to write pipeline.json; err=%v", err)
 		return
 	}
 
-	log.Printf("*** Writing pipeline history to: %v", pipeline.Sink)
-
-	s3key := pipeline.Id + "/" + executionId
-
-	workflow, blocks, err := translate(ctx, pipeline, "org", s3key, build, cfg)
+	workflow, blocks, err := translate(ctx, pipeline, "org", s3Key, build, cfg)
 	if err != nil {
 		log.Printf("Failed to translate the pipeline; err=%v", err)
 		return
@@ -712,7 +753,7 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, build 
 		return
 	}
 
-	if err := writeFile(filepath.Join(pipeline.Sink, pipeline.Id+".json"), string(jsonWorkflow)); err != nil {
+	if err := uploadData(ctx, string(jsonWorkflow), s3Key+"/"+"argo.json", cfg); err != nil {
 		log.Printf("Failed to write translated pipeline.json; err=%v", err)
 		return
 	}
@@ -744,7 +785,7 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, build 
 		return
 	}
 
-	workflow, err = runArgo(ctx, workflow, pipeline.Sink, pipeline.Id, execution.ID, client, db, hub)
+	workflow, err = runArgo(ctx, workflow, execution.ID, client, db, hub)
 	log.Printf("Name: %v", workflow.Name)
 	if workflow != nil {
 		defer deleteArgo(ctx, workflow.Name, client)
@@ -754,12 +795,17 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, build 
 		return
 	}
 
-	if err := results(filepath.Join(pipeline.Sink, "results", "results.json"), pipeline, workflow); err != nil {
-		log.Printf("Failed to download results; err=%v", err)
+	if err := upload(ctx, tempLog, s3Key+"/"+executionId+".log", cfg); err != nil {
+		log.Printf("Failed to upload log: err=%v", err)
 		return
 	}
 
-	if err := downloadFiles(ctx, pipeline.Sink, s3key, cfg); err != nil {
+	if err := results(ctx, cfg, s3Key+"/"+"results.json", pipeline, workflow); err != nil {
+		log.Printf("Failed to upload results; err=%v", err)
+		return
+	}
+
+	if err := downloadFiles(ctx, pipeline.Sink, s3Key, cfg); err != nil {
 		log.Printf("Failed to download files; err=%v", err)
 		return
 	}
@@ -795,7 +841,7 @@ func cloudExecute(pipeline *zjson.Pipeline, id int64, executionId string, build 
 		return
 	}
 
-	workflow, err = runArgo(ctx, workflow, "", pipeline.Id, execution.ID, client, db, hub)
+	workflow, err = runArgo(ctx, workflow, execution.ID, client, db, hub)
 	if workflow != nil {
 		defer deleteArgo(ctx, workflow.Name, client)
 	}

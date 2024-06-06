@@ -37,32 +37,36 @@ export default function WorkspaceTabs() {
     }
 
     const selectedTab = renderedTabs[selectedIndex];
+    console.log(selectedTab)
 
     // TODO: Pop modal for deleting last tab
     if (workspace.tabs.length > 1) {
       const pipeline = workspace.pipelines[selectedTab.id]
 
       setWorkspace((draft) => {
-        const filteredTabs = workspace.tabs.filter((tab) => selectedTab.id != tab.id)
+        const filteredTabs = workspace.tabs.filter((tab) => selectedTab.id != tab)
         draft.tabs = filteredTabs
 
         // make the same tab we're deleting active, unless it's at the end, in which case we get -1
         if (tabIndex === selectedIndex) {
-          if (tabIndex > filteredTabs.length) {
+          console.log(tabIndex, selectedIndex)
+          console.log(filteredTabs.length)
+          if (tabIndex >= filteredTabs.length) {
             tabIndex = (filteredTabs.length - 1)
           }
+          console.log("INDEX: ", tabIndex)
           draft.active = filteredTabs[tabIndex];
         } else {
           // we're re-calculating the selectedIndex since the selected tab's index might have shifted
           // due to a tab element being removed from the array
-          tabIndex = filteredTabs.indexOf(selectedTab);
+          tabIndex = filteredTabs.indexOf(selectedTab.id);
           draft.active = filteredTabs[tabIndex]
         }
 
         // If it's an empty pipeline we can just delete it
-        if (Object.keys(pipeline.data).length === 0 && !pipeline.record) {
-          delete draft.pipelines[pipeline.id]
-        }
+        //if (Object.keys(pipeline.data).length === 0 && !pipeline.record) {
+        //  delete draft.pipelines[pipeline.id]
+        //}
       })
     }
   };

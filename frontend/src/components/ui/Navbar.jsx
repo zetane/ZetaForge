@@ -32,6 +32,9 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import StopPipelineButton from "./StopPipelineButton";
 import { useLoadServerPipeline } from "./useLoadPipeline";
+import { pipelineKey } from "@/atoms/pipelineAtom";
+
+const ONE_SECOND = 1000;
 
 export default function Navbar({ children }) {
   const [darkMode, setDarkMode] = useAtom(darkModeAtom);
@@ -39,7 +42,7 @@ export default function Navbar({ children }) {
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const loadPipeline = useLoadServerPipeline();
-  console.log("ws: ", workspace)
+  //console.log("ws: ", workspace)
 
   // TODO: Figure out how to get SQLC to emit the same struct for two different queries
   const { pending, error, data } = useQuery({
@@ -55,7 +58,8 @@ export default function Navbar({ children }) {
     const iters = allPipelines || []
     for (const serverPipeline of iters) {
       const loaded = loadPipeline(serverPipeline)
-      addPipelines[loaded.id] = loaded
+      const key = loaded.id + "." + loaded.record.Hash
+      addPipelines[key] = loaded
       addExecutions[loaded.record.Execution] = loaded
     }
     setWorkspace((draft) => {
@@ -112,18 +116,20 @@ export default function Navbar({ children }) {
 
   useEffect(() => {
     if (lastMessage !== null) {
+      const content = JSON.parse(lastMessage.data).content
+      const {executionId, blockId, message, time, ...jsonObj} = JSON.parse(content)
+
       setPipeline((draft) => {
-        const mess = JSON.parse(lastMessage.data).content
-        const splitMess = mess.split("::::")
-        // slices off the []
-        const pod = splitMess[0].slice(1, -1)
-        const key = pod.split("-").slice(1,).join("-")
-        if (draft.data[key]) {
-          const node = draft.data[key]
-          const message = splitMess[1].trim()
+        let shouldLog = true
+
+        if (draft.data[blockId]) {
+          const node = draft.data[blockId]
           const tagAndObject = message.split("|||")
           const tag = tagAndObject[0].trim()
 
+          if (tag == "debug") {
+            shouldLog = false
+          }
           if (tag == "outputs") {
             try {
               const outs = JSON.parse(tagAndObject[1]);
@@ -156,7 +162,14 @@ export default function Navbar({ children }) {
           }
 
         }
-        draft.log = draft.log.concat(`${mess}\n`)
+
+        if (shouldLog) {
+          let logString = `[${time}][${executionId}] ${message}`
+          if (blockId) {
+            logString = `[${time}][${executionId}][${blockId}] ${message}`
+          }
+          draft.log.push(logString)
+        }
       })
     }
   }, [lastMessage]);

@@ -89,9 +89,9 @@ export default function RunPipelineButton({modalPopper, children, action}) {
           draft.socketUrl = `${import.meta.env.VITE_WS_EXECUTOR}/ws/${executionId}`;
           draft.log = []
         })
-        setWorkspace((draft) => {
-          draft.fetchInterval = 1 * 1000;
-        })
+        //setWorkspace((draft) => {
+        //  draft.fetchInterval = 1 * 1000;
+        //})
       }
       try {
         mixpanelService.trackEvent('Run Created')

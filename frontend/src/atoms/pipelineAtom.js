@@ -3,11 +3,12 @@ import { withImmer } from 'jotai-immer';
 import { customAlphabet } from "nanoid";
 import rfdc from 'rfdc';
 import { hex_sha1 } from '@/utils/sha1';
+import { sha1 } from 'js-sha1';
 
 export const pipelineKey = (id, data) => {
   let hash = ""
   if (data && data != "") {
-    hash = hex_sha1(JSON.stringify(data))
+    hash = sha1(JSON.stringify(data))
   }
   return id + "." + hash
 }
@@ -43,7 +44,7 @@ export const workspaceAtom = atom({
   pipelines: {[emptyKey]: initPipeline},
   executions: {},
   active: emptyKey,
-  fetchInterval: 10 * 1000
+  fetchInterval: 2 * 1000
 })
 
 export const getRunning = (workspace) => {

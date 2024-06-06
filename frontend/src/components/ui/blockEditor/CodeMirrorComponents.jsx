@@ -71,7 +71,7 @@ export const LogsCodeMirror = ({ code, onUpdate }) => {
       extensions={[EditorView.lineWrapping]}
       readOnly={true}
       basicSetup={{
-        lineNumbers: false,
+        lineNumbers: true,
         highlightActiveLineGutter: false,
         highlightSpecialChar: false,
         history: false,

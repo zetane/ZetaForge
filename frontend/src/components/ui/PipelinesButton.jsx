@@ -18,18 +18,18 @@ export default function PipelinesButton() {
     });
   };
 
+  const closeModal = () => {
+    setModalContent({
+      show: false
+    })
+  }
+
   const styles = {
     margin: '5px',
   };
 
   useEffect(() => {
     const runs = getRunning(workspace)
-    /*/
-    if (runs == 0 && workspace.fetchInterval == 1000) {
-      setWorkspace((draft) => {
-        draft.fetchInterval = 10 * 1000
-      })
-      }*/
     setExecutions(runs)
   }, [workspace?.pipelines])
 
@@ -38,7 +38,7 @@ export default function PipelinesButton() {
     count = executions.length
   }
 
-  let grid = (<ExecutionDataGrid executions={executions}/>);
+  let grid = (<ExecutionDataGrid executions={executions} closeModal={closeModal} />);
 
   const svgOverride = { position: 'absolute', right: '15px', top: '5px'}
   return (

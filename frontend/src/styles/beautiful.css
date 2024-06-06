@@ -194,7 +194,7 @@ header a {
 #drawflow {
 	position: relative;
 	width: 100%;
-	height: calc(100dvh - 5rem);
+	height: calc(100dvh - 4.9rem);
 	/* background: var(--background-color); */
 	background-size: 25px 25px;
 	margin-top: 4.9rem;

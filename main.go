@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"database/sql"
@@ -70,24 +71,48 @@ type Cloud struct {
 }
 
 type WebSocketWriter struct {
-	PipelineId  string
+	Id          string
 	MessageFunc func(string, string)
 	// Add other fields as needed
 }
 
 func (w *WebSocketWriter) Write(p []byte) (n int, err error) {
 	message := string(p)
-	w.MessageFunc(message, w.PipelineId)
+	w.MessageFunc(message, w.Id)
 	return len(p), nil
 }
 
-func createLogger(pipelineId string, file io.Writer, messageFunc func(string, string)) io.Writer {
+func createLogger(id string, file io.Writer, messageFunc func(string, string)) io.Writer {
 	wsWriter := &WebSocketWriter{
-		PipelineId:  pipelineId,
+		Id:          id,
 		MessageFunc: messageFunc,
 	}
 
 	return io.MultiWriter(os.Stdout, wsWriter, file)
+}
+
+func readTempLog(tempLog string) ([]string, error) {
+	if _, err := os.Stat(tempLog); os.IsNotExist(err) {
+		return []string{}, nil
+	}
+
+	file, err := os.Open(tempLog)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	var logData []string
+	for scanner.Scan() {
+		logData = append(logData, scanner.Text())
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return logData, nil
 }
 
 func Initialize(obj interface{}) interface{} {
@@ -412,6 +437,26 @@ func main() {
 		}
 
 		ctx.JSON(http.StatusOK, response)
+	})
+	execution.GET("/:executionId/log", func(ctx *gin.Context) {
+		executionId := ctx.Param("executionId")
+		res, err := getExecutionById(ctx.Request.Context(), db, executionId)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve execution"})
+			return
+		}
+
+		tempLog := filepath.Join(os.TempDir(), executionId)
+		if res.Status == "Running" {
+			logData, err := readTempLog(tempLog)
+			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read temporary log"})
+				return
+			}
+			ctx.JSON(http.StatusOK, logData)
+		} else {
+			ctx.JSON(http.StatusOK, []string{})
+		}
 	})
 	execution.POST("/:executionId/terminate", func(ctx *gin.Context) {
 		executionId := ctx.Param("executionId")

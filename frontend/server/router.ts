@@ -7,6 +7,8 @@ import { compileComputation, runTest, saveBlockSpecs } from './blockSerializatio
 import { readPipelines, readSpecs } from "./fileSystem.js";
 import { copyPipeline, getBlockPath, removeBlock, saveBlock, saveSpec, uploadBlocks } from './pipelineSerialization.js';
 import { publicProcedure, router } from './trpc';
+import { getFileData } from "./s3.js";
+import axios from "axios";
 
 export const appRouter = router({
   getBlocks: publicProcedure
@@ -17,7 +19,7 @@ export const appRouter = router({
       {
       coreBlocks = path.join(resources, "core", "blocks")
       }
-      
+
       try {
         const blocks = await readSpecs(coreBlocks)
         return blocks
@@ -37,7 +39,7 @@ export const appRouter = router({
       if (app.isPackaged) {
         blocksPath = path.join(resources, "core", "blocks");
       }
-  
+
       try {
         const coverImagePath = path.join(blocksPath, blockId, "cover-image.png");
         return { coverImagePath };
@@ -45,7 +47,7 @@ export const appRouter = router({
         console.log(error);
         return { coverImagePath: null };
       }
-    }),  
+    }),
   getPipelines: publicProcedure
     .query(async () => {
       const resources = process.resourcesPath;
@@ -53,7 +55,7 @@ export const appRouter = router({
       if (app.isPackaged) {
         corePipelines = path.join(resources, "core", "pipelines");
       }
-  
+
       try {
         const pipelines = await readPipelines(corePipelines);
         return pipelines;
@@ -61,7 +63,7 @@ export const appRouter = router({
         console.log(error);
         return [];
       }
-    }), 
+    }),
   getPipelineCoverImagePath: publicProcedure
   .input(z.object({
     pipelineId: z.string(),
@@ -88,7 +90,7 @@ export const appRouter = router({
       return { coverImagePath: null };
     }
   }),
-  
+
   //TODO: load and validate schema
   savePipeline: publicProcedure
     .input(z.object({
@@ -120,7 +122,7 @@ export const appRouter = router({
             }
           }
         }
-      } 
+      }
 
       if (writePath) {
         const savePaths = await copyPipeline(specs, name, buffer, writePath);
@@ -137,7 +139,7 @@ export const appRouter = router({
       blockId: z.string(),
       blockPath: z.string(),
       pipelinePath: z.string()
-    })) 
+    }))
     .mutation(async(opts) => {
       const {input} = opts;
       const {pipelineSpec, name, blockSpec, blockId, blockPath, pipelinePath} = input;
@@ -179,7 +181,7 @@ export const appRouter = router({
       pipelineId: z.string(),
       executionId: z.string(),
       pipelineSpecs: z.any(),
-      buffer: z.string(), 
+      buffer: z.string(),
     }))
     .mutation(async (opts) => {
       const {input} = opts;
@@ -187,6 +189,35 @@ export const appRouter = router({
 
       return uploadBlocks(pipelineId, executionId, pipelineSpecs, buffer);
     }),
+  getLog: publicProcedure
+      .input(z.object({
+        s3Key: z.string(),
+        executionId: z.string(),
+      }))
+      .query(async (opts) => {
+        const { input } = opts;
+        const { s3Key, executionId } = input;
+
+        try {
+          const fileData = await getFileData(s3Key);
+          return { data: fileData };
+        } catch (error) {
+          console.error(error);
+
+          try {
+            const response = await axios.get(`${import.meta.env.VITE_EXECUTOR}/${executionId}/log`);
+            const logData = response.data;
+
+            return { data: logData };
+          } catch (error) {
+            console.error('Failed to retrieve log data:', error);
+            throw new TRPCError({
+              code: 'INTERNAL_SERVER_ERROR',
+              message: 'Failed to retrieve log data',
+            });
+          }
+        }
+      }),
   compileComputation: publicProcedure
     .input(z.object({
       blockPath: z.string(),
@@ -194,7 +225,7 @@ export const appRouter = router({
     .mutation(async (opts) => {
       const {input} = opts;
       const {blockPath} = input;
-      
+
       try {
         return await compileComputation(blockPath);
       } catch (error) {
@@ -204,7 +235,7 @@ export const appRouter = router({
           message: 'Could not compile.',
         });
       }
-      
+
     }),
   saveBlockSpecs: publicProcedure
     .input(z.object({
@@ -213,7 +244,7 @@ export const appRouter = router({
     }))
     .mutation(async (opts) => {
       const {input} = opts;
-      const {blockPath, blockSpecs} = input; 
+      const {blockPath, blockSpecs} = input;
 
       try {
         return await saveBlockSpecs(blockPath, blockSpecs);
@@ -232,7 +263,7 @@ export const appRouter = router({
     }))
     .mutation(async (opts) => {
       const {input} = opts;
-      const {blockPath, blockKey} = input; 
+      const {blockPath, blockKey} = input;
 
       try {
         await runTest(blockPath, blockKey);
@@ -245,7 +276,7 @@ export const appRouter = router({
       }
     })
 });
- 
+
 // Export type router type signature,
 // NOT the router itself.
 export type AppRouter = typeof appRouter;

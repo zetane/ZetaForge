@@ -57,14 +57,81 @@ export const useLoadPipeline = () => {
   return loadPipeline;
 };
 
+function updatePipelineWithLogFile(logFile, pipeline) {
+ const logLines = logFile.split('\n');
+
+ for (const line of logLines) {
+   if (line.trim() !== '') {
+     const { executionId, blockId, message, time, ...jsonObj } = JSON.parse(line);
+     let shouldLog = true;
+
+     if (pipeline.data[blockId]) {
+       const node = pipeline.data[blockId];
+       const tagAndObject = message.split("|||");
+       const tag = tagAndObject[0].trim();
+
+       if (tag === "debug") {
+         shouldLog = false;
+       }
+
+       if (tag === "outputs") {
+         try {
+           const outs = JSON.parse(tagAndObject[1]);
+           if (outs && typeof outs === 'object') {
+             for (const [key, value] of Object.entries(outs)) {
+               if (!node.events.outputs) {
+                 node.events["outputs"] = {};
+               }
+               node.events.outputs[key] = value;
+             }
+           }
+         } catch (err) {
+           console.error('Failed to parse outputs:', err);
+         }
+       }
+
+       if (tag === "inputs") {
+         try {
+           const outs = JSON.parse(tagAndObject[1]);
+           if (outs && typeof outs === 'object') {
+             for (const [key, value] of Object.entries(outs)) {
+               if (!node.events.inputs) {
+                 node.events["inputs"] = {};
+               }
+               node.events["inputs"][key] = value;
+             }
+           }
+         } catch (err) {
+           console.error('Failed to parse inputs:', err);
+         }
+       }
+     }
+
+     if (shouldLog) {
+       let logString = `[${time}][${executionId}] ${message}`;
+       if (blockId) {
+         logString = `[${time}][${executionId}][${blockId}] ${message}`;
+       }
+       pipeline.log.push(logString);
+     }
+   }
+ }
+
+ return pipeline;
+}
+
+
 export const useLoadServerPipeline = () => {
+  const utils = trpc.useUtils()
   const loadPipeline = (pipeline) => {
     if (!pipeline)  { return }
-    console.log(pipeline)
     const pipelineData = JSON.parse(pipeline.PipelineJson)
-
     const bufferPath = `${window.cache.local}${pipelineData.id}`;
     const executionId = pipeline.Execution
+    const logPath = `${pipelineData.id}/${executionId}/${executionId}.log`
+    const logQuery = utils.getLog.fetch({s3Key: logPath, executionId: executionId});
+    const logs = logQuery.data ? logQuery.data : []
+    console.log("logs: ", logs)
 
     const loadedPipeline = {
       name: pipelineData.name ? pipelineData.name : pipelineData.id,
@@ -74,10 +141,13 @@ export const useLoadServerPipeline = () => {
       data: pipelineData.pipeline,
       id: pipelineData.id,
       history: pipelineData.id + "/" + executionId,
-      record: pipeline
+      record: pipeline,
+      socketUrl: `${import.meta.env.VITE_WS_EXECUTOR}/ws/${executionId}}`,
+      logs: logs
     }
 
-    const newPipeline = pipelineFactory(window.cache.local, loadedPipeline)
+    let newPipeline = pipelineFactory(window.cache.local, loadedPipeline)
+    //newPipeline = updatePipelineWithLogFile(logs, newPipeline)
 
     return newPipeline
   };

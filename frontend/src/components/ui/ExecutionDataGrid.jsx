@@ -5,20 +5,20 @@ import { DataTable, Table, TableHead, TableRow, TableHeader, TableBody, TableCel
 import { PipelineStopButton } from "./PipelineStopButton";
 import { useLoadPipeline, useLoadServerPipeline } from "./useLoadPipeline";
 
-export const ExecutionDataGrid = ({executions}) => {
+export const ExecutionDataGrid = ({executions, closeModal}) => {
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
-  const loadPipeline = useLoadServerPipeline();
-
   const items = []
 
   const selectPipeline = (pipeline) => {
-    const loadedPipeline = loadPipeline(pipeline);
-    const key = loadedPipeline.id + "." + loadedPipeline.record.Hash
+    console.log(pipeline)
+    const key = pipeline.id + "." + pipeline.record.Hash
 
     setWorkspace((draft) => {
       draft.tabs.push(key)
       draft.active = key
     })
+
+    closeModal();
   }
 
   for (const pipeline of executions) {
