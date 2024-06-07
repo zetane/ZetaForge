@@ -90,6 +90,10 @@ export default function DrawflowWrapper() {
   }, [pipeline.data])
 
   useEffect(() => {
+    console.log("pipeline connections:", pipelineConnections)
+  }, [pipelineConnections])
+
+  useEffect(() => {
     if (renderNodes.length) {
       // Note: This code is super finicky because it's our declarative (React)
       // vs imperative (drawflow) boundary
@@ -103,9 +107,8 @@ export default function DrawflowWrapper() {
       // }
 
       try {
-        editor.pipeline = pipeline
+        editor.pipeline = pipeline;
         editor.connection_list = pipelineConnections;
-        console.log("pipeline connections:", editor.connection_list)
         editor.addConnection();
       } catch (e) {
         console.log(e)
