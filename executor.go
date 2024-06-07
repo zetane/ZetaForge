@@ -863,9 +863,9 @@ func getBuildContextStatus(pipeline *zjson.Pipeline, cfg Config) *[]zjson.BuildC
 	var buildContextStatus []zjson.BuildContextStatus
 	for id, block := range pipeline.Pipeline {
 		if len(block.Action.Container.Image) > 0 {
-			image := getImage(&block, cfg)
+			image := getImage(&block)
 			status, err := checkImage(context, image, cfg)
-			s3Key := getKanikoBuildContextS3Key(getKanikoTemplateName(&block, "org"))
+			s3Key := getKanikoBuildContextS3Key(&block, "org")
 
 			if err != nil {
 				log.Printf("Failed to get build context status; err=%v", err)

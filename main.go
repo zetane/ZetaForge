@@ -63,6 +63,8 @@ type Local struct {
 type Cloud struct {
 	Registry     string
 	RegistryAddr string
+	RegistryPort int
+	IsDebug      bool
 	RegistryUser string
 	RegistryPass string
 	ClusterIP    string
