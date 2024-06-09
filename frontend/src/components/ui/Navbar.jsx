@@ -1,10 +1,9 @@
 import { modalContentAtom } from "@/atoms/modalAtom";
-import { darkModeAtom } from "@/atoms/themeAtom";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
-import { Play, Password, Renew } from "@carbon/icons-react";
+import { darkModeAtom } from "@/atoms/themeAtom";
+import { Password, Play, Renew } from "@carbon/icons-react";
 import {
   Header,
-  HeaderGlobalAction,
   HeaderGlobalBar,
   HeaderMenu,
   HeaderMenuItem,
@@ -13,19 +12,20 @@ import {
   SkipToContent
 } from "@carbon/react";
 import { useAtom } from "jotai";
+import { useImmerAtom } from "jotai-immer";
+import { useEffect } from "react";
+import useWebSocket, { ReadyState } from "react-use-websocket";
 import LoadBlockButton from "./LoadBlockButton";
 import LoadPipelineButton from "./LoadPipelineButton";
-import PipelineNameLabel from "./PipelineNameLabel";
-import SavePipelineButton from "./SavePipelineButton";
-import SaveAsPipelineButton from "./SaveAsPipelineButton";
-import RunPipelineButton from "./RunPipelineButton";
 import LogsButton from "./LogsButton";
 import NewButton from "./NewButton";
-import ApiKeysModal from "./modal/ApiKeysModal";
-import useWebSocket, {ReadyState} from "react-use-websocket";
-import { useEffect } from "react";
-import { useImmerAtom } from "jotai-immer";
 import { PipelineLogs } from "./PipelineLogs";
+import PipelineNameLabel from "./PipelineNameLabel";
+import RunPipelineButton from "./RunPipelineButton";
+import SaveAsPipelineButton from "./SaveAsPipelineButton";
+import SavePipelineButton from "./SavePipelineButton";
+import AnvilConfigurationsModal from "./modal/AnvilConfigurationsModal";
+import ApiKeysModal from "./modal/ApiKeysModal";
 
 export default function Navbar({ children }) {
   const [darkMode, setDarkMode] = useAtom(darkModeAtom);
@@ -40,7 +40,7 @@ export default function Navbar({ children }) {
     });
   };
 
-  const svgOverride = { position: 'absolute', right: '15px', top: '5px'}
+  const svgOverride = { position: 'absolute', right: '15px', top: '5px' }
 
   const { sendMessage, lastMessage, readyState } = useWebSocket(
     pipeline.socketUrl,
@@ -63,7 +63,7 @@ export default function Navbar({ children }) {
           const message = splitMess[1].trim()
           const tagAndObject = message.split("|||")
           const tag = tagAndObject[0].trim()
-          
+
           if (tag == "outputs") {
             try {
               const outs = JSON.parse(tagAndObject[1]);
@@ -124,29 +124,33 @@ export default function Navbar({ children }) {
           <NewButton />
           <SavePipelineButton />
           <SaveAsPipelineButton />
-            <LoadPipelineButton  />
-            <LoadBlockButton />
+          <LoadPipelineButton />
+          <LoadBlockButton />
         </HeaderMenu>
         <HeaderMenu menuLinkName="Settings" aria-label="Settings">
-          <HeaderMenuItem 
-          onClick={() => modalPopper(<ApiKeysModal />)}>
-            <Password  size={16} className="mx-1 align-middle"></Password>
+          <HeaderMenuItem
+            onClick={() => modalPopper(<ApiKeysModal />)}>
+            <Password size={16} className="mx-1 align-middle"></Password>
             <span>API Keys</span>
+          </HeaderMenuItem>
+          <HeaderMenuItem
+            onClick={() => modalPopper(<AnvilConfigurationsModal />)}>
+            Anvil Configurations
           </HeaderMenuItem>
           <HeaderMenuItem label="Theme" onClick={() => setDarkMode(!darkMode)}>
             Toggle Theme
           </HeaderMenuItem>
         </HeaderMenu>
         <HeaderMenu menuLinkName="Help" aria-label="Help">
-          <HeaderMenuItem onClick={() => window.open('https://github.com/zetane/zetaforge')}>
-            GitHub
-          </HeaderMenuItem>
-          <HeaderMenuItem onClick={() => window.open('https://discord.gg/zetaforge')}>
-            Discord
-          </HeaderMenuItem>
-          <HeaderMenuItem onClick={() => window.open('https://zetane/docs/')}>
-            Docs
-          </HeaderMenuItem>
+            <HeaderMenuItem onClick={() => window.open('https://github.com/zetane/zetaforge')}>
+              GitHub
+            </HeaderMenuItem>
+            <HeaderMenuItem onClick={() => window.open('https://discord.gg/zetaforge')}>
+              Discord
+            </HeaderMenuItem>
+            <HeaderMenuItem onClick={() => window.open('https://zetane/docs/')}>
+              Docs
+            </HeaderMenuItem>
         </HeaderMenu>
       </HeaderNavigation>
       <HeaderGlobalBar>

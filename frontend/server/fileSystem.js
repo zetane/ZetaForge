@@ -1,39 +1,8 @@
-import { SPECS_FILE_NAME } from "../src/utils/constants";
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import fs from "fs/promises";
 import { tmpdir } from "os";
 import path from "path";
-
-// TODO: use env vars
-export const s3Upload = async (filePath) => {
-  if (await fileExists(filePath)) {
-    const fileName = filePath.split(path.sep).at(-1)
-    const uploadKey = `files/${fileName}`
-    const fileBody = await fs.readFile(filePath)
-    const creds = {
-      accessKeyId: "AKIAIOSFODNN7EXAMPLE",
-      secretAccessKey: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
-    }
-
-    // note: using `localhost` in the endpoint caused a connection refused error
-    // because the s3client defaults to using ipv6
-    const client = new S3Client({
-      region: 'us-east-2',
-      credentials: creds,
-      endpoint: "http://127.0.0.1:8333",
-      forcePathStyle: true,
-    })
-    const res = await client.send(new PutObjectCommand({
-      Bucket: "zetaforge",
-      Key: uploadKey,
-      Body: fileBody,
-      Metadata: {
-        name: fileName,
-      }
-    }))
-    return res
-  }
-}
+import { BLOCK_SPECS_FILE_NAME, PIPELINE_SPECS_FILE_NAME } from "../src/utils/constants";
 
 export const readPipelines = async (dir) => {
   const items = await fs.readdir(dir);
@@ -49,7 +18,7 @@ const pipelineSpecBuilder = async (items, dir) => {
       const stat = await fs.stat(itemPath);
 
       if (stat.isDirectory()) {
-        const pipelineSpecFile = path.join(itemPath, `${item}.json`);
+        const pipelineSpecFile = path.join(itemPath, PIPELINE_SPECS_FILE_NAME);
         try {
           await fs.stat(pipelineSpecFile);
           const pipelineData = await fs.readFile(pipelineSpecFile, 'utf8');
@@ -83,7 +52,7 @@ const specBuilder = async (specs, dir) => {
       const stat = await fs.stat(itemPath);
 
       if (stat.isDirectory()) {
-        const specs = path.join(itemPath, SPECS_FILE_NAME);
+        const specs = path.join(itemPath, BLOCK_SPECS_FILE_NAME);
         try {
           await fs.stat(specs)
           const specData = await fs.readFile(specs)
@@ -94,12 +63,12 @@ const specBuilder = async (specs, dir) => {
       }
 
     } catch (error) {
-        console.log("ERRRRRROR: ", error)
-      }
-
+      console.log("ERRRRRROR: ", error)
     }
 
-    return specsData;
+  }
+
+  return specsData;
 }
 
 export async function fileExists(filePath) {

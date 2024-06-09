@@ -1,8 +1,9 @@
-import { useRef } from "react";
-import { HeaderMenuItem } from "@carbon/react";
-import { useLoadPipeline } from "./useLoadPipeline";
 import { mixpanelAtom } from "@/atoms/mixpanelAtom";
+import { PIPELINE_SPECS_FILE_NAME } from "@/utils/constants";
+import { HeaderMenuItem } from "@carbon/react";
 import { useAtom } from "jotai";
+import { useRef } from "react";
+import { useLoadPipeline } from "./useLoadPipeline";
 
 
 const FILE_EXTENSION_REGEX = /\.[^/.]+$/;
@@ -30,11 +31,15 @@ export default function LoadPipelineButton() {
         continue;
       }
       relPath = relPath.replaceAll('\\', '/')
-      const folder = relPath.split("/")[0]
-      const pipelineName = file.name.replace(FILE_EXTENSION_REGEX, "");
-      if (folder == pipelineName) {
-        await loadPipeline(file);
-        event.target.value = ''; // Reset the file input
+      const parts = relPath.split("/")
+      if (parts.length == 2) {
+        const pipelineName = parts[0]
+        const fileName = parts[1];
+        const fileNameNoExtension = parts[1].replace(FILE_EXTENSION_REGEX, "");
+        if (fileNameNoExtension == pipelineName || fileName == PIPELINE_SPECS_FILE_NAME) {
+          await loadPipeline(file);
+          event.target.value = ''; // Reset the file input
+        }
       }
     }
   };

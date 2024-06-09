@@ -1,7 +1,10 @@
-import { useCallback, useRef, useState, useEffect } from "react";
-import { Code, View } from "@carbon/icons-react"
-import { FileBlock } from "./FileBlock";
+import { Code, View } from "@carbon/icons-react";
+import { Modal } from "@carbon/react";
 import { useImmerAtom } from "jotai-immer";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { FileBlock } from "./FileBlock";
+import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
+import { useAtom } from "jotai";
 
 const isTypeDisabled = (action) => {
   if (!action.parameters) {
@@ -29,18 +32,19 @@ const checkPath = async (path, count, setIframeSrc) => {
     });
 }
 
-const BlockGenerator = ({ block, openView, id, historySink, pipelineAtom}) => {
+const BlockGenerator = ({ block, openView, id, historySink, pipelineAtom }) => {
   const [_, setFocusAction] = useImmerAtom(pipelineAtom)
+  const [configuration] = useAtom(activeConfigurationAtom)
 
   const styles = {
-    top: `${block.views.node.pos_y}px`, 
+    top: `${block.views.node.pos_y}px`,
     left: `${block.views.node.pos_x}px`
   }
 
   const [iframeSrc, setIframeSrc] = useState("")
   useEffect(() => {
     if (block.events.outputs?.html) {
-      const fileUrl = `${import.meta.env.VITE_S3_ENDPOINT}/zetaforge/${historySink}/${block.events.outputs.html}`
+      const fileUrl = `http://${configuration.host}:${configuration.s3Port}/zetaforge/${historySink}/${block.events.outputs.html}`
       checkPath(fileUrl, 0, setIframeSrc)
     }
   }, [block.events.outputs?.html])
@@ -70,15 +74,16 @@ const BlockGenerator = ({ block, openView, id, historySink, pipelineAtom}) => {
             id={id}
             color={backgroundColor}
             openView={openView}
-            actions={!disabled} 
+            actions={!disabled}
             src={iframeSrc}
+            blockEvents={block.events}
           />
           <div className="block-body">
             <div className="block-io">
               <BlockInputs inputs={block.inputs} />
               <BlockOutputs outputs={block.outputs} />
             </div>
-            { content }
+            {content}
           </div>
         </div>
       </div>
@@ -86,7 +91,7 @@ const BlockGenerator = ({ block, openView, id, historySink, pipelineAtom}) => {
   );
 };
 
-const BlockPreview = ({id, src}) => {
+const BlockPreview = ({ id, src }) => {
   return (
     <div className="block-preview">
       <div>
@@ -97,21 +102,44 @@ const BlockPreview = ({id, src}) => {
   )
 }
 
-const BlockTitle = ({ name, id, color, openView, actions, src}) => {
+
+const BlockTitle = ({ name, id, color, openView, actions, src, blockEvents }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleViewClick = () => {
+    if (!src) {
+      setIsOpen(true)
+    } else {
+      window.open(src, '_blank');
+    }
+  };
+
   let actionContainer = (
     <div className="action-container">
       <button id="btn_open_code" className="view-btn" onClick={() => openView(id)}><Code size={20}/></button>
-      <a href={src} target="_blank" rel="noopener noreferrer" className="flex"><button id="btn_show_view" className="view-btn"><View size={20}/></button></a>
+      <button id="btn_show_view" className="view-btn" onClick={handleViewClick}><View size={20}/></button>
     </div>
-  )
+  );
 
   return (
     <div className="title-box" style={{ backgroundColor: color }}>
       <span>{name}</span>
-      { actions && actionContainer }
+      {actions && actionContainer}
+
+      <Modal
+        modalHeading="Block Events"
+        passiveModal={true}
+        open={isOpen}
+        onRequestClose={() => setIsOpen(false)}
+      >
+        <div className="flex flex-col gap-4 p-3">
+          {JSON.stringify(blockEvents, null, 2)}
+        </div>
+      </Modal>
     </div>
-  )
+  );
 };
+
 const parseHtmlToInputs = (html) => {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
@@ -156,7 +184,7 @@ const InputField = ({ type, value, name, step, parameterName, onChange }) => {
   const preventQuotation = (event) => {
     const quotations = ['"', "'", '`'];
     const { key } = event;
-    
+
     const { selectionStart, selectionEnd } = inputRef?.current;
     const atBeginning = selectionStart === 0; // beginning of text, left of start quote
     const atEnd = selectionEnd - 2 === currentValue.length; // end of text, right of end quote
@@ -164,10 +192,10 @@ const InputField = ({ type, value, name, step, parameterName, onChange }) => {
     const boundaries =
       quotations.includes(key) ||
       key === "Backspace" && (atBeginning || selectionStart === 1) && !isRangedSelection ||
-      key === "Delete" && (atEnd || selectionEnd - 1 === currentValue.length)  && !isRangedSelection ||
+      key === "Delete" && (atEnd || selectionEnd - 1 === currentValue.length) && !isRangedSelection ||
       key === 'ArrowLeft' && atEnd ||
       key === 'ArrowRight' && atBeginning;
-    
+
     if (boundaries) event.preventDefault();
 
     if (isRangedSelection) {
@@ -188,17 +216,17 @@ const InputField = ({ type, value, name, step, parameterName, onChange }) => {
   }
 
   const EyeOpenIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="gray" class="bi bi-eye-fill" viewBox="0 0 16 16">
-    <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0"/>
-    <path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7"/>
-  </svg>
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="gray" class="bi bi-eye-fill" viewBox="0 0 16 16">
+      <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0" />
+      <path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7" />
+    </svg>
   );
 
   const EyeClosedIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="gray" class="bi bi-eye-slash-fill" viewBox="0 0 16 16">
-    <path d="m10.79 12.912-1.614-1.615a3.5 3.5 0 0 1-4.474-4.474l-2.06-2.06C.938 6.278 0 8 0 8s3 5.5 8 5.5a7 7 0 0 0 2.79-.588M5.21 3.088A7 7 0 0 1 8 2.5c5 0 8 5.5 8 5.5s-.939 1.721-2.641 3.238l-2.062-2.062a3.5 3.5 0 0 0-4.474-4.474z"/>
-    <path d="M5.525 7.646a2.5 2.5 0 0 0 2.829 2.829zm4.95.708-2.829-2.83a2.5 2.5 0 0 1 2.829 2.829zm3.171 6-12-12 .708-.708 12 12z"/>
-  </svg>
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="gray" class="bi bi-eye-slash-fill" viewBox="0 0 16 16">
+      <path d="m10.79 12.912-1.614-1.615a3.5 3.5 0 0 1-4.474-4.474l-2.06-2.06C.938 6.278 0 8 0 8s3 5.5 8 5.5a7 7 0 0 0 2.79-.588M5.21 3.088A7 7 0 0 1 8 2.5c5 0 8 5.5 8 5.5s-.939 1.721-2.641 3.238l-2.062-2.062a3.5 3.5 0 0 0-4.474-4.474z" />
+      <path d="M5.525 7.646a2.5 2.5 0 0 0 2.829 2.829zm4.95.708-2.829-2.83a2.5 2.5 0 0 1 2.829 2.829zm3.171 6-12-12 .708-.708 12 12z" />
+    </svg>
   );
 
   const isTextBlock = name === 'text';
@@ -242,9 +270,9 @@ const InputField = ({ type, value, name, step, parameterName, onChange }) => {
             onChange={handleChange}
             className="input-element"
             style={{
-              minWidth: '200px', // Set the minimum width
+              minWidth: '200px', 
               padding: '10px',
-              paddingRight: '28px' // Make room for the toggle icon
+              paddingRight: '28px'
             }}
           />
           <button
@@ -263,9 +291,9 @@ const InputField = ({ type, value, name, step, parameterName, onChange }) => {
         </div>
       );
 
-      default:
-        return (
-          <textarea
+    default:
+      return (
+        <textarea
           value={currentValue}
           name={name}
           onChange={handleChange}
@@ -279,11 +307,11 @@ const InputField = ({ type, value, name, step, parameterName, onChange }) => {
             height: "30px",
             minHeight: "30px",
             width: "250px",
-            minWidth: "250px" 
+            minWidth: "250px"
           }}
         />
-        );
-    }
+      );
+  }
 };
 
 const BlockContent = ({ html, block, onInputChange }) => {

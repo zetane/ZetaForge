@@ -4,9 +4,12 @@
 	--ztn-purple-10: rgb(191, 158, 252);
 	--ztn-red-0: rgba(255, 0, 0, 1);
 	--ztn-white-0: #ffffff;
+	--ztn-white-1: #f4f4f4;
 	--ztn-gray-0: rgba(139,139,139,1);
 	--ztn-gray-1: rgba(38, 38, 38, 1);
+	--ztn-gray-2: #393939;
 	--ztn-black-0: #000;
+	--ztn-black-1: #161616
 	--ztn-orange-0: rgba(252, 168, 0, 1);
 	--ztn-orange-10: rgba(253, 187, 55, 1);
 
@@ -23,6 +26,8 @@
 	--cds-focus: var(--ztn-purple-0) !important;
 	--cds-focus-inverse: var(--ztn-purple-0) !important;
 	--pipeline-background-color: var(--ztn-gray-1) !important;
+	--tooltip-color: var(--ztn-white-0);
+	--tooltip-background-color: var(--ztn-gray-2);
 }
 @mixin ztn-colors-g100 {
 	// dark mode
@@ -30,9 +35,12 @@
 	--ztn-purple-10: rgb(191, 158, 252);
 	--ztn-red-0: rgba(255, 0, 0, 1);
 	--ztn-white-0: #ffffff;
+	--ztn-white-1: #f4f4f4;
 	--ztn-gray-0: rgba(139,139,139,1);
 	--ztn-gray-1: rgba(38, 38, 38, 1);
+	--ztn-gray-2: #393939;
 	--ztn-black-0: #000;
+	--ztn-black-1: #161616;
 	--ztn-orange-0: rgba(252, 168, 0, 1);
 	--ztn-orange-10: rgba(253, 187, 55, 1);
 
@@ -49,4 +57,6 @@
 	--cds-focus: var(--ztn-purple-0) !important;
 	--cds-focus-inverse: var(--ztn-purple-0) !important;
 	--pipeline-background-color: var(--ztn-gray-1) !important;
+	--tooltip-color: var(--ztn-black-1);
+	--tooltip-background-color: var(--ztn-white-1);
 }

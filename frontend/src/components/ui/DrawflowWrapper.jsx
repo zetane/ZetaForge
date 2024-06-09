@@ -142,8 +142,8 @@ export default function DrawflowWrapper() {
               buffer: pipeline.buffer,
               writePath: pipeline.buffer,
             };
-            const response = await savePipeline.mutateAsync(saveData);
-            const { dirPath, specs } = response;
+    
+            await savePipeline.mutateAsync(saveData);
           }
         } catch (error) {
           console.error("Error saving pipeline:", error);
@@ -241,9 +241,7 @@ export default function DrawflowWrapper() {
   return (
     <div
       id="drawflow"
-      // className="parent-drawflow"
       ref={handleDrawflow}
-      tabIndex={0}
       onDrop={(ev) => {
         const blockData = ev.dataTransfer.getData("block");
         const pipelineData = ev.dataTransfer.getData("pipeline");
