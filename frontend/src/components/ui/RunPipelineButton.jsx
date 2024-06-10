@@ -91,19 +91,14 @@ export default function RunPipelineButton({ children, action }) {
   const executePipeline = trpc.executePipeline.useMutation();
 
   const runPipeline = async () => {
-    // check if pipeline structure exists
-    if (!pipeline.data || !Object.keys(pipeline.data).length) return null;
+    if (!validatePipelineExists()) return;
+
     setValidationErrorMsg([])
 
     const pipelineSpecs = editor.convert_drawflow_to_block(pipeline.name, pipeline.data);
     const executionId = uuidv7();
 
-    if (! (await isAnvilOnline())){
-      setValidationErrorMsg(["Seaweed ping did not return ok. Please wait a few seconds and retry."])
-      setIsOpen(true)
-      return null;
-    }
-    
+    if (!(await validateAnvilOnline())) return;
     if (!validateSchema()) return;
     if (!(await execute(pipelineSpecs, executionId))) return;
 
@@ -116,11 +111,26 @@ export default function RunPipelineButton({ children, action }) {
 
     trackMixpanelRunCreated();
   };
+  
 
-  const isAnvilOnline = async () => {
+  const validatePipelineExists = async () => {
+    return pipeline.data && Object.keys(pipeline.data).length
+  }
+
+  const validateAnvilOnline =  async () => {
+    if (await pingAnvil()){
+      return true
+    } else {
+      setValidationErrorMsg(["Seaweed ping did not return ok. Please wait a few seconds and retry."])
+      setIsOpen(true)
+      return false;
+    }
+  }
+
+  const pingAnvil = async () => {
     try {
-    const response = await fetch(`http://${configuration.host}:${configuration.anvilPort}/ping`);
-    return response.ok;
+      const response = await fetch(`http://${configuration.host}:${configuration.anvilPort}/ping`);
+      return response.ok;
     } catch {
       return false
     }
@@ -152,15 +162,14 @@ export default function RunPipelineButton({ children, action }) {
     const schema = generateSchema(pipeline.data);
     const results = schema.safeParse(pipeline.data);
 
-    if (!results.success) {
+    if (results.success) {
+      return true;
+    } else {
       setValidationErrorMsg(() => {
         return results.error.issues.map(block => `${block.path[0]}: ${block.message}`)
       })
       setIsOpen(true)
       return false;
-    } else {
-      setValidationErrorMsg([]);
-      return true;
     }
   }
 
