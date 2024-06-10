@@ -1067,7 +1067,7 @@ export default class Drawflow {
     return JSON.parse(JSON.stringify(this.pipeline.data[id]));
   }
 
-  removeNodeInputConnections(id, input_class) { // used somewhere else
+  removeNodeInputConnections(id, input_class) {
     const infoNode = this.getNodeFromId(id)
     const removeInputs = [];
     Object.keys(infoNode.inputs[input_class].connections).map(function (key, index) {
@@ -1119,90 +1119,79 @@ export default class Drawflow {
   }
 
   removeSingleConnection(id_output, id_input, output_class, input_class) {
-    // if (nodeOneModule === nodeTwoModule) {
-      // Check nodes in same module.
+    var exists = this.pipeline.data[id_output].outputs[output_class].connections.findIndex(function (item, i) {
+        return item.block == id_input && item.variable === input_class
+    });
+    if (exists > -1) {
 
-      // Check connection exist
-      var exists = this.pipeline.data[id_output].outputs[output_class].connections.findIndex(function (item, i) {
+      const svgName = '.connection.node_in_node-' + id_input + '.node_out_node-' + id_output + '.' + output_class + '.' + input_class;
+      this.container.querySelector(svgName).remove();
+      this.updateConnectionList((draft) => {
+        delete draft[svgName];
+      })
+
+      this.setPipeline((draft) => {
+        var index_out = draft.data[id_output].outputs[output_class].connections.findIndex(function (item, i) {
           return item.block == id_input && item.variable === input_class
-      });
-      if (exists > -1) {
+        });
+        draft.data[id_output].outputs[output_class].connections.splice(index_out, 1);
+  
+        var index_in = draft.data[id_input].inputs[input_class].connections.findIndex(function (item, i) {
+          return item.block == id_output && item.variable === output_class
+        });
+        draft.data[id_input].inputs[input_class].connections.splice(index_in, 1);
+      })
+      
+      return true;
 
-        // if (this.module === nodeOneModule) {
-          // In same module with view.
-          const svgName = '.connection.node_in_node-' + id_input + '.node_out_node-' + id_output + '.' + output_class + '.' + input_class;
-          this.container.querySelector(svgName).remove();
-          this.updateConnectionList((draft) => {
-            delete draft[svgName];
-          })
-        // }
-
-        this.setPipeline((draft) => {
-          var index_out = draft.data[id_output].outputs[output_class].connections.findIndex(function (item, i) {
-            return item.block == id_input && item.variable === input_class
-          });
-          draft.data[id_output].outputs[output_class].connections.splice(index_out, 1);
-    
-          var index_in = draft.data[id_input].inputs[input_class].connections.findIndex(function (item, i) {
-            return item.block == id_output && item.variable === output_class
-          });
-          draft.data[id_input].inputs[input_class].connections.splice(index_in, 1);
-        })
-        
-        return true;
-
-      } else {
-        return false;
-      }
-    // } else {
-      // return false;
-    // }
+    } else {
+      return false;
+    }
   }
 
   removeConnectionNodeId(id) {
       // DELETE all connections associated with this id with setpipeline
-      const nodeId = id.slice(5);
-      this.setPipeline((draft) => {
+    const nodeId = id.slice(5);
+    this.setPipeline((draft) => {
       const connectionList = []
-          
-          for (let connection in this.connection_list) {
-              if (connection.includes(nodeId)) {
-                  const { input_id, input_class, output_id, output_class } = this.connection_list[connection];
-                  connectionList.push(connection);
-                  
-                  // Remove connection data from output property of connecting block
-                  if (input_id === nodeId) {
-                  const index_out = draft.data[output_id].outputs[output_class].connections.findIndex(function (item, i) {
-                      return item.variable === input_class && item.block === input_id;
-                  });
-                  draft.data[output_id].outputs[output_class].connections.splice(index_out, 1);
+        
+      for (let connection in this.connection_list) {
+        if (connection.includes(nodeId)) {
+          const { input_id, input_class, output_id, output_class } = this.connection_list[connection];
+          connectionList.push(connection);
+                
+          // Remove connection data from output property of connecting block
+          if (input_id === nodeId) {
+          const index_out = draft.data[output_id].outputs[output_class].connections.findIndex(function (item, i) {
+              return item.variable === input_class && item.block === input_id;
+          });
+          draft.data[output_id].outputs[output_class].connections.splice(index_out, 1);
 
-                  // Remove connection data from input property of connecting block
-                  } else if (output_id === nodeId) {
-                  const index_in = draft.data[input_id].inputs[input_class].connections.findIndex(function (item, i) {
-                      return item.variable === output_class && item.block === output_id;
-                  });
-                  draft.data[input_id].inputs[input_class].connections.splice(index_in, 1);
-                  }
-              }      
+          // Remove connection data from input property of connecting block
+          } else if (output_id === nodeId) {
+          const index_in = draft.data[input_id].inputs[input_class].connections.findIndex(function (item, i) {
+              return item.variable === output_class && item.block === output_id;
+          });
+          draft.data[input_id].inputs[input_class].connections.splice(index_in, 1);
           }
+        }      
+      }
 
-          this.updateConnectionList((connectionListDraft) => {
-              connectionList.forEach((connection) => {
-                  if (connectionListDraft[connection]) {
-                  this.container.querySelector(connection).remove()
-                  delete connectionListDraft[connection];
-                  }
-              })
-          })
-
-          delete draft.data[nodeId]
+      this.updateConnectionList((connectionListDraft) => {
+        connectionList.forEach((connection) => {
+          if (connectionListDraft[connection]) {
+            this.container.querySelector(connection).remove()
+            delete connectionListDraft[connection];
+          }
+        })
       })
+
+      delete draft.data[nodeId]
+    })
   }
     
   clear() {
     this.precanvas.innerHTML = "";
-    // this.drawflow = { "drawflow": { "Home": { "data": {} } } };
   }
   
   getChildrenAsArray(obj, parentKey) {
