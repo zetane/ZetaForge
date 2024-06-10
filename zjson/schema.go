@@ -102,9 +102,9 @@ type Execution struct {
 }
 
 type BuildContextStatus struct {
-	BlockKey string `json:"blockKey"`
-	Status   bool   `json:"status"`
-	S3Key    string `json:"s3Key"`
+	BlockKey   string `json:"blockKey"`
+	IsUploaded bool   `json:"isUploaded"`
+	S3Key      string `json:"s3Key"`
 }
 
 type Config struct {

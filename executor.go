@@ -873,15 +873,15 @@ func getBuildContextStatus(pipeline *zjson.Pipeline, cfg Config) *[]zjson.BuildC
 			}
 
 			buildContextStatus = append(buildContextStatus, zjson.BuildContextStatus{
-				BlockKey: id,
-				Status:   status,
-				S3Key:    s3Key,
+				BlockKey:   id,
+				IsUploaded: status,
+				S3Key:      s3Key,
 			})
 		} else {
 			buildContextStatus = append(buildContextStatus, zjson.BuildContextStatus{
-				BlockKey: id,
-				Status:   true,
-				S3Key:    "",
+				BlockKey:   id,
+				IsUploaded: true,
+				S3Key:      "",
 			})
 		}
 	}
