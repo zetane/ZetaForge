@@ -2,21 +2,19 @@ import { drawflowEditorAtom } from '@/atoms/drawflowAtom';
 import { blockEditorRootAtom, isBlockEditorOpenAtom } from '@/atoms/editorAtom';
 import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { pipelineConnectionsAtom } from "@/atoms/pipelineConnectionsAtom";
-// import Drawflow from '@/components/ZetaneDrawflowEditor';
-import Drawflow2 from '../ZetaneDrawFlowEditor_2';
+import Drawflow from '@/components/ZetaneDrawflowEditor';
 import BlockGenerator from '@/components/ui/blockGenerator/BlockGenerator';
-import { genJSON, generateId, replaceIds } from '@/utils/blockUtils';
+import { generateId, replaceIds } from '@/utils/blockUtils';
 import { trpc } from "@/utils/trpc";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { useAtom, useSetAtom } from 'jotai';
 import { useImmerAtom } from 'jotai-immer';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLoadPipeline } from "./useLoadPipeline";
-// import drawflowUtils from '@/utils/drawflowUtils';
 
 const launchDrawflow = (parentDomRef, canvasDomRef, pipeline, setPipeline, connection_list, setConnectionList) => {
   if (parentDomRef.className != "parent-drawflow") {
-    const editor = new Drawflow2(parentDomRef, pipeline, setPipeline, canvasDomRef, connection_list, setConnectionList);
+    const editor = new Drawflow(parentDomRef, pipeline, setPipeline, canvasDomRef, connection_list, setConnectionList);
 
     editor.reroute = true;
     editor.reroute_fix_curvature = true;
@@ -101,11 +99,6 @@ export default function DrawflowWrapper() {
       // IN THIS ORDER
       // because they programmatically
       // re-draw the connections in the graph
-      // for (const [id, block] of Object.entries(pipeline.data)) {
-      //   const json = genJSON(block, id)
-      //   drawflowUtils.addNode_from_JSON(json)
-      // }
-
       try {
         editor.pipeline = pipeline;
         editor.connection_list = pipelineConnections;
@@ -113,20 +106,6 @@ export default function DrawflowWrapper() {
       } catch (e) {
         console.log(e)
       }
-      // for (const [id, block] of Object.entries(pipeline.data)) {
-      //   let outputNames = block.outputs
-      //   for (const [outputKey, output] of Object.entries(outputNames)) {
-      //     let inputConnections = output.connections;
-      //     for (const input of inputConnections) {
-      //       try {
-      //         // editor.addConnection(id, input.block, outputKey, input.variable);
-      //         // drawflowUtils.addConnection(id, input.block, outputKey, input.variable, drawflowCanvas.current, editor);
-      //       } catch (e) {
-      //         console.log(e)
-      //       }
-      //     }
-      //   }
-      // }
 
       const fetchData = async () => {
         try {
@@ -202,19 +181,6 @@ export default function DrawflowWrapper() {
 
     return block
   }
-
-  // const removeNodeToDrawflow = (id, pipeline) => {
-  //   let newNodes = {}
-  //   for (const [key, node] of Object.entries(pipeline.data)) {
-  //     if (key !== id) {
-  //       newNodes[key] = node
-  //     }
-  //   }
-  //   setPipeline((draft) => {
-  //     draft.data = newNodes;
-  //   })
-  // };
-
   const openView = async (id) => {
     const root = await getBlockPath.mutateAsync({
       blockId: id, 
@@ -259,7 +225,6 @@ export default function DrawflowWrapper() {
     >
       <div
         ref={drawflowCanvas}
-        // className="drawflow"
       >
         {renderNodes}
       </div>

@@ -3,8 +3,8 @@
 export const createConnections = (pipeline) => {
     const connectionList = {}
     for (const [output_id, block] of Object.entries(pipeline)) {
-        let outputNames = block.outputs // image_paths
-        for (const [output_class, output] of Object.entries(outputNames)) { // [image_paths, {type, connections}]
+        let outputNames = block.outputs
+        for (const [output_class, output] of Object.entries(outputNames)) {
             let inputConnections = output.connections;
             for (const input of inputConnections) {
                 const input_id = input.block;

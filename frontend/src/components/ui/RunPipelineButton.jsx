@@ -30,16 +30,12 @@ export default function RunPipelineButton({ modalPopper, children, action }) {
   })
 
   const runPipeline = async (editor, pipeline) => {
-    console.log("pipeline: ", pipeline)
-    console.log("editor: ", editor)
     // check if pipeline structure exists
     if (!pipeline.data || !Object.keys(pipeline.data).length) return null;
     setValidationErrorMsg([])
 
     let pipelineSpecs = editor.convert_drawflow_to_block(pipeline.name, pipeline.data);
-    console.log("pipelineSpecs1: ", pipelineSpecs)
     const executionId = uuidv7();
-    console.log("executionId: ", executionId)
 
 
     try {
@@ -61,7 +57,6 @@ export default function RunPipelineButton({ modalPopper, children, action }) {
         buffer: pipeline.buffer,
         anvilConfiguration: configuration,
       });
-      console.log("pipelineSpecs2: ", pipelineSpecs)
     } catch (error) {
       setValidationErrorMsg([`Failed to upload files to anvil server: ${error}`])
       setIsOpen(true)
@@ -99,9 +94,7 @@ export default function RunPipelineButton({ modalPopper, children, action }) {
         pipeline: pipelineSpecs,
         build: rebuild
       }
-      console.log("pipelineSpecs3: ", pipelineSpecs)
       const res = await mutation.mutateAsync(execution)
-      console.log("res: ", res)
       if (res.status == 201) {
         setPipeline((draft) => {
           draft.socketUrl = `ws://${configuration.host}:${configuration.anvilPort}/ws/${pipelineSpecs.id}`;

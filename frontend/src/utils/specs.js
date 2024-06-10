@@ -31,7 +31,6 @@ function mergeIO(oldIO, IO) {
 }
 
 function removeDanglingConnections (pipeline, blockFolderName, content, editor) {
-  console.log("called remove dangling connections")
   getRemovedIOKeys(pipeline[blockFolderName].outputs, content.outputs)
     .forEach((key) => {editor.removeNodeOutputConnections(blockFolderName, key)});
 

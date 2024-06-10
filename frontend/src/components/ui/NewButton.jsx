@@ -28,9 +28,7 @@ export default function NewButton() {
       draft.buffer = bufferPath,
       draft.path = undefined,
       draft.data = {}
-      })
-
-    // console.log("pipelineConnectionsAtom: ", pipelineConnections)
+    })
   };
 
   return (
