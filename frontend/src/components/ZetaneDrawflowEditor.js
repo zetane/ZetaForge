@@ -459,20 +459,9 @@ export default class Drawflow {
 
     if (this.node_selected) { // update block position in pipeline
       const nodeId = this.node_selected.id.slice(5);
-      console.log("nodeid: ", nodeId)
       this.setPipeline((draft) => {
         draft.data[nodeId].views.node.pos_x = String(this.node_selected.offsetLeft);
         draft.data[nodeId].views.node.pos_y = String(this.node_selected.offsetTop);
-  
-        for (let svg in this.connection_list) { //review
-          if (svg.includes(nodeId)) {
-              console.log("svg: ", svg)
-              console.log("connection_list, svg: ", this.connection_list?.[svg])
-              this.updateConnectionList((draft) => {
-                draft[svg].path = Array.from(this.container.querySelector(svg)?.children);
-              })
-          }
-        }
       })    
     }
 
@@ -659,7 +648,6 @@ export default class Drawflow {
       
         if (this.connection_list[svg].path) {
           for (const item of this.connection_list[svg].path) {
-            console.log("item: ", item)
             connection.appendChild(item);
           }
         } else {
@@ -1030,7 +1018,6 @@ export default class Drawflow {
     point.setAttributeNS(null, 'cy', pos_y);
     point.setAttributeNS(null, 'r', this.reroute_width);
 
-    let position_add_array_point = 0;
     if (this.reroute_fix_curvature) {
 
       const numberPoints = ele.parentElement.querySelectorAll(".main-path").length;
@@ -1043,7 +1030,6 @@ export default class Drawflow {
         ele.parentElement.appendChild(point);
       } else {
         const search_point = Array.from(ele.parentElement.children).indexOf(ele)
-        position_add_array_point = search_point;
         ele.parentElement.insertBefore(point, ele.parentElement.children[search_point + numberPoints + 1]);
       }
 

@@ -5,10 +5,11 @@ import { trpc } from "@/utils/trpc";
 import { getDirectoryPath } from "@/../utils/fileUtils";
 import { customAlphabet } from 'nanoid';
 import { createConnections } from "@/utils/createConnections"
+import { useAtom } from "jotai";
 
 export const useLoadPipeline = () => {
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
-  const [pipelineConnections, setPipelineConnectionsAtom] = useImmerAtom(pipelineConnectionsAtom);
+  const [pipelineConnections, setPipelineConnections] = useAtom(pipelineConnectionsAtom);
   const savePipelineMutation = trpc.savePipeline.useMutation();
   const cacheQuery = trpc.getCachePath.useQuery();
   const cachePath = cacheQuery?.data || "";
@@ -60,9 +61,7 @@ export const useLoadPipeline = () => {
       draft.data = data.pipeline;
       draft.id = data.id;
 
-      setPipelineConnectionsAtom((draft) => {
-        Object.assign(draft, {...createConnections(data.pipeline)})
-      })
+      setPipelineConnections(createConnections(data.pipeline))
     });
     
   };
