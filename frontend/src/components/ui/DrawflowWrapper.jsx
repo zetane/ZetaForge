@@ -2,7 +2,7 @@ import { drawflowEditorAtom } from '@/atoms/drawflowAtom';
 import { blockEditorRootAtom, isBlockEditorOpenAtom } from '@/atoms/editorAtom';
 import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { pipelineConnectionsAtom } from "@/atoms/pipelineConnectionsAtom";
-import Drawflow from '@/components/ZetaneDrawFlowEditor';
+import Drawflow from '@/components/ZetaneDrawflowEditor';
 import BlockGenerator from '@/components/ui/blockGenerator/BlockGenerator';
 import { generateId, replaceIds } from '@/utils/blockUtils';
 import { trpc } from "@/utils/trpc";
