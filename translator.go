@@ -56,31 +56,7 @@ func checkImage(ctx context.Context, tag string, cfg Config) (bool, error) {
 			return false, nil
 		}
 	} else if cfg.Cloud.IsDebug {
-		// TODO this won't work, find a solution in the lead developer's PR
-		repo, err := name.NewRepository(cfg.Cloud.RegistryAddr)
-		if err != nil {
-			return false, err
-		}
-
-		auth := authn.FromConfig(
-			authn.AuthConfig{
-				Username: cfg.Cloud.RegistryUser,
-				Password: cfg.Cloud.RegistryPass,
-			},
-		)
-
-		data, err := remote.List(repo, remote.WithAuth(auth))
-
-		if err != nil {
-			return false, err
-		}
-
-		for _, tagName := range data {
-			if tag == fmt.Sprintf("localhost:%d/%s", cfg.Cloud.RegistryPort, tagName) {
-				return true, nil
-			}
-		}
-
+		// TODO this won't work, use solution in PR #85
 		return false, nil
 	} else {
 		repo, err := name.NewRepository(cfg.Cloud.RegistryAddr)
