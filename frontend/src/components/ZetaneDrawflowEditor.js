@@ -334,7 +334,7 @@ export default class Drawflow {
       this.ele_selected.style.top = (this.ele_selected.offsetTop - y) + "px";
       this.ele_selected.style.left = (this.ele_selected.offsetLeft - x) + "px";
   
-      this.updateConnectionNodes(this.ele_selected.id) //dragging node
+      this.updateConnectionNodes(this.ele_selected.id)
     }
 
     if (this.drag_point) {
@@ -351,7 +351,7 @@ export default class Drawflow {
       this.ele_selected.setAttributeNS(null, 'cy', pos_y);
 
       const parentSelected = this.ele_selected.parentElement.classList[2].slice(9);
-      this.updateConnectionNodes(parentSelected); // dragging reroute point
+      this.updateConnectionNodes(parentSelected);
     }
 
     if (e.type === "touchmove") {
@@ -467,8 +467,8 @@ export default class Drawflow {
     if (this.node_selected) { // update block position in pipeline
       const nodeId = this.node_selected.id.slice(5);
       this.setPipeline((draft) => {
-        draft.data[nodeId].views.node.pos_x = String(this.node_selected.offsetLeft);
-        draft.data[nodeId].views.node.pos_y = String(this.node_selected.offsetTop);
+        draft.data[nodeId].views.node.pos_x = this.node_selected.offsetLeft;
+        draft.data[nodeId].views.node.pos_y = this.node_selected.offsetTop;
       })    
     }
 
@@ -1204,6 +1204,8 @@ export default class Drawflow {
       const newPipeline = {}
       for (const block in graph_with_connections) {
         graph_with_connections[block].events = {};
+        graph_with_connections[block].views.node.pos_x = graph_with_connections[block].views.node.pos_x.toString();
+        graph_with_connections[block].views.node.pos_y = graph_with_connections[block].views.node.pos_y.toString();
         newPipeline[block] = graph_with_connections[block];
       }
     
