@@ -6,6 +6,7 @@ import ScrollToBottom from 'react-scroll-to-bottom';
 
 export const PipelineLogs = () => {
   const pipeline = useAtomValue(pipelineAtom);
+  console.log("logs here: ", pipeline)
 
   return (
     <ClosableModal

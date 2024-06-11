@@ -56,18 +56,19 @@ export default function Navbar({ children }) {
     const addPipelines = {}
     const addExecutions = {}
     const iters = allPipelines || []
-    for (const serverPipeline of iters) {
-      const loaded = loadPipeline(serverPipeline)
-      const key = loaded.id + "." + loaded.record.Hash
-      addPipelines[key] = loaded
-      addExecutions[loaded.record.Execution] = loaded
-    }
+
     setWorkspace((draft) => {
-      const mergedPipelines = Object.assign(draft.pipelines, addPipelines)
-      draft.pipelines = mergedPipelines
-      draft.executions = addExecutions
+      for (const serverPipeline of iters) {
+        const loaded = loadPipeline(serverPipeline)
+        const key = loaded.id + "." + loaded.record.Execution
+        console.log(`LOADED: ${key} for `, loaded)
+        draft.pipelines[key] = loaded
+        draft.executions[loaded.record.Execution] = loaded
+      }
     })
   }, [allPipelines])
+
+  console.log("ws: ", workspace)
 
   /*const {pendingRoom, errorRoom, dataRoom }  = useQuery({
     queryKey: ['rooms'],
@@ -105,12 +106,9 @@ export default function Navbar({ children }) {
   useEffect(() => {
     if (readyState === ReadyState.OPEN) {
       if (pipeline.socketUrl) {
-        modalPopper(<PipelineLogs />)
+        //modalPopper(<PipelineLogs />)
       }
     } else if (readyState === ReadyState.CLOSED) {
-      setPipeline((draft) => {
-        draft.socketUrl = null;
-      })
     }
   }, [readyState]);
 
@@ -168,7 +166,7 @@ export default function Navbar({ children }) {
           if (blockId) {
             logString = `[${time}][${executionId}][${blockId}] ${message}`
           }
-          draft.log.push(logString)
+          //draft.log.push(logString)
         }
       })
     }
@@ -182,7 +180,7 @@ export default function Navbar({ children }) {
     </RunPipelineButton>
   )
 
-  if (pipeline?.socketUrl) {
+  if (pipeline?.record?.Status == "Running") {
     runButton = (
       <StopPipelineButton />
     )

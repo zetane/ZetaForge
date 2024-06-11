@@ -87,7 +87,7 @@ export default function RunPipelineButton({modalPopper, children, action}) {
       if (res.status == 201) {
         setPipeline((draft) => {
           draft.socketUrl = `${import.meta.env.VITE_WS_EXECUTOR}/ws/${executionId}`;
-          draft.log = []
+          //draft.log = []
         })
         //setWorkspace((draft) => {
         //  draft.fetchInterval = 1 * 1000;

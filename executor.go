@@ -103,6 +103,37 @@ func upload(ctx context.Context, source string, key string, cfg Config) error {
 	return err
 }
 
+func downloadFile(ctx context.Context, key string, filename string, cfg Config) error {
+	client, err := s3Client(ctx, cfg)
+	if err != nil {
+		return err
+	}
+
+	result, err := client.GetObject(ctx, &s3.GetObjectInput{
+		Bucket: aws.String(BUCKET),
+		Key:    &key,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	file, err := os.OpenFile(filepath.Join(filename), os.O_CREATE|os.O_RDWR, 0644)
+	if err != nil {
+		result.Body.Close()
+		return err
+	}
+
+	if _, err := io.Copy(file, result.Body); err != nil {
+		result.Body.Close()
+		return err
+	}
+
+	result.Body.Close()
+
+	return nil
+}
+
 func downloadFiles(ctx context.Context, sink string, prefix string, cfg Config) error {
 	client, err := s3Client(ctx, cfg)
 	if err != nil {
@@ -674,6 +705,7 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, build 
 	}
 
 	tempLog := filepath.Join(os.TempDir(), executionId+".log")
+	fmt.Printf("tempLog: %s", tempLog)
 	s3Key := pipeline.Id + "/" + executionId
 
 	file, err := os.OpenFile(tempLog, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
@@ -725,6 +757,8 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, build 
 				Room:    executionId,
 				Content: fmt.Sprintf("%s", jsonData),
 			}
+
+			file.WriteString(fmt.Sprintf("%s\n", jsonData))
 		}
 	})
 	log.SetOutput(pipelineLogger)

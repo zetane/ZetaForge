@@ -88,7 +88,7 @@ func createLogger(id string, file io.Writer, messageFunc func(string, string)) i
 		MessageFunc: messageFunc,
 	}
 
-	return io.MultiWriter(os.Stdout, wsWriter, file)
+	return io.MultiWriter(os.Stdout, wsWriter)
 }
 
 func readTempLog(tempLog string) ([]string, error) {
@@ -551,7 +551,25 @@ func main() {
 
 		var response []ResponsePipelineExecution
 		for _, execution := range res {
-			newRes, err := newResponsePipelineExecution(execution)
+			logOutput := []string{}
+			tempLog := filepath.Join(os.TempDir(), execution.Executionid)
+			if execution.Status == "Running" {
+				logOutput, err = readTempLog(tempLog)
+				if err != nil {
+					fmt.Printf("Failed to retrieve writing log; err=%v", err)
+				}
+			} else if execution.Status != "Pending" {
+				s3key := execution.Uuid + "/" + execution.Executionid + "/" + execution.Executionid + ".log"
+				err = downloadFile(ctx, s3key, tempLog, config)
+				if err != nil {
+					//fmt.Printf("Failed to retrieve s3 log; err=%v", err)
+				}
+				logOutput, err = readTempLog(tempLog)
+				if err != nil {
+					fmt.Printf("Failed to read s3 log; err=%v\n", err)
+				}
+			}
+			newRes, err := newResponsePipelineExecution(execution, logOutput)
 			if err != nil {
 				ctx.String(err.Status(), err.Error())
 			}

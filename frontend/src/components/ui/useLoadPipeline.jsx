@@ -57,10 +57,8 @@ export const useLoadPipeline = () => {
   return loadPipeline;
 };
 
-function updatePipelineWithLogFile(logFile, pipeline) {
- const logLines = logFile.split('\n');
-
- for (const line of logLines) {
+function updatePipelineWithLogFile(pipeline) {
+  for (const line of pipeline.logs) {
    if (line.trim() !== '') {
      const { executionId, blockId, message, time, ...jsonObj } = JSON.parse(line);
      let shouldLog = true;
@@ -120,18 +118,12 @@ function updatePipelineWithLogFile(logFile, pipeline) {
  return pipeline;
 }
 
-
 export const useLoadServerPipeline = () => {
-  const utils = trpc.useUtils()
   const loadPipeline = (pipeline) => {
     if (!pipeline)  { return }
     const pipelineData = JSON.parse(pipeline.PipelineJson)
     const bufferPath = `${window.cache.local}${pipelineData.id}`;
     const executionId = pipeline.Execution
-    const logPath = `${pipelineData.id}/${executionId}/${executionId}.log`
-    const logQuery = utils.getLog.fetch({s3Key: logPath, executionId: executionId});
-    const logs = logQuery.data ? logQuery.data : []
-    console.log("logs: ", logs)
 
     const loadedPipeline = {
       name: pipelineData.name ? pipelineData.name : pipelineData.id,
@@ -143,11 +135,20 @@ export const useLoadServerPipeline = () => {
       history: pipelineData.id + "/" + executionId,
       record: pipeline,
       socketUrl: `${import.meta.env.VITE_WS_EXECUTOR}/ws/${executionId}}`,
-      logs: logs
+      logs: pipeline.Log
     }
 
     let newPipeline = pipelineFactory(window.cache.local, loadedPipeline)
-    //newPipeline = updatePipelineWithLogFile(logs, newPipeline)
+    if (newPipeline.logs != null && newPipeline.logs.length) {
+      try {
+        newPipeline = updatePipelineWithLogFile(newPipeline)
+        console.log("made it: ", newPipeline)
+      } catch (e) {
+        console.log("Failed to parse server logs: ", e)
+      }
+    }
+
+    console.log("new pipeline: ", newPipeline)
 
     return newPipeline
   };

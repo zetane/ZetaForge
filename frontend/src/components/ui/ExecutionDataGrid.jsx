@@ -11,7 +11,8 @@ export const ExecutionDataGrid = ({executions, closeModal}) => {
 
   const selectPipeline = (pipeline) => {
     console.log(pipeline)
-    const key = pipeline.id + "." + pipeline.record.Hash
+    const key = pipeline.id + "." + pipeline.record.Execution
+    console.log(`setting ${key} for `, pipeline)
 
     setWorkspace((draft) => {
       draft.tabs.push(key)
@@ -26,13 +27,16 @@ export const ExecutionDataGrid = ({executions, closeModal}) => {
     const pipelineData = JSON.parse(record.PipelineJson)
     const friendlyName = pipelineData.name
     const executionId = record?.Execution;
-    const stopAction = <PipelineStopButton executionId={executionId} />;
+    let stopAction = null;
+    if (record.Status == "Running") {
+      stopAction = <PipelineStopButton executionId={executionId} />;
+    }
 
     items.push({
-      id: pipeline.id,
+      id: executionId,
       pipeline: friendlyName,
       name: <Link href="#" onClick={() => {selectPipeline(pipeline)}}>{executionId}</Link>,
-      created: new Date(record?.Created * 1000).toLocaleString(),
+      created: new Date(record?.ExecutionTime * 1000).toLocaleString(),
       status: record?.Status,
       deployed: record?.Deployed,
       actions: stopAction,

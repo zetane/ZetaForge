@@ -24,16 +24,18 @@ type ResponsePipeline struct {
 }
 
 type ResponsePipelineExecution struct {
-	Organization string
-	Created      int64
-	Uuid         string
-	Hash         string
-	PipelineJson string
-	Deployed     int64
-	Status       interface{}
-	Completed    int64
-	Workflow     string
-	Execution    string
+	Organization  string
+	Created       int64
+	ExecutionTime int64
+	Uuid          string
+	Hash          string
+	PipelineJson  string
+	Deployed      int64
+	Status        interface{}
+	Completed     int64
+	Workflow      string
+	Execution     string
+	Log           []string
 }
 
 type ResponseExecution struct {
@@ -66,7 +68,7 @@ func newResponsePipeline(pipeline zdatabase.Pipeline) (ResponsePipeline, HTTPErr
 	}, nil
 }
 
-func newResponsePipelineExecution(filterPipeline zdatabase.FilterPipelinesRow) (ResponsePipelineExecution, HTTPError) {
+func newResponsePipelineExecution(filterPipeline zdatabase.FilterPipelinesRow, execLog []string) (ResponsePipelineExecution, HTTPError) {
 	var data zjson.Pipeline
 	if err := json.Unmarshal([]byte(filterPipeline.Json), &data); err != nil {
 		return ResponsePipelineExecution{}, InternalServerError{err.Error()}
@@ -77,16 +79,18 @@ func newResponsePipelineExecution(filterPipeline zdatabase.FilterPipelinesRow) (
 	}
 
 	return ResponsePipelineExecution{
-		Organization: filterPipeline.Organization,
-		Created:      filterPipeline.Created,
-		Uuid:         filterPipeline.Uuid,
-		Hash:         filterPipeline.Hash,
-		PipelineJson: string(jsonData),
-		Deployed:     filterPipeline.Deployed,
-		Status:       filterPipeline.Status,
-		Completed:    filterPipeline.Created,
-		Workflow:     filterPipeline.Workflow.String,
-		Execution:    filterPipeline.Executionid,
+		Organization:  filterPipeline.Organization,
+		Created:       filterPipeline.Created,
+		ExecutionTime: filterPipeline.Created_2,
+		Uuid:          filterPipeline.Uuid,
+		Hash:          filterPipeline.Hash,
+		PipelineJson:  string(jsonData),
+		Deployed:      filterPipeline.Deployed,
+		Status:        filterPipeline.Status,
+		Completed:     filterPipeline.Completed.Int64,
+		Workflow:      filterPipeline.Workflow.String,
+		Execution:     filterPipeline.Executionid,
+		Log:           execLog,
 	}, nil
 }
 

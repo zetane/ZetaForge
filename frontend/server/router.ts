@@ -206,6 +206,7 @@ export const appRouter = router({
 
           try {
             const response = await axios.get(`${import.meta.env.VITE_EXECUTOR}/${executionId}/log`);
+            console.log(response)
             const logData = response.data;
 
             return { data: logData };

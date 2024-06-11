@@ -2,7 +2,6 @@ import { atom } from 'jotai'
 import { withImmer } from 'jotai-immer';
 import { customAlphabet } from "nanoid";
 import rfdc from 'rfdc';
-import { hex_sha1 } from '@/utils/sha1';
 import { sha1 } from 'js-sha1';
 
 export const pipelineKey = (id, data) => {
@@ -50,9 +49,10 @@ export const workspaceAtom = atom({
 export const getRunning = (workspace) => {
   const running = [];
   for (const [key, pipeline] of Object.entries(workspace.executions)) {
-    if (pipeline.record.Status == "Running") {
+    /*if (pipeline.record.Status == "Running") {
       running.push(pipeline)
-    }
+      }*/
+    running.push(pipeline)
   }
   return running
 }
@@ -67,7 +67,7 @@ const pipelineAtomWithImmer = atom(
     const newWorkspace = rfdc({proto: true})(workspace)
     let key = `${newPipeline.id}.`
     if (newPipeline.record) {
-      key = pipelineKey(newPipeline.id, newPipeline.record.Hash)
+      key = `${newPipeline.id}.${newPipeline.record.Execution}`
     }
     newWorkspace.pipelines[key] = newPipeline;
     set(workspaceAtom, newWorkspace)
