@@ -460,8 +460,8 @@ export default class Drawflow {
     if (this.node_selected) { // update block position in pipeline
       const nodeId = this.node_selected.id.slice(5);
       this.setPipeline((draft) => {
-        draft.data[nodeId].views.node.pos_x = String(this.node_selected.offsetLeft);
-        draft.data[nodeId].views.node.pos_y = String(this.node_selected.offsetTop);
+        draft.data[nodeId].views.node.pos_x = this.node_selected.offsetLeft;
+        draft.data[nodeId].views.node.pos_y = this.node_selected.offsetTop;
       })    
     }
 
@@ -1215,6 +1215,8 @@ export default class Drawflow {
       const newPipeline = {}
       for (const block in graph_with_connections) {
         graph_with_connections[block].events = {};
+        graph_with_connections[block].views.node.pos_x = graph_with_connections[block].views.node.pos_x.toString();
+        graph_with_connections[block].views.node.pos_y = graph_with_connections[block].views.node.pos_y.toString();
         newPipeline[block] = graph_with_connections[block];
       }
     
