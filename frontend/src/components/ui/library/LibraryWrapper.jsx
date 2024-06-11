@@ -90,7 +90,7 @@ export default function LibraryWrapper({ specs, pipelines }) {
             labelText="Search"
           />
           <Tabs>
-            <TabList fullWidth className="full-tabs">
+            <TabList fullWidth className="full-tabs" aria-label='Core blocks and pipelines'>
               <Tab>Core Blocks ({searchResults.length})</Tab>
               <Tab>Core Pipelines ({filteredPipelines.length})</Tab>
             </TabList>

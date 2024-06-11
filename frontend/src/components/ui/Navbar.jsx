@@ -11,14 +11,12 @@ import {
   HeaderNavigation,
   SkipToContent,
 } from "@carbon/react";
-
 import { useAtom, useSetAtom } from "jotai";
+import { useImmerAtom } from "jotai-immer";
+import { useEffect } from "react";
+import useWebSocket, { ReadyState } from "react-use-websocket";
 import LoadBlockButton from "./LoadBlockButton";
 import LoadPipelineButton from "./LoadPipelineButton";
-import PipelineNameLabel from "./PipelineNameLabel";
-import SavePipelineButton from "./SavePipelineButton";
-import SaveAsPipelineButton from "./SaveAsPipelineButton";
-import RunPipelineButton from "./RunPipelineButton";
 import LogsButton from "./LogsButton";
 import NewButton from "./NewButton";
 import ApiKeysModal from "./modal/ApiKeysModal";
@@ -27,12 +25,17 @@ import WorkspaceTabs from "./WorkspaceTabs";
 import useWebSocket, {ReadyState} from "react-use-websocket";
 import { useEffect } from "react";
 import { useImmerAtom } from "jotai-immer";
-import { PipelineLogs } from "./PipelineLogs";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import StopPipelineButton from "./StopPipelineButton";
 import { useLoadServerPipeline } from "./useLoadPipeline";
 import { pipelineKey } from "@/atoms/pipelineAtom";
+import { PipelineLogs } from "./PipelineLogs";
+import RunPipelineButton from "./RunPipelineButton";
+import SaveAsPipelineButton from "./SaveAsPipelineButton";
+import SavePipelineButton from "./SavePipelineButton";
+import AnvilConfigurationsModal from "./modal/AnvilConfigurationsModal";
+import ApiKeysModal from "./modal/ApiKeysModal";
 
 const ONE_SECOND = 1000;
 
@@ -91,7 +94,7 @@ export default function Navbar({ children }) {
     });
   };
 
-  const svgOverride = { position: 'absolute', right: '15px', top: '5px'}
+  const svgOverride = { position: 'absolute', right: '15px', top: '5px' }
 
   const socket = pipeline?.socketUrl || null
 
@@ -193,33 +196,37 @@ export default function Navbar({ children }) {
         ZetaForge
       </HeaderName>
       <HeaderNavigation aria-label="ZetaForge">
-        <HeaderMenu menuLinkName="File">
+        <HeaderMenu menuLinkName="File" aria-label="File">
           <NewButton />
           <SavePipelineButton />
           <SaveAsPipelineButton />
-            <LoadPipelineButton  />
-            <LoadBlockButton />
+          <LoadPipelineButton />
+          <LoadBlockButton />
         </HeaderMenu>
-        <HeaderMenu menuLinkName="Settings">
+        <HeaderMenu menuLinkName="Settings" aria-label="Settings">
           <HeaderMenuItem
-          onClick={() => modalPopper(<ApiKeysModal />)}>
-            <Password  size={16} className="mx-1 align-middle"></Password>
+            onClick={() => modalPopper(<ApiKeysModal />)}>
+            <Password size={16} className="mx-1 align-middle"></Password>
             <span>API Keys</span>
+          </HeaderMenuItem>
+          <HeaderMenuItem
+            onClick={() => modalPopper(<AnvilConfigurationsModal />)}>
+            Anvil Configurations
           </HeaderMenuItem>
           <HeaderMenuItem label="Theme" onClick={() => setDarkMode(!darkMode)}>
             Toggle Theme
           </HeaderMenuItem>
         </HeaderMenu>
-        <HeaderMenu menuLinkName="Help">
-        <HeaderMenuItem onClick={() => window.open('https://github.com/zetane/zetaforge')}>
-          GitHub
-        </HeaderMenuItem>
-        <HeaderMenuItem onClick={() => window.open('https://discord.gg/zetaforge')}>
-          Discord
-        </HeaderMenuItem>
-        <HeaderMenuItem onClick={() => window.open('https://zetane/docs/')}>
-          Docs
-        </HeaderMenuItem>
+        <HeaderMenu menuLinkName="Help" aria-label="Help">
+            <HeaderMenuItem onClick={() => window.open('https://github.com/zetane/zetaforge')}>
+              GitHub
+            </HeaderMenuItem>
+            <HeaderMenuItem onClick={() => window.open('https://discord.gg/zetaforge')}>
+              Discord
+            </HeaderMenuItem>
+            <HeaderMenuItem onClick={() => window.open('https://zetane/docs/')}>
+              Docs
+            </HeaderMenuItem>
         </HeaderMenu>
       </HeaderNavigation>
       <HeaderGlobalBar>

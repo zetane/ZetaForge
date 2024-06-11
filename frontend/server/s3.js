@@ -2,24 +2,29 @@ import { HeadObjectCommand, PutObjectCommand, GetObjectCommand, S3Client } from 
 import fs from 'fs/promises';
 import config from "../config";
 
-const client = new S3Client({
-  region: config.s3.region,
-  credentials: {
-    accessKeyId: config.s3.accessKeyId,
-    secretAccessKey: config.s3.secretAccessKey
-  },
-  endpoint: config.s3.endpoint,
-  forcePathStyle: config.s3.forcePathStyle,
-})
+function getClient(configuration) {
+  const endpoint = `http://${configuration.host}:${configuration.s3Port}`;
+  console.log(endpoint);
+  return new S3Client({
+    region: config.s3.region,
+    credentials: {
+      accessKeyId: config.s3.accessKeyId,
+      secretAccessKey: config.s3.secretAccessKey
+    },
+    endpoint: endpoint,
+    forcePathStyle: config.s3.forcePathStyle,
+  })
+}
 
-export async function checkAndUpload(key, filePath) {
-  const exists = await fileExists(key);
+export async function checkAndUpload(key, filePath, anvilConfiguration) {
+  const exists = await fileExists(key, anvilConfiguration);
 
   if (!exists) {
-    await upload(key, filePath);
+    await upload(key, filePath, anvilConfiguration);
   }
 }
-async function upload(key, filePath) {
+async function upload(key, filePath, anvilConfiguration) {
+  const client = getClient(anvilConfiguration);
   const fileBody = await fs.readFile(filePath)
 
   try {
@@ -36,7 +41,9 @@ async function upload(key, filePath) {
   }
 }
 
-async function fileExists(key) {
+async function fileExists(key, anvilConfiguration) {
+  const client = getClient(anvilConfiguration);
+
   try {
     await client.send(new HeadObjectCommand({
       Bucket: config.s3.bucket,
@@ -53,8 +60,9 @@ async function fileExists(key) {
   }
 }
 
-export async function getFileData(key) {
-  const exists = await fileExists(key);
+export async function getFileData(key, anvilConfiguration) {
+  const exists = await fileExists(key, anvilConfiguration);
+  const client = getClient(anvilConfiguration)
 
   if (exists) {
     try {

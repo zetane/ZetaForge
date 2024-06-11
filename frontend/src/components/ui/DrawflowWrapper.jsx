@@ -1,9 +1,10 @@
 import { drawflowEditorAtom } from '@/atoms/drawflowAtom';
 import { blockEditorRootAtom, isBlockEditorOpenAtom } from '@/atoms/editorAtom';
 import { pipelineAtom } from "@/atoms/pipelineAtom";
+import { pipelineConnectionsAtom } from "@/atoms/pipelineConnectionsAtom";
 import Drawflow from '@/components/ZetaneDrawflowEditor';
 import BlockGenerator from '@/components/ui/blockGenerator/BlockGenerator';
-import { genJSON, generateId, replaceIds } from '@/utils/blockUtils';
+import { generateId, replaceIds } from '@/utils/blockUtils';
 import { trpc } from "@/utils/trpc";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { useAtom, useSetAtom } from 'jotai';
@@ -11,9 +12,9 @@ import { useImmerAtom } from 'jotai-immer';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLoadPipeline } from "./useLoadPipeline";
 
-const launchDrawflow = (parentDomRef, canvasDomRef, pipeline, setPipeline) => {
+const launchDrawflow = (parentDomRef, canvasDomRef, pipeline, setPipeline, connection_list, setConnectionList) => {
   if (parentDomRef.className != "parent-drawflow") {
-    const editor = new Drawflow(parentDomRef, pipeline, setPipeline, canvasDomRef);
+    const editor = new Drawflow(parentDomRef, pipeline, setPipeline, canvasDomRef, connection_list, setConnectionList);
 
     editor.reroute = true;
     editor.reroute_fix_curvature = true;
@@ -34,93 +35,22 @@ const dragOverHandler = (event) => {
 export default function DrawflowWrapper() {
   const [editor, setEditor] = useAtom(drawflowEditorAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
+  const [pipelineConnections, setPipelineConnections] = useImmerAtom(pipelineConnectionsAtom);
   const setBlockEditorRoot = useSetAtom(blockEditorRootAtom);
   const setEditorOpen = useSetAtom(isBlockEditorOpenAtom);
   const [renderNodes, setRenderNodes] = useState([])
   const drawflowCanvas = useRef(null);
   const pipelineRef = useRef(null)
+
   pipelineRef.current = pipeline
 
   const savePipeline = trpc.savePipeline.useMutation();
   const getBlockPath = trpc.getBlockPath.useMutation();
 
-  const createConnection = (connection, pipeline) => {
-    const {output_id, input_id, output_class, input_class} = connection;
-    const outputBlock = pipeline.data[output_id]
-    const inputBlock = pipeline.data[input_id]
-    if (outputBlock && inputBlock) {
-      const outputConn = outputBlock.outputs[output_class]
-      const inputConn = inputBlock.inputs[input_class]
-      if (outputConn && inputConn) {
-        const inputHasOutput = inputConn.connections.some((ele) => {
-          return (ele.variable == output_class && ele.block == output_id)
-        })
-        if (!inputHasOutput) {
-          setPipeline((draft) => {
-            draft.data[input_id].inputs[input_class].connections.push({
-              variable: output_class,
-              block: output_id
-            })
-          })
-        }
-
-        const outputHasInput = outputConn.connections.some((ele) => {
-          return (ele.variable == input_class && ele.block == input_id)
-        })
-        if (!outputHasInput) {
-          setPipeline((draft) => {
-            draft.data[output_id].outputs[output_class].connections.push({
-             variable: input_class,
-             block: input_id
-            })
-          })
-        }
-      }
-    }
-  }
-
-  const removeConnection = (connection, pipeline) => {
-    const {output_id, input_id, output_class, input_class} = connection;
-    const outputBlock = pipeline.data[output_id]
-    const inputBlock = pipeline.data[input_id]
-    if (outputBlock && inputBlock) {
-      const outputConn = outputBlock.outputs[output_class]
-      const inputConn = inputBlock.inputs[input_class]
-      if (outputConn && inputConn) {
-        const inputHasOutput = inputConn.connections.some((ele) => {
-          return (ele.variable == output_class && ele.block == output_id)
-        })
-        if (inputHasOutput) {
-          setPipeline((draft) => {
-            const newConns = inputConn.connections.filter((ele) => {
-              return (ele.variable != output_class || ele.block != output_id)
-            })
-            draft.data[input_id].inputs[input_class].connections = newConns;
-          })
-        }
-
-        const outputHasInput = outputConn.connections.some((ele) => {
-          return (ele.variable == input_class && ele.block == input_id)
-        })
-        if (outputHasInput) {
-          setPipeline((draft) => {
-            const newConns = outputConn.connections.filter((ele) => {
-              return (ele.variable != input_class || ele.block != input_id)
-            })
-            draft.data[output_id].outputs[output_class].connections = newConns;
-          })
-        }
-      }
-    }
-  }
-
   const handleDrawflow = useCallback((node) => {
     if (!node) { return }
-    const constructedEditor = launchDrawflow(node, drawflowCanvas.current, pipeline, setPipeline);
+    const constructedEditor = launchDrawflow(node, drawflowCanvas.current, pipeline, setPipeline, pipelineConnections, setPipelineConnections);
     if (constructedEditor) {
-      constructedEditor.on('nodeRemoved', (id) => removeNodeToDrawflow(id, pipelineRef.current));
-      constructedEditor.on('connectionCreated', (connection) => createConnection(connection, pipelineRef.current));
-      constructedEditor.on('connectionRemoved', (connection) => removeConnection(connection, pipelineRef.current));
       setEditor(constructedEditor);
     }
   }, []);
@@ -146,33 +76,18 @@ export default function DrawflowWrapper() {
       // IN THIS ORDER
       // because they programmatically
       // re-draw the connections in the graph
-      editor.clearDrawflowData()
-      editor.removeAllConnections()
-
-      for (const [id, block] of Object.entries(pipeline.data)) {
-        const json = genJSON(block, id)
-        editor.addNode_from_JSON(json)
-      }
-
-      for (const [id, block] of Object.entries(pipeline.data)) {
-        let outputNames = block.outputs
-        for (const [outputKey, output] of Object.entries(outputNames)) {
-          let inputConnections = output.connections;
-          for (const input of inputConnections) {
-            try {
-              editor.addConnection(id, input.block, outputKey, input.variable);
-            } catch (e) {
-              console.log(e)
-            }
-          }
-        }
+      try {
+        editor.pipeline = pipeline;
+        editor.connection_list = pipelineConnections;
+        editor.addConnection();
+      } catch (e) {
+        console.log(e)
       }
 
       const fetchData = async () => {
         try {
           if (Object.getOwnPropertyNames(pipeline.data).length !== 0) {
             const pipelineSpecs = editor.convert_drawflow_to_block(pipeline.name, pipeline.data);
-
             // note that we are writing to the buffer, not the load path
             pipelineSpecs['sink'] = pipeline.buffer;
             pipelineSpecs['build'] = pipeline.buffer;
@@ -181,11 +96,10 @@ export default function DrawflowWrapper() {
               specs: pipelineSpecs,
               name: pipeline.name,
               buffer: pipeline.buffer,
-              writePath: pipeline.buffer
+              writePath: pipeline.buffer,
             };
 
-            const response = await savePipeline.mutateAsync(saveData);
-            const { dirPath, specs } = response;
+            await savePipeline.mutateAsync(saveData);
           }
         } catch (error) {
           console.error("Error saving pipeline:", error);
@@ -245,19 +159,6 @@ export default function DrawflowWrapper() {
 
     return block
   }
-
-  const removeNodeToDrawflow = (id, pipeline) => {
-    let newNodes = {}
-    for (const [key, node] of Object.entries(pipeline.data)) {
-      if (key !== id) {
-        newNodes[key] = node
-      }
-    }
-    setPipeline((draft) => {
-      draft.data = newNodes;
-    })
-  };
-
   const openView = async (id) => {
     const root = await getBlockPath.mutateAsync({
       blockId: id,
@@ -282,7 +183,9 @@ export default function DrawflowWrapper() {
   const fileInput = useRef();
 
   return (
-    <div id="drawflow" ref={handleDrawflow}
+    <div
+      id="drawflow"
+      ref={handleDrawflow}
       onDrop={(ev) => {
         const blockData = ev.dataTransfer.getData("block");
         const pipelineData = ev.dataTransfer.getData("pipeline");
@@ -298,7 +201,9 @@ export default function DrawflowWrapper() {
       }}
       onDragOver={(ev) => { dragOverHandler(ev) }}
     >
-      <div ref={drawflowCanvas}>
+      <div
+        ref={drawflowCanvas}
+      >
         {renderNodes}
       </div>
       <input

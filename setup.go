@@ -117,7 +117,7 @@ func validNamespace(namespace string, Kind string) bool {
 	return true
 }
 
-func kubectlApply(filePath string, resources map[string]string, clientConfig *rest.Config) error {
+func kubectlApply(ctx context.Context, filePath string, resources map[string]string, clientConfig *rest.Config) error {
 	file, err := kubectlFiles.ReadFile(filePath)
 	if err != nil {
 		return err
@@ -154,7 +154,7 @@ func kubectlApply(filePath string, resources map[string]string, clientConfig *re
 		if !validNamespace(namespace, gvk.Kind) {
 			namespace = "default"
 		}
-		_, err = dynamicClient.Resource(gvr).Namespace(namespace).Apply(context.Background(), name, &obj, metav1.ApplyOptions{FieldManager: name})
+		_, err = dynamicClient.Resource(gvr).Namespace(namespace).Apply(ctx, name, &obj, metav1.ApplyOptions{FieldManager: name})
 		if err != nil {
 			return err
 		}
@@ -162,7 +162,7 @@ func kubectlApply(filePath string, resources map[string]string, clientConfig *re
 	}
 }
 
-func kubectlDelete(filePath string, resources map[string]string, clientConfig *rest.Config) error {
+func kubectlDelete(ctx context.Context, filePath string, resources map[string]string, clientConfig *rest.Config) error {
 	file, err := kubectlFiles.ReadFile(filePath)
 	if err != nil {
 		return err
@@ -199,7 +199,7 @@ func kubectlDelete(filePath string, resources map[string]string, clientConfig *r
 		if !validNamespace(namespace, gvk.Kind) {
 			namespace = "default"
 		}
-		err = dynamicClient.Resource(gvr).Namespace(namespace).Delete(context.Background(), name, metav1.DeleteOptions{})
+		err = dynamicClient.Resource(gvr).Namespace(namespace).Delete(ctx, name, metav1.DeleteOptions{})
 		if err != nil {
 			log.Printf("Resource %s %s deletion failed", gvk.Kind, name)
 			continue
@@ -208,7 +208,7 @@ func kubectlDelete(filePath string, resources map[string]string, clientConfig *r
 	}
 }
 
-func kubectlCheckPods(ctx context.Context, clientConfig *rest.Config) error {
+func kubectlSeaweedFS(ctx context.Context, clientConfig *rest.Config, cfg Config) error {
 	clientset, err := kubernetes.NewForConfig(clientConfig)
 	if err != nil {
 		return err
@@ -233,17 +233,25 @@ func kubectlCheckPods(ctx context.Context, clientConfig *rest.Config) error {
 		time.Sleep(WAIT_TIME)
 	}
 
+	for {
+		_, err := http.Get(fmt.Sprintf("http://localhost:%d", cfg.Local.BucketPort))
+		if err == nil {
+			break
+		}
+		log.Println("Waiting on seaweedfs...")
+		time.Sleep(WAIT_TIME)
+	}
+
 	return nil
 }
 
 func migrate(ctx context.Context, resources map[string]string, config Config, clientConfig *rest.Config, db *sql.DB) error {
 	setupVersion, err := getSetupVersion(ctx, db)
-	log.Println(setupVersion)
 	var version string
 	if err != nil {
 		version = config.SetupVersion
 		// cleanup the earliest version
-		if err := kubectlDelete("setup/build-0.yaml", resources, clientConfig); err != nil {
+		if err := kubectlDelete(ctx, "setup/build-0.yaml", resources, clientConfig); err != nil {
 			return err
 		}
 
@@ -255,19 +263,19 @@ func migrate(ctx context.Context, resources map[string]string, config Config, cl
 	}
 
 	if version < config.SetupVersion {
-		if err := kubectlDelete("setup/build-"+version+".yaml", resources, clientConfig); err != nil {
+		if err := kubectlDelete(ctx, "setup/build-"+version+".yaml", resources, clientConfig); err != nil {
 			return err
 		}
 		if _, err := setSetupVersion(ctx, db, config.SetupVersion); err != nil {
 			return err
 		}
-		if err := kubectlApply("setup/build-"+config.SetupVersion+".yaml", resources, clientConfig); err != nil {
+		if err := kubectlApply(ctx, "setup/build-"+config.SetupVersion+".yaml", resources, clientConfig); err != nil {
 			return err
 		}
 	} else if version > config.SetupVersion {
 		log.Fatalf("Invalid version downgrade")
 	} else {
-		if err := kubectlApply("setup/build-"+config.SetupVersion+".yaml", resources, clientConfig); err != nil {
+		if err := kubectlApply(ctx, "setup/build-"+config.SetupVersion+".yaml", resources, clientConfig); err != nil {
 			return err
 		}
 	}
@@ -286,33 +294,32 @@ func setup(ctx context.Context, config Config, client clientcmd.ClientConfig, db
 	if err != nil {
 		log.Fatalf("Failed to fetch kubernetes resources; err=%v", err)
 	}
-	if err := kubectlApply("setup/install.yaml", resources, clientConfig); err != nil {
+	if err := kubectlApply(ctx, "setup/install.yaml", resources, clientConfig); err != nil {
 		log.Fatalf("Failed to install argo; err=%v", err)
 	}
 	if err := migrate(ctx, resources, config, clientConfig, db); err != nil {
 		log.Fatalf("Failed to migrate bucket; err=%v", err)
 	}
 
-	if err := kubectlCheckPods(ctx, clientConfig); err != nil {
-		log.Fatalf("Setup execution failed; err=%v", err)
-	}
-	log.Println("Setup Successful")
-
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt)
 
 	if config.Local.Driver == "minikube" {
 		stopBucketCh := make(chan struct{}, 1)
-		readyBucketCh := make(chan struct{})
 		go func() {
-			if err := portForward(context.Background(), "weed", "default", config.Local.BucketPort, 8333, stopBucketCh, readyBucketCh, clientConfig); err != nil {
-				log.Fatalf("Port-Forwarding error; err=%v", err)
+			for {
+				readyBucketCh := make(chan struct{})
+				if err := portForward(ctx, "weed", "default", config.Local.BucketPort, 8333, stopBucketCh, readyBucketCh, clientConfig); err != nil {
+					log.Printf("Port-Forwarding warning; warning=%v", err)
+				}
+				time.Sleep(WAIT_TIME)
 			}
 		}()
+
 		go func() {
 			<-signals
 			log.Println("Starting Shutdown...")
-			if err := kubectlDelete("setup/install.yaml", resources, clientConfig); err != nil {
+			if err := kubectlDelete(ctx, "setup/install.yaml", resources, clientConfig); err != nil {
 				log.Printf("Failed to delete argo; err=%v", err)
 			}
 			if stopBucketCh != nil {
@@ -322,12 +329,11 @@ func setup(ctx context.Context, config Config, client clientcmd.ClientConfig, db
 			signal.Stop(signals)
 			os.Exit(1)
 		}()
-		<-readyBucketCh
 	} else {
 		go func() {
 			<-signals
 			log.Println("Starting Shutdown...")
-			if err := kubectlDelete("setup/install.yaml", resources, clientConfig); err != nil {
+			if err := kubectlDelete(ctx, "setup/install.yaml", resources, clientConfig); err != nil {
 				log.Printf("Failed to delete argo; err=%v", err)
 			}
 			log.Println("Shutdown Successful")
@@ -335,6 +341,11 @@ func setup(ctx context.Context, config Config, client clientcmd.ClientConfig, db
 			os.Exit(1)
 		}()
 	}
+
+	if err := kubectlSeaweedFS(ctx, clientConfig, config); err != nil {
+		log.Fatalf("Setup execution failed; err=%v", err)
+	}
+	log.Println("Setup Successful")
 }
 
 func uninstall(ctx context.Context, client clientcmd.ClientConfig, db *sql.DB) {
@@ -356,7 +367,7 @@ func uninstall(ctx context.Context, client clientcmd.ClientConfig, db *sql.DB) {
 		version = setupVersion.Version
 	}
 
-	if err := kubectlDelete("setup/build-"+version+".yaml", resources, clientConfig); err != nil {
+	if err := kubectlDelete(ctx, "setup/build-"+version+".yaml", resources, clientConfig); err != nil {
 		log.Fatalf("Failed to delete bucket; err=%v", err)
 	}
 }

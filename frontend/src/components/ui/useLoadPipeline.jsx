@@ -1,12 +1,16 @@
 import { useImmerAtom } from "jotai-immer";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
+import { pipelineConnectionsAtom } from "@/atoms/pipelineConnectionsAtom";
 import { trpc } from "@/utils/trpc";
 import { getDirectoryPath } from "@/../utils/fileUtils";
 import { workspaceAtom, pipelineFactory, pipelineKey } from "@/atoms/pipelineAtom";
+import { createConnections } from "@/utils/createConnections"
+import { useAtom } from "jotai";
 
 export const useLoadPipeline = () => {
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
+  const [pipelineConnections, setPipelineConnections] = useAtom(pipelineConnectionsAtom);
   const savePipelineMutation = trpc.savePipeline.useMutation();
 
   const loadPipeline = async (file) => {
@@ -51,6 +55,8 @@ export const useLoadPipeline = () => {
       draft.tabs.push(key)
       draft.pipelines[key] = newPipeline
       draft.active = key
+
+      setPipelineConnections(createConnections(data.pipeline))
     })
   };
 
@@ -134,7 +140,7 @@ export const useLoadServerPipeline = () => {
       id: pipelineData.id,
       history: pipelineData.id + "/" + executionId,
       record: pipeline,
-      socketUrl: `${import.meta.env.VITE_WS_EXECUTOR}/ws/${executionId}}`,
+      socketUrl: `ws://${configuration.host}:${configuration.anvilPort}/ws/${executionId}`,
       logs: pipeline.Log
     }
 

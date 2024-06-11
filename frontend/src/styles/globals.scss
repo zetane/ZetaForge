@@ -105,3 +105,22 @@ main {
 .theme-mode-transition * {
 	transition: all 200ms cubic-bezier(0.2, 0.2, 0.38, 0.9);
 }
+
+.tooltip {
+	max-width: 18rem;
+	padding: 0.5rem;
+	border-radius: 2px;
+	color: var(--tooltip-color);
+	background-color: var(--tooltip-background-color);
+}
+
+.tooltip::after {
+	content: "";
+	position: absolute;
+	bottom: 100%;
+	left: 10px;
+	margin-left: -5px;
+	border-width: 5px;
+	border-style: solid;
+	border-color: transparent transparent var(--tooltip-background-color) transparent;
+}

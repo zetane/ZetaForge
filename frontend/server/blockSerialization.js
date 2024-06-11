@@ -1,8 +1,8 @@
 import { execFile, spawnSync } from "child_process";
 import { app } from "electron";
 import fs from "fs/promises";
-import path, { resolve } from "path";
-import { SPECS_FILE_NAME } from "../src/utils/constants";
+import path from "path";
+import { BLOCK_SPECS_FILE_NAME } from "../src/utils/constants";
 import { fileExists } from "./fileSystem";
 
 export async function compileComputation(blockPath) {
@@ -23,7 +23,7 @@ export async function compileComputation(blockPath) {
 }
 
 export async function saveBlockSpecs(blockPath, specs) {
-  const specsPath = path.join(blockPath, SPECS_FILE_NAME);
+  const specsPath = path.join(blockPath, BLOCK_SPECS_FILE_NAME);
 
   removeConnections(specs.inputs)
   removeConnections(specs.outputs)
@@ -48,10 +48,10 @@ export async function runTest(blockPath, blockKey) {
     throw new Error(`Could not find script for running tests: ${scriptPath}`)
   }
   
-  return new Promise(() => {
+  return new Promise((resolve, reject) => {
     execFile("python", [scriptPath, blockPath, blockKey], (error, stdout, stderr) => {
       if (error) {
-        rejects(error);
+        reject(error);
       }
 
       console.log(stdout);
