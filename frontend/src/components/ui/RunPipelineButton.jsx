@@ -94,7 +94,6 @@ export default function RunPipelineButton({ modalPopper, children, action }) {
         pipeline: pipelineSpecs,
         build: rebuild
       }
-
       const res = await mutation.mutateAsync(execution)
       if (res.status == 201) {
         setPipeline((draft) => {

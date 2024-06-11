@@ -1,11 +1,15 @@
 import { useImmerAtom } from "jotai-immer";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
+import { pipelineConnectionsAtom } from "@/atoms/pipelineConnectionsAtom";
 import { trpc } from "@/utils/trpc";
 import { getDirectoryPath } from "@/../utils/fileUtils";
 import { customAlphabet } from 'nanoid';
+import { createConnections } from "@/utils/createConnections"
+import { useAtom } from "jotai";
 
 export const useLoadPipeline = () => {
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
+  const [pipelineConnections, setPipelineConnections] = useAtom(pipelineConnectionsAtom);
   const savePipelineMutation = trpc.savePipeline.useMutation();
   const cacheQuery = trpc.getCachePath.useQuery();
   const cachePath = cacheQuery?.data || "";
@@ -56,7 +60,10 @@ export const useLoadPipeline = () => {
       draft.saveTime = Date.now();
       draft.data = data.pipeline;
       draft.id = data.id;
+
+      setPipelineConnections(createConnections(data.pipeline))
     });
+    
   };
 
   return loadPipeline;

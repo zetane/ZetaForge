@@ -120,14 +120,14 @@ export default function Navbar({ children }) {
         ZetaForge
       </HeaderName>
       <HeaderNavigation aria-label="ZetaForge">
-        <HeaderMenu menuLinkName="File">
+        <HeaderMenu menuLinkName="File" aria-label="File">
           <NewButton />
           <SavePipelineButton />
           <SaveAsPipelineButton />
           <LoadPipelineButton />
           <LoadBlockButton />
         </HeaderMenu>
-        <HeaderMenu menuLinkName="Settings">
+        <HeaderMenu menuLinkName="Settings" aria-label="Settings">
           <HeaderMenuItem
             onClick={() => modalPopper(<ApiKeysModal />)}>
             <Password size={16} className="mx-1 align-middle"></Password>
@@ -141,16 +141,16 @@ export default function Navbar({ children }) {
             Toggle Theme
           </HeaderMenuItem>
         </HeaderMenu>
-        <HeaderMenu menuLinkName="Help">
-          <HeaderMenuItem onClick={() => window.open('https://github.com/zetane/zetaforge')}>
-            GitHub
-          </HeaderMenuItem>
-          <HeaderMenuItem onClick={() => window.open('https://discord.gg/zetaforge')}>
-            Discord
-          </HeaderMenuItem>
-          <HeaderMenuItem onClick={() => window.open('https://zetane/docs/')}>
-            Docs
-          </HeaderMenuItem>
+        <HeaderMenu menuLinkName="Help" aria-label="Help">
+            <HeaderMenuItem onClick={() => window.open('https://github.com/zetane/zetaforge')}>
+              GitHub
+            </HeaderMenuItem>
+            <HeaderMenuItem onClick={() => window.open('https://discord.gg/zetaforge')}>
+              Discord
+            </HeaderMenuItem>
+            <HeaderMenuItem onClick={() => window.open('https://zetane/docs/')}>
+              Docs
+            </HeaderMenuItem>
         </HeaderMenu>
       </HeaderNavigation>
       <HeaderGlobalBar>
