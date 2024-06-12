@@ -4,7 +4,7 @@ export async function getBuildContextStatus(configuration, pipelineSpecs) {
       DEFAULT_SCHEME,
       configuration.host,
       configuration.anvilPort,
-      "buildContextStatus",
+      "build-context-status",
     ),
     HttpMethod.POST,
     {},

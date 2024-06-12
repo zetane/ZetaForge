@@ -474,7 +474,7 @@ func main() {
 		ctx.JSON(http.StatusOK, configResponse)
 
 	})
-	router.POST("/buildContextStatus", func(ctx *gin.Context) {
+	router.POST("/build-context-status", func(ctx *gin.Context) {
 		pipeline, err := validateJson[zjson.Pipeline](ctx.Request.Body)
 		if err != nil {
 			log.Printf("Invalid json request; err=%v", err)
