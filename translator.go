@@ -394,7 +394,7 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 		}
 
 		var filesName string
-		if cfg.IsLocal {
+		if cfg.IsLocal || cfg.Cloud.IsDebug {
 			filesName = key
 		} else {
 			filesName = organization + "/" + key
@@ -463,7 +463,7 @@ func getImage(block *zjson.Block) string {
 }
 
 func getComputaionName(blockKey string, organization string, cfg Config) string {
-	if cfg.IsLocal {
+	if cfg.IsLocal || cfg.Cloud.IsDebug {
 		return blockKey + ".py"
 	} else {
 		return organization + "-" + blockKey + ".py"
