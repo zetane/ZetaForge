@@ -37,9 +37,12 @@ export const pipelineFactory = (cachePath, pipeline=null) => {
 
 const initPipeline = pipelineFactory(window.cache.local)
 const emptyKey = `${initPipeline.id}.`
+const tabMap = {
+  [emptyKey]: {},
+}
 
 export const workspaceAtom = atom({
-  tabs: [emptyKey],
+  tabs: tabMap,
   pipelines: {[emptyKey]: initPipeline},
   executions: {},
   active: emptyKey,

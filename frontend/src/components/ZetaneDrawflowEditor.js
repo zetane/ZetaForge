@@ -640,9 +640,47 @@ export default class Drawflow {
     path.setAttributeNS(null, 'd', lineCurve);
   }
 
+  setDifference(setA, setB) {
+    const difference = {};
+
+    for (const key in setA) {
+      if (setA.hasOwnProperty(key)) {
+        difference[key] = setA[key];
+      }
+    }
+
+    for (const key in setB) {
+      if (setB.hasOwnProperty(key) && difference[key]) {
+        delete difference[key];
+      }
+    }
+
+    return difference;
+  }
+
+  removeDomConnection(svg) {
+    console.log('tryin to remove ', svg)
+    const domElement = this.container.querySelector(svg)
+    console.log(domElement)
+    if (domElement) {
+      domElement.remove()
+    }
+  }
+
+  syncConnections(newConnections) {
+    // look ma it's what react does i wrote my own framework
+    const removeKeys = this.setDifference(this.connection_list, newConnections)
+
+    for (let key in removeKeys) {
+      this.removeDomConnection(key)
+    }
+  }
+
+
   addConnection() {
     for (let svg in this.connection_list) {
-      if (!this.container.querySelector(svg)) {
+      const domElement = this.container.querySelector(svg)
+      if (!domElement) {
         const connection = document.createElementNS('http://www.w3.org/2000/svg', "svg");
         connection.classList.add(...svg.split(".").filter(Boolean));
 
@@ -695,15 +733,19 @@ export default class Drawflow {
     let precanvasHeightZoom = precanvas.clientHeight / (precanvas.clientHeight * zoom);
     precanvasHeightZoom = precanvasHeightZoom || 0;
 
-    const elemsOut = container.querySelectorAll(`.${idSearchOut}`);
+    console.log('searching for ', idSearchOut)
+    const elemsOut = precanvas.querySelectorAll(`.${idSearchOut}`);
+    console.log('found ', elemsOut)
 
     Object.keys(elemsOut).map(function (item, index) {
       if (elemsOut[item].querySelector('.point') === null) {
 
-        var elemtsearchId_out = container.querySelector(`#${id}`);
+        console.log('searching for ', id)
+        var elemtsearchId_out = precanvas.querySelector(`#${id}`);
 
         var id_search = elemsOut[item].classList[1].replace('node_in_', '');
-        var elemtsearchId = container.querySelector(`#${id_search}`);
+        console.log('and again for ', id_search)
+        var elemtsearchId = precanvas.querySelector(`#${id_search}`);
 
         var elemtsearch = elemtsearchId.querySelectorAll('.' + elemsOut[item].classList[4])[0]
 

@@ -9,64 +9,57 @@ export default function WorkspaceTabs() {
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   useEffect(() => {
-    const pipelineTabs = Object.values(workspace.tabs).map((key) => {
-      const [id, hash] = key.split(".")
+    const pipelineTabs = []
+    let index = 0;
+    Object.keys(workspace.tabs).forEach((key) => {
       const pipeline = workspace.pipelines[key]
-      let label = pipeline?.name
-      return {id: key, label: pipeline?.name, panel: <TabPanel/>}
+      const label = pipeline?.name
+      pipelineTabs.push({id: key, label: label, panel: <TabPanel/>})
+
+      if (workspace.active == key) {
+         setSelectedIndex(index)
+      }
+      index++
     })
     setRenderedTabs(pipelineTabs)
-    for (let i = 0; i < workspace.tabs.length; i++) {
-      if (workspace.active == workspace.tabs[i]) {
-        setSelectedIndex(i)
-        break;
-      }
-    }
   }, [workspace])
 
   const handleTabChange = (evt) => {
+    const index = evt.selectedIndex
+    const key = renderedTabs[index]?.id
     setWorkspace((draft) => {
-      draft.active = draft.tabs[evt.selectedIndex]
+      draft.active = key
     })
   };
 
-  const handleCloseTabRequest = (tabIndex) => {
+  const handleCloseTabRequest = (deleteIndex) => {
     // ignore close requests on disabled tabs
-    if (renderedTabs[tabIndex].disabled) {
+    if (renderedTabs[deleteIndex].disabled) {
       return;
     }
-
-    const selectedTab = renderedTabs[selectedIndex];
-    console.log(selectedTab)
-
     // TODO: Pop modal for deleting last tab
-    if (workspace.tabs.length > 1) {
-      const pipeline = workspace.pipelines[selectedTab.id]
+    console.log(workspace.tabs)
+    if (Object.keys(workspace.tabs).length > 1) {
+      const deleteTab = renderedTabs[deleteIndex];
+      const selectedTab = renderedTabs[selectedIndex];
+      const key = deleteTab.id
+      const {[key]: _, ...filteredTabs} = workspace.tabs
+      const newTabArray = Object.keys(filteredTabs)
 
       setWorkspace((draft) => {
-        const filteredTabs = workspace.tabs.filter((tab) => selectedTab.id != tab)
-        draft.tabs = filteredTabs
-
         // make the same tab we're deleting active, unless it's at the end, in which case we get -1
-        if (tabIndex === selectedIndex) {
-          console.log(tabIndex, selectedIndex)
-          console.log(filteredTabs.length)
-          if (tabIndex >= filteredTabs.length) {
-            tabIndex = (filteredTabs.length - 1)
+        if (deleteIndex == selectedIndex) {
+          if (deleteIndex >= newTabArray.length) {
+            deleteIndex = (newTabArray.length - 1)
           }
-          console.log("INDEX: ", tabIndex)
-          draft.active = filteredTabs[tabIndex];
         } else {
           // we're re-calculating the selectedIndex since the selected tab's index might have shifted
           // due to a tab element being removed from the array
-          tabIndex = filteredTabs.indexOf(selectedTab.id);
-          draft.active = filteredTabs[tabIndex]
+          deleteIndex = newTabArray.indexOf(selectedTab.id);
         }
 
-        // If it's an empty pipeline we can just delete it
-        //if (Object.keys(pipeline.data).length === 0 && !pipeline.record) {
-        //  delete draft.pipelines[pipeline.id]
-        //}
+        draft.tabs = filteredTabs
+        draft.active = newTabArray[deleteIndex];
       })
     }
   };

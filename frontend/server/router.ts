@@ -8,8 +8,6 @@ import { getHistory, getIndex, updateHistory, updateIndex } from "./chat.js";
 import { readPipelines, readSpecs } from "./fileSystem.js";
 import { copyPipeline, getBlockPath, removeBlock, saveBlock, saveSpec, uploadBlocks } from './pipelineSerialization.js';
 import { publicProcedure, router } from './trpc';
-import { getFileData } from "./s3.js";
-import axios from "axios";
 
 export const appRouter = router({
   getBlocks: publicProcedure
@@ -193,42 +191,6 @@ export const appRouter = router({
 
       return uploadBlocks(pipelineId, executionId, pipelineSpecs, buffer, anvilConfiguration);
     }),
-  getLog: publicProcedure
-      .input(z.object({
-        s3Key: z.string(),
-        executionId: z.string(),
-        anvilConfiguration: z.object({
-          name: z.string(),
-          host: z.string(),
-          s3Port: z.string(),
-          anvilPort: z.string(),
-        })
-      }))
-      .query(async (opts) => {
-        const { input } = opts;
-        const { s3Key, executionId } = input;
-
-        try {
-          const fileData = await getFileData(s3Key);
-          return { data: fileData };
-        } catch (error) {
-          console.error(error);
-
-          try {
-            const response = await axios.get(`${import.meta.env.VITE_EXECUTOR}/${executionId}/log`);
-            console.log(response)
-            const logData = response.data;
-
-            return { data: logData };
-          } catch (error) {
-            console.error('Failed to retrieve log data:', error);
-            throw new TRPCError({
-              code: 'INTERNAL_SERVER_ERROR',
-              message: 'Failed to retrieve log data',
-            });
-          }
-        }
-      }),
   compileComputation: publicProcedure
     .input(z.object({
       blockPath: z.string(),

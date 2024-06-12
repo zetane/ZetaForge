@@ -1,7 +1,5 @@
-import { FileBlock } from "./FileBlock";
 import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
-import { useImmerAtom } from "jotai-immer";
 import { Code, View } from "@carbon/icons-react";
 import { Modal } from "@carbon/react";
 import { useImmerAtom } from "jotai-immer";
@@ -36,7 +34,7 @@ const checkPath = async (path, count, setIframeSrc) => {
     });
 }
 
-const BlockGenerator = ({ block, openView, id, historySink, pipelineAtom }) => {
+const BlockGenerator = ({ block, openView, id, historySink }) => {
   const [pipeline, setFocusAction] = useImmerAtom(pipelineAtom)
   const [editor, _s] = useAtom(drawflowEditorAtom);
   const [configuration] = useAtom(activeConfigurationAtom)

@@ -1,21 +1,23 @@
 import ClosableModal from "./modal/ClosableModal";
 import { workspaceAtom } from "@/atoms/pipelineAtom";
 import { useImmerAtom } from "jotai-immer";
+import { useAtom } from "jotai";
 import { DataTable, Table, TableHead, TableRow, TableHeader, TableBody, TableCell, Link } from "@carbon/react";
 import { PipelineStopButton } from "./PipelineStopButton";
-import { useLoadPipeline, useLoadServerPipeline } from "./useLoadPipeline";
+import { pipelineConnectionsAtom } from "@/atoms/pipelineConnectionsAtom";
+import { createConnections } from "@/utils/createConnections";
 
 export const ExecutionDataGrid = ({executions, closeModal}) => {
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
+  const [pipelineConnections, setPipelineConnections] = useAtom(pipelineConnectionsAtom);
+
   const items = []
 
   const selectPipeline = (pipeline) => {
-    console.log(pipeline)
     const key = pipeline.id + "." + pipeline.record.Execution
-    console.log(`setting ${key} for `, pipeline)
 
     setWorkspace((draft) => {
-      draft.tabs.push(key)
+      draft.tabs[key] = {}
       draft.active = key
     })
 

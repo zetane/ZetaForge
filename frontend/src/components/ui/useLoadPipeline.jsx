@@ -52,11 +52,9 @@ export const useLoadPipeline = () => {
     const key = pipelineKey(newPipeline.id, null)
 
     setWorkspace(draft => {
-      draft.tabs.push(key)
+      draft.tabs[key] = {}
       draft.pipelines[key] = newPipeline
       draft.active = key
-
-      setPipelineConnections(createConnections(data.pipeline))
     })
   };
 
@@ -125,7 +123,7 @@ function updatePipelineWithLogFile(pipeline) {
 }
 
 export const useLoadServerPipeline = () => {
-  const loadPipeline = (pipeline) => {
+  const loadPipeline = (pipeline, configuration) => {
     if (!pipeline)  { return }
     const pipelineData = JSON.parse(pipeline.PipelineJson)
     const bufferPath = `${window.cache.local}${pipelineData.id}`;
@@ -153,8 +151,6 @@ export const useLoadServerPipeline = () => {
         console.log("Failed to parse server logs: ", e)
       }
     }
-
-    console.log("new pipeline: ", newPipeline)
 
     return newPipeline
   };

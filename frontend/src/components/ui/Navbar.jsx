@@ -12,9 +12,6 @@ import {
   SkipToContent,
 } from "@carbon/react";
 import { useAtom, useSetAtom } from "jotai";
-import { useImmerAtom } from "jotai-immer";
-import { useEffect } from "react";
-import useWebSocket, { ReadyState } from "react-use-websocket";
 import LoadBlockButton from "./LoadBlockButton";
 import LoadPipelineButton from "./LoadPipelineButton";
 import LogsButton from "./LogsButton";
@@ -29,13 +26,11 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import StopPipelineButton from "./StopPipelineButton";
 import { useLoadServerPipeline } from "./useLoadPipeline";
-import { pipelineKey } from "@/atoms/pipelineAtom";
-import { PipelineLogs } from "./PipelineLogs";
 import RunPipelineButton from "./RunPipelineButton";
 import SaveAsPipelineButton from "./SaveAsPipelineButton";
 import SavePipelineButton from "./SavePipelineButton";
 import AnvilConfigurationsModal from "./modal/AnvilConfigurationsModal";
-import ApiKeysModal from "./modal/ApiKeysModal";
+import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 
 const ONE_SECOND = 1000;
 
@@ -44,13 +39,14 @@ export default function Navbar({ children }) {
   const [modalContent, setModalContent] = useAtom(modalContentAtom);
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
+  const [configuration] = useAtom(activeConfigurationAtom);
   const loadPipeline = useLoadServerPipeline();
   //console.log("ws: ", workspace)
 
   // TODO: Figure out how to get SQLC to emit the same struct for two different queries
   const { pending, error, data } = useQuery({
     queryKey: ['pipelines', workspace.fetchInterval],
-    queryFn: async () => { return axios.get(`${import.meta.env.VITE_EXECUTOR}/pipeline/filter?limit=100000&offset=0`)},
+    queryFn: async () => { return axios.get(`http://${configuration.host}:${configuration.anvilPort}/pipeline/filter?limit=100000&offset=0`)},
     refetchInterval: workspace.fetchInterval
   })
   const allPipelines = data?.data;
@@ -62,16 +58,13 @@ export default function Navbar({ children }) {
 
     setWorkspace((draft) => {
       for (const serverPipeline of iters) {
-        const loaded = loadPipeline(serverPipeline)
+        const loaded = loadPipeline(serverPipeline, configuration)
         const key = loaded.id + "." + loaded.record.Execution
-        console.log(`LOADED: ${key} for `, loaded)
         draft.pipelines[key] = loaded
         draft.executions[loaded.record.Execution] = loaded
       }
     })
   }, [allPipelines])
-
-  console.log("ws: ", workspace)
 
   /*const {pendingRoom, errorRoom, dataRoom }  = useQuery({
     queryKey: ['rooms'],
