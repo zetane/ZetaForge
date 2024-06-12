@@ -336,6 +336,20 @@ func main() {
 			os.Exit(1)
 		}
 		setup(ctx, config, client, db)
+	} else if config.Cloud.IsDebug {
+		client = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+			clientcmd.NewDefaultClientConfigLoadingRules(),
+			&clientcmd.ConfigOverrides{},
+		)
+
+		// Switching to Cobra if we need more arguments
+		if len(os.Args) > 1 {
+			if os.Args[1] == "--uninstall" {
+				uninstall(ctx, client, db)
+				return
+			}
+			os.Exit(1)
+		}
 	} else {
 		cacert, err := base64.StdEncoding.DecodeString(config.Cloud.CaCert)
 		if err != nil {
