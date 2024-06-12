@@ -858,7 +858,7 @@ func cloudExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 	}
 }
 
-func getBuildContextStatus(pipeline *zjson.Pipeline, cfg Config) *[]zjson.BuildContextStatus {
+func getBuildContextStatus(pipeline *zjson.Pipeline, cfg Config) []zjson.BuildContextStatus {
 	context := context.Background()
 	var buildContextStatus []zjson.BuildContextStatus
 	for id, block := range pipeline.Pipeline {
@@ -869,7 +869,7 @@ func getBuildContextStatus(pipeline *zjson.Pipeline, cfg Config) *[]zjson.BuildC
 
 			if err != nil {
 				log.Printf("Failed to get build context status; err=%v", err)
-				return &buildContextStatus
+				return buildContextStatus
 			}
 
 			buildContextStatus = append(buildContextStatus, zjson.BuildContextStatus{
@@ -885,5 +885,5 @@ func getBuildContextStatus(pipeline *zjson.Pipeline, cfg Config) *[]zjson.BuildC
 			})
 		}
 	}
-	return &buildContextStatus
+	return buildContextStatus
 }
