@@ -1,0 +1,59 @@
+{
+  "information": {
+    "id": "audio-waveform",
+    "name": "Audio Waveform",
+    "description": "Computes the waveform of an audio file and returns the waveform plot image data.",
+    "block_version": "block version number",
+    "block_source": "custom_blocks/audio-waveform",
+    "block_type": "compute",
+    "system_versions": [
+      "0.1"
+    ]
+  },
+  "inputs": {
+    "audio_path": {
+      "type": "file",
+      "connections": [
+        {
+          "variable": "path",
+          "block": "file-6wt21sinahw9"
+        }
+      ],
+      "relays": []
+    }
+  },
+  "outputs": {
+    "image_paths": {
+      "type": "file",
+      "connections": [
+        {
+          "variable": "image_paths_view",
+          "block": "view-images-hfmt87k102op"
+        }
+      ],
+      "relays": []
+    }
+  },
+  "action": {
+    "container": {
+      "image": "audio-waveform",
+      "version": "latest",
+      "command_line": [
+        "python",
+        "entrypoint.py"
+      ]
+    }
+  },
+  "views": {
+    "node": {
+      "active": "True or False",
+      "title_bar": {},
+      "preview": {},
+      "html": "",
+      "pos_x": "1281",
+      "pos_y": "432",
+      "pos_z": "999, this is the z-index for 2D canvas"
+    }
+  },
+  "events": {}
+}
