@@ -148,7 +148,7 @@ export default function Navbar({ children }) {
             <HeaderMenuItem onClick={() => window.open('https://discord.gg/zetaforge')}>
               Discord
             </HeaderMenuItem>
-            <HeaderMenuItem onClick={() => window.open('https://zetane/docs/')}>
+            <HeaderMenuItem onClick={() => window.open('https://zetane.com/docs/')}>
               Docs
             </HeaderMenuItem>
         </HeaderMenu>
