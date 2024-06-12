@@ -418,11 +418,10 @@ func main() {
 			ctx.String(err.Status(), err.Error())
 			return
 		}
-
-		if config.IsLocal {
-			go localExecute(&execution.Pipeline, newExecution.ID, execution.Id, execution.Build, config, client, db, hub)
+		if config.IsLocal || config.Cloud.IsDebug {
+			go localExecute(&execution.Pipeline, res.ID, execution.Id, execution.Build, config, client, db, hub)
 		} else {
-			go cloudExecute(&execution.Pipeline, newExecution.ID, execution.Id, execution.Build, config, client, db, hub)
+			go cloudExecute(&execution.Pipeline, res.ID, execution.Id, execution.Build, config, client, db, hub)
 		}
 
 		retData, err := filterPipeline(ctx, db, execution.Id)
@@ -765,8 +764,8 @@ func main() {
 			return
 		}
 
-		if config.IsLocal {
-			go localExecute(&pipeline, newExecution.ID, executionId.String(), false, config, client, db, hub)
+		if config.IsLocal || config.Cloud.IsDebug {
+			go localExecute(&pipeline, res.ID, executionId.String(), false, config, client, db, hub)
 		} else {
 			go cloudExecute(&pipeline, newExecution.ID, executionId.String(), false, config, client, db, hub)
 		}
