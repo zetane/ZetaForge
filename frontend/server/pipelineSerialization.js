@@ -10,7 +10,7 @@ import {
   readJsonToObject,
 } from "./fileSystem.js";
 import { checkAndUpload, checkAndCopy, uploadDirectory } from "./s3.js";
-import { createExecution, getBuildContextStatus, getConfig } from "./anvil";
+import { createExecution, getBuildContextStatus } from "./anvil";
 
 export async function saveSpec(spec, writePath) {
   const pipelineSpecsPath = path.join(writePath, PIPELINE_SPECS_FILE_NAME)
@@ -190,11 +190,8 @@ export async function executePipeline(
   specs["build"] = buffer;
   specs["name"] = name;
   specs["id"] = id;
-  
-  const anvilConfiguration = await getConfig(anvilHostConfiguration)
-  if (!anvilConfiguration.isLocal) {
-    await uploadBuildContexts(anvilHostConfiguration, specs, buffer);
-  }
+
+  await uploadBuildContexts(anvilHostConfiguration, specs, buffer);
 
   await createExecution(anvilHostConfiguration, executionId, specs, rebuild);
 }

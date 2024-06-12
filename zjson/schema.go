@@ -106,7 +106,3 @@ type BuildContextStatus struct {
 	IsUploaded bool   `json:"isUploaded"`
 	S3Key      string `json:"s3Key"`
 }
-
-type Config struct {
-	IsLocal bool `json:"isLocal"`
-}

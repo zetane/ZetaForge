@@ -466,14 +466,6 @@ func main() {
 			ctx.String(err.Status(), err.Error())
 		}
 	})
-	router.GET("/config", func(ctx *gin.Context) {
-		configResponse := zjson.Config{
-			IsLocal: config.IsLocal,
-		}
-
-		ctx.JSON(http.StatusOK, configResponse)
-
-	})
 	router.POST("/build-context-status", func(ctx *gin.Context) {
 		pipeline, err := validateJson[zjson.Pipeline](ctx.Request.Body)
 		if err != nil {

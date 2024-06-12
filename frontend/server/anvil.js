@@ -44,23 +44,6 @@ export async function createExecution(
   return body;
 }
 
-export async function getConfig(configuration) {
-  const response = await handleRequest(
-    buildPath(
-      DEFAULT_SCHEME,
-      configuration.host,
-      configuration.anvilPort,
-      "config",
-    ),
-    HttpMethod.GET,
-    {},
-  );
-
-  const body = await response.json();
-
-  return body;
-}
-
 const DEFAULT_SCHEME = "http";
 
 const HttpMethod = {
