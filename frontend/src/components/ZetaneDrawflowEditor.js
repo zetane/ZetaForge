@@ -646,7 +646,6 @@ export default class Drawflow {
   }
 
   addConnection() {
-    console.log("connectionlist: ", this.connection_list)
     for (let svg in this.connection_list) {
       if (!this.container.querySelector(svg)) {
         const connection = document.createElementNS('http://www.w3.org/2000/svg', "svg");
