@@ -678,7 +678,7 @@ export default class Drawflow {
     const nodes = this.pipeline.data;
     Object.keys(nodes).forEach(nodeId => {
       // Update connections for each node
-      this.updateConnectionNodes('node-' + nodeId); // called on renders
+      this.updateConnectionNodes('node-' + nodeId);
     });
   }  
 
@@ -736,7 +736,7 @@ export default class Drawflow {
         var x = eX;
         var y = eY;
 
-        var lineCurve = createCurvature(line_x, line_y, x, y, curvature, 'openclose');
+        const lineCurve = createCurvature(line_x, line_y, x, y, curvature, 'openclose');
         elemsOut[item].children[0].setAttributeNS(null, 'd', lineCurve);
 
       } else {
@@ -894,13 +894,13 @@ export default class Drawflow {
           })
         }
         
-        const line_x = outputElement.offsetWidth / 2 + (outputElement.getBoundingClientRect().x - precanvas.getBoundingClientRect().x) * precanvasWitdhZoom;
-        const line_y = outputElement.offsetHeight / 2 + (outputElement.getBoundingClientRect().y - precanvas.getBoundingClientRect().y) * precanvasHeightZoom;
+        var line_x = outputElement.offsetWidth / 2 + (outputElement.getBoundingClientRect().x - precanvas.getBoundingClientRect().x) * precanvasWitdhZoom;
+        var line_y = outputElement.offsetHeight / 2 + (outputElement.getBoundingClientRect().y - precanvas.getBoundingClientRect().y) * precanvasHeightZoom;
 
         var x = inputElement.offsetWidth / 2 + (inputElement.getBoundingClientRect().x - precanvas.getBoundingClientRect().x) * precanvasWitdhZoom;
         var y = inputElement.offsetHeight / 2 + (inputElement.getBoundingClientRect().y - precanvas.getBoundingClientRect().y) * precanvasHeightZoom;
 
-        var lineCurve = createCurvature(line_x, line_y, x, y, curvature, 'openclose');
+        const lineCurve = createCurvature(line_x, line_y, x, y, curvature, 'openclose');
         elems[item].children[0].setAttributeNS(null, 'd', lineCurve);
 
       } else {
