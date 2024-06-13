@@ -80,8 +80,8 @@ const BlockGenerator = ({ block, openView, id, historySink, pipelineAtom }) => {
           />
           <div className="block-body">
             <div className="block-io">
-              <BlockInputs inputs={block.inputs} />
-              <BlockOutputs outputs={block.outputs} />
+              <BlockInputs inputs={block.inputs} id={id} />
+              <BlockOutputs outputs={block.outputs} id={id}  />
             </div>
             {content}
           </div>
@@ -340,11 +340,11 @@ const BlockContent = ({ html, block, onInputChange }) => {
   );
 };
 
-const BlockInputs = ({ inputs }) => (
+const BlockInputs = ({ inputs, id }) => (
   <div className="inputs">
     {Object.entries(inputs).map(([name, input]) => (
       <div key={name} className="block-input">
-        <div className={`input ${name}`}></div>
+        <div className={`input ${name} ${id}-input-${name}`}></div>
         <span className="type-icon">
           <i className={getIcon(input.type)}></i>
         </span>
@@ -354,7 +354,7 @@ const BlockInputs = ({ inputs }) => (
   </div>
 );
 
-const BlockOutputs = ({ outputs }) => (
+const BlockOutputs = ({ outputs, id }) => (
   <div className="outputs">
     {Object.entries(outputs).map(([name, output]) => (
       <div key={name} className="block-output">
@@ -362,7 +362,7 @@ const BlockOutputs = ({ outputs }) => (
         <span className="type-icon">
           <i className={getIcon(output.type)}></i>
         </span>
-        <div className={`output ${name}`}></div>
+        <div className={`output ${name} ${id}-output-${name}`}></div>
       </div>
     ))}
   </div>
