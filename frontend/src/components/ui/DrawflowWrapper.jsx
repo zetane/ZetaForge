@@ -40,7 +40,7 @@ export default function DrawflowWrapper() {
   const setEditorOpen = useSetAtom(isBlockEditorOpenAtom);
   const [renderNodes, setRenderNodes] = useState([])
   const drawflowCanvas = useRef(null);
-  const pipelineRef = useRef(null)
+  const pipelineRef = useRef(null);
 
   pipelineRef.current = pipeline
 
@@ -75,13 +75,16 @@ export default function DrawflowWrapper() {
 
   useEffect(() => {
     const nodes = Object.entries(pipeline.data).map(([key, block]) => {
-      return (<BlockGenerator key={key} 
-                block={block} 
-                openView={openView} 
-                id={key} 
-                historySink={pipeline.history} 
-                pipelineAtom={pipelineAtom}
-                />)
+      return (
+        <BlockGenerator
+          key={key} 
+          block={block} 
+          openView={openView} 
+          id={key} 
+          historySink={pipeline.history} 
+          pipelineAtom={pipelineAtom}
+        />
+      )
     })
     setRenderNodes(nodes)
   }, [pipeline.data])

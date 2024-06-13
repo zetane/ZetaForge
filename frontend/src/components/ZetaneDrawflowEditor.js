@@ -430,10 +430,10 @@ export default class Drawflow {
               draft[svgName] = {
                 input_id: id_input,
                 input_class,
-                input_element: ele_last,
+                input_element_id: '.' + ele_last.classList[2],
                 output_id: id_output,
                 output_class,
-                output_element: this.ele_selected,
+                output_element_id: '.' + this.ele_selected.classList[2],
                 path: Array.from(this.connection_ele.children),
               }
             })
@@ -683,7 +683,6 @@ export default class Drawflow {
   }  
 
   updateConnectionNodes(id) {
-
     // Aquí nos quedamos;
     const idSearch = 'node_in_' + id;
     const idSearchOut = 'node_out_' + id;
@@ -698,7 +697,7 @@ export default class Drawflow {
     const rerouteWidth = this.reroute_width;
     const zoom = this.zoom;
     const connection_list = this.connection_list;
-    // const updateConnectionList = this.updateConnectionList;
+    const updateConnectionList = this.updateConnectionList;
     let precanvasWitdhZoom = precanvas.clientWidth / (precanvas.clientWidth * zoom);
     precanvasWitdhZoom = precanvasWitdhZoom || 0;
     let precanvasHeightZoom = precanvas.clientHeight / (precanvas.clientHeight * zoom);
@@ -706,15 +705,27 @@ export default class Drawflow {
 
     const elemsOut = container.querySelectorAll(`.${idSearchOut}`);
     Object.keys(elemsOut).map(function (item, index) {
+      let inputElement;
+      let outputElement;
       if (elemsOut[item].querySelector('.point') === null) {    
         const svgName = "." + elemsOut[item].classList.value.split(" ").join(".");
 
-        const elemtsearchId_out = container.querySelector(`#${id}`);
-        const id_search = '#node-' + connection_list[svgName].input_id;
-        const elemtsearchId = container.querySelector(id_search);
+        if (connection_list[svgName].input_element_id && connection_list[svgName].output_element_id) {
+          inputElement = container.querySelector(connection_list[svgName].input_element_id);
+          outputElement = container.querySelector(connection_list[svgName].output_element_id);
+        } else {
+          const elemtsearchId_out = container.querySelector(`#${id}`);
+          const id_search = '#node-' + connection_list[svgName].input_id;
+          const elemtsearchId = container.querySelector(id_search);
+  
+          inputElement = elemtsearchId.querySelectorAll("." + connection_list[svgName].input_class)[0];
+          outputElement = elemtsearchId_out.querySelectorAll("." + connection_list[svgName].output_class)[0];
 
-        const inputElement = elemtsearchId.querySelectorAll("." + connection_list[svgName].input_class)[0];
-        const outputElement = elemtsearchId_out.querySelectorAll('.' + connection_list[svgName].output_class)[0];
+          updateConnectionList((draft) => {
+            draft[svgName].input_element_id = '.' + inputElement.classList[2];
+            draft[svgName].output_element_id = '.' + outputElement.classList[2];
+          })
+        }
           
         const eX = inputElement.offsetWidth / 2 + (inputElement.getBoundingClientRect().x - precanvas.getBoundingClientRect().x) * precanvasWitdhZoom;
         const eY = inputElement.offsetHeight / 2 + (inputElement.getBoundingClientRect().y - precanvas.getBoundingClientRect().y) * precanvasHeightZoom;
@@ -725,23 +736,30 @@ export default class Drawflow {
         var x = eX;
         var y = eY;
 
-        const lineCurve = createCurvature(line_x, line_y, x, y, curvature, 'openclose');
+        var lineCurve = createCurvature(line_x, line_y, x, y, curvature, 'openclose');
         elemsOut[item].children[0].setAttributeNS(null, 'd', lineCurve);
 
       } else {
         const points = elemsOut[item].querySelectorAll('.point');
         let linecurve = '';
         const reoute_fix = [];
+
         points.forEach((item, i) => {
-          const svgName = "." + item.parentElement.classList.value.split(" ").join(".");
+          const svgName = '.' + item.parentElement.classList.value.split(" ").join(".");
           const circleElement = item;
           if (i === 0 && ((points.length - 1) === 0)) {
-            const elemtsearchId_out = container.querySelector(`#${id}`);
-            const id_search = '#node-' + connection_list[svgName].input_id;
-            const elemtsearchId = container.querySelector(id_search);
-              
-            const outputElement = elemtsearchId_out.querySelectorAll('.' + connection_list[svgName].output_class)[0]
-            const inputElement = elemtsearchId.querySelectorAll('.' + connection_list[svgName].input_class)[0]
+
+            if (connection_list[svgName].input_element_id && connection_list[svgName].output_element_id) {
+              inputElement = container.querySelector(connection_list[svgName].input_element_id);
+              outputElement = container.querySelector(connection_list[svgName].output_element_id);
+            } else {
+              const elemtsearchId_out = container.querySelector(`#${id}`);
+              const id_search = '#node-' + connection_list[svgName].input_id;
+              const elemtsearchId = container.querySelector(id_search);
+                
+              outputElement = elemtsearchId_out.querySelectorAll('.' + connection_list[svgName].output_class)[0];
+              inputElement = elemtsearchId.querySelectorAll('.' + connection_list[svgName].input_class)[0];
+            }
 
             var eX = (circleElement.getBoundingClientRect().x - precanvas.getBoundingClientRect().x) * precanvasWitdhZoom + rerouteWidth;
             var eY = (circleElement.getBoundingClientRect().y - precanvas.getBoundingClientRect().y) * precanvasHeightZoom + rerouteWidth;
@@ -769,8 +787,12 @@ export default class Drawflow {
             reoute_fix.push(lineCurveSearch);
 
           } else if (i === 0) {
-            const elemtsearchId_out = container.querySelector(`#${id}`);
-            const outputElement = elemtsearchId_out.querySelectorAll('.' + connection_list[svgName].output_class)[0]
+            if (connection_list[svgName].output_element_id) {
+              outputElement = container.querySelector(connection_list[svgName].output_element_id);
+            } else {
+              const elemtsearchId_out = container.querySelector(`#${id}`);
+              outputElement = elemtsearchId_out.querySelectorAll('.' + connection_list[svgName].output_class)[0]
+            }
 
             var eX = (circleElement.getBoundingClientRect().x - precanvas.getBoundingClientRect().x) * precanvasWitdhZoom + rerouteWidth;
             var eY = (circleElement.getBoundingClientRect().y - precanvas.getBoundingClientRect().y) * precanvasHeightZoom + rerouteWidth;
@@ -800,9 +822,14 @@ export default class Drawflow {
             reoute_fix.push(lineCurveSearch);
 
           } else if (i === (points.length - 1)) {
-            const id_search = '#node-' + connection_list[svgName].input_id; 
-            var elemtsearchId = container.querySelector(id_search);
-            const inputElement = elemtsearchId.querySelectorAll('.' + connection_list[svgName].input_class)[0]
+
+            if (connection_list[svgName].input_element_id) {
+              inputElement = container.querySelector(connection_list[svgName].input_element_id);
+            } else {
+              const id_search = '#node-' + connection_list[svgName].input_id; 
+              var elemtsearchId = container.querySelector(id_search);
+              inputElement = elemtsearchId.querySelectorAll('.' + connection_list[svgName].input_class)[0]
+            }
 
             var eX = inputElement.offsetWidth / 2 + (inputElement.getBoundingClientRect().x - precanvas.getBoundingClientRect().x) * precanvasWitdhZoom;
             var eY = inputElement.offsetHeight / 2 + (inputElement.getBoundingClientRect().y - precanvas.getBoundingClientRect().y) * precanvasHeightZoom;
@@ -845,39 +872,58 @@ export default class Drawflow {
 
     const elems = container.querySelectorAll(`.${idSearch}`);
     Object.keys(elems).map(function (item, index) {
+      let inputElement;
+      let outputElement;
       if (elems[item].querySelector('.point') === null) {
         const svgName = "." + elems[item].classList.value.split(" ").join(".");
 
-        const elemtsearchId_in = container.querySelector(`#${id}`); // input element block
-        const id_search = "#node-" + connection_list[svgName].output_id; // output block id
-        const elemtsearchId = container.querySelector(id_search); // output element block
-
-        const outputElement = elemtsearchId.querySelectorAll('.' + connection_list[svgName].output_class)[0] // output element NODE // elemtsearch
-        const inputElement = elemtsearchId_in.querySelectorAll('.' + connection_list[svgName].input_class)[0] // input element NODE //elemtsearchId_in
+        if (connection_list[svgName].input_element_id && connection_list[svgName].output_element_id) {
+          inputElement = container.querySelector(connection_list[svgName].input_element_id);
+          outputElement = container.querySelector(connection_list[svgName].output_element_id);
+        } else {
+          const elemtsearchId_in = container.querySelector(`#${id}`);
+          const id_search = "#node-" + connection_list[svgName].output_id;
+          const elemtsearchId = container.querySelector(id_search);
+  
+          outputElement = elemtsearchId.querySelectorAll("." + connection_list[svgName].output_class)[0] // output element NODE // elemtsearch
+          inputElement = elemtsearchId_in.querySelectorAll("." + connection_list[svgName].input_class)[0] // input element NODE //elemtsearchId_in
+          
+          updateConnectionList((draft) => {
+            draft[svgName].input_element_id = '.' + inputElement.classList[2];
+            draft[svgName].output_element_id = '.' + outputElement.classList[2];
+          })
+        }
         
         const line_x = outputElement.offsetWidth / 2 + (outputElement.getBoundingClientRect().x - precanvas.getBoundingClientRect().x) * precanvasWitdhZoom;
         const line_y = outputElement.offsetHeight / 2 + (outputElement.getBoundingClientRect().y - precanvas.getBoundingClientRect().y) * precanvasHeightZoom;
 
-        const x = inputElement.offsetWidth / 2 + (inputElement.getBoundingClientRect().x - precanvas.getBoundingClientRect().x) * precanvasWitdhZoom;
-        const y = inputElement.offsetHeight / 2 + (inputElement.getBoundingClientRect().y - precanvas.getBoundingClientRect().y) * precanvasHeightZoom;
+        var x = inputElement.offsetWidth / 2 + (inputElement.getBoundingClientRect().x - precanvas.getBoundingClientRect().x) * precanvasWitdhZoom;
+        var y = inputElement.offsetHeight / 2 + (inputElement.getBoundingClientRect().y - precanvas.getBoundingClientRect().y) * precanvasHeightZoom;
 
-        const lineCurve = createCurvature(line_x, line_y, x, y, curvature, 'openclose');
+        var lineCurve = createCurvature(line_x, line_y, x, y, curvature, 'openclose');
         elems[item].children[0].setAttributeNS(null, 'd', lineCurve);
 
       } else {
         const points = elems[item].querySelectorAll('.point');
         let linecurve = '';
         const reoute_fix = [];
+
         points.forEach((item, i) => {
           const svgName = "." + item.parentElement.classList.value.split(" ").join(".");
           const circleElement = item;
           if (i === 0 && ((points.length - 1) === 0)) {
-            const elemtsearchId_out = container.querySelector(`#${id}`); // input block element
-            const id_search = '#node-' + connection_list[svgName].output_id; // output element block ID
-            const elemtsearchId = container.querySelector(id_search);  // output element BLOCK
-              
-            const inputElement = elemtsearchId_out.querySelectorAll('.' + connection_list[svgName].input_class)[0] // input element NODE
-            const outputElement = elemtsearchId.querySelectorAll('.' + connection_list[svgName].output_class)[0]
+
+            if (connection_list[svgName].input_element_id && connection_list[svgName].output_element_id) {
+              inputElement = container.querySelector(connection_list[svgName].input_element_id);
+              outputElement = container.querySelector(connection_list[svgName].output_element_id);
+            } else {
+              const elemtsearchId_out = container.querySelector(`#${id}`);
+              const id_search = '#node-' + connection_list[svgName].output_id;
+              const elemtsearchId = container.querySelector(id_search);
+                
+              inputElement = elemtsearchId_out.querySelectorAll('.' + connection_list[svgName].input_class)[0] // input element NODE
+              outputElement = elemtsearchId.querySelectorAll('.' + connection_list[svgName].output_class)[0]
+            }
      
             var line_x = (circleElement.getBoundingClientRect().x - precanvas.getBoundingClientRect().x) * precanvasWitdhZoom + rerouteWidth;
             var line_y = (circleElement.getBoundingClientRect().y - precanvas.getBoundingClientRect().y) * precanvasHeightZoom + rerouteWidth;
@@ -906,9 +952,13 @@ export default class Drawflow {
             reoute_fix.push(lineCurveSearch);
           } else if (i === 0) {
             // FIRST
-            var id_search = '#node-' + connection_list[svgName].output_id;
-            var elemtsearchId = container.querySelector(id_search);
-            const outputElement = elemtsearchId.querySelectorAll('.' + connection_list[svgName].output_class)[0]
+            if (connection_list[svgName].output_element_id) {
+              outputElement = container.querySelector(connection_list[svgName].output_element_id);
+            } else {
+              var id_search = '#node-' + connection_list[svgName].output_id;
+              var elemtsearchId = container.querySelector(id_search);
+              outputElement = elemtsearchId.querySelectorAll('.' + connection_list[svgName].output_class)[0]
+            }
 
             var line_x = outputElement.offsetWidth / 2 + (outputElement.getBoundingClientRect().x - precanvas.getBoundingClientRect().x) * precanvasWitdhZoom;
             var line_y = outputElement.offsetHeight / 2 + (outputElement.getBoundingClientRect().y - precanvas.getBoundingClientRect().y) * precanvasHeightZoom;
@@ -938,9 +988,15 @@ export default class Drawflow {
             reoute_fix.push(lineCurveSearch);
 
           } else if (i === (points.length - 1)) {
-            const id_search = '#node-' + connection_list[svgName].input_id;
-            const elemtsearchId = container.querySelector(id_search);
-            const inputElement = elemtsearchId.querySelectorAll('.' + connection_list[svgName].input_class)[0];
+
+            if (connection_list[svgName].input_element_id) {
+              inputElement = container.querySelector(connection_list[svgName].input_element_id);
+              outputElement = container.querySelector(connection_list[svgName].output_element_id);
+            }  else {
+              const id_search = '#node-' + connection_list[svgName].input_id;
+              const elemtsearchId = container.querySelector(id_search);
+              inputElement = elemtsearchId.querySelectorAll('.' + connection_list[svgName].input_class)[0];
+            }
 
             var eX = inputElement.offsetWidth / 2 + (inputElement.getBoundingClientRect().x - precanvas.getBoundingClientRect().x) * precanvasWitdhZoom;
             var eY = inputElement.offsetHeight / 2 + (inputElement.getBoundingClientRect().y - precanvas.getBoundingClientRect().y) * precanvasHeightZoom;
