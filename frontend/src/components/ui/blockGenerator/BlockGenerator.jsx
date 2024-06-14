@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { FileBlock } from "./FileBlock";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { useAtom } from "jotai";
+import ReactDOM from 'react-dom';
 
 const isTypeDisabled = (action) => {
   if (!action.parameters) {
@@ -35,6 +36,14 @@ const checkPath = async (path, count, setIframeSrc) => {
 const BlockGenerator = ({ block, openView, id, historySink, pipelineAtom }) => {
   const [_, setFocusAction] = useImmerAtom(pipelineAtom)
   const [configuration] = useAtom(activeConfigurationAtom)
+  const parentNodeRef = useRef(null);
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    if (parentNodeRef.current) {
+      setIsReady(true);
+    }
+  }, [parentNodeRef.current])
 
   const styles = {
     top: `${block.views.node.pos_y}px`,
@@ -64,7 +73,7 @@ const BlockGenerator = ({ block, openView, id, historySink, pipelineAtom }) => {
   const backgroundColor = block.views?.node?.title_bar?.background_color || 'var(--title-background-color)';
 
   return (
-    <div className="parent-node">
+    <div className="parent-node" ref={parentNodeRef}>
       <div className="drawflow-node" id={`node-${id}`} style={styles}>
         <div className="drawflow_content_node">
           {preview && <BlockPreview id={id} src={iframeSrc} />}
@@ -77,6 +86,8 @@ const BlockGenerator = ({ block, openView, id, historySink, pipelineAtom }) => {
             actions={!disabled}
             src={iframeSrc}
             blockEvents={block.events}
+            parentNode={parentNodeRef}
+            isReady={isReady}
           />
           <div className="block-body">
             <div className="block-io">
@@ -103,7 +114,7 @@ const BlockPreview = ({ id, src }) => {
 }
 
 
-const BlockTitle = ({ name, id, color, openView, actions, src, blockEvents }) => {
+const BlockTitle = ({ name, id, color, openView, actions, src, blockEvents, parentNode, isReady }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleViewClick = () => {
@@ -126,16 +137,21 @@ const BlockTitle = ({ name, id, color, openView, actions, src, blockEvents }) =>
       <span>{name}</span>
       {actions && actionContainer}
 
-      <Modal
-        modalHeading="Block Events"
-        passiveModal={true}
-        open={isOpen}
-        onRequestClose={() => setIsOpen(false)}
-      >
-        <div className="flex flex-col gap-4 p-3">
-          {JSON.stringify(blockEvents, null, 2)}
-        </div>
-      </Modal>
+      {typeof window !== "undefined" && isReady &&
+        ReactDOM.createPortal(
+          <Modal
+            modalHeading="Block Events"
+            passiveModal={true}
+            open={isOpen}
+            onRequestClose={() => setIsOpen(false)}
+          >
+            <div className="flex flex-col gap-4 p-3">
+              {JSON.stringify(blockEvents, null, 2)}
+            </div>
+          </Modal>,
+          parentNode.current
+        )
+      }
     </div>
   );
 };
