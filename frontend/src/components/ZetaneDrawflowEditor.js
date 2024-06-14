@@ -659,9 +659,7 @@ export default class Drawflow {
   }
 
   removeDomConnection(svg) {
-    console.log('tryin to remove ', svg)
     const domElement = this.container.querySelector(svg)
-    console.log(domElement)
     if (domElement) {
       domElement.remove()
     }
@@ -733,18 +731,14 @@ export default class Drawflow {
     let precanvasHeightZoom = precanvas.clientHeight / (precanvas.clientHeight * zoom);
     precanvasHeightZoom = precanvasHeightZoom || 0;
 
-    console.log('searching for ', idSearchOut)
     const elemsOut = precanvas.querySelectorAll(`.${idSearchOut}`);
-    console.log('found ', elemsOut)
 
     Object.keys(elemsOut).map(function (item, index) {
       if (elemsOut[item].querySelector('.point') === null) {
 
-        console.log('searching for ', id)
         var elemtsearchId_out = precanvas.querySelector(`#${id}`);
 
         var id_search = elemsOut[item].classList[1].replace('node_in_', '');
-        console.log('and again for ', id_search)
         var elemtsearchId = precanvas.querySelector(`#${id_search}`);
 
         var elemtsearch = elemtsearchId.querySelectorAll('.' + elemsOut[item].classList[4])[0]
@@ -1254,6 +1248,7 @@ export default class Drawflow {
 
   convert_drawflow_to_block(name, blockGraph) {
       const graph_with_connections = JSON.parse(JSON.stringify(blockGraph))
+      console.log("df graph: ", graph_with_connections)
       const newPipeline = {}
       for (const block in graph_with_connections) {
         graph_with_connections[block].events = {};

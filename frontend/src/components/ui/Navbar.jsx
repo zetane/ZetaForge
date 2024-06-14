@@ -41,30 +41,27 @@ export default function Navbar({ children }) {
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const [configuration] = useAtom(activeConfigurationAtom);
   const loadPipeline = useLoadServerPipeline();
-  //console.log("ws: ", workspace)
 
-  // TODO: Figure out how to get SQLC to emit the same struct for two different queries
   const { pending, error, data } = useQuery({
-    queryKey: ['pipelines', workspace.fetchInterval],
-    queryFn: async () => { return axios.get(`http://${configuration.host}:${configuration.anvilPort}/pipeline/filter?limit=100000&offset=0`)},
+    queryKey: ['pipelines'],
+    queryFn: async () => {
+      const res = await axios.get(`http://${configuration.host}:${configuration.anvilPort}/pipeline/filter?limit=100000&offset=0`)
+      return res.data;
+    },
     refetchInterval: workspace.fetchInterval
   })
-  const allPipelines = data?.data;
 
   useEffect(() => {
-    const addPipelines = {}
-    const addExecutions = {}
-    const iters = allPipelines || []
-
+    const pipelines = data ?? []
     setWorkspace((draft) => {
-      for (const serverPipeline of iters) {
+      for (const serverPipeline of pipelines) {
         const loaded = loadPipeline(serverPipeline, configuration)
         const key = loaded.id + "." + loaded.record.Execution
         draft.pipelines[key] = loaded
         draft.executions[loaded.record.Execution] = loaded
       }
     })
-  }, [allPipelines])
+  }, [data])
 
   /*const {pendingRoom, errorRoom, dataRoom }  = useQuery({
     queryKey: ['rooms'],
@@ -217,7 +214,7 @@ export default function Navbar({ children }) {
             <HeaderMenuItem onClick={() => window.open('https://discord.gg/zetaforge')}>
               Discord
             </HeaderMenuItem>
-            <HeaderMenuItem onClick={() => window.open('https://zetane/docs/')}>
+            <HeaderMenuItem onClick={() => window.open('https://zetane.com/docs/')}>
               Docs
             </HeaderMenuItem>
         </HeaderMenu>

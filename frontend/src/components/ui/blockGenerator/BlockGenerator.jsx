@@ -6,7 +6,9 @@ import { useImmerAtom } from "jotai-immer";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FileBlock } from "./FileBlock";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
+import { modalContentAtom } from "@/atoms/modalAtom";
 import { useAtom } from "jotai";
+import ClosableModal from "@/components/ui/modal/ClosableModal";
 
 const isTypeDisabled = (action) => {
   if (!action.parameters) {
@@ -34,7 +36,7 @@ const checkPath = async (path, count, setIframeSrc) => {
     });
 }
 
-const BlockGenerator = ({ block, openView, id, historySink }) => {
+const BlockGenerator = ({ block, openView, id, history }) => {
   const [pipeline, setFocusAction] = useImmerAtom(pipelineAtom)
   const [editor, _s] = useAtom(drawflowEditorAtom);
   const [configuration] = useAtom(activeConfigurationAtom)
@@ -44,10 +46,24 @@ const BlockGenerator = ({ block, openView, id, historySink }) => {
     left: `${block.views.node.pos_x}px`
   }
 
+  function trimQuotes(str) {
+    if (typeof str !== 'string') {
+      return str;
+    }
+
+    if (str.length >= 2 && (str[0] === '"' || str[0] === "'") && str[0] === str[str.length - 1]) {
+      return str.slice(1, -1);
+    }
+
+    return str;
+  }
+
   const [iframeSrc, setIframeSrc] = useState("")
   useEffect(() => {
     if (block.events.outputs?.html) {
-      const fileUrl = `http://${configuration.host}:${configuration.s3Port}/zetaforge/${historySink}/${block.events.outputs.html}`
+      // these outputs are a special case
+      const html = trimQuotes(block.events.outputs.html)
+      const fileUrl = `http://${configuration.host}:${configuration.s3Port}/zetaforge/${history}/${html}`
       checkPath(fileUrl, 0, setIframeSrc)
     }
   }, [block.events.outputs?.html])
@@ -110,10 +126,21 @@ const BlockPreview = ({ id, src }) => {
 
 const BlockTitle = ({ name, id, color, openView, actions, src, blockEvents }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [modalContent, setModalContent] = useAtom(modalContentAtom);
+
+  const eventsModal = (
+    <ClosableModal
+      modalHeading="Block Events"
+    >
+      <div className="flex flex-col gap-4 p-3">
+        {JSON.stringify(blockEvents, null, 2)}
+      </div>
+    </ClosableModal>
+  )
 
   const handleViewClick = () => {
     if (!src) {
-      setIsOpen(true)
+      modalPopper(eventsModal)
     } else {
       window.open(src, '_blank');
     }
@@ -126,21 +153,18 @@ const BlockTitle = ({ name, id, color, openView, actions, src, blockEvents }) =>
     </div>
   );
 
+  const modalPopper = (content) => {
+    setModalContent({
+      ...modalContent,
+      show: true,
+      content: content,
+    });
+  };
+
   return (
     <div className="title-box" style={{ backgroundColor: color }}>
       <span>{name}</span>
       {actions && actionContainer}
-
-      <Modal
-        modalHeading="Block Events"
-        passiveModal={true}
-        open={isOpen}
-        onRequestClose={() => setIsOpen(false)}
-      >
-        <div className="flex flex-col gap-4 p-3">
-          {JSON.stringify(blockEvents, null, 2)}
-        </div>
-      </Modal>
     </div>
   );
 };
@@ -170,7 +194,7 @@ const parseHtmlToInputs = (html) => {
 
 const InputField = ({ type, value, name, step, parameterName, onChange, id }) => {
   const [editor, _] = useAtom(drawflowEditorAtom);
-  const [currentValue, setCurrentValue] = useState("");
+  const [currentValue, setCurrentValue] = useState(value);
   const inputRef = useRef(null);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 

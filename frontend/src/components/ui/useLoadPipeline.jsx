@@ -88,7 +88,7 @@ function updatePipelineWithLogFile(pipeline) {
              }
            }
          } catch (err) {
-           console.error('Failed to parse outputs:', err);
+           //console.error('Failed to parse outputs:', err);
          }
        }
 
@@ -125,7 +125,10 @@ function updatePipelineWithLogFile(pipeline) {
 export const useLoadServerPipeline = () => {
   const loadPipeline = (pipeline, configuration) => {
     if (!pipeline)  { return }
-    const pipelineData = JSON.parse(pipeline.PipelineJson)
+    let pipelineData = JSON.parse(pipeline.PipelineJson)
+    if (pipeline.Results != "") {
+      pipelineData = JSON.parse(pipeline.Results)
+    }
     const bufferPath = `${window.cache.local}${pipelineData.id}`;
     const executionId = pipeline.Execution
 
@@ -146,9 +149,8 @@ export const useLoadServerPipeline = () => {
     if (newPipeline.logs != null && newPipeline.logs.length) {
       try {
         newPipeline = updatePipelineWithLogFile(newPipeline)
-        console.log("made it: ", newPipeline)
       } catch (e) {
-        console.log("Failed to parse server logs: ", e)
+        //console.log("Failed to parse server logs: ", e)
       }
     }
 

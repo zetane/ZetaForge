@@ -1,7 +1,6 @@
 import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { pipelineSchemaAtom } from "@/atoms/pipelineSchemaAtom";
 import { mixpanelAtom } from "@/atoms/mixpanelAtom";
 import generateSchema from '@/utils/schemaValidation';
 import { trpc } from "@/utils/trpc";
@@ -14,6 +13,74 @@ import { uuidv7 } from "uuidv7";
 import ClosableModal from "./modal/ClosableModal";
 import { workspaceAtom } from "@/atoms/pipelineAtom";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
+import { useLoadServerPipeline } from "./useLoadPipeline";
+
+const usePostExecution = (queryClient, configuration, setWorkspace, loadServerPipeline) => {
+  const mutation = useMutation({
+    mutationFn: async (execution) => {
+      console.log("posting: ", JSON.stringify(execution));
+      const response = await fetch(`http://${configuration.host}:${configuration.anvilPort}/execute`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(execution),
+      });
+
+      if (!response.ok) {
+        throw new Error('Request failed');
+      }
+
+      const data = await response.json();
+      return data;
+    },
+    onSuccess: (newExecution) => {
+      queryClient.setQueryData(['pipelines'], (oldExecutions) => {
+        let updatedPipelines = [];
+
+        if (oldExecutions && Array.isArray(oldExecutions)) {
+          // Check if the new execution already exists in the array
+          const existingIndex = oldExecutions.findIndex(
+            (execution) => execution.Execution === newExecution.Execution
+          );
+
+          if (existingIndex !== -1) {
+            // If the execution exists, replace it with the new execution
+            updatedPipelines = [
+              ...oldExecutions.slice(0, existingIndex),
+              newExecution,
+              ...oldExecutions.slice(existingIndex + 1),
+            ];
+          } else {
+            // If the execution doesn't exist, add it to the beginning of the array
+            updatedPipelines = [newExecution, ...oldExecutions];
+          }
+        } else {
+          // If oldExecutions is not an array, return a new array with the new execution
+          updatedPipelines = [newExecution];
+        }
+        return updatedPipelines
+      });
+
+      setWorkspace((draft) => {
+        const currentTab = draft.active
+        const newKey = newExecution.Uuid + "." + newExecution.Execution
+        const pipeline = draft.pipelines[newKey]
+        if (!pipeline) {
+          // key hasn't updated yet
+          const loaded = loadServerPipeline(newExecution, configuration)
+          draft.pipelines[newKey] = loaded
+          draft.executions[loaded.record.Execution] = loaded
+        }
+        draft.tabs[newKey] = {}
+        draft.active = newKey
+        delete draft.tabs[currentTab]
+      })
+    },
+  });
+
+  return mutation;
+};
 
 export default function RunPipelineButton({ modalPopper, children, action }) {
   const [editor] = useAtom(drawflowEditorAtom);
@@ -23,15 +90,11 @@ export default function RunPipelineButton({ modalPopper, children, action }) {
   const [isOpen, setIsOpen] = useState(false);
   const [mixpanelService] = useAtom(mixpanelAtom)
   const [configuration] = useAtom(activeConfigurationAtom);
-
-  const uploadParameterBlocks = trpc.uploadParameterBlocks.useMutation();
   const queryClient = useQueryClient();
+  const loadServerPipeline = useLoadServerPipeline();
 
-  const mutation = useMutation({
-    mutationFn: async (execution) => {
-      return axios.post(`http://${configuration.host}:${configuration.anvilPort}/execute`, execution)
-    },
-  })
+  const postExecution = usePostExecution(queryClient, configuration, setWorkspace, loadServerPipeline);
+  const uploadParameterBlocks = trpc.uploadParameterBlocks.useMutation();
 
   const runPipeline = async (editor, pipeline) => {
     // check if pipeline structure exists
@@ -40,7 +103,6 @@ export default function RunPipelineButton({ modalPopper, children, action }) {
 
     let pipelineSpecs = editor.convert_drawflow_to_block(pipeline.name, pipeline.data);
     const executionId = uuidv7();
-
 
     try {
       const res = await axios.get(`${import.meta.env.VITE_EXECUTOR}/ping`)
@@ -66,6 +128,8 @@ export default function RunPipelineButton({ modalPopper, children, action }) {
       setIsOpen(true)
       return null;
     }
+
+    console.log("specs after block upload: ", pipelineSpecs)
 
     const schema = generateSchema(pipeline.data);
     const results = schema.safeParse(pipeline.data);
@@ -98,18 +162,8 @@ export default function RunPipelineButton({ modalPopper, children, action }) {
         pipeline: pipelineSpecs,
         build: rebuild
       }
-      const res = await mutation.mutateAsync(execution)
-      if (res.status == 201) {
-        //setWorkspace((draft) => {
-        //  draft.fetchInterval = 1 * 1000;
-        //})
-      }
-      try {
-        mixpanelService.trackEvent('Run Created')
-      } catch (err) {
 
-      }
-
+      const response = await postExecution.mutateAsync(execution)
     } catch (error) {
       setValidationErrorMsg([error.message])
       setIsOpen(true)

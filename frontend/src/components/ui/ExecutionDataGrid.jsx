@@ -5,13 +5,11 @@ import { useAtom } from "jotai";
 import { DataTable, Table, TableHead, TableRow, TableHeader, TableBody, TableCell, Link } from "@carbon/react";
 import { PipelineStopButton } from "./PipelineStopButton";
 import { pipelineConnectionsAtom } from "@/atoms/pipelineConnectionsAtom";
-import { createConnections } from "@/utils/createConnections";
+import { useState, useEffect } from "react";
 
 export const ExecutionDataGrid = ({executions, closeModal}) => {
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
-  const [pipelineConnections, setPipelineConnections] = useAtom(pipelineConnectionsAtom);
-
-  const items = []
+  const [pipelineList, setPipelineList] = useState([])
 
   const selectPipeline = (pipeline) => {
     const key = pipeline.id + "." + pipeline.record.Execution
@@ -24,26 +22,32 @@ export const ExecutionDataGrid = ({executions, closeModal}) => {
     closeModal();
   }
 
-  for (const pipeline of executions) {
-    const record = pipeline.record;
-    const pipelineData = JSON.parse(record.PipelineJson)
-    const friendlyName = pipelineData.name
-    const executionId = record?.Execution;
-    let stopAction = null;
-    if (record.Status == "Running") {
-      stopAction = <PipelineStopButton executionId={executionId} />;
-    }
+  useEffect(() => {
+    const items = []
+    for (const pipeline of executions) {
+      const record = pipeline.record;
+      const pipelineData = JSON.parse(record.PipelineJson)
+      const friendlyName = pipelineData.name
+      const executionId = record?.Execution;
+      let stopAction = null;
+      if (record.Status == "Running") {
+        stopAction = <PipelineStopButton executionId={executionId} />;
+      }
 
-    items.push({
-      id: executionId,
-      pipeline: friendlyName,
-      name: <Link href="#" onClick={() => {selectPipeline(pipeline)}}>{executionId}</Link>,
-      created: new Date(record?.ExecutionTime * 1000).toLocaleString(),
-      status: record?.Status,
-      deployed: record?.Deployed,
-      actions: stopAction,
-    });
-  }
+      items.push({
+        id: executionId,
+        pipeline: friendlyName,
+        name: <Link href="#" onClick={() => {selectPipeline(pipeline)}}>{executionId}</Link>,
+        created: new Date(record?.ExecutionTime * 1000).toLocaleString(),
+        status: record?.Status,
+        deployed: record?.Deployed,
+        actions: stopAction,
+      });
+    }
+    setPipelineList(items)
+  }, [executions])
+
+
 
   const headers = [
     {
@@ -77,7 +81,7 @@ export const ExecutionDataGrid = ({executions, closeModal}) => {
       passiveModal={true}
       modalClass="custom-modal-size"
     >
-      <DataTable rows={items} headers={headers}>
+      <DataTable rows={pipelineList} headers={headers}>
         {({ rows, headers, getTableProps, getHeaderProps, getRowProps }) => (
           <Table {...getTableProps()}>
             <TableHead>

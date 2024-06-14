@@ -18,6 +18,7 @@ type Execution struct {
 	Deleted     int64
 	Executionid string
 	Workflow    sql.NullString
+	Results     sql.NullString
 }
 
 type Pipeline struct {

@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 export default function PipelinesButton() {
   const [modalContent, setModalContent] = useAtom(modalContentAtom);
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
-  const [executions, setExecutions] = useState(0);
+  const [executions, setExecutions] = useState([]);
   const modalPopper = (content) => {
     setModalContent({
       ...modalContent,

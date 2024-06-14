@@ -39,8 +39,8 @@ RETURNING *;
 
 -- name: CompleteExecution :one
 UPDATE Executions
-SET completed = unixepoch('now') 
-WHERE id = ? 
+SET completed = unixepoch('now')
+WHERE id = ?
 RETURNING *;
 
 -- name: UpdateExecutionStatus :one
@@ -55,9 +55,14 @@ SET workflow = ?
 WHERE id = ?
 RETURNING *;
 
-
 -- name: SoftDeleteExecution :one
 UPDATE Executions
 SET deleted = TRUE
+WHERE id = ?
+RETURNING *;
+
+-- name: UpdateExecutionResults :one
+UPDATE Executions
+SET results = json(?)
 WHERE id = ?
 RETURNING *;

@@ -257,7 +257,7 @@ func writeFile(path string, content string) error {
 	return file.Close()
 }
 
-func results(ctx context.Context, cfg Config, key string, pipeline *zjson.Pipeline, workflow *wfv1.Workflow) error {
+func results(ctx context.Context, db *sql.DB, execution int64, pipeline *zjson.Pipeline, workflow *wfv1.Workflow) error {
 	for _, node := range workflow.Status.Nodes {
 		if node.Type == "Pod" {
 			block := pipeline.Pipeline[node.TemplateName]
@@ -273,12 +273,7 @@ func results(ctx context.Context, cfg Config, key string, pipeline *zjson.Pipeli
 		}
 	}
 
-	data, err := json.MarshalIndent(pipeline, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	return uploadData(ctx, string(data), key, cfg)
+	return updateExecutionResults(ctx, db, execution, pipeline)
 }
 
 func streaming(ctx context.Context, name string, client clientcmd.ClientConfig) {
@@ -682,39 +677,34 @@ func buildImage(ctx context.Context, source string, tag string, cfg Config) erro
 	}
 }
 
-func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, build bool, cfg Config, client clientcmd.ClientConfig, db *sql.DB, hub *Hub) {
+func localExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid string, build bool, cfg Config, client clientcmd.ClientConfig, db *sql.DB, hub *Hub) {
 	ctx := context.Background()
 	defer log.Printf("Completed")
 
-	execution, err := createExecution(ctx, db, id, executionId)
-	if err != nil {
-		log.Printf("Failed to write execution to database; err=%v", err)
-		return
-	}
-	defer completeExecution(ctx, db, execution.ID)
+	defer completeExecution(ctx, db, executionId)
 
-	if err := hub.OpenRoom(executionId); err != nil {
+	if err := hub.OpenRoom(executionUuid); err != nil {
 		log.Printf("Failed to open log room; err=%v", err)
 		return
 	}
-	defer hub.CloseRoom(executionId)
+	defer hub.CloseRoom(executionUuid)
 
 	if err := upload(ctx, cfg.EntrypointFile, cfg.EntrypointFile, cfg); err != nil { // should never fail
 		log.Printf("Failed to upload entrypoint file; err=%v", err)
 		return
 	}
 
-	tempLog := filepath.Join(os.TempDir(), executionId+".log")
+	tempLog := filepath.Join(os.TempDir(), executionUuid+".log")
 	fmt.Printf("tempLog: %s", tempLog)
-	s3Key := pipeline.Id + "/" + executionId
+	s3Key := pipeline.Id + "/" + executionUuid
 
 	file, err := os.OpenFile(tempLog, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Printf("Error creating pipeline log: %v", err)
 	}
 
-	pipelineLogger := createLogger(executionId, file, func(message string, executionId string) {
-		if executionId != "" {
+	pipelineLogger := createLogger(executionUuid, file, func(message string, executionUuid string) {
+		if executionUuid != "" {
 			// log printf produces a timestamp by default
 			// remove it here
 			parts := strings.SplitN(message, " ", 3)
@@ -725,7 +715,7 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, build 
 			}
 
 			content := map[string]interface{}{
-				"executionId": executionId,
+				"executionId": executionUuid,
 				"time":        timestamp,
 			}
 
@@ -754,7 +744,7 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, build 
 			}
 
 			hub.Broadcast <- Message{
-				Room:    executionId,
+				Room:    executionUuid,
 				Content: fmt.Sprintf("%s", jsonData),
 			}
 
@@ -792,7 +782,7 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, build 
 		return
 	}
 
-	if err := updateExecutionJson(ctx, db, execution.ID, workflow); err != nil {
+	if err := updateExecutionJson(ctx, db, executionId, workflow); err != nil {
 		log.Printf("Failed to write workflow to database; err=%v", err)
 		return
 	}
@@ -804,8 +794,6 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, build 
 		// Duplicate variables -> https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/loopclosure
 		path := path
 		image := image
-		log.Printf("Path: %s", path)
-		log.Printf("Image: %s", image)
 
 		if len(image) > 0 {
 			eg.Go(func() error {
@@ -819,7 +807,7 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, build 
 		return
 	}
 
-	workflow, err = runArgo(ctx, workflow, execution.ID, client, db, hub)
+	workflow, err = runArgo(ctx, workflow, executionId, client, db, hub)
 	log.Printf("Name: %v", workflow.Name)
 	if workflow != nil {
 		defer deleteArgo(ctx, workflow.Name, client)
@@ -829,13 +817,13 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, build 
 		return
 	}
 
-	if err := upload(ctx, tempLog, s3Key+"/"+executionId+".log", cfg); err != nil {
+	if err := upload(ctx, tempLog, s3Key+"/"+executionUuid+".log", cfg); err != nil {
 		log.Printf("Failed to upload log: err=%v", err)
 		return
 	}
 
-	if err := results(ctx, cfg, s3Key+"/"+"results.json", pipeline, workflow); err != nil {
-		log.Printf("Failed to upload results; err=%v", err)
+	if err := results(ctx, db, executionId, pipeline, workflow); err != nil {
+		log.Printf("Failed to save results; err=%v", err)
 		return
 	}
 
@@ -845,16 +833,11 @@ func localExecute(pipeline *zjson.Pipeline, id int64, executionId string, build 
 	}
 }
 
-func cloudExecute(pipeline *zjson.Pipeline, id int64, executionId string, build bool, cfg Config, client clientcmd.ClientConfig, db *sql.DB, hub *Hub) {
+func cloudExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid string, build bool, cfg Config, client clientcmd.ClientConfig, db *sql.DB, hub *Hub) {
 	ctx := context.Background()
 	defer log.Printf("Completed")
 
-	execution, err := createExecution(ctx, db, id, executionId)
-	if err != nil {
-		log.Printf("Failed to write execution to database; err=%v", err)
-		return
-	}
-	defer completeExecution(ctx, db, execution.ID)
+	defer completeExecution(ctx, db, executionId)
 
 	if err := hub.OpenRoom(pipeline.Id); err != nil {
 		log.Printf("Failed to open log room; err=%v", err)
@@ -862,7 +845,7 @@ func cloudExecute(pipeline *zjson.Pipeline, id int64, executionId string, build 
 	}
 	defer hub.CloseRoom(pipeline.Id)
 
-	s3key := pipeline.Id + "/" + executionId
+	s3key := pipeline.Id + "/" + executionUuid
 
 	workflow, _, err := translate(ctx, pipeline, "org", s3key, build, cfg)
 	if err != nil {
@@ -870,12 +853,12 @@ func cloudExecute(pipeline *zjson.Pipeline, id int64, executionId string, build 
 		return
 	}
 
-	if err := updateExecutionJson(ctx, db, execution.ID, workflow); err != nil {
+	if err := updateExecutionJson(ctx, db, executionId, workflow); err != nil {
 		log.Printf("Failed to write workflow to database; err=%v", err)
 		return
 	}
 
-	workflow, err = runArgo(ctx, workflow, execution.ID, client, db, hub)
+	workflow, err = runArgo(ctx, workflow, executionId, client, db, hub)
 	if workflow != nil {
 		defer deleteArgo(ctx, workflow.Name, client)
 	}

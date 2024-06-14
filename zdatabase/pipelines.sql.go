@@ -11,7 +11,7 @@ import (
 )
 
 const allFilterPipelines = `-- name: AllFilterPipelines :many
-SELECT p.id, p.organization, p.created, p.uuid, p.hash, p.json, p.deployed, p.deleted, e.id, e.pipeline, e.status, e.created, e.completed, e.json, e.deleted, e.executionid, e.workflow FROM Pipelines p
+SELECT p.id, p.organization, p.created, p.uuid, p.hash, p.json, p.deployed, p.deleted, e.id, e.pipeline, e.status, e.created, e.completed, e.json, e.deleted, e.executionid, e.workflow, e.results FROM Pipelines p
 INNER JOIN Executions e on e.pipeline = p.id
 WHERE e.status != 'pending' AND e.workflow is not null and p.deleted = FALSE
 ORDER BY e.created DESC
@@ -35,6 +35,7 @@ type AllFilterPipelinesRow struct {
 	Deleted_2    int64
 	Executionid  string
 	Workflow     sql.NullString
+	Results      sql.NullString
 }
 
 func (q *Queries) AllFilterPipelines(ctx context.Context) ([]AllFilterPipelinesRow, error) {
@@ -64,6 +65,7 @@ func (q *Queries) AllFilterPipelines(ctx context.Context) ([]AllFilterPipelinesR
 			&i.Deleted_2,
 			&i.Executionid,
 			&i.Workflow,
+			&i.Results,
 		); err != nil {
 			return nil, err
 		}
@@ -144,8 +146,62 @@ func (q *Queries) DeployPipeline(ctx context.Context, arg DeployPipelineParams) 
 	return i, err
 }
 
+const filterPipeline = `-- name: FilterPipeline :one
+SELECT p.id, p.organization, p.created, p.uuid, p.hash, p.json, p.deployed, p.deleted, e.id, e.pipeline, e.status, e.created, e.completed, e.json, e.deleted, e.executionid, e.workflow, e.results FROM Pipelines p
+INNER JOIN Executions e on e.pipeline = p.id
+WHERE e.executionid = ?
+ORDER BY e.created DESC
+`
+
+type FilterPipelineRow struct {
+	ID           int64
+	Organization string
+	Created      int64
+	Uuid         string
+	Hash         string
+	Json         string
+	Deployed     int64
+	Deleted      int64
+	ID_2         int64
+	Pipeline     int64
+	Status       interface{}
+	Created_2    int64
+	Completed    sql.NullInt64
+	Json_2       sql.NullString
+	Deleted_2    int64
+	Executionid  string
+	Workflow     sql.NullString
+	Results      sql.NullString
+}
+
+func (q *Queries) FilterPipeline(ctx context.Context, executionid string) (FilterPipelineRow, error) {
+	row := q.db.QueryRowContext(ctx, filterPipeline, executionid)
+	var i FilterPipelineRow
+	err := row.Scan(
+		&i.ID,
+		&i.Organization,
+		&i.Created,
+		&i.Uuid,
+		&i.Hash,
+		&i.Json,
+		&i.Deployed,
+		&i.Deleted,
+		&i.ID_2,
+		&i.Pipeline,
+		&i.Status,
+		&i.Created_2,
+		&i.Completed,
+		&i.Json_2,
+		&i.Deleted_2,
+		&i.Executionid,
+		&i.Workflow,
+		&i.Results,
+	)
+	return i, err
+}
+
 const filterPipelines = `-- name: FilterPipelines :many
-SELECT p.id, p.organization, p.created, p.uuid, p.hash, p.json, p.deployed, p.deleted, e.id, e.pipeline, e.status, e.created, e.completed, e.json, e.deleted, e.executionid, e.workflow FROM Pipelines p
+SELECT p.id, p.organization, p.created, p.uuid, p.hash, p.json, p.deployed, p.deleted, e.id, e.pipeline, e.status, e.created, e.completed, e.json, e.deleted, e.executionid, e.workflow, e.results FROM Pipelines p
 INNER JOIN Executions e on e.pipeline = p.id
 WHERE e.status != 'pending' AND e.workflow is not null and p.deleted = FALSE
 ORDER BY e.created DESC
@@ -175,6 +231,7 @@ type FilterPipelinesRow struct {
 	Deleted_2    int64
 	Executionid  string
 	Workflow     sql.NullString
+	Results      sql.NullString
 }
 
 func (q *Queries) FilterPipelines(ctx context.Context, arg FilterPipelinesParams) ([]FilterPipelinesRow, error) {
@@ -204,6 +261,7 @@ func (q *Queries) FilterPipelines(ctx context.Context, arg FilterPipelinesParams
 			&i.Deleted_2,
 			&i.Executionid,
 			&i.Workflow,
+			&i.Results,
 		); err != nil {
 			return nil, err
 		}

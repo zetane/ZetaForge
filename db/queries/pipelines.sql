@@ -8,6 +8,12 @@ SELECT * FROM Pipelines
 WHERE organization = ? AND uuid = ? AND deleted = FALSE
 ORDER BY deployed DESC, created DESC;
 
+-- name: FilterPipeline :one
+SELECT p.*, e.* FROM Pipelines p
+INNER JOIN Executions e on e.pipeline = p.id
+WHERE e.executionid = ?
+ORDER BY e.created DESC;
+
 -- name: FilterPipelines :many
 SELECT p.*, e.* FROM Pipelines p
 INNER JOIN Executions e on e.pipeline = p.id

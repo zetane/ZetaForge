@@ -222,7 +222,12 @@ func checkVisited(v reflect.Value, visited map[uintptr]bool) bool {
 
 func validateJson[D any](body io.ReadCloser) (D, HTTPError) {
 	var data D
-	schema, err := json.Marshal(jsonschema.Reflect(data))
+	r := jsonschema.Reflector{
+		RequiredFromJSONSchemaTags: true,
+		AllowAdditionalProperties:  false,
+		ExpandedStruct:             true,
+	}
+	schema, err := json.Marshal(r.Reflect(data))
 
 	if err != nil { // Should never happen outside of development
 		return data, InternalServerError{err.Error()}
@@ -234,6 +239,7 @@ func validateJson[D any](body io.ReadCloser) (D, HTTPError) {
 	schemaLoader := gojsonschema.NewStringLoader(string(schema))
 	jsonLoader := gojsonschema.NewStringLoader(buffer.String())
 	result, err := gojsonschema.Validate(schemaLoader, jsonLoader)
+	log.Printf("Uh? : %v", result)
 
 	if err != nil {
 		return data, InternalServerError{err.Error()}
@@ -245,13 +251,12 @@ func validateJson[D any](body io.ReadCloser) (D, HTTPError) {
 			listError = append(listError, error.String())
 		}
 		stringError := strings.Join(listError, "\n")
-		return data, BadRequest{stringError}
+		return data, InternalServerError{stringError}
 	}
 
 	if err := json.Unmarshal(buffer.Bytes(), &data); err != nil {
 		return data, InternalServerError{err.Error()}
 	}
-
 	log.Printf("json: %v", data)
 
 	return data, nil
@@ -380,21 +385,34 @@ func main() {
 		// TODO: client needs to handle results files
 		sink := filepath.Join(execution.Pipeline.Sink, "history", execution.Id)
 		execution.Pipeline.Sink = sink
-		if config.IsLocal {
-			go localExecute(&execution.Pipeline, res.ID, execution.Id, execution.Build, config, client, db, hub)
-		} else {
-			go cloudExecute(&execution.Pipeline, res.ID, execution.Id, execution.Build, config, client, db, hub)
-		}
-		response, err := newResponsePipeline(res)
+		newExecution, err := createExecution(ctx, db, res.ID, execution.Id)
+
 		if err != nil {
+			log.Printf("Failed to write execution to database; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
-		newRes := make(map[string]any)
-		newRes["executionId"] = execution.Id
-		newRes["history"] = sink
-		newRes["pipeline"] = response
-		ctx.JSON(http.StatusCreated, newRes)
+
+		if config.IsLocal {
+			go localExecute(&execution.Pipeline, newExecution.ID, execution.Id, execution.Build, config, client, db, hub)
+		} else {
+			go cloudExecute(&execution.Pipeline, newExecution.ID, execution.Id, execution.Build, config, client, db, hub)
+		}
+
+		retData, err := filterPipeline(ctx, db, execution.Id)
+		log.Printf("PipelineExecution: %v", retData)
+		if err != nil {
+			log.Printf("Failed to get pipeline record; err=%v", err)
+			ctx.String(err.Status(), err.Error())
+			return
+		}
+		response, err := newResponsePipelineExecution(retData, []string{})
+		if err != nil {
+			log.Printf("Failed to create response payload; err=%v", err)
+			ctx.String(err.Status(), err.Error())
+			return
+		}
+		ctx.JSON(http.StatusCreated, response)
 	})
 	router.GET("/rooms", func(ctx *gin.Context) {
 		rooms := hub.GetRooms()
@@ -572,7 +590,7 @@ func main() {
 					fmt.Printf("Failed to read s3 log; err=%v\n", err)
 				}
 			}
-			newRes, err := newResponsePipelineExecution(execution, logOutput)
+			newRes, err := newResponsePipelinesExecution(execution, logOutput)
 			if err != nil {
 				ctx.String(err.Status(), err.Error())
 			}
@@ -700,10 +718,18 @@ func main() {
 		sink := filepath.Join(pipeline.Sink, "history", executionId.String())
 		pipeline.Sink = sink
 
+		newExecution, err := createExecution(ctx, db, res.ID, executionId.String())
+
+		if err != nil {
+			log.Printf("Failed to write execution to database; err=%v", err)
+			ctx.String(err.Status(), err.Error())
+			return
+		}
+
 		if config.IsLocal {
-			go localExecute(&pipeline, res.ID, executionId.String(), false, config, client, db, hub)
+			go localExecute(&pipeline, newExecution.ID, executionId.String(), false, config, client, db, hub)
 		} else {
-			go cloudExecute(&pipeline, res.ID, executionId.String(), false, config, client, db, hub)
+			go cloudExecute(&pipeline, newExecution.ID, executionId.String(), false, config, client, db, hub)
 		}
 
 		newRes := make(map[string]any)

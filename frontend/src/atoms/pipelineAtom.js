@@ -46,7 +46,7 @@ export const workspaceAtom = atom({
   pipelines: {[emptyKey]: initPipeline},
   executions: {},
   active: emptyKey,
-  fetchInterval: 2 * 1000
+  fetchInterval: 10 * 1000
 })
 
 export const getRunning = (workspace) => {
@@ -57,7 +57,7 @@ export const getRunning = (workspace) => {
       }*/
     running.push(pipeline)
   }
-  return running
+  return running.sort((a, b) => b?.record?.Execution.localeCompare(a?.record?.Execution));
 }
 
 const pipelineAtomWithImmer = atom(

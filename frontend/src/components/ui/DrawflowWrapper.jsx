@@ -36,7 +36,6 @@ export default function DrawflowWrapper() {
   const [editor, setEditor] = useAtom(drawflowEditorAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const [pipelineConnections, setPipelineConnections] = useImmerAtom(pipelineConnectionsAtom);
-  const [workspace, setWorkspace] = useImmerAtom(workspaceAtom)
   const setBlockEditorRoot = useSetAtom(blockEditorRootAtom);
   const setEditorOpen = useSetAtom(isBlockEditorOpenAtom);
   const [renderNodes, setRenderNodes] = useState([])
@@ -63,12 +62,12 @@ export default function DrawflowWrapper() {
                 block={block}
                 openView={openView}
                 id={key}
-                historySink={pipeline.history}
+                history={pipeline.history}
                 />)
     })
 
     setRenderNodes(nodes)
-  }, [pipeline.data])
+  }, [pipeline?.data])
 
   useEffect(() => {
     if (editor) {
@@ -79,7 +78,7 @@ export default function DrawflowWrapper() {
   }, [pipelineConnections])
 
   useEffect(() => {
-    const newConnections = createConnections(pipeline.data)
+    const newConnections = createConnections(pipeline?.data)
     if (editor) {
       editor.syncConnections(newConnections)
     }
@@ -87,7 +86,7 @@ export default function DrawflowWrapper() {
 
     const syncData = async () => {
       try {
-        if (Object.getOwnPropertyNames(pipeline.data).length !== 0) {
+        if (Object.getOwnPropertyNames(pipeline?.data).length !== 0) {
           const pipelineSpecs = editor.convert_drawflow_to_block(pipeline.name, pipeline.data);
           // note that we are writing to the buffer, not the load path
           pipelineSpecs['sink'] = pipeline.buffer;
@@ -95,9 +94,9 @@ export default function DrawflowWrapper() {
 
           const saveData = {
             specs: pipelineSpecs,
-            name: pipeline.name,
-            buffer: pipeline.buffer,
-            writePath: pipeline.buffer,
+            name: pipeline?.name,
+            buffer: pipeline?.buffer,
+            writePath: pipeline?.buffer,
           };
 
           await savePipeline.mutateAsync(saveData);

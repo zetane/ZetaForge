@@ -4,7 +4,6 @@ import { Button } from "@carbon/react";
 import axios from "axios";
 
 export const PipelineStopButton = ({executionId}) => {
-  console.log("key: ", executionId)
   const mutation = useMutation({
     mutationFn: async () => {
       return axios.post(`${import.meta.env.VITE_EXECUTOR}/execution/${executionId}/terminate`)
