@@ -9,6 +9,7 @@ import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { modalContentAtom } from "@/atoms/modalAtom";
 import { useAtom } from "jotai";
 import ClosableModal from "@/components/ui/modal/ClosableModal";
+import { trimQuotes } from "@/utils/blockUtils";
 
 const isTypeDisabled = (action) => {
   if (!action.parameters) {
@@ -46,18 +47,6 @@ const BlockGenerator = ({ block, openView, id, history }) => {
     left: `${block.views.node.pos_x}px`
   }
 
-  function trimQuotes(str) {
-    if (typeof str !== 'string') {
-      return str;
-    }
-
-    if (str.length >= 2 && (str[0] === '"' || str[0] === "'") && str[0] === str[str.length - 1]) {
-      return str.slice(1, -1);
-    }
-
-    return str;
-  }
-
   const [iframeSrc, setIframeSrc] = useState("")
   useEffect(() => {
     if (block.events.outputs?.html) {
@@ -84,7 +73,8 @@ const BlockGenerator = ({ block, openView, id, history }) => {
     id={id}
     history={history}
     />)
-  if (block.action.parameters?.path?.type == "file") {
+  const type = block?.action?.parameters?.path?.type
+  if (type == "file" || type == "blob") {
     content = (<FileBlock blockId={id} block={block} setFocusAction={setFocusAction} history={history}/>)
   }
 
@@ -200,7 +190,6 @@ const parseHtmlToInputs = (html) => {
 };
 
 const InputField = ({ type, value, name, step, parameterName, onChange, id }) => {
-  console.log("input val: ", value)
   const [editor, _] = useAtom(drawflowEditorAtom);
   const [currentValue, setCurrentValue] = useState(value);
   const inputRef = useRef(null);

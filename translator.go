@@ -247,20 +247,7 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 			})
 		}
 
-		/*blockIter := block.Inputs.EntriesIter()
-		for {
-			pair, ok := blockIter()
-			if !ok {
-				break
-			}
-			name := pair.Key
-			input := pair.Value.(zjson.Put)
-		*/
-
 		for name, input := range block.Inputs {
-			//for pair := block.Inputs.Oldest(); pair != nil; pair = pair.Next() {
-			//input := pair.Value
-			//name := pair.Key
 			if len(input.Connections) > 0 {
 				if len(input.Connections) == 1 {
 					connection := input.Connections[0]
@@ -294,19 +281,6 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 				}
 			}
 		}
-
-		/*
-			outputBlockIter := block.Outputs.EntriesIter()
-			for {
-				pair, ok := outputBlockIter()
-				if !ok {
-					break
-				}
-				name := pair.Key
-		*/
-
-		//for pair := block.Outputs.Oldest(); pair != nil; pair = pair.Next() {
-		//	name := pair.Key
 
 		for name := range block.Outputs {
 			blockVar := blockKey + "-" + name

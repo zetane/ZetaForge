@@ -9,7 +9,7 @@ import {
   filterDirectories,
   readJsonToObject,
 } from "./fileSystem.js";
-import { checkAndUpload } from "./s3.js";
+import { checkAndUpload, checkAndCopy } from "./s3.js";
 
 export async function saveSpec(spec, writePath) {
   const pipelineSpecsPath = path.join(writePath, PIPELINE_SPECS_FILE_NAME)
@@ -186,7 +186,15 @@ export async function uploadBlocks(pipelineId, executionId, pipelineSpecs, buffe
           if (filePath && filePath.trim()) {
             await checkAndUpload(awsKey, filePath, anvilConfiguration);
             param.value = `"${fileName}"`;
+            param.type = "blob"
           }
+        } else if (param.type == "blob") {
+          const copyKey = param.value
+          const fileName = param.value.split("/").at(-1)
+          const newAwsKey = `${pipelineId}/${executionId}/${fileName}`
+
+          await checkAndCopy(newAwsKey, copyKey, anvilConfiguration)
+          param.value = `"${fileName}"`;
         }
       }
     } else if (container) {

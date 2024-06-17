@@ -75,6 +75,7 @@ export default function DrawflowWrapper() {
       editor.pipeline = pipeline;
       editor.connection_list = pipelineConnections
       editor.addConnection()
+      editor.updateAllConnections()
     }
   }, [pipelineConnections])
 
@@ -176,8 +177,6 @@ export default function DrawflowWrapper() {
   };
 
   const fileInput = useRef();
-
-  console.log(renderNodes)
 
   return (
     <div

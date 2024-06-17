@@ -1,10 +1,9 @@
-import { HeadObjectCommand, PutObjectCommand, GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { HeadObjectCommand, PutObjectCommand, GetObjectCommand, CopyObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import fs from 'fs/promises';
 import config from "../config";
 
 function getClient(configuration) {
   const endpoint = `http://${configuration.host}:${configuration.s3Port}`;
-  console.log(endpoint);
   return new S3Client({
     region: config.s3.region,
     credentials: {
@@ -16,6 +15,39 @@ function getClient(configuration) {
   })
 }
 
+export async function checkAndCopy(newKey, copyKey, anvilConfiguration) {
+  console.log(`checking for ${newKey}`)
+  const oldExists = await fileExists(copyKey, anvilConfiguration)
+  if (!oldExists) {
+    throw new Error("Previous file did not upload successfully, please upload a new file.")
+  }
+  const exists = await fileExists(newKey, anvilConfiguration);
+  if (!exists) {
+    await copy(newKey, copyKey, anvilConfiguration);
+  }
+}
+
+async function copy(newKey, copyKey, anvilConfiguration) {
+  const client = getClient(anvilConfiguration);
+  try {
+    const source = encodeURI(`/${config.s3.bucket}/${copyKey}`)
+    console.log(`attempting to copy ${source} to ${newKey}`)
+
+    const res = await client.send(new CopyObjectCommand({
+      Bucket: config.s3.bucket,
+      CopySource: source,
+      Key: newKey,
+    }));
+    console.log(`copied ${source} to ${newKey}`)
+
+    return res;
+  } catch (err) {
+    const message = `Could not copy file in S3 from ${source} to ${newKey}`;
+    console.error(message, err);
+    throw new Error(message);
+  }
+}
+
 export async function checkAndUpload(key, filePath, anvilConfiguration) {
   const exists = await fileExists(key, anvilConfiguration);
 
@@ -23,6 +55,7 @@ export async function checkAndUpload(key, filePath, anvilConfiguration) {
     await upload(key, filePath, anvilConfiguration);
   }
 }
+
 async function upload(key, filePath, anvilConfiguration) {
   const client = getClient(anvilConfiguration);
   const fileBody = await fs.readFile(filePath)
@@ -36,6 +69,32 @@ async function upload(key, filePath, anvilConfiguration) {
     return res
   } catch (err) {
     const message = 'Could not upload file to S3';
+    console.error(message, err);
+    throw new Error(message);
+  }
+}
+
+async function fileUrlExists(url) {
+  const accessKeyId = config.s3.accessKeyId
+  const secretAccessKey = config.s3.secretAccessKey
+
+  try {
+    const response = await fetch(url, {
+      method: 'HEAD',
+      headers: {
+        'Authorization': `AWS ${accessKeyId}:${secretAccessKey}`,
+      },
+    });
+
+    if (response.status === 200) {
+      return true;
+    } else if (response.status === 404) {
+      return false;
+    } else {
+      throw new Error(`Unexpected response status: ${response.status}`);
+    }
+  } catch (err) {
+    const message = 'Error checking file existence in S3';
     console.error(message, err);
     throw new Error(message);
   }
