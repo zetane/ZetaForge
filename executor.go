@@ -4,7 +4,6 @@ import (
 	"archive/tar"
 	"bytes"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"

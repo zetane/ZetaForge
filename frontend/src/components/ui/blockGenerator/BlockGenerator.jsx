@@ -77,9 +77,15 @@ const BlockGenerator = ({ block, openView, id, history }) => {
     })
   }
 
-  let content = (<BlockContent html={block.views.node.html} block={block} onInputChange={handleInputChange} id={id} />)
+  let content = (<BlockContent
+    html={block.views.node.html}
+    block={block}
+    onInputChange={handleInputChange}
+    id={id}
+    history={history}
+    />)
   if (block.action.parameters?.path?.type == "file") {
-    content = (<FileBlock blockId={id} block={block} setFocusAction={setFocusAction} />)
+    content = (<FileBlock blockId={id} block={block} setFocusAction={setFocusAction} history={history}/>)
   }
 
   const backgroundColor = block.views?.node?.title_bar?.background_color || 'var(--title-background-color)';
@@ -88,7 +94,7 @@ const BlockGenerator = ({ block, openView, id, history }) => {
     <div className="parent-node">
       <div className="drawflow-node" id={`node-${id}`} style={styles}>
         <div className="drawflow_content_node">
-          {preview && <BlockPreview id={id} src={iframeSrc} />}
+          {preview && <BlockPreview id={id} src={iframeSrc} history={history}/>}
 
           <BlockTitle
             name={block.information.name}
@@ -98,11 +104,12 @@ const BlockGenerator = ({ block, openView, id, history }) => {
             actions={!disabled}
             src={iframeSrc}
             blockEvents={block.events}
+            history={history}
           />
           <div className="block-body">
             <div className="block-io">
-              <BlockInputs inputs={block.inputs} />
-              <BlockOutputs outputs={block.outputs} />
+              <BlockInputs inputs={block.inputs} history={history}/>
+              <BlockOutputs outputs={block.outputs} history={history}/>
             </div>
             {content}
           </div>
@@ -124,7 +131,7 @@ const BlockPreview = ({ id, src }) => {
 }
 
 
-const BlockTitle = ({ name, id, color, openView, actions, src, blockEvents }) => {
+const BlockTitle = ({ name, id, color, openView, actions, src, blockEvents, history }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [modalContent, setModalContent] = useAtom(modalContentAtom);
 
@@ -193,10 +200,15 @@ const parseHtmlToInputs = (html) => {
 };
 
 const InputField = ({ type, value, name, step, parameterName, onChange, id }) => {
+  console.log("input val: ", value)
   const [editor, _] = useAtom(drawflowEditorAtom);
   const [currentValue, setCurrentValue] = useState(value);
   const inputRef = useRef(null);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+
+  useEffect(() => {
+    setCurrentValue(value)
+  }, [value])
 
   useEffect(() => {
     if (!editor) return;
@@ -220,13 +232,6 @@ const InputField = ({ type, value, name, step, parameterName, onChange, id }) =>
     inputRef.current.selectionStart = start;
     inputRef.current.selectionEnd = end || start;
   };
-
-  useEffect(() => {
-    if (currentValue === "") {
-      //onChange(name, "", parameterName)
-      setCurrentValue("")
-    }
-  }, [currentValue])
 
   const preventQuotation = (event) => {
     const quotations = ['"', "'", '`'];
@@ -362,7 +367,7 @@ const InputField = ({ type, value, name, step, parameterName, onChange, id }) =>
   }
 };
 
-const BlockContent = ({ html, block, onInputChange, id }) => {
+const BlockContent = ({ html, block, onInputChange, id, history }) => {
   const parsedInputs = parseHtmlToInputs(html);
 
   return (
@@ -389,7 +394,7 @@ const BlockContent = ({ html, block, onInputChange, id }) => {
   );
 };
 
-const BlockInputs = ({ inputs }) => (
+const BlockInputs = ({ inputs, history }) => (
   <div className="inputs">
     {Object.entries(inputs).map(([name, input]) => (
       <div key={name} className="block-input">
@@ -403,7 +408,7 @@ const BlockInputs = ({ inputs }) => (
   </div>
 );
 
-const BlockOutputs = ({ outputs }) => (
+const BlockOutputs = ({ outputs, history }) => (
   <div className="outputs">
     {Object.entries(outputs).map(([name, output]) => (
       <div key={name} className="block-output">

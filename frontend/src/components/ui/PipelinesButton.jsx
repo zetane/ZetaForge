@@ -3,7 +3,7 @@ import { useAtom } from "jotai";
 import { modalContentAtom } from "@/atoms/modalAtom";
 import { ExecutionDataGrid } from "@/components/ui/ExecutionDataGrid";
 import { useImmerAtom } from "jotai-immer";
-import { workspaceAtom, getRunning } from "@/atoms/pipelineAtom";
+import { workspaceAtom, getPipelines } from "@/atoms/pipelineAtom";
 import { useEffect, useState } from "react";
 
 export default function PipelinesButton() {
@@ -29,7 +29,7 @@ export default function PipelinesButton() {
   };
 
   useEffect(() => {
-    const runs = getRunning(workspace)
+    const runs = getPipelines(workspace)
     setExecutions(runs)
   }, [workspace?.pipelines])
 

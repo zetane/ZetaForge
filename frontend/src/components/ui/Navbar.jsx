@@ -19,20 +19,17 @@ import NewButton from "./NewButton";
 import ApiKeysModal from "./modal/ApiKeysModal";
 import PipelinesButton from "./PipelinesButton";
 import WorkspaceTabs from "./WorkspaceTabs";
-import useWebSocket, {ReadyState} from "react-use-websocket";
 import { useEffect } from "react";
 import { useImmerAtom } from "jotai-immer";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import StopPipelineButton from "./StopPipelineButton";
 import { useLoadServerPipeline } from "./useLoadPipeline";
 import RunPipelineButton from "./RunPipelineButton";
 import SaveAsPipelineButton from "./SaveAsPipelineButton";
 import SavePipelineButton from "./SavePipelineButton";
 import AnvilConfigurationsModal from "./modal/AnvilConfigurationsModal";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
-
-const ONE_SECOND = 1000;
+import { PipelineStopButton } from "./PipelineStopButton";
 
 export default function Navbar({ children }) {
   const [darkMode, setDarkMode] = useAtom(darkModeAtom);
@@ -57,24 +54,15 @@ export default function Navbar({ children }) {
       for (const serverPipeline of pipelines) {
         const loaded = loadPipeline(serverPipeline, configuration)
         const key = loaded.id + "." + loaded.record.Execution
+        const current = workspace.pipelines[key]
+        if (current?.record.Results) {
+          continue
+        }
         draft.pipelines[key] = loaded
         draft.executions[loaded.record.Execution] = loaded
       }
     })
   }, [data])
-
-  /*const {pendingRoom, errorRoom, dataRoom }  = useQuery({
-    queryKey: ['rooms'],
-    queryFn: async () => { return axios.get(`${import.meta.env.VITE_EXECUTOR}/rooms`)}
-  })
-  const rooms = dataRoom?.data
-  useEffect(() => {
-    if (!pipeline.socketUrl && rooms?.length > 0) {
-      setPipeline((draft) => {
-        draft.socketUrl = `${import.meta.env.VITE_WS_EXECUTOR}/ws/${rooms[0]}`;
-      })
-    }
-  }, [rooms])*/
 
   const modalPopper = (content) => {
     setModalContent({
@@ -86,96 +74,15 @@ export default function Navbar({ children }) {
 
   const svgOverride = { position: 'absolute', right: '15px', top: '5px' }
 
-  const socket = pipeline?.socketUrl || null
-
-  const { sendMessage, lastMessage, readyState } = useWebSocket(
-    socket,
-    {
-      share: true,
-      shouldReconnect: () => false,
-    }
-  );
-
-  useEffect(() => {
-    if (readyState === ReadyState.OPEN) {
-      if (pipeline.socketUrl) {
-        //modalPopper(<PipelineLogs />)
-      }
-    } else if (readyState === ReadyState.CLOSED) {
-    }
-  }, [readyState]);
-
-  useEffect(() => {
-    if (lastMessage !== null) {
-      const content = JSON.parse(lastMessage.data).content
-      const {executionId, blockId, message, time, ...jsonObj} = JSON.parse(content)
-
-      setPipeline((draft) => {
-        let shouldLog = true
-
-        if (draft.data[blockId]) {
-          const node = draft.data[blockId]
-          const tagAndObject = message.split("|||")
-          const tag = tagAndObject[0].trim()
-
-          if (tag == "debug") {
-            shouldLog = false
-          }
-          if (tag == "outputs") {
-            try {
-              const outs = JSON.parse(tagAndObject[1]);
-              if (outs && typeof outs === 'object') { // Ensure outs is an object
-                for (const [key, value] of Object.entries(outs)) {
-                  if (!node.events.outputs) {
-                    node.events["outputs"] = {};
-                  }
-                  node.events.outputs[key] = value;
-                }
-              }
-            } catch (err) {
-              console.error('Failed to parse outputs:', err);
-            }
-          }
-          if (tag == "inputs") {
-            try {
-              const outs = JSON.parse(tagAndObject[1]);
-              if (outs && typeof outs === 'object') { // Ensure outs is an object
-                for (const [key, value] of Object.entries(outs)) {
-                  if (!node.events.inputs) {
-                    node.events["inputs"] = {};
-                  }
-                  node.events["inputs"][key] = value;
-                }
-              }
-            } catch (err) {
-              console.error('Failed to parse inputs:', err);
-            }
-          }
-
-        }
-
-        if (shouldLog) {
-          let logString = `[${time}][${executionId}] ${message}`
-          if (blockId) {
-            logString = `[${time}][${executionId}][${blockId}] ${message}`
-          }
-          //draft.log.push(logString)
-        }
-      })
-    }
-  }, [lastMessage]);
-
-
-
   let runButton =  (
     <RunPipelineButton modalPopper={modalPopper} action="Run">
       <Play size={20} style={svgOverride} />
     </RunPipelineButton>
   )
 
-  if (pipeline?.record?.Status == "Running") {
+  if (pipeline?.record?.Status == "Running" || pipeline?.record?.Status == "Pending") {
     runButton = (
-      <StopPipelineButton />
+      <PipelineStopButton executionId={pipeline?.record?.Execution} configuration={configuration}/>
     )
   }
 

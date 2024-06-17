@@ -18,7 +18,6 @@ import { useLoadServerPipeline } from "./useLoadPipeline";
 const usePostExecution = (queryClient, configuration, setWorkspace, loadServerPipeline) => {
   const mutation = useMutation({
     mutationFn: async (execution) => {
-      console.log("posting: ", JSON.stringify(execution));
       const response = await fetch(`http://${configuration.host}:${configuration.anvilPort}/execute`, {
         method: 'POST',
         headers: {
@@ -129,8 +128,6 @@ export default function RunPipelineButton({ modalPopper, children, action }) {
       return null;
     }
 
-    console.log("specs after block upload: ", pipelineSpecs)
-
     const schema = generateSchema(pipeline.data);
     const results = schema.safeParse(pipeline.data);
 
@@ -173,6 +170,7 @@ export default function RunPipelineButton({ modalPopper, children, action }) {
   const styles = {
     margin: '5px',
   };
+
 
   return (
     <>

@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/sha1"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"log"
 
@@ -186,6 +185,7 @@ func newResponseExecutionsRow(execution zdatabase.Execution) ResponseExecution {
 
 func createPipeline(ctx context.Context, db *sql.DB, organization string, pipeline zjson.Pipeline) (zdatabase.Pipeline, HTTPError) {
 	jsonData, err := json.Marshal(Initialize(&pipeline))
+	log.Printf("crying : %v", jsonData)
 	if err != nil {
 		return zdatabase.Pipeline{}, InternalServerError{err.Error()}
 	}

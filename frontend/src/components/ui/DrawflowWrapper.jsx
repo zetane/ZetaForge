@@ -58,7 +58,8 @@ export default function DrawflowWrapper() {
   useEffect(() => {
     const blocks = pipeline?.data || {}
     const nodes = Object.entries(blocks).map(([key, block]) => {
-      return (<BlockGenerator key={key}
+      const uniqueKey = pipeline.history + "/" + key
+      return (<BlockGenerator key={uniqueKey}
                 block={block}
                 openView={openView}
                 id={key}
@@ -175,6 +176,8 @@ export default function DrawflowWrapper() {
   };
 
   const fileInput = useRef();
+
+  console.log(renderNodes)
 
   return (
     <div

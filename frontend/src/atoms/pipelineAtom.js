@@ -49,12 +49,9 @@ export const workspaceAtom = atom({
   fetchInterval: 10 * 1000
 })
 
-export const getRunning = (workspace) => {
+export const getPipelines = (workspace) => {
   const running = [];
   for (const [key, pipeline] of Object.entries(workspace.executions)) {
-    /*if (pipeline.record.Status == "Running") {
-      running.push(pipeline)
-      }*/
     running.push(pipeline)
   }
   return running.sort((a, b) => b?.record?.Execution.localeCompare(a?.record?.Execution));

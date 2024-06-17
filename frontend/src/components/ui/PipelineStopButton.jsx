@@ -3,12 +3,18 @@ import { Stop } from "@carbon/icons-react";
 import { Button } from "@carbon/react";
 import axios from "axios";
 
-export const PipelineStopButton = ({executionId}) => {
-  const mutation = useMutation({
+export const PipelineStopButton = ({executionId, configuration}) => {
+  const terminate = useMutation({
     mutationFn: async () => {
-      return axios.post(`${import.meta.env.VITE_EXECUTOR}/execution/${executionId}/terminate`)
+      const url = `http://${configuration.host}:${configuration.anvilPort}/execution/${executionId}/terminate`
+      const res = axios.post(url)
+      return res.data
     },
   })
+
+  const mutationAction = () => {
+    terminate?.mutateAsync()
+  }
 
   const svgOverride = { position: 'absolute', right: '15px', top: '5px'}
   const buttonStyles = { margin: '5px' }
@@ -17,12 +23,16 @@ export const PipelineStopButton = ({executionId}) => {
       Stop
       <Stop size="20" style={svgOverride} />
     </div>)
-  if (mutation.isLoading) {
+
+  if (terminate?.isLoading) {
     stopButton = (<div>"Stopping.."</div>)
   }
 
+  console.log(terminate)
+  const disabled = (terminate?.isLoading || !executionId)
+
   return (
-    <Button size="sm" style={buttonStyles} disabled={mutation.isLoading} onClick={() => {mutation.mutateAsync()} }>
+    <Button size="sm" style={buttonStyles} disabled={disabled} onClick={() => mutationAction()}>
       { stopButton }
     </Button>
   )

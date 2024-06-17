@@ -7,7 +7,6 @@ import (
 	"database/sql"
 	"embed"
 	"encoding/base64"
-	"encoding/json"
 	"io"
 	"log"
 	"net/http"
@@ -25,6 +24,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/invopop/jsonschema"
+	jsoniter "github.com/json-iterator/go"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/pressly/goose/v3"
 	"github.com/xeipuuv/gojsonschema"
@@ -220,6 +220,14 @@ func checkVisited(v reflect.Value, visited map[uintptr]bool) bool {
 	return false
 }
 
+var json jsoniter.API
+
+func init() {
+	json = jsoniter.Config{
+		SortMapKeys: false,
+	}.Froze()
+}
+
 func validateJson[D any](body io.ReadCloser) (D, HTTPError) {
 	var data D
 	r := jsonschema.Reflector{
@@ -239,7 +247,6 @@ func validateJson[D any](body io.ReadCloser) (D, HTTPError) {
 	schemaLoader := gojsonschema.NewStringLoader(string(schema))
 	jsonLoader := gojsonschema.NewStringLoader(buffer.String())
 	result, err := gojsonschema.Validate(schemaLoader, jsonLoader)
-	log.Printf("Uh? : %v", result)
 
 	if err != nil {
 		return data, InternalServerError{err.Error()}
@@ -253,6 +260,10 @@ func validateJson[D any](body io.ReadCloser) (D, HTTPError) {
 		stringError := strings.Join(listError, "\n")
 		return data, InternalServerError{stringError}
 	}
+
+	json := jsoniter.Config{
+		SortMapKeys: false,
+	}.Froze()
 
 	if err := json.Unmarshal(buffer.Bytes(), &data); err != nil {
 		return data, InternalServerError{err.Error()}

@@ -4,12 +4,13 @@ import { useImmerAtom } from "jotai-immer";
 import { useAtom } from "jotai";
 import { DataTable, Table, TableHead, TableRow, TableHeader, TableBody, TableCell, Link } from "@carbon/react";
 import { PipelineStopButton } from "./PipelineStopButton";
-import { pipelineConnectionsAtom } from "@/atoms/pipelineConnectionsAtom";
 import { useState, useEffect } from "react";
+import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 
 export const ExecutionDataGrid = ({executions, closeModal}) => {
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
   const [pipelineList, setPipelineList] = useState([])
+  const [configuration] = useAtom(activeConfigurationAtom);
 
   const selectPipeline = (pipeline) => {
     const key = pipeline.id + "." + pipeline.record.Execution
@@ -30,8 +31,8 @@ export const ExecutionDataGrid = ({executions, closeModal}) => {
       const friendlyName = pipelineData.name
       const executionId = record?.Execution;
       let stopAction = null;
-      if (record.Status == "Running") {
-        stopAction = <PipelineStopButton executionId={executionId} />;
+      if (record.Status == "Running" || record.Status == "Pending") {
+        stopAction = <PipelineStopButton executionId={executionId} configuration={configuration}/>;
       }
 
       items.push({

@@ -1248,7 +1248,6 @@ export default class Drawflow {
 
   convert_drawflow_to_block(name, blockGraph) {
       const graph_with_connections = JSON.parse(JSON.stringify(blockGraph))
-      console.log("df graph: ", graph_with_connections)
       const newPipeline = {}
       for (const block in graph_with_connections) {
         graph_with_connections[block].events = {};
