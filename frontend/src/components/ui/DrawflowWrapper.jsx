@@ -1,6 +1,6 @@
 import { drawflowEditorAtom } from '@/atoms/drawflowAtom';
 import { blockEditorRootAtom, isBlockEditorOpenAtom } from '@/atoms/editorAtom';
-import { pipelineAtom } from "@/atoms/pipelineAtom";
+import { pipelineAtom, workspaceAtom } from "@/atoms/pipelineAtom";
 import { pipelineConnectionsAtom } from "@/atoms/pipelineConnectionsAtom";
 import Drawflow from '@/components/ZetaneDrawflowEditor';
 import BlockGenerator from '@/components/ui/blockGenerator/BlockGenerator';
@@ -11,6 +11,7 @@ import { useAtom, useSetAtom } from 'jotai';
 import { useImmerAtom } from 'jotai-immer';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLoadPipeline } from "./useLoadPipeline";
+import { createConnections } from '@/utils/createConnections';
 
 const launchDrawflow = (parentDomRef, canvasDomRef, pipeline, setPipeline, connection_list, setConnectionList) => {
   if (parentDomRef.className != "parent-drawflow") {
@@ -31,7 +32,6 @@ const dragOverHandler = (event) => {
   event.preventDefault()
 };
 
-
 export default function DrawflowWrapper() {
   const [editor, setEditor] = useAtom(drawflowEditorAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
@@ -46,24 +46,6 @@ export default function DrawflowWrapper() {
 
   const savePipeline = trpc.savePipeline.useMutation();
   const getBlockPath = trpc.getBlockPath.useMutation();
-  
-  // Redraw the connections when resizing textarea
-  useEffect(() => {
-    if (!editor) return;
-
-    const resizeObserver = new ResizeObserver(entries => {
-        entries.forEach(entry => {
-            if (entry.target.classList.contains('textarea-node')) {
-                editor.updateAllConnections();
-            }
-        });
-    });
-
-    const textareas = document.querySelectorAll('.textarea-node');
-    textareas.forEach(textarea => resizeObserver.observe(textarea));
-
-    return () => resizeObserver.disconnect();
-  }, [renderNodes]);
 
   const handleDrawflow = useCallback((node) => {
     if (!node) { return }
@@ -74,62 +56,59 @@ export default function DrawflowWrapper() {
   }, []);
 
   useEffect(() => {
-    const nodes = Object.entries(pipeline.data).map(([key, block]) => {
-      return (<BlockGenerator key={key} 
-                block={block} 
-                openView={openView} 
-                id={key} 
-                historySink={pipeline.history} 
-                pipelineAtom={pipelineAtom}
+    const blocks = pipeline?.data || {}
+    const nodes = Object.entries(blocks).map(([key, block]) => {
+      const uniqueKey = pipeline.history + "/" + key
+      return (<BlockGenerator key={uniqueKey}
+                block={block}
+                openView={openView}
+                id={key}
+                history={pipeline.history}
                 />)
     })
+
     setRenderNodes(nodes)
-  }, [pipeline.data])
+  }, [pipeline?.data])
 
   useEffect(() => {
-    if (renderNodes.length) {
-      // Note: This code is super finicky because it's our declarative (React)
-      // vs imperative (drawflow) boundary
-      // We have to re-call these functions 
-      // IN THIS ORDER
-      // because they programmatically
-      // re-draw the connections in the graph
-      try {
-        editor.pipeline = pipeline;
-        editor.connection_list = pipelineConnections;
-        editor.addConnection();
-      } catch (e) {
-        console.log(e)
-      }
-
-      const fetchData = async () => {
-        try {
-          if (Object.getOwnPropertyNames(pipeline.data).length !== 0) {
-            const pipelineSpecs = editor.convert_drawflow_to_block(pipeline.name, pipeline.data);
-            // note that we are writing to the buffer, not the load path
-            pipelineSpecs['sink'] = pipeline.buffer;
-            pipelineSpecs['build'] = pipeline.buffer;
-    
-            const saveData = {
-              specs: pipelineSpecs,
-              name: pipeline.name,
-              buffer: pipeline.buffer,
-              writePath: pipeline.buffer,
-            };
-    
-            await savePipeline.mutateAsync(saveData);
-          }
-        } catch (error) {
-          console.error("Error saving pipeline:", error);
-        }
-      };
-  
-      fetchData();
-    } else {
-      if (editor) {
-        editor.clear()
-      }
+    if (editor) {
+      editor.pipeline = pipeline;
+      editor.connection_list = pipelineConnections
+      editor.addConnection()
+      editor.updateAllConnections()
     }
+  }, [pipelineConnections])
+
+  useEffect(() => {
+    const newConnections = createConnections(pipeline?.data)
+    if (editor) {
+      editor.syncConnections(newConnections)
+    }
+    setPipelineConnections(draft => draft = newConnections)
+
+    const syncData = async () => {
+      try {
+        if (Object.getOwnPropertyNames(pipeline?.data).length !== 0) {
+          const pipelineSpecs = editor.convert_drawflow_to_block(pipeline.name, pipeline.data);
+          // note that we are writing to the buffer, not the load path
+          pipelineSpecs['sink'] = pipeline.buffer;
+          pipelineSpecs['build'] = pipeline.buffer;
+
+          const saveData = {
+            specs: pipelineSpecs,
+            name: pipeline?.name,
+            buffer: pipeline?.buffer,
+            writePath: pipeline?.buffer,
+          };
+
+          await savePipeline.mutateAsync(saveData);
+        }
+      } catch (error) {
+        console.error("Error saving pipeline:", error);
+      }
+    };
+
+    syncData();
   }, [renderNodes])
 
   const addBlockToPipeline = (block) => {
@@ -152,7 +131,7 @@ export default function DrawflowWrapper() {
     const jsonData = event.dataTransfer.getData("block");
     const spec = JSON.parse(jsonData)
     const block = setBlockPos(editor, spec, event.clientX, event.clientY)
-    addBlockToPipeline(block, editor)
+    addBlockToPipeline(block)
   };
 
   const setBlockPos = (editor, block, posX, posY) => {
@@ -178,7 +157,7 @@ export default function DrawflowWrapper() {
   }
   const openView = async (id) => {
     const root = await getBlockPath.mutateAsync({
-      blockId: id, 
+      blockId: id,
       pipelinePath: pipeline.buffer
     });
     setBlockEditorRoot(root);
@@ -196,7 +175,7 @@ export default function DrawflowWrapper() {
       event.target.value = ''; // Reset the file input
     }
   };
-  
+
   const fileInput = useRef();
 
   return (
@@ -218,9 +197,7 @@ export default function DrawflowWrapper() {
       }}
       onDragOver={(ev) => { dragOverHandler(ev) }}
     >
-      <div
-        ref={drawflowCanvas}
-      >
+      <div ref={drawflowCanvas} >
         {renderNodes}
       </div>
       <input
