@@ -343,6 +343,7 @@ func streaming(ctx context.Context, name string, client clientcmd.ClientConfig) 
 				fmt.Printf("Failed to cast log to JSON: %v", err)
 			}
 
+			// This writes stream output to log, mandatory
 			log.Printf("%s", jsonData)
 		}
 	}
@@ -535,15 +536,7 @@ func terminateArgo(ctx context.Context, client clientcmd.ClientConfig, db *sql.D
 		return err
 	}
 
-	if wf.Status.Phase != "Running" {
-		// Update the execution status in the database to "Terminated"
-		err := updateExecutionStatus(ctx, db, id, "Terminated")
-		if err != nil {
-			log.Printf("Failed to update execution status for workflow %s; err=%v", name, err)
-			return err
-		}
-	} else {
-		// Terminate the workflow
+	if wf.Status.Phase == "Running" || wf.Status.Phase == "Pending" {
 		_, err = serviceClient.TerminateWorkflow(ctx, &workflowpkg.WorkflowTerminateRequest{
 			Name:      name,
 			Namespace: namespace,
@@ -552,6 +545,12 @@ func terminateArgo(ctx context.Context, client clientcmd.ClientConfig, db *sql.D
 			log.Printf("Failed to stop workflow %s; err=%v", name, err)
 			return err
 		}
+	}
+
+	err = updateExecutionStatus(ctx, db, id, "Failed")
+	if err != nil {
+		log.Printf("Failed to update execution status for workflow %s; err=%v", name, err)
+		return err
 	}
 
 	return nil

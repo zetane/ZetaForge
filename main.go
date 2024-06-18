@@ -115,7 +115,7 @@ func readTempLog(tempLog string) ([]string, error) {
 	return logData, nil
 }
 
-func Initialize(obj interface{}) interface{} {
+func initialize(obj interface{}) interface{} {
 	v := reflect.ValueOf(obj)
 	if v.Kind() != reflect.Ptr {
 		panic("niltoempty: expected pointer")

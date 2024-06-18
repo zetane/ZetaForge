@@ -54,7 +54,7 @@ func newResponsePipeline(pipeline zdatabase.Pipeline) (ResponsePipeline, HTTPErr
 	if err := json.Unmarshal([]byte(pipeline.Json), &data); err != nil {
 		return ResponsePipeline{}, InternalServerError{err.Error()}
 	}
-	jsonData, err := json.Marshal(Initialize(&data))
+	jsonData, err := json.Marshal(initialize(&data))
 	if err != nil {
 		return ResponsePipeline{}, InternalServerError{err.Error()}
 	}
@@ -78,7 +78,7 @@ func newResponsePipelineExecution(filterPipeline zdatabase.FilterPipelineRow, ex
 	if err := json.Unmarshal([]byte(filterPipeline.Json), &data); err != nil {
 		return ResponsePipelineExecution{}, InternalServerError{err.Error()}
 	}
-	jsonData, err := json.Marshal(Initialize(&data))
+	jsonData, err := json.Marshal(initialize(&data))
 	if err != nil {
 		return ResponsePipelineExecution{}, InternalServerError{err.Error()}
 	}
@@ -109,7 +109,7 @@ func newResponsePipelinesExecution(filterPipeline zdatabase.FilterPipelinesRow, 
 	if err := json.Unmarshal([]byte(filterPipeline.Json), &data); err != nil {
 		return ResponsePipelineExecution{}, InternalServerError{err.Error()}
 	}
-	jsonData, err := json.Marshal(Initialize(&data))
+	jsonData, err := json.Marshal(initialize(&data))
 	if err != nil {
 		return ResponsePipelineExecution{}, InternalServerError{err.Error()}
 	}
@@ -186,7 +186,7 @@ func newResponseExecutionsRow(execution zdatabase.Execution) ResponseExecution {
 }
 
 func createPipeline(ctx context.Context, db *sql.DB, organization string, pipeline zjson.Pipeline) (zdatabase.Pipeline, HTTPError) {
-	jsonData, err := json.Marshal(Initialize(&pipeline))
+	jsonData, err := json.Marshal(initialize(&pipeline))
 	if err != nil {
 		return zdatabase.Pipeline{}, InternalServerError{err.Error()}
 	}
