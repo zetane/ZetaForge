@@ -533,6 +533,12 @@ func terminateArgo(ctx context.Context, client clientcmd.ClientConfig, db *sql.D
 	})
 	if err != nil {
 		log.Printf("Failed to get workflow %s; err=%v", name, err)
+		updateErr := updateExecutionStatus(ctx, db, id, "Failed")
+
+		if updateErr != nil {
+			log.Printf("Failed to update execution status for workflow %s; err=%v", name, err)
+		}
+
 		return err
 	}
 
