@@ -55,7 +55,7 @@ export default class Drawflow {
 
     this.removeNodeSubscribers = [];
   }
-  
+
   start() {
     // console.info("Start Drawflow!!");
     this.container.classList.add("parent-drawflow");
@@ -90,12 +90,12 @@ export default class Drawflow {
     this.container.onpointerout = this.pointerup_handler.bind(this);
     this.container.onpointerleave = this.pointerup_handler.bind(this);
   }
-  
+
   /* Mobile zoom */
   pointerdown_handler(ev) {
     this.evCache.push(ev);
   }
-  
+
   pointermove_handler(ev) {
     for (var i = 0; i < this.evCache.length; i++) {
       if (ev.pointerId == this.evCache[i].pointerId) {
@@ -122,7 +122,7 @@ export default class Drawflow {
       this.prevDiff = curDiff;
     }
   }
-  
+
   pointerup_handler(ev) {
     this.remove_event(ev);
     if (this.evCache.length < 2) {
@@ -139,7 +139,7 @@ export default class Drawflow {
     }
   }
   /* End Mobile Zoom */
-  
+
   removeReouteConnectionSelected() {
     if (this.reroute_fix_curvature) {
       this.connection_selected.parentElement.querySelectorAll(".main-path").forEach((item, i) => {
@@ -333,7 +333,7 @@ export default class Drawflow {
 
       this.ele_selected.style.top = (this.ele_selected.offsetTop - y) + "px";
       this.ele_selected.style.left = (this.ele_selected.offsetLeft - x) + "px";
-  
+
       this.updateConnectionNodes(this.ele_selected.id)
     }
 
@@ -421,11 +421,11 @@ export default class Drawflow {
           );
           
           if (!this.connection_list[svgName]) {
-  
+
             var id_input = input_id.slice(5);
             var id_output = output_id.slice(5);
-  
-  
+
+
             this.updateConnectionList((draft) => {
               draft[svgName] = {
                 input_id: id_input,
@@ -435,19 +435,19 @@ export default class Drawflow {
                 path: Array.from(this.connection_ele.children),
               }
             })
-  
+
             this.connection_ele.remove();
             this.connection_ele = null;
-  
+
             this.setPipeline((draft) => {
               draft.data[id_output].outputs[output_class].connections.push({variable: input_class, block: id_input});
               draft.data[id_input].inputs[input_class].connections.push({variable: output_class, block: id_output});
             })
-  
+
           } else {
             this.connection_ele.remove();
           }
-  
+
           this.connection_ele = null;
         } else {
           // Connection exists Remove Connection;
@@ -467,7 +467,7 @@ export default class Drawflow {
       this.setPipeline((draft) => {
         draft.data[nodeId].views.node.pos_x = this.node_selected.offsetLeft;
         draft.data[nodeId].views.node.pos_y = this.node_selected.offsetTop;
-      })    
+      })
     }
 
     this.drag = false;
@@ -520,7 +520,7 @@ export default class Drawflow {
           this.removeConnectionNodeId(this.node_selected.id);
         }
       }
-      
+
       if (this.connection_selected != null) {
         this.removeConnection();
       }
@@ -645,12 +645,48 @@ export default class Drawflow {
     path.setAttributeNS(null, 'd', lineCurve);
   }
 
+  setDifference(setA, setB) {
+    const difference = {};
+
+    for (const key in setA) {
+      if (setA.hasOwnProperty(key)) {
+        difference[key] = setA[key];
+      }
+    }
+
+    for (const key in setB) {
+      if (setB.hasOwnProperty(key) && difference[key]) {
+        delete difference[key];
+      }
+    }
+
+    return difference;
+  }
+
+  removeDomConnection(svg) {
+    const domElement = this.container.querySelector(svg)
+    if (domElement) {
+      domElement.remove()
+    }
+  }
+
+  syncConnections(newConnections) {
+    // look ma it's what react does i wrote my own framework
+    const removeKeys = this.setDifference(this.connection_list, newConnections)
+
+    for (let key in removeKeys) {
+      this.removeDomConnection(key)
+    }
+  }
+
+
   addConnection() {
     for (let svg in this.connection_list) {
-      if (!this.container.querySelector(svg)) {
+      const domElement = this.container.querySelector(svg)
+      if (!domElement) {
         const connection = document.createElementNS('http://www.w3.org/2000/svg', "svg");
         connection.classList.add(...svg.split(".").filter(Boolean));
-      
+
         if (this.connection_list[svg].path) {
           for (const item of this.connection_list[svg].path) {
             connection.appendChild(item);
@@ -678,7 +714,7 @@ export default class Drawflow {
       // Update connections for each node
       this.updateConnectionNodes('node-' + nodeId);
     });
-  }  
+  }
 
   updateConnectionNodes(id) {
     // Aquí nos quedamos;
@@ -1018,7 +1054,7 @@ export default class Drawflow {
       const svgName = "." + ele.parentElement.classList.value.split(" ").join(".");
       draft[svgName].path = Array.from(ele.parentElement.children)
     })
-  
+
     this.updateConnectionNodes(nodeUpdate);
   }
 
@@ -1033,7 +1069,7 @@ export default class Drawflow {
       const searchPoint = draft[svgName].path.findIndex(function (item, i) {
         return item === ele;
       });
-      draft[svgName].path.splice(searchPoint, 1);      
+      draft[svgName].path.splice(searchPoint, 1);
     })
 
     ele.remove();
@@ -1057,7 +1093,7 @@ export default class Drawflow {
       this.removeSingleConnection(item.id_output, item.id, item.output_class, item.input_class);
     });
   }
-  
+
   removeNodeOutputConnections(id, output_class) {
     const infoNode = this.getNodeFromId(id)
     const removeOutputs = [];
@@ -1112,13 +1148,13 @@ export default class Drawflow {
           return item.block == id_input && item.variable === input_class
         });
         draft.data[id_output].outputs[output_class].connections.splice(index_out, 1);
-  
+
         var index_in = draft.data[id_input].inputs[input_class].connections.findIndex(function (item, i) {
           return item.block == id_output && item.variable === output_class
         });
         draft.data[id_input].inputs[input_class].connections.splice(index_in, 1);
       })
-      
+
       return true;
 
     } else {
@@ -1131,12 +1167,12 @@ export default class Drawflow {
     const nodeId = id.slice(5);
     this.setPipeline((draft) => {
       const connectionList = []
-        
+
       for (let connection in this.connection_list) {
         if (connection.includes(nodeId)) {
           const { input_id, input_class, output_id, output_class } = this.connection_list[connection];
           connectionList.push(connection);
-                
+
           // Remove connection data from output property of connecting block
           if (input_id === nodeId) {
           const index_out = draft.data[output_id].outputs[output_class].connections.findIndex(function (item, i) {
@@ -1151,7 +1187,7 @@ export default class Drawflow {
           });
           draft.data[input_id].inputs[input_class].connections.splice(index_in, 1);
           }
-        }      
+        }
       }
 
       this.updateConnectionList((connectionListDraft) => {
@@ -1166,11 +1202,11 @@ export default class Drawflow {
       delete draft.data[nodeId]
     })
   }
-    
+
   clear() {
     this.precanvas.innerHTML = "";
   }
-  
+
   getChildrenAsArray(obj, parentKey) {
     const result = [];
 
@@ -1186,7 +1222,7 @@ export default class Drawflow {
 
     return result;
   }
-  
+
   convert_drawflow_to_block(name, blockGraph) {
       const graph_with_connections = JSON.parse(JSON.stringify(blockGraph))
       const newPipeline = {}
@@ -1196,16 +1232,16 @@ export default class Drawflow {
         graph_with_connections[block].views.node.pos_y = graph_with_connections[block].views.node.pos_y.toString();
         newPipeline[block] = graph_with_connections[block];
       }
-    
+
       const pipeline = {
           pipeline: newPipeline,
           sink: "./history",
           build: "./my_pipelines"
       }
-    
+
     return pipeline;
   }
-  
+
   import(data, notifi = true) {
     // this.clear();
     this.drawflow = JSON.parse(JSON.stringify(data));
