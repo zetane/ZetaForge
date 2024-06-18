@@ -62,65 +62,49 @@ export const useLoadPipeline = () => {
   return loadPipeline;
 };
 
-function updatePipelineWithLogFile(pipeline) {
-  for (const line of pipeline.logs) {
-   if (line.trim() !== '') {
-     const { executionId, blockId, message, time, ...jsonObj } = JSON.parse(line);
-     let shouldLog = true;
+function parseLogLine(line) {
+  if (line.trim() === '') {
+    return null;
+  }
+  let tag, data = null;
 
-     if (pipeline.data[blockId]) {
-       const node = pipeline.data[blockId];
-       const tagAndObject = message.split("|||");
-       const tag = tagAndObject[0].trim();
+  const { executionId, blockId, message, time, ...jsonObj } = JSON.parse(line);
+  const tagAndObject = message.split("|||");
+  if (tagAndObject.length > 1) {
+    tag = tagAndObject[0].trim();
+    //data = tagAndObject[1] ? JSON.parse(tagAndObject[1]) : null;
+  }
 
-       if (tag === "debug") {
-         shouldLog = false;
-       }
+  return {
+    executionId,
+    blockId,
+    message,
+    tag,
+    data,
+    time,
+    jsonObj,
+  };
+}
 
-       if (tag === "outputs") {
-         try {
-           const outs = JSON.parse(tagAndObject[1]);
-           if (outs && typeof outs === 'object') {
-             for (const [key, value] of Object.entries(outs)) {
-               if (!node.events.outputs) {
-                 node.events["outputs"] = {};
-               }
-               node.events.outputs[key] = value;
-             }
-           }
-         } catch (err) {
-           //console.error('Failed to parse outputs:', err);
-         }
-       }
+export function parseLog(log) {
+  const parsedLog = []
+  log = log ?? []
+  for (const line of log) {
+    const parsedLine = parseLogLine(line);
+    if (parsedLine) {
+      const { executionId, blockId, message, tag, data, time, jsonObj } = parsedLine;
+      let shouldLog = true;
 
-       if (tag === "inputs") {
-         try {
-           const outs = JSON.parse(tagAndObject[1]);
-           if (outs && typeof outs === 'object') {
-             for (const [key, value] of Object.entries(outs)) {
-               if (!node.events.inputs) {
-                 node.events["inputs"] = {};
-               }
-               node.events["inputs"][key] = value;
-             }
-           }
-         } catch (err) {
-           console.error('Failed to parse inputs:', err);
-         }
-       }
-     }
-
-     if (shouldLog) {
-       let logString = `[${time}][${executionId}] ${message}`;
-       if (blockId) {
-         logString = `[${time}][${executionId}][${blockId}] ${message}`;
-       }
-       pipeline.log.push(logString);
-     }
-   }
- }
-
- return pipeline;
+      if (shouldLog) {
+        let logString = `[${time}] ${message}`;
+        if (blockId) {
+          logString = `[${time}][${blockId}] ${message}`;
+        }
+        parsedLog.push(logString);
+      }
+    }
+  }
+  return parsedLog;
 }
 
 function sortSpecsKeys(pipeline) {
@@ -199,7 +183,8 @@ export const useLoadServerPipeline = () => {
     let newPipeline = pipelineFactory(window.cache.local, loadedPipeline)
     if (newPipeline.logs != null && newPipeline.logs.length) {
       try {
-        newPipeline = updatePipelineWithLogFile(newPipeline)
+        const parsedLog = parseLog(newPipeline?.logs)
+        newPipeline.log = parsedLog
       } catch (e) {
         //console.log("Failed to parse server logs: ", e)
       }

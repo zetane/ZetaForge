@@ -255,7 +255,7 @@ func writeFile(path string, content string) error {
 	return file.Close()
 }
 
-func results(ctx context.Context, db *sql.DB, execution int64, pipeline *zjson.Pipeline, workflow *wfv1.Workflow) error {
+func results(ctx context.Context, db *sql.DB, execution int64, pipeline zjson.Pipeline, workflow wfv1.Workflow) error {
 	for _, node := range workflow.Status.Nodes {
 		if node.Type == "Pod" {
 			block := pipeline.Pipeline[node.TemplateName]
@@ -765,6 +765,8 @@ func localExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 		return
 	}
 
+	defer cleanupRun(ctx, db, executionId, executionUuid, *pipeline, *workflow, cfg)
+
 	jsonWorkflow, err := json.MarshalIndent(&workflow, "", "  ")
 	if err != nil {
 		log.Printf("Invalid translated pipeline.json; err=%v", err)
@@ -810,20 +812,27 @@ func localExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 		log.Printf("Error during pipeline execution; err=%v", err)
 		return
 	}
+	// needs to be called here in addition to in defer
+	// in defer, it seems the nodes go out of scope
+	if err := results(ctx, db, executionId, *pipeline, *workflow); err != nil {
+		log.Printf("Failed to save results; err=%v", err)
+	}
+}
+
+func cleanupRun(ctx context.Context, db *sql.DB, executionId int64, executionUuid string, pipeline zjson.Pipeline, workflow wfv1.Workflow, cfg Config) {
+	tempLog := filepath.Join(os.TempDir(), executionUuid+".log")
+	s3Key := pipeline.Id + "/" + executionUuid
 
 	if err := upload(ctx, tempLog, s3Key+"/"+executionUuid+".log", cfg); err != nil {
 		log.Printf("Failed to upload log: err=%v", err)
-		return
 	}
 
 	if err := results(ctx, db, executionId, pipeline, workflow); err != nil {
 		log.Printf("Failed to save results; err=%v", err)
-		return
 	}
 
 	if err := downloadFiles(ctx, pipeline.Sink, s3Key, cfg); err != nil {
 		log.Printf("Failed to download files; err=%v", err)
-		return
 	}
 }
 

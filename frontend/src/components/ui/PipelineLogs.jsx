@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { getFileData } from "@/utils/s3";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
+import { parseLog } from "@/components/ui/useLoadPipeline";
 
 export const PipelineLogs = () => {
   const [configuration, _] = useAtom(activeConfigurationAtom)
@@ -22,9 +23,9 @@ export const PipelineLogs = () => {
     },
     enabled: (pipeline?.record?.LogPath != null)
   })
-  let log = pipeline.log.join("\n")
+  let log = pipeline.log
   if (data) {
-    log = data
+    log = parseLog(data.split("\n"))
   }
 
   /*
@@ -114,7 +115,7 @@ export const PipelineLogs = () => {
     >
       <ScrollToBottom className="viewer-container">
         <div className="logs-viewer">
-          <LogsCodeMirror code={log} />
+          <LogsCodeMirror code={log.join("\n")} />
         </div>
       </ScrollToBottom>
     </ClosableModal>

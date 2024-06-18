@@ -348,7 +348,7 @@ func listRunningExecutions(ctx context.Context, db *sql.DB) ([]zdatabase.Executi
 	return res, nil
 }
 
-func updateExecutionResults(ctx context.Context, db *sql.DB, execution int64, pipeline *zjson.Pipeline) error {
+func updateExecutionResults(ctx context.Context, db *sql.DB, execution int64, pipeline zjson.Pipeline) error {
 	jsonPipeline, err := json.Marshal(pipeline)
 	if err != nil {
 		return err
