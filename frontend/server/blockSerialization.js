@@ -5,6 +5,7 @@ import path from "path";
 import { BLOCK_SPECS_FILE_NAME } from "../src/utils/constants";
 import { fileExists } from "./fileSystem";
 import { logger } from "./logger";
+import { HttpStatus, ServerError } from "./serverError";
 
 export async function compileComputation(blockPath) {
   const sourcePath = path.join(blockPath, "computations.py");
@@ -14,7 +15,7 @@ export async function compileComputation(blockPath) {
     ? path.join(process.resourcesPath, "resources", "compileComputation.py")
     : path.join("resources", "compileComputation.py");
   if (!(await fileExists(scriptPath))) {
-    throw new Error(`Could not find script for compilation: ${scriptPath}`);
+    throw new ServerError(`Could not find script for compilation: ${scriptPath}`, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
   const { stdout } = spawnSync("python", [scriptPath], {
