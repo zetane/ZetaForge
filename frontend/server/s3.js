@@ -30,19 +30,17 @@ async function copy(newKey, copyKey, anvilConfiguration) {
   const client = getClient(anvilConfiguration);
   try {
     const source = encodeURI(`/${config.s3.bucket}/${copyKey}`)
-    console.log(`attempting to copy ${source} to ${newKey}`)
 
     const res = await client.send(new CopyObjectCommand({
       Bucket: config.s3.bucket,
       CopySource: source,
       Key: newKey,
     }));
-    console.log(`copied ${source} to ${newKey}`)
 
     return res;
   } catch (err) {
     const message = `Could not copy file in S3 from ${source} to ${newKey}`;
-    console.error(message, err);
+    console.error(message, err, err?.stack);
     throw new Error(message);
   }
 }
@@ -68,32 +66,6 @@ async function upload(key, filePath, anvilConfiguration) {
     return res
   } catch (err) {
     const message = 'Could not upload file to S3';
-    console.error(message, err);
-    throw new Error(message);
-  }
-}
-
-async function fileUrlExists(url) {
-  const accessKeyId = config.s3.accessKeyId
-  const secretAccessKey = config.s3.secretAccessKey
-
-  try {
-    const response = await fetch(url, {
-      method: 'HEAD',
-      headers: {
-        'Authorization': `AWS ${accessKeyId}:${secretAccessKey}`,
-      },
-    });
-
-    if (response.status === 200) {
-      return true;
-    } else if (response.status === 404) {
-      return false;
-    } else {
-      throw new Error(`Unexpected response status: ${response.status}`);
-    }
-  } catch (err) {
-    const message = 'Error checking file existence in S3';
     console.error(message, err);
     throw new Error(message);
   }
