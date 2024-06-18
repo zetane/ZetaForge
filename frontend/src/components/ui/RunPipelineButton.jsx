@@ -81,6 +81,26 @@ const usePostExecution = (queryClient, configuration, setWorkspace, loadServerPi
   return mutation;
 };
 
+const buildSortKeys = (specs) => {
+  for (const blockId in specs.pipeline) {
+    const orderObject = {
+      input: [],
+      output: [],
+    };
+
+    const block = specs.pipeline[blockId];
+    const inputKeys = Object.keys(block.inputs);
+    const outputKeys = Object.keys(block.outputs);
+
+    orderObject.input = (inputKeys);
+    orderObject.output = (outputKeys);
+
+    block.views.node.order = orderObject
+  }
+
+  return specs
+}
+
 export default function RunPipelineButton({ modalPopper, children, action }) {
   const [editor] = useAtom(drawflowEditorAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
@@ -142,6 +162,7 @@ export default function RunPipelineButton({ modalPopper, children, action }) {
     }
 
     try {
+      const sortedPipeline = buildSortKeys(pipelineSpecs)
       // tries to put history in a user path if it exists, if not
       // will put it into the buffer path (.cache)
       pipelineSpecs['sink'] = pipeline.path ? pipeline.path : pipeline.buffer
@@ -156,7 +177,7 @@ export default function RunPipelineButton({ modalPopper, children, action }) {
       const rebuild = (action == "Rebuild")
       const execution = {
         id: executionId,
-        pipeline: pipelineSpecs,
+        pipeline: sortedPipeline,
         build: rebuild
       }
 

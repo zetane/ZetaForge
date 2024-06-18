@@ -268,7 +268,6 @@ func validateJson[D any](body io.ReadCloser) (D, HTTPError) {
 	if err := json.Unmarshal(buffer.Bytes(), &data); err != nil {
 		return data, InternalServerError{err.Error()}
 	}
-	log.Printf("json: %v", data)
 
 	return data, nil
 }
@@ -411,7 +410,6 @@ func main() {
 		}
 
 		retData, err := filterPipeline(ctx, db, execution.Id)
-		log.Printf("PipelineExecution: %v", retData)
 		if err != nil {
 			log.Printf("Failed to get pipeline record; err=%v", err)
 			ctx.String(err.Status(), err.Error())
@@ -478,7 +476,7 @@ func main() {
 			return
 		}
 
-		tempLog := filepath.Join(os.TempDir(), executionId)
+		tempLog := filepath.Join(os.TempDir(), executionId+".log")
 		if res.Status == "Running" {
 			logData, err := readTempLog(tempLog)
 			if err != nil {
@@ -584,15 +582,16 @@ func main() {
 		var response []ResponsePipelineExecution
 		for _, execution := range res {
 			logOutput := []string{}
-			tempLog := filepath.Join(os.TempDir(), execution.Executionid)
+			tempLog := filepath.Join(os.TempDir(), execution.Executionid+".log")
+			var s3key string
 			if execution.Status == "Running" {
 				logOutput, err = readTempLog(tempLog)
 				if err != nil {
 					fmt.Printf("Failed to retrieve writing log; err=%v", err)
 				}
 			} else if execution.Status != "Pending" {
-				s3key := execution.Uuid + "/" + execution.Executionid + "/" + execution.Executionid + ".log"
-				err = downloadFile(ctx, s3key, tempLog, config)
+				s3key = execution.Uuid + "/" + execution.Executionid + "/" + execution.Executionid + ".log"
+				/*err = downloadFile(ctx, s3key, tempLog, config)
 				if err != nil {
 					//fmt.Printf("Failed to retrieve s3 log; err=%v", err)
 				}
@@ -600,8 +599,9 @@ func main() {
 				if err != nil {
 					fmt.Printf("Failed to read s3 log; err=%v\n", err)
 				}
+				*/
 			}
-			newRes, err := newResponsePipelinesExecution(execution, logOutput)
+			newRes, err := newResponsePipelinesExecution(execution, logOutput, s3key)
 			if err != nil {
 				ctx.String(err.Status(), err.Error())
 			}

@@ -4,10 +4,10 @@ import { trimQuotes } from "@/utils/blockUtils";
 export const FileBlock = ({blockId, block, setFocusAction, history}) => {
   const fileInput = useRef();
   const [renderPath, setRenderPath] = useState(null)
-  console.log(block?.action?.parameters['path'])
 
   useEffect(() => {
-    if (history) {
+    const type = block?.action?.parameters['path']?.type
+    if (history && type != "fileLoad") {
       let fileName = block?.action?.parameters["path"]?.value
       const fileSplit = fileName.split("/")
       if (fileSplit.length > 1) {
@@ -21,14 +21,16 @@ export const FileBlock = ({blockId, block, setFocusAction, history}) => {
       })
       setRenderPath(fileName)
     }
-
-  }, [history])
+  }, [block])
 
   const loadFile = async (e) => {
     const files = fileInput.current.files
     const file = files[0]
     const value = file.path.toString()
-    setFocusAction((draft) => { draft.data[blockId].action.parameters['path'].value = value })
+    setFocusAction((draft) => {
+      draft.data[blockId].action.parameters['path'].value = value
+      draft.data[blockId].action.parameters['path'].type = "fileLoad"
+    })
     setRenderPath(value)
   }
 

@@ -184,7 +184,6 @@ func downloadFiles(ctx context.Context, sink string, prefix string, cfg Config) 
 }
 
 func deleteFiles(ctx context.Context, prefix string, extraFiles []string, cfg Config) {
-	log.Printf("Deleting: %s", prefix)
 	client, err := s3Client(ctx, cfg)
 	if err != nil {
 		log.Printf("Failed to delete files; err=%v", err)
@@ -376,13 +375,11 @@ func runArgo(ctx context.Context, workflow *wfv1.Workflow, execution int64, clie
 		return nil, err
 	}
 
-	log.Printf("Workflow Name: %v", workflow.Name)
 	serviceClient := cli.NewWorkflowServiceClient()
 	workflow, err = serviceClient.CreateWorkflow(ctx, &workflowpkg.WorkflowCreateRequest{
 		Namespace: namespace,
 		Workflow:  workflow,
 	})
-	log.Printf("Workflow Name: %v", workflow.Name)
 
 	if err != nil {
 		return workflow, err
@@ -416,7 +413,6 @@ func runArgo(ctx context.Context, workflow *wfv1.Workflow, execution int64, clie
 		}
 
 		if workflow.Status.Phase.Completed() {
-
 			log.Printf("Status: Completed")
 			mixpanelClient.TrackEvent(ctx, "Run Completed", map[string]any{})
 			break
@@ -694,7 +690,6 @@ func localExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 	}
 
 	tempLog := filepath.Join(os.TempDir(), executionUuid+".log")
-	fmt.Printf("tempLog: %s", tempLog)
 	s3Key := pipeline.Id + "/" + executionUuid
 
 	file, err := os.OpenFile(tempLog, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)

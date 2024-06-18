@@ -16,7 +16,6 @@ function getClient(configuration) {
 }
 
 export async function checkAndCopy(newKey, copyKey, anvilConfiguration) {
-  console.log(`checking for ${newKey}`)
   const oldExists = await fileExists(copyKey, anvilConfiguration)
   if (!oldExists) {
     throw new Error("Previous file did not upload successfully, please upload a new file.")

@@ -6,6 +6,7 @@ import { getDirectoryPath } from "@/../utils/fileUtils";
 import { workspaceAtom, pipelineFactory, pipelineKey } from "@/atoms/pipelineAtom";
 import { createConnections } from "@/utils/createConnections"
 import { useAtom } from "jotai";
+import { getFileData } from "@/utils/s3";
 
 export const useLoadPipeline = () => {
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
@@ -122,12 +123,62 @@ function updatePipelineWithLogFile(pipeline) {
  return pipeline;
 }
 
+function sortSpecsKeys(pipeline) {
+ const updatedPipeline = {};
+ const specs = pipeline?.data ?? []
+
+ for (const blockId in specs) {
+   const block = specs[blockId];
+   const inputs = block.inputs;
+   const outputs = block.outputs;
+
+   let inputKeys = Object.keys(inputs);
+   let outputKeys = Object.keys(outputs);
+
+   if (block.views?.node?.order) {
+     const order = block.views.node.order
+
+     if (
+       order?.input?.length === inputKeys.length &&
+       order?.output?.length === outputKeys.length
+     ) {
+       inputKeys = order.input;
+       outputKeys = order.output;
+     }
+   }
+
+   const sortedInputs = {};
+   inputKeys.forEach((key) => {
+     sortedInputs[key] = inputs[key];
+   });
+
+   const sortedOutputs = {};
+   outputKeys.forEach((key) => {
+     sortedOutputs[key] = outputs[key];
+   });
+
+   updatedPipeline[blockId] = {
+     ...block,
+     inputs: sortedInputs,
+     outputs: sortedOutputs,
+   };
+ }
+
+ pipeline.data = updatedPipeline
+ return pipeline
+
+}
+
 export const useLoadServerPipeline = () => {
   const loadPipeline = (pipeline, configuration) => {
     if (!pipeline)  { return }
     let pipelineData = JSON.parse(pipeline.PipelineJson)
     if (pipeline.Results != "") {
       pipelineData = JSON.parse(pipeline.Results)
+    }
+    let logs = pipeline?.Log
+    if (pipeline.LogPath) {
+      //logs = getFileData(pipeline.LogPath, configuration)
     }
     const bufferPath = `${window.cache.local}${pipelineData.id}`;
     const executionId = pipeline.Execution
@@ -142,7 +193,7 @@ export const useLoadServerPipeline = () => {
       history: pipelineData.id + "/" + executionId,
       record: pipeline,
       socketUrl: `ws://${configuration.host}:${configuration.anvilPort}/ws/${executionId}`,
-      logs: pipeline.Log
+      logs: logs
     }
 
     let newPipeline = pipelineFactory(window.cache.local, loadedPipeline)
@@ -153,7 +204,8 @@ export const useLoadServerPipeline = () => {
         //console.log("Failed to parse server logs: ", e)
       }
     }
-
+    // sort keys
+    newPipeline = sortSpecsKeys(newPipeline)
     return newPipeline
   };
 

@@ -35,6 +35,7 @@ type ResponsePipelineExecution struct {
 	Workflow      string
 	Execution     string
 	Log           []string
+	LogPath       string
 	Results       string
 }
 
@@ -103,7 +104,7 @@ func newResponsePipelineExecution(filterPipeline zdatabase.FilterPipelineRow, ex
 // generating the same struct from a join, so there are two identical
 // structs with slightly different names
 // see: https://github.com/sqlc-dev/sqlc/issues/781
-func newResponsePipelinesExecution(filterPipeline zdatabase.FilterPipelinesRow, execLog []string) (ResponsePipelineExecution, HTTPError) {
+func newResponsePipelinesExecution(filterPipeline zdatabase.FilterPipelinesRow, execLog []string, s3key string) (ResponsePipelineExecution, HTTPError) {
 	var data zjson.Pipeline
 	if err := json.Unmarshal([]byte(filterPipeline.Json), &data); err != nil {
 		return ResponsePipelineExecution{}, InternalServerError{err.Error()}
@@ -126,6 +127,7 @@ func newResponsePipelinesExecution(filterPipeline zdatabase.FilterPipelinesRow, 
 		Workflow:      filterPipeline.Workflow.String,
 		Execution:     filterPipeline.Executionid,
 		Log:           execLog,
+		LogPath:       s3key,
 		Results:       filterPipeline.Results.String,
 	}, nil
 }
@@ -185,7 +187,6 @@ func newResponseExecutionsRow(execution zdatabase.Execution) ResponseExecution {
 
 func createPipeline(ctx context.Context, db *sql.DB, organization string, pipeline zjson.Pipeline) (zdatabase.Pipeline, HTTPError) {
 	jsonData, err := json.Marshal(Initialize(&pipeline))
-	log.Printf("crying : %v", jsonData)
 	if err != nil {
 		return zdatabase.Pipeline{}, InternalServerError{err.Error()}
 	}
@@ -204,9 +205,6 @@ func createPipeline(ctx context.Context, db *sql.DB, organization string, pipeli
 		Uuid:         pipeline.Id,
 		Hash:         hash,
 	})
-	if err == nil {
-		log.Printf("res: %v", res)
-	}
 	if err == sql.ErrNoRows {
 		res, err = qtx.CreatePipeline(ctx, zdatabase.CreatePipelineParams{
 			Organization: organization,

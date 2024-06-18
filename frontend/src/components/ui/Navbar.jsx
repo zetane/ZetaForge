@@ -55,7 +55,7 @@ export default function Navbar({ children }) {
         const loaded = loadPipeline(serverPipeline, configuration)
         const key = loaded.id + "." + loaded.record.Execution
         const current = workspace.pipelines[key]
-        if (current?.record.Results) {
+        if (current?.record.Results || current?.record?.Status == "Failed" || current?.record?.Status == "Succeeded" || current?.record?.Status == "Error") {
           continue
         }
         draft.pipelines[key] = loaded

@@ -178,7 +178,7 @@ export async function uploadBlocks(pipelineId, executionId, pipelineSpecs, buffe
       for (const paramKey in parameters) {
         const param = parameters[paramKey];
 
-        if (param.type === "file") {
+        if (param.type === "file" || param.type == "fileLoad") {
           const filePath = param.value;
           const fileName = path.basename(filePath);
           const awsKey = `${pipelineId}/${executionId}/${fileName}`;

@@ -28,7 +28,6 @@ export const PipelineStopButton = ({executionId, configuration}) => {
     stopButton = (<div>"Stopping.."</div>)
   }
 
-  console.log(terminate)
   const disabled = (terminate?.isLoading || !executionId)
 
   return (

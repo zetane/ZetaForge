@@ -1,9 +1,8 @@
 import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { Code, View } from "@carbon/icons-react";
-import { Modal } from "@carbon/react";
 import { useImmerAtom } from "jotai-immer";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FileBlock } from "./FileBlock";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { modalContentAtom } from "@/atoms/modalAtom";
@@ -74,7 +73,7 @@ const BlockGenerator = ({ block, openView, id, history }) => {
     history={history}
     />)
   const type = block?.action?.parameters?.path?.type
-  if (type == "file" || type == "blob") {
+  if (type == "file" || type == "blob" || type == "fileLoad") {
     content = (<FileBlock blockId={id} block={block} setFocusAction={setFocusAction} history={history}/>)
   }
 
@@ -98,8 +97,8 @@ const BlockGenerator = ({ block, openView, id, history }) => {
           />
           <div className="block-body">
             <div className="block-io">
-              <BlockInputs inputs={block.inputs} history={history}/>
-              <BlockOutputs outputs={block.outputs} history={history}/>
+              <BlockInputs inputs={block.inputs} history={history} block={block}/>
+              <BlockOutputs outputs={block.outputs} history={history} block={block}/>
             </div>
             {content}
           </div>

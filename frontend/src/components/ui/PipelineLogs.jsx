@@ -1,15 +1,33 @@
 import { LogsCodeMirror } from "@/components/ui/blockEditor/CodeMirrorComponents";
 import ClosableModal from "./modal/ClosableModal";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
-import { useAtomValue } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 import ScrollToBottom from 'react-scroll-to-bottom';
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
+import { getFileData } from "@/utils/s3";
+import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 
 export const PipelineLogs = () => {
+  const [configuration, _] = useAtom(activeConfigurationAtom)
   const pipeline = useAtomValue(pipelineAtom);
   const socket = pipeline?.socketUrl || null
 
+  const { pending, error, data } = useQuery({
+    queryKey: ['logs', pipeline?.history],
+    queryFn: async () => {
+      return await getFileData(pipeline?.record?.LogPath, configuration)
+    },
+    enabled: (pipeline?.record?.LogPath != null)
+  })
+  let log = pipeline.log.join("\n")
+  if (data) {
+    log = data
+  }
+
+  /*
   const { sendMessage, lastMessage, readyState } = useWebSocket(
     socket,
     {
@@ -31,7 +49,6 @@ export const PipelineLogs = () => {
       const content = JSON.parse(lastMessage.data).content
       const {executionId, blockId, message, time, ...jsonObj} = JSON.parse(content)
 
-      /*
       setPipeline((draft) => {
         let shouldLog = true
 
@@ -84,9 +101,10 @@ export const PipelineLogs = () => {
           //draft.log.push(logString)
         }
       })
-      */
     }
   }, [lastMessage]);
+
+  */
 
   return (
     <ClosableModal
@@ -96,7 +114,7 @@ export const PipelineLogs = () => {
     >
       <ScrollToBottom className="viewer-container">
         <div className="logs-viewer">
-          <LogsCodeMirror code={pipeline.log.join("\n")} />
+          <LogsCodeMirror code={log} />
         </div>
       </ScrollToBottom>
     </ClosableModal>

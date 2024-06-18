@@ -46,7 +46,7 @@ export const workspaceAtom = atom({
   pipelines: {[emptyKey]: initPipeline},
   executions: {},
   active: emptyKey,
-  fetchInterval: 10 * 1000
+  fetchInterval: 2 * 1000
 })
 
 export const getPipelines = (workspace) => {
