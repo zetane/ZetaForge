@@ -24,6 +24,8 @@ export const PipelineLogs = () => {
     enabled: (pipeline?.record?.LogPath != null)
   })
   let log = pipeline.log
+  console.log("log is: ", log)
+  console.log("data is: ", data)
   if (data) {
     log = parseLog(data.split("\n"))
   }

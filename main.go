@@ -591,15 +591,13 @@ func main() {
 				}
 			} else if execution.Status != "Pending" {
 				s3key = execution.Uuid + "/" + execution.Executionid + "/" + execution.Executionid + ".log"
-				/*err = downloadFile(ctx, s3key, tempLog, config)
-				if err != nil {
-					//fmt.Printf("Failed to retrieve s3 log; err=%v", err)
-				}
+				// in certain cases the pipeline has succeeded or failed but
+				// has not yet uploaded to s3, so still attempt to send the tempLog
 				logOutput, err = readTempLog(tempLog)
+
 				if err != nil {
-					fmt.Printf("Failed to read s3 log; err=%v\n", err)
+					fmt.Printf("No temp log on the server; err=%v\n", err)
 				}
-				*/
 			}
 			newRes, err := newResponsePipelinesExecution(execution, logOutput, s3key)
 			if err != nil {
