@@ -231,7 +231,7 @@ func init() {
 func validateJson[D any](body io.ReadCloser) (D, HTTPError) {
 	var data D
 	r := jsonschema.Reflector{
-		RequiredFromJSONSchemaTags: true,
+		RequiredFromJSONSchemaTags: false,
 		AllowAdditionalProperties:  false,
 		ExpandedStruct:             true,
 	}
@@ -258,7 +258,11 @@ func validateJson[D any](body io.ReadCloser) (D, HTTPError) {
 			listError = append(listError, error.String())
 		}
 		stringError := strings.Join(listError, "\n")
-		return data, InternalServerError{stringError}
+		jsonError, err := json.Marshal(stringError)
+		if err != nil {
+			return data, BadRequest{stringError}
+		}
+		return data, BadRequest{string(jsonError)}
 	}
 
 	json := jsoniter.Config{

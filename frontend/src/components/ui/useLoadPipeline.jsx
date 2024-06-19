@@ -177,8 +177,6 @@ export const useLoadServerPipeline = () => {
       logs: logs
     }
 
-    console.log("server sink: ", loadedPipeline.path)
-
     let newPipeline = pipelineFactory(window.cache.local, loadedPipeline)
     if (newPipeline?.logs != null && newPipeline.logs.length) {
       try {
