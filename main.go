@@ -231,7 +231,7 @@ func init() {
 func validateJson[D any](body io.ReadCloser) (D, HTTPError) {
 	var data D
 	r := jsonschema.Reflector{
-		RequiredFromJSONSchemaTags: true,
+		RequiredFromJSONSchemaTags: false,
 		AllowAdditionalProperties:  false,
 		ExpandedStruct:             true,
 	}
@@ -258,7 +258,11 @@ func validateJson[D any](body io.ReadCloser) (D, HTTPError) {
 			listError = append(listError, error.String())
 		}
 		stringError := strings.Join(listError, "\n")
-		return data, InternalServerError{stringError}
+		jsonError, err := json.Marshal(stringError)
+		if err != nil {
+			return data, BadRequest{stringError}
+		}
+		return data, BadRequest{string(jsonError)}
 	}
 
 	json := jsoniter.Config{
@@ -391,10 +395,6 @@ func main() {
 			ctx.String(err.Status(), err.Error())
 			return
 		}
-
-		// TODO: client needs to handle results files
-		sink := filepath.Join(execution.Pipeline.Sink, "history", execution.Id)
-		execution.Pipeline.Sink = sink
 		newExecution, err := createExecution(ctx, db, res.ID, execution.Id)
 
 		if err != nil {
@@ -721,11 +721,6 @@ func main() {
 			ctx.String(500, fmt.Sprintf("%v", uuidErr))
 			return
 		}
-
-		// TODO: client needs to handle file uploading to S3
-		// along with handling results files
-		sink := filepath.Join(pipeline.Sink, "history", executionId.String())
-		pipeline.Sink = sink
 
 		newExecution, err := createExecution(ctx, db, res.ID, executionId.String())
 

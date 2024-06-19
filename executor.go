@@ -223,25 +223,6 @@ func deleteFiles(ctx context.Context, prefix string, extraFiles []string, cfg Co
 	}
 }
 
-func history(sinkPath string) error {
-	if err := os.MkdirAll(sinkPath, 0755); err != nil {
-		return err
-	}
-	if err := os.Mkdir(filepath.Join(sinkPath, "files"), 0755); err != nil {
-		return err
-	}
-	if err := os.Mkdir(filepath.Join(sinkPath, "pipeline"), 0755); err != nil {
-		return err
-	}
-	if err := os.Mkdir(filepath.Join(sinkPath, "logs"), 0755); err != nil {
-		return err
-	}
-	if err := os.Mkdir(filepath.Join(sinkPath, "results"), 0755); err != nil {
-		return err
-	}
-	return nil
-}
-
 func writeFile(path string, content string) error {
 	file, err := os.Create(path)
 	if err != nil {
@@ -836,7 +817,8 @@ func cleanupRun(ctx context.Context, db *sql.DB, executionId int64, executionUui
 		log.Printf("Failed to save results; err=%v", err)
 	}
 
-	if err := downloadFiles(ctx, pipeline.Sink, s3Key, cfg); err != nil {
+	sink := filepath.Join(pipeline.Sink, "history", executionUuid)
+	if err := downloadFiles(ctx, sink, s3Key, cfg); err != nil {
 		log.Printf("Failed to download files; err=%v", err)
 	}
 }
