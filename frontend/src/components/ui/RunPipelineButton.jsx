@@ -124,7 +124,7 @@ export default function RunPipelineButton({ modalPopper, children, action }) {
     const executionId = uuidv7();
 
     try {
-      const res = await axios.get(`${import.meta.env.VITE_EXECUTOR}/ping`)
+      const res = await axios.get(`http://${configuration.host}:${configuration.anvilPort}/ping`)
       if (res.status != 200) {
         throw Error()
       }
