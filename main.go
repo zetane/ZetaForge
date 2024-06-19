@@ -391,10 +391,6 @@ func main() {
 			ctx.String(err.Status(), err.Error())
 			return
 		}
-
-		// TODO: client needs to handle results files
-		sink := filepath.Join(execution.Pipeline.Sink, "history", execution.Id)
-		execution.Pipeline.Sink = sink
 		newExecution, err := createExecution(ctx, db, res.ID, execution.Id)
 
 		if err != nil {
@@ -721,11 +717,6 @@ func main() {
 			ctx.String(500, fmt.Sprintf("%v", uuidErr))
 			return
 		}
-
-		// TODO: client needs to handle file uploading to S3
-		// along with handling results files
-		sink := filepath.Join(pipeline.Sink, "history", executionId.String())
-		pipeline.Sink = sink
 
 		newExecution, err := createExecution(ctx, db, res.ID, executionId.String())
 

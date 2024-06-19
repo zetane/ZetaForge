@@ -22,7 +22,7 @@ export default function SaveAsPipelineButton() {
     // If it isn't set, electron will pop a file picker window
     // The response from the server after saving will contain that new path
     pipelineSpecs['sink'] = pipeline.path ? pipeline.path : pipeline.buffer
-    pipelineSpecs['build'] = pipeline.path ? pipeline.path : pipeline.buffer
+    pipelineSpecs['build'] = pipeline.buffer
     pipelineSpecs['name'] = pipeline.name
     pipelineSpecs['id'] = pipeline.id
     const saveData = {

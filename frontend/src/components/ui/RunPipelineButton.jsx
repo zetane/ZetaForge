@@ -183,6 +183,7 @@ export default function RunPipelineButton({ modalPopper, children, action }) {
 
       const response = await postExecution.mutateAsync(execution)
     } catch (error) {
+      console.log(error)
       setValidationErrorMsg([error.message])
       setIsOpen(true)
     }
