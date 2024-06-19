@@ -231,7 +231,7 @@ func init() {
 func validateJson[D any](body io.ReadCloser) (D, HTTPError) {
 	var data D
 	r := jsonschema.Reflector{
-		RequiredFromJSONSchemaTags: true,
+		RequiredFromJSONSchemaTags: false,
 		AllowAdditionalProperties:  false,
 		ExpandedStruct:             true,
 	}
@@ -258,7 +258,11 @@ func validateJson[D any](body io.ReadCloser) (D, HTTPError) {
 			listError = append(listError, error.String())
 		}
 		stringError := strings.Join(listError, "\n")
-		return data, InternalServerError{stringError}
+		jsonError, err := json.Marshal(stringError)
+		if err != nil {
+			return data, BadRequest{stringError}
+		}
+		return data, BadRequest{string(jsonError)}
 	}
 
 	json := jsoniter.Config{
@@ -391,10 +395,6 @@ func main() {
 			ctx.String(err.Status(), err.Error())
 			return
 		}
-
-		// TODO: client needs to handle results files
-		sink := filepath.Join(execution.Pipeline.Sink, "history", execution.Id)
-		execution.Pipeline.Sink = sink
 		newExecution, err := createExecution(ctx, db, res.ID, execution.Id)
 
 		if err != nil {
@@ -591,15 +591,13 @@ func main() {
 				}
 			} else if execution.Status != "Pending" {
 				s3key = execution.Uuid + "/" + execution.Executionid + "/" + execution.Executionid + ".log"
-				/*err = downloadFile(ctx, s3key, tempLog, config)
-				if err != nil {
-					//fmt.Printf("Failed to retrieve s3 log; err=%v", err)
-				}
+				// in certain cases the pipeline has succeeded or failed but
+				// has not yet uploaded to s3, so still attempt to send the tempLog
 				logOutput, err = readTempLog(tempLog)
+
 				if err != nil {
-					fmt.Printf("Failed to read s3 log; err=%v\n", err)
+					fmt.Printf("No temp log on the server; err=%v\n", err)
 				}
-				*/
 			}
 			newRes, err := newResponsePipelinesExecution(execution, logOutput, s3key)
 			if err != nil {
@@ -723,11 +721,6 @@ func main() {
 			ctx.String(500, fmt.Sprintf("%v", uuidErr))
 			return
 		}
-
-		// TODO: client needs to handle file uploading to S3
-		// along with handling results files
-		sink := filepath.Join(pipeline.Sink, "history", executionId.String())
-		pipeline.Sink = sink
 
 		newExecution, err := createExecution(ctx, db, res.ID, executionId.String())
 

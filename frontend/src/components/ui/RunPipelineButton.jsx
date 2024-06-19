@@ -24,13 +24,13 @@ const usePostExecution = (queryClient, configuration, setWorkspace, loadServerPi
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(execution),
-      });
+      })
+      const data = await response.json()
 
       if (!response.ok) {
-        throw new Error('Request failed');
+        throw new Error(`Request failed: ${data}`);
       }
 
-      const data = await response.json();
       return data;
     },
     onSuccess: (newExecution) => {
@@ -124,7 +124,7 @@ export default function RunPipelineButton({ modalPopper, children, action }) {
     const executionId = uuidv7();
 
     try {
-      const res = await axios.get(`${import.meta.env.VITE_EXECUTOR}/ping`)
+      const res = await axios.get(`http://${configuration.host}:${configuration.anvilPort}/ping`)
       if (res.status != 200) {
         throw Error()
       }
@@ -165,15 +165,13 @@ export default function RunPipelineButton({ modalPopper, children, action }) {
       const sortedPipeline = buildSortKeys(pipelineSpecs)
       // tries to put history in a user path if it exists, if not
       // will put it into the buffer path (.cache)
-      pipelineSpecs['sink'] = pipeline.path ? pipeline.path : pipeline.buffer
+      sortedPipeline['sink'] = pipeline.path ? pipeline.path : pipeline.buffer
       // Pull containers from the buffer to ensure the most recent ones
       // In the case where a user has a savePath but a mod has happened since
       // Last save
-      // TODO: Set a flag (right now it's a timestamp)
-      // and break the cache when user mods the canvas
-      pipelineSpecs['build'] = pipeline.buffer
-      pipelineSpecs['name'] = pipeline.name
-      pipelineSpecs['id'] = pipeline.id
+      sortedPipeline['build'] = pipeline.buffer
+      sortedPipeline['name'] = pipeline.name
+      sortedPipeline['id'] = pipeline.id
       const rebuild = (action == "Rebuild")
       const execution = {
         id: executionId,

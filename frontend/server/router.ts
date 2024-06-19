@@ -107,6 +107,7 @@ export const appRouter = router({
           writePath = savePath.filePath
           specs['sink'] = writePath
           specs['build'] = writePath
+          specs['name'] = name
 
           if (writePath) {
             try {
@@ -123,7 +124,7 @@ export const appRouter = router({
 
       if (writePath) {
         const savePaths = await copyPipeline(specs, buffer, writePath);
-        return savePaths;
+        return { name: name, ...savePaths };
       }
 
       return {}
