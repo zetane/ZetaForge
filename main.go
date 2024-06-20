@@ -419,9 +419,9 @@ func main() {
 			return
 		}
 		if config.IsLocal || config.Cloud.IsDebug {
-			go localExecute(&execution.Pipeline, res.ID, execution.Id, execution.Build, config, client, db, hub)
+			go localExecute(&execution.Pipeline, newExecution.ID, execution.Id, execution.Build, config, client, db, hub)
 		} else {
-			go cloudExecute(&execution.Pipeline, res.ID, execution.Id, execution.Build, config, client, db, hub)
+			go cloudExecute(&execution.Pipeline, newExecution.ID, execution.Id, execution.Build, config, client, db, hub)
 		}
 
 		retData, err := filterPipeline(ctx, db, execution.Id)
