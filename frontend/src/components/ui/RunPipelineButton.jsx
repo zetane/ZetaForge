@@ -40,8 +40,6 @@ export default function RunPipelineButton({ children, action }) {
     if(!newExecution) {
       return;
     }
-
-    console.log(newExecution);
     
     queryClient.setQueryData(['pipelines'], (oldExecutions) => {
       let updatedPipelines = [];
