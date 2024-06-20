@@ -19,9 +19,9 @@ import {
 } from "@carbon/react";
 import { useAtom } from "jotai";
 import { useImmerAtom } from 'jotai-immer';
-import { Fragment, useEffect, useRef, useState } from "react";
-import { EditorCodeMirror, ViewerCodeMirror } from "./CodeMirrorComponents";
-
+import { useEffect, useMemo, useRef, useState } from "react";
+import ViewerFragment from './ViewerFragment';
+import { ManualEditor } from './ManualEditor';
 
 export default function ComputationsFileEditor({ fetchFileSystem }) {
   const serverAddress = "http://localhost:3330";
@@ -46,12 +46,15 @@ export default function ComputationsFileEditor({ fetchFileSystem }) {
   const compileComputation = trpc.compileComputation.useMutation();
   const saveBlockSpecs = trpc.saveBlockSpecs.useMutation();
   const history = trpc.chat.history.get.useQuery({ blockPath });
+  const historyData = history?.data ?? []
   const updateHistory = trpc.chat.history.update.useMutation({
     onSuccess(input) {
       utils.chat.history.get.invalidate({ blockPath })
     }
   });
+
   const index = trpc.chat.index.get.useQuery({ blockPath });
+  const indexData = index?.data ?? []
   const updateIndex = trpc.chat.index.update.useMutation({
     onSuccess(input) {
       utils.chat.index.get.invalidate({ blockPath })
@@ -95,10 +98,6 @@ export default function ComputationsFileEditor({ fetchFileSystem }) {
     })
   };
 
-  const handleEditorChange = (value) => {
-    setEditorValue(value);
-  };
-
   const handleSubmit = async (e) => {
     setIsLoading(true);
     e.preventDefault();
@@ -138,9 +137,9 @@ export default function ComputationsFileEditor({ fetchFileSystem }) {
     setIsLoading(false);
   };
 
-  const handleSave = (e) => {
+  const handleSave = (value) => {
     if (editorManualPrompt) {
-      recordCode(editorManualPrompt, editorValue);
+      recordCode(editorManualPrompt, value);
     }
     setShowEditor(false);
     if (panel.current) {
@@ -213,104 +212,65 @@ export default function ComputationsFileEditor({ fetchFileSystem }) {
     fetchFileSystem();
   };
 
-  return (
-    <div ref={panel} className="flex flex-col gap-y-12">
-      {history.isSuccess & index.isSuccess && history.data.map((item, i) => (
-        <Fragment key={i}>
-          <span className="block-editor-prompt">
-            {item.prompt}
-          </span>
-          <div>
-            <div className="flex items-center mb-4">
-              <RadioButton
-                checked={index.data === i}
-                onChange={() => handleGenerate(i)}
-                labelText={`Select Code #${i}`}
-              />
-            </div>
-            <div
-              className="relative"
-              style={{
-                border:
-                  index.data === i
-                    ? "2px solid darkorange"
-                    : "none",
-              }}
-            >
-              <ViewerCodeMirror
-                code={item.response}
-              />
-              <div className="absolute right-4 top-4">
-                <Button
-                  renderIcon={Edit}
-                  iconDescription="Edit Code"
-                  tooltipPosition="top"
-                  hasIconOnly
-                  size="md"
-                  onClick={() => handleEdit(i)}
+  const fragments = useMemo(() => {
+    console.log("im being called ", historyData, indexData)
+    let fragmentArray = [];
+    fragmentArray = historyData.map((item, i) => {
+      return (<ViewerFragment i={i} selected={indexData == i} item={item} index={indexData}
+        handleGenerate={handleGenerate} handleEdit={handleEdit}/>)
+    })
+    return fragmentArray;
+  }, [historyData, indexData])
+
+  let editorComponent = null;
+  if (showEditor) {
+    editorComponent = (<ManualEditor updatedCode={editorValue}
+      handleSave={handleSave} editorManualPrompt={editorManualPrompt}/>)
+  } else {
+    editorComponent = (
+      <>
+          {openAIApiKey &&
+            <div className="relative">
+              <div className="text-right">
+                <div className="inline-block p-2">
+                  <Bot size={24} className="align-middle" />
+                  <span className="text-md align-middle">{agentName}</span>
+                </div>
+                <textarea
+                  className="w-full p-2 block-editor-prompt-input resize-none"
+                  ref={chatTextarea}
+                  placeholder="Ask to generate code or modify last code"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSubmit(e);
+                    }
+                  }}
                 />
               </div>
-            </div>
-          </div>
-        </Fragment>
-      ))}
-      {showEditor ? (
-        <div>
-          <div>{editorManualPrompt}</div>
-          <div className="relative">
-            <EditorCodeMirror
-              code={editorValue}
-              onChange={handleEditorChange}
-            />
-            <div className="absolute right-4 top-4">
-              <Button
-                renderIcon={Save}
-                iconDescription="Save code"
-                tooltipPosition="left"
-                hasIconOnly
-                size="md"
-                onClick={handleSave}
-              />
-            </div>
-          </div>
-        </div>
-      ) : (
-        <>
-            {openAIApiKey &&
-              <div className="relative">
-                <div className="text-right">
-                  <div className="inline-block p-2">
-                    <Bot size={24} className="align-middle" />
-                    <span className="text-md align-middle">{agentName}</span>
-                  </div>
-                  <textarea
-                    className="w-full p-2 block-editor-prompt-input resize-none"
-                    ref={chatTextarea}
-                    placeholder="Ask to generate code or modify last code"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSubmit(e);
-                      }
-                    }}
-                  />
-                </div>
 
-                <div className="absolute bottom-2 right-1">
-                  {isLoading ? (
-                    <div className='prompt-spinner'>
-                      <Loading active={true} description="Sending..." withOverlay={false} />
-                    </div>
-                  ) : (
-                    <IconButton iconDescription="Send Prompt" label="Send Prompt" kind='ghost' onClick={handleSubmit}>
-                        <SendFilled size={24} />
-                    </IconButton>
-                  )}
-                </div>
-            </div>
-            }
-        </>
-      )}
+              <div className="absolute bottom-2 right-1">
+                {isLoading ? (
+                  <div className='prompt-spinner'>
+                    <Loading active={true} description="Sending..." withOverlay={false} />
+                  </div>
+                ) : (
+                  <IconButton iconDescription="Send Prompt" label="Send Prompt" kind='ghost' onClick={handleSubmit}>
+                      <SendFilled size={24} />
+                  </IconButton>
+                )}
+              </div>
+          </div>
+          }
+      </>
+    )
+  }
+
+
+  return (
+    <div ref={panel} className="flex flex-col gap-y-12">
+      {fragments}
+      {editorComponent}
     </div>
   );
 }

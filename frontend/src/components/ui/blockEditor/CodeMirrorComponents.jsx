@@ -27,16 +27,18 @@ const viewerBackgroundTheme = EditorView.theme({
 
 const themeAtom = atom((get) => get(darkModeAtom) ? vscodeDark : githubLight);
 
-export const ViewerCodeMirror = ({ code }) => {
+export const ViewerCodeMirror = ({ index, code }) => {
   const [theme] = useAtom(themeAtom);
+  const extensions = [loadLanguage("python"), viewerBackgroundTheme]
   return (
     <CodeMirror
-      value={code}
+      key={index+"code"}
       theme={theme}
-      extensions={[loadLanguage("python"), viewerBackgroundTheme]}
+      extensions={extensions}
       readOnly={true}
+      height="800px"
       basicSetup={{
-        lineNumbers: true,
+        lineNumbers: false,
         highlightActiveLineGutter: false,
         highlightSpecialChar: false,
         history: false,
@@ -62,16 +64,20 @@ export const ViewerCodeMirror = ({ code }) => {
         lintKeymap: false,
         tabSize: 2,
       }}
+      onUpdate={() => {'being called'}}
     />
   );
 };
 
-export const EditorCodeMirror = ({ code, onChange }) => {
+export const EditorCodeMirror = ({ code, setCode }) => {
   const [theme] = useAtom(themeAtom);
+  const extensions = [loadLanguage("python"), viewerBackgroundTheme]
+
   return (
     <CodeMirror
       value={code}
-      extensions={[loadLanguage("python"), backgroundTheme]}
+      extensions={extensions}
+      height="600px"
       basicSetup={{
         tabSize: 2,
         highlightActiveLine: false,
@@ -79,7 +85,7 @@ export const EditorCodeMirror = ({ code, onChange }) => {
         drawSelection: false,
       }}
       theme={theme}
-      onChange={onChange}
+      onChange={setCode}
     />
   );
 };
