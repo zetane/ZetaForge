@@ -41,6 +41,21 @@ export default function DrawflowWrapper() {
   const [renderNodes, setRenderNodes] = useState([])
   const drawflowCanvas = useRef(null);
   const pipelineRef = useRef(null);
+  const nodeRefs = useRef({});
+
+  const addNodeRefs = (nodeList) => {
+    nodeRefs.current = { ...nodeRefs.current, ...nodeList };
+  }
+
+  const removeNodeRefs = (blockId) => {
+    const newRefs = { ...nodeRefs.current };
+    Object.keys(newRefs).forEach(key => {
+      if (key.startsWith(blockId)) {
+        delete newRefs[key];
+      }
+    });
+    nodeRefs.current = newRefs;
+  }
 
   pipelineRef.current = pipeline
 
@@ -64,6 +79,9 @@ export default function DrawflowWrapper() {
                 openView={openView}
                 id={key}
                 history={pipeline.history}
+                addNodeRefs={addNodeRefs}
+                removeNodeRefs={removeNodeRefs}
+                nodeRefs={nodeRefs}
                 />)
     })
 
@@ -74,13 +92,14 @@ export default function DrawflowWrapper() {
     if (editor) {
       editor.pipeline = pipeline;
       editor.connection_list = pipelineConnections
+      editor.nodeRefs = nodeRefs.current;
       editor.addConnection()
       editor.updateAllConnections()
     }
   }, [pipelineConnections])
 
   useEffect(() => {
-    const newConnections = createConnections(pipeline?.data)
+    const newConnections = createConnections(pipeline?.data, pipelineConnections)
     if (editor) {
       editor.syncConnections(newConnections)
     }
