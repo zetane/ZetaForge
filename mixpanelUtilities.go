@@ -18,7 +18,7 @@ import (
 func generateDistinctID() string {
 	_, macInt, err := getMACAddress()
 	if err != nil {
-		log.Printf("Mixpanel error; err=%v", err)
+		log.Printf("mixpanel error; err=%v", err)
 	}
 
 	macAsString := macInt.String()
@@ -122,7 +122,7 @@ func (m *MixpanelClient) SetPeopleProperties(ctx context.Context, userProperties
 	user := mixpanel.NewPeopleProperties(m.DistinctID, finalProperties)
 	err := m.Client.PeopleSet(ctx, []*mixpanel.PeopleProperties{user})
 	if err != nil {
-		log.Printf("Mixpanel error; err=%v", err)
+		log.Printf("mixpanel error; err=%v", err)
 		m.Enabled = false
 	}
 	return err
@@ -148,7 +148,7 @@ func (m *MixpanelClient) TrackEvent(ctx context.Context, eventName string, prope
 	event := m.Client.NewEvent(eventName, m.DistinctID, finalProperties)
 	err := m.Client.Track(ctx, []*mixpanel.Event{event})
 	if err != nil {
-		log.Printf("Mixpanel error; err=%v", err)
+		log.Printf("mixpanel error; err=%v", err)
 		m.Enabled = false
 	}
 	return err

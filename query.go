@@ -88,8 +88,8 @@ func createPipeline(ctx context.Context, db *sql.DB, organization string, pipeli
 
 	tx, err := db.Begin()
 	if err != nil {
-		log.Printf("Failed to initialize transaction; err=%v", err)
-		return zdatabase.Pipeline{}, InternalServerError{err.Error()}
+		log.Printf("failed to initialize transaction; err=%v", err)
+		return zdatabase.Pipeline{}, InternalServerError{fmt.Sprintf("failed to initialize transaction: %v", err)}
 	}
 	defer tx.Rollback()
 
@@ -114,7 +114,7 @@ func createPipeline(ctx context.Context, db *sql.DB, organization string, pipeli
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Printf("Failed to commit transaction; err=%v", err)
+		log.Printf("failed to commit transaction; err=%v", err)
 		return zdatabase.Pipeline{}, InternalServerError{err.Error()}
 	}
 
@@ -146,7 +146,7 @@ func listAllPipelines(ctx context.Context, db *sql.DB, organization string) ([]z
 func deployPipeline(ctx context.Context, db *sql.DB, organization string, uuid string, hash string) HTTPError {
 	tx, err := db.Begin()
 	if err != nil {
-		log.Printf("Failed to initialize transaction; err=%v", err)
+		log.Printf("failed to initialize transaction; err=%v", err)
 		return InternalServerError{err.Error()}
 	}
 	defer tx.Rollback()
@@ -168,7 +168,7 @@ func deployPipeline(ctx context.Context, db *sql.DB, organization string, uuid s
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Printf("Failed to commit transaction; err=%v", err)
+		log.Printf("failed to commit transaction; err=%v", err)
 		return InternalServerError{err.Error()}
 	}
 
@@ -193,10 +193,11 @@ func getPipeline(ctx context.Context, db *sql.DB, organization string, uuid stri
 
 func createExecution(ctx context.Context, db *sql.DB, pipeline int64, executionid string) (zdatabase.Execution, error) {
 	q := zdatabase.New(db)
-	return q.CreateExecution(ctx, zdatabase.CreateExecutionParams{
+	res, err := q.CreateExecution(ctx, zdatabase.CreateExecutionParams{
 		Pipeline:    pipeline,
 		Executionid: executionid,
 	})
+	return res, err
 }
 
 func updateExecutionWorkflow(ctx context.Context, db *sql.DB, execution int64, workflow *wfv1.Workflow) error {
@@ -234,7 +235,7 @@ func softDeleteExecution(ctx context.Context, db *sql.DB, organization string, u
 
 	tx, err := db.Begin()
 	if err != nil {
-		log.Printf("Failed to initialize transaction; err=%v", err)
+		log.Printf("failed to initialize transaction; err=%v", err)
 		return InternalServerError{err.Error()}
 	}
 	defer tx.Rollback()
@@ -259,7 +260,7 @@ func softDeleteExecution(ctx context.Context, db *sql.DB, organization string, u
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Printf("Failed to commit transaction; err=%v", err)
+		log.Printf("failed to commit transaction; err=%v", err)
 		return InternalServerError{err.Error()}
 	}
 
@@ -300,7 +301,7 @@ func getExecution(ctx context.Context, db *sql.DB, organization string, uuid str
 
 	tx, err := db.Begin()
 	if err != nil {
-		log.Printf("Failed to initialize transaction; err=%v", err)
+		log.Printf("failed to initialize transaction; err=%v", err)
 		return zdatabase.Execution{}, InternalServerError{err.Error()}
 	}
 	defer tx.Rollback()
@@ -326,7 +327,7 @@ func getExecution(ctx context.Context, db *sql.DB, organization string, uuid str
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Printf("Failed to commit transaction; err=%v", err)
+		log.Printf("failed to commit transaction; err=%v", err)
 		return zdatabase.Execution{}, InternalServerError{err.Error()}
 	}
 
@@ -336,7 +337,7 @@ func getExecution(ctx context.Context, db *sql.DB, organization string, uuid str
 func setSetupVersion(ctx context.Context, db *sql.DB, version string) (zdatabase.SetupVersion, error) {
 	tx, err := db.Begin()
 	if err != nil {
-		log.Printf("Failed to initialize transaction; err=%v", err)
+		log.Printf("failed to initialize transaction; err=%v", err)
 		return zdatabase.SetupVersion{}, InternalServerError{err.Error()}
 	}
 	defer tx.Rollback()
@@ -353,7 +354,7 @@ func setSetupVersion(ctx context.Context, db *sql.DB, version string) (zdatabase
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Printf("Failed to commit transaction; err=%v", err)
+		log.Printf("failed to commit transaction; err=%v", err)
 		return zdatabase.SetupVersion{}, InternalServerError{err.Error()}
 	}
 

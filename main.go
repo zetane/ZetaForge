@@ -129,7 +129,7 @@ func setupSentry() {
 		Dsn: "https://7fb18e8e487455a950298625457264f3@o1096443.ingest.us.sentry.io/4507031960223744",
 	})
 	if err != nil {
-		log.Fatalf("Failed to start Sentry; err=%s", err)
+		log.Fatalf("failed to start Sentry; err=%v", err)
 	}
 	defer sentry.Flush(2 * time.Second)
 }
@@ -138,12 +138,12 @@ func main() {
 	ctx := context.Background()
 	file, err := os.ReadFile("config.json")
 	if err != nil {
-		log.Fatalf("Config file missing; err=%v", err)
+		log.Fatalf("config file missing; err=%v", err)
 		return
 	}
 	var config Config
 	if err := json.Unmarshal(file, &config); err != nil {
-		log.Fatalf("Config file invalid; err=%v", err)
+		log.Fatalf("config file invalid; err=%v", err)
 		return
 	}
 
@@ -153,17 +153,17 @@ func main() {
 
 	db, err := sql.Open("sqlite3", config.Database)
 	if err != nil {
-		log.Fatalf("Failed to load database; err=%v", err)
+		log.Fatalf("failed to load database; err=%v", err)
 	}
 
 	goose.SetBaseFS(migrations)
 
 	if err := goose.SetDialect(string(goose.DialectSQLite3)); err != nil {
-		log.Fatalf("Failed to set database dialect; err=%v", err)
+		log.Fatalf("failed to set database dialect; err=%v", err)
 	}
 
 	if err := goose.Up(db, "db/migrations"); err != nil {
-		log.Fatalf("Failed to migrate database; err=%v", err)
+		log.Fatalf("failed to migrate database; err=%v", err)
 	}
 
 	var client clientcmd.ClientConfig
@@ -185,7 +185,7 @@ func main() {
 	} else {
 		cacert, err := base64.StdEncoding.DecodeString(config.Cloud.CaCert)
 		if err != nil {
-			log.Fatalf("Invalid CA certificate; err=%v", err)
+			log.Fatalf("invalid CA certificate; err=%v", err)
 		}
 
 		cfg := clientcmdapi.NewConfig()
@@ -236,7 +236,7 @@ func main() {
 
 		res, err := createPipeline(ctx.Request.Context(), db, "org", execution.Pipeline)
 		if err != nil {
-			log.Printf("Failed to create pipeline; err=%v", err)
+			log.Printf("failed to create pipeline; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
@@ -276,7 +276,7 @@ func main() {
 		}
 
 		if err := serveSocket(conn, room, hub); err != nil {
-			log.Printf("Websocket error; err=%v", err)
+			log.Printf("websocket error; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 		}
 	})
@@ -285,14 +285,14 @@ func main() {
 	pipeline.POST("", func(ctx *gin.Context) {
 		pipeline, err := validateJson[zjson.Pipeline](ctx.Request.Body)
 		if err != nil {
-			log.Printf("Invalid json request; err=%v", err)
+			log.Printf("invalid json request; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
 
 		res, err := createPipeline(ctx.Request.Context(), db, "org", pipeline)
 		if err != nil {
-			log.Printf("Failed to create pipeline; err=%v", err)
+			log.Printf("failed to create pipeline; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
@@ -303,7 +303,7 @@ func main() {
 		res, err := listAllPipelines(ctx.Request.Context(), db, "org")
 
 		if err != nil {
-			log.Printf("Failed to list pipelines; err=%v", err)
+			log.Printf("failed to list pipelines; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
@@ -320,7 +320,7 @@ func main() {
 		hash := ctx.Param("hash")
 
 		if err := softDeletePipeline(ctx.Request.Context(), db, "org", uuid, hash); err != nil {
-			log.Printf("Failed to delete pipeline; err=%v", err)
+			log.Printf("failed to delete pipeline; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
@@ -330,7 +330,7 @@ func main() {
 		hash := ctx.Param("hash")
 
 		if err := deployPipeline(ctx.Request.Context(), db, "org", uuid, hash); err != nil {
-			log.Printf("Failed to deploy pipeline; err=%v", err)
+			log.Printf("failed to deploy pipeline; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
@@ -341,7 +341,7 @@ func main() {
 		res, err := listAllExecutions(ctx.Request.Context(), db, "org", uuid)
 
 		if err != nil {
-			log.Printf("Failed to list executions; err=%v", err)
+			log.Printf("failed to list executions; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
@@ -364,7 +364,7 @@ func main() {
 
 		res, httpErr := getExecution(ctx.Request.Context(), db, "org", uuid, hash, index)
 		if httpErr != nil {
-			log.Printf("Failed to delete execution; err=%v", err)
+			log.Printf("failed to delete execution; err=%v", err)
 			ctx.String(httpErr.Status(), httpErr.Error())
 			return
 		}
@@ -378,7 +378,7 @@ func main() {
 		res, err := listExecutions(ctx.Request.Context(), db, "org", uuid, hash)
 
 		if err != nil {
-			log.Printf("Failed to list executions; err=%v", err)
+			log.Printf("failed to list executions; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
@@ -395,7 +395,7 @@ func main() {
 		hash := ctx.Param("hash")
 		res, err := getPipeline(ctx.Request.Context(), db, "org", paramUuid, hash)
 		if err != nil {
-			log.Printf("Failed to execute pipeline; err=%v", err)
+			log.Printf("failed to execute pipeline; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
@@ -439,7 +439,7 @@ func main() {
 		}
 
 		if err := softDeleteExecution(ctx.Request.Context(), db, "org", uuid, hash, index); err != nil {
-			log.Printf("Failed to delete execution; err=%v", err)
+			log.Printf("failed to delete execution; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}

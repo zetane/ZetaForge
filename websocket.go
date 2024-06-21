@@ -127,7 +127,7 @@ func (hub *Hub) Run() {
 
 func (hub *Hub) OpenRoom(room string) error {
 	if _, ok := hub.Clients[room]; ok {
-		return errors.New("Pipeline already exists")
+		return errors.New("pipeline already exists")
 	}
 
 	hub.Clients[room] = make(map[*Client]bool)
