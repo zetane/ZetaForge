@@ -3,6 +3,7 @@ import fs from "fs/promises";
 import { tmpdir } from "os";
 import path from "path";
 import { BLOCK_SPECS_FILE_NAME, PIPELINE_SPECS_FILE_NAME } from "../src/utils/constants";
+import { logger } from './logger';
 
 export const readPipelines = async (dir) => {
   const items = await fs.readdir(dir);
@@ -26,11 +27,11 @@ const pipelineSpecBuilder = async (items, dir) => {
           parsedPipelineData.folderName = item; // Add the folder name to the pipeline data
           pipelinesData.push(parsedPipelineData);
         } catch (error) {
-          console.log("ERROR: ", error);
+          logger.error(error);
         }
       }
     } catch (error) {
-      console.log("ERROR: ", error);
+      logger.error(error);
     }
   }
 
@@ -58,12 +59,12 @@ const specBuilder = async (specs, dir) => {
           const specData = await fs.readFile(specs)
           specsData.push(JSON.parse(specData))
         } catch (error) {
-          console.log("ERROR: ", error)
+          logger.error(error)
         }
       }
 
     } catch (error) {
-      console.log("ERRRRRROR: ", error)
+      logger.error(error)
     }
 
   }
@@ -110,7 +111,7 @@ export async function withFileSystemRollback(restorablePaths, workFunction) {
 
     await workFunction();
   } catch (e) {
-    console.error(
+    logger.error(
       "File system operations failed. Starting file rollback. Caused by:",
       e
     );

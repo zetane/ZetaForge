@@ -11,6 +11,7 @@ import {
 } from "./fileSystem.js";
 import { checkAndUpload, checkAndCopy, uploadDirectory } from "./s3.js";
 import { createExecution, getBuildContextStatus } from "./anvil";
+import { logger } from "./logger";
 
 export async function saveSpec(spec, writePath) {
   const pipelineSpecsPath = path.join(writePath, PIPELINE_SPECS_FILE_NAME)
@@ -20,7 +21,7 @@ export async function saveSpec(spec, writePath) {
 
 export async function saveBlock(blockKey, blockSpec, fromPath, toPath) {
   const newFolder = path.join(toPath, blockKey);
-  console.log(`saving ${blockKey} from ${fromPath} to ${newFolder}`);
+  logger.debug(`saving ${blockKey} from ${fromPath} to ${newFolder}`);
   await fs.mkdir(newFolder, { recursive: true });
   await fs.cp(fromPath, newFolder, { recursive: true });
   await fs.writeFile(path.join(newFolder, BLOCK_SPECS_FILE_NAME), JSON.stringify(blockSpec, null, 2))
@@ -30,7 +31,7 @@ export async function saveBlock(blockKey, blockSpec, fromPath, toPath) {
 export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
   const bufferPath = path.resolve(process.cwd(), fromDir)
 
-  console.log(`supposed to be writing from ${fromDir} to ${toDir}`);
+  logger.debug(`supposed to be writing from ${fromDir} to ${toDir}`);
 
   // Takes existing pipeline + spec
   const writePipelineDirectory = toDir;
@@ -79,7 +80,7 @@ export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
       }
     }
 
-    console.log(`saving ${key} from ${existingBlockPath} to ${newBlockPath}`);
+    logger.debug(`saving ${key} from ${existingBlockPath} to ${newBlockPath}`);
     if (existingBlockPath != newBlockPath) {
       // if it's the same folder, don't try to copy it
       await fs.cp(existingBlockPath, newBlockPath, {recursive: true})
@@ -108,7 +109,7 @@ async function getBlockIndex(blockDirectories) {
       }
     } catch (error) {
       if (error.code === "ENOENT") {
-        console.error("Directory or file does not exist:", error.path);
+        logger.error("Directory or file does not exist:", error.path);
       } else {
         // Handle other types of errors or rethrow the error
         throw error;

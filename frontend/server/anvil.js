@@ -1,3 +1,5 @@
+import { logger } from "./logger";
+
 export async function getBuildContextStatus(configuration, pipelineSpecs) {
   const response = await handleRequest(
     buildPath(
@@ -67,7 +69,7 @@ async function handleRequest(url, method, headers, body = null) {
     return response;
   } catch (error) {
     const message = `Anvil request failed: ${error}`;
-    console.trace(message);
+    logger.error(message);
     throw new Error(message);
   }
 }
