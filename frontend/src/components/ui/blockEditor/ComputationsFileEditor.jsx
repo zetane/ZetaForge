@@ -213,10 +213,11 @@ export default function ComputationsFileEditor({ fetchFileSystem }) {
   };
 
   const fragments = useMemo(() => {
-    console.log("im being called ", historyData, indexData)
     let fragmentArray = [];
     fragmentArray = historyData.map((item, i) => {
-      return (<ViewerFragment i={i} selected={indexData == i} item={item} index={indexData}
+      const code = item?.response ?? ""
+      const prompt = item?.prompt ?? ""
+      return (<ViewerFragment key={i} currentIndex={i} code={code} prompt={prompt} selectedIndex={indexData}
         handleGenerate={handleGenerate} handleEdit={handleEdit}/>)
     })
     return fragmentArray;

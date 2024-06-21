@@ -27,18 +27,19 @@ const viewerBackgroundTheme = EditorView.theme({
 
 const themeAtom = atom((get) => get(darkModeAtom) ? vscodeDark : githubLight);
 
-export const ViewerCodeMirror = ({ index, code }) => {
+export const ViewerCodeMirror = ({ currentIndex, code }) => {
   const [theme] = useAtom(themeAtom);
   const extensions = [loadLanguage("python"), viewerBackgroundTheme]
   return (
     <CodeMirror
-      key={index+"code"}
+      key={currentIndex+"code"}
+      value={code}
       theme={theme}
       extensions={extensions}
       readOnly={true}
-      height="800px"
+      maxWidth="100%"
       basicSetup={{
-        lineNumbers: false,
+        lineNumbers: true,
         highlightActiveLineGutter: false,
         highlightSpecialChar: false,
         history: false,
@@ -77,7 +78,8 @@ export const EditorCodeMirror = ({ code, setCode }) => {
     <CodeMirror
       value={code}
       extensions={extensions}
-      height="600px"
+      maxHeight="800px"
+      width="100%"
       basicSetup={{
         tabSize: 2,
         highlightActiveLine: false,

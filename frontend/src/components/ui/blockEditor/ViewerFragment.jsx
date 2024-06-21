@@ -1,21 +1,22 @@
-import { Fragment, useMemo } from "react";
+import { Fragment } from "react";
 import { RadioButton, Button } from "@carbon/react";
 import { ViewerCodeMirror } from "./CodeMirrorComponents";
 import { Edit } from "@carbon/icons-react";
 
-export default function ViewerFragment({i, selected, item, index, handleGenerate, handleEdit}) {
-  console.log(index, item)
+export default function ViewerFragment({code, prompt, currentIndex, selectedIndex, handleGenerate, handleEdit}) {
+  console.log(currentIndex, selectedIndex)
+  const selected = (currentIndex == selectedIndex)
   return (
-    <Fragment key={index}>
+    <Fragment key={currentIndex}>
       <span className="block-editor-prompt">
-        {item.prompt}
+        {prompt}
       </span>
       <div>
         <div className="flex items-center mb-4">
           <RadioButton
             checked={selected}
-            onChange={() => handleGenerate(i)}
-            labelText={`Select Code #${i}`}
+            onChange={() => handleGenerate(currentIndex)}
+            labelText={`Select Code #${currentIndex}`}
           />
         </div>
         <div
@@ -28,9 +29,9 @@ export default function ViewerFragment({i, selected, item, index, handleGenerate
           }}
         >
           <ViewerCodeMirror
-            index={index}
-            key={index+"-viewer"}
-            code={item.response}
+            key={currentIndex+"-viewer"}
+            currentIndex={currentIndex}
+            code={code}
           />
           <div className="absolute right-4 top-4">
             <Button
@@ -39,7 +40,7 @@ export default function ViewerFragment({i, selected, item, index, handleGenerate
               tooltipPosition="top"
               hasIconOnly
               size="md"
-              onClick={() => handleEdit(i)}
+              onClick={() => handleEdit(currentIndex)}
             />
           </div>
         </div>
