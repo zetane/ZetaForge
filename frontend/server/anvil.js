@@ -1,4 +1,5 @@
 import { logger } from "./logger";
+import { HttpStatus, ServerError } from "./serverError";
 
 export async function getBuildContextStatus(configuration, pipelineSpecs) {
   const response = await handleRequest(
@@ -42,6 +43,10 @@ export async function createExecution(
   );
 
   const body = await response.json();
+
+  if (!response.ok) {
+    throw new ServerError(`Anvil could not start the execution: ${response.json()}`, HttpStatus.BAD_REQUEST, null)
+  }
 
   return body;
 }

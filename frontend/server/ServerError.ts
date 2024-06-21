@@ -1,8 +1,8 @@
 
 export class ServerError extends Error {
   public readonly statusCode: HttpStatus;
-  public readonly cause: Error;
-  constructor(message: string, statusCode: HttpStatus, cause: Error) {
+  public readonly cause: Error | undefined;
+  constructor(message: string, statusCode: HttpStatus, cause: Error | undefined) {
     super(message);
     this.statusCode = statusCode;
     this.cause = cause;
