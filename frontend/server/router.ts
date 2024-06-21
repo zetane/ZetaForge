@@ -1,4 +1,3 @@
-import { TRPCError } from "@trpc/server";
 import { app, dialog } from 'electron';
 import fs from "fs/promises";
 import path from "path";
@@ -9,6 +8,7 @@ import { readPipelines, readSpecs } from "./fileSystem.js";
 import { copyPipeline, executePipeline, getBlockPath, removeBlock, saveBlock, saveSpec } from './pipelineSerialization.js';
 import { publicProcedure, router } from './trpc';
 import { errorHandling } from "./middleware"
+import { logger } from "./logger.js";
 
 export const appRouter = router({
   getBlocks: publicProcedure
@@ -20,14 +20,11 @@ export const appRouter = router({
         coreBlocks = path.join(resources, "core", "blocks")
       }
 
-      try {
         const blocks = await readSpecs(coreBlocks)
         return blocks
-      } catch (error) {
-        console.log(error)
-      }
     }),
   getBlockCoverImagePath: publicProcedure
+    .use(errorHandling)
     .input(z.object({
       blockId: z.string(),
     }))
@@ -44,11 +41,12 @@ export const appRouter = router({
         const coverImagePath = path.join(blocksPath, blockId, "cover-image.png");
         return { coverImagePath };
       } catch (error) {
-        console.log(error);
+        logger.error(error);
         return { coverImagePath: null };
       }
     }),
   getPipelines: publicProcedure
+    .use(errorHandling)
     .query(async () => {
       const resources = process.resourcesPath;
       let corePipelines = "core/pipelines";
@@ -60,11 +58,12 @@ export const appRouter = router({
         const pipelines = await readPipelines(corePipelines);
         return pipelines;
       } catch (error) {
-        console.log(error);
+        logger.error(error);
         return [];
       }
     }),
   getPipelineCoverImagePath: publicProcedure
+    .use(errorHandling)
     .input(z.object({
       pipelineId: z.string(),
     }))
@@ -86,12 +85,13 @@ export const appRouter = router({
         const coverImagePath = path.join(pipelinesPath, pipeline.folderName, 'cover-image.png');
         return { coverImagePath };
       } catch (error) {
-        console.log(error);
+        logger.error(error);
         return { coverImagePath: null };
       }
     }),
   //TODO: load and validate schema
   savePipeline: publicProcedure
+    .use(errorHandling)
     .input(z.object({
       specs: z.any(),
       name: z.optional(z.string()),
@@ -118,7 +118,7 @@ export const appRouter = router({
                 fs.rm(writePath, { recursive: true, force: true })
               }
             } catch {
-              console.log("Creating dir: ", writePath)
+              logger.debug("Creating dir: ", writePath)
             }
           }
         }
@@ -132,6 +132,7 @@ export const appRouter = router({
       return {}
     }),
   saveBlock: publicProcedure
+    .use(errorHandling)
     .input(z.object({
       pipelineSpec: z.any(),
       blockSpec: z.any(),
@@ -152,6 +153,7 @@ export const appRouter = router({
       return savePaths;
     }),
   getBlockPath: publicProcedure
+    .use(errorHandling)
     .input(z.object({
       blockId: z.string(),
       pipelinePath: z.string(),
@@ -162,10 +164,12 @@ export const appRouter = router({
       return await getBlockPath(blockId, pipelinePath);
     }),
   getCachePath: publicProcedure
+    .use(errorHandling)
     .query(async () => {
       return path.join(process.cwd(), ".cache") + path.sep
     }),
   removeBlock: publicProcedure
+    .use(errorHandling)
     .input(z.object({
       blockId: z.string(),
       pipelinePath: z.string(),
@@ -176,6 +180,7 @@ export const appRouter = router({
       removeBlock(blockId, pipelinePath);
     }),
   executePipeline: publicProcedure
+    .use(errorHandling)
     .input(z.object({
       id: z.string(),
       executionId: z.string(),
@@ -194,19 +199,11 @@ export const appRouter = router({
     .mutation(async (opts) => {
       const { input } = opts;
       const { id, executionId, specs, path, buffer, name, rebuild, anvilConfiguration } = input;
-      
-      try {
-        return await executePipeline(id, executionId, specs, path, buffer, name, rebuild, anvilConfiguration);
-      } catch (error: unknown) {
-        const message = "Could not execute the pipeline"
-        console.error(message, error, (error as Error).stack)
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: message,
-        });
-      }
+
+      return await executePipeline(id, executionId, specs, path, buffer, name, rebuild, anvilConfiguration);
     }),
   compileComputation: publicProcedure
+    .use(errorHandling)
     .input(z.object({
       blockPath: z.string(),
     }))
@@ -214,18 +211,10 @@ export const appRouter = router({
       const { input } = opts;
       const { blockPath } = input;
 
-      try {
-        return await compileComputation(blockPath);
-      } catch (error) {
-        console.error(error)
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Could not compile.',
-        });
-      }
-
+      return await compileComputation(blockPath);
     }),
   saveBlockSpecs: publicProcedure
+    .use(errorHandling)
     .input(z.object({
       blockPath: z.string(),
       blockSpecs: z.any(),
@@ -234,17 +223,10 @@ export const appRouter = router({
       const { input } = opts;
       const { blockPath, blockSpecs } = input;
 
-      try {
-        return await saveBlockSpecs(blockPath, blockSpecs);
-      } catch (error) {
-        console.error(error)
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Could not compile.',
-        });
-      }
+      return await saveBlockSpecs(blockPath, blockSpecs);
     }),
   runTest: publicProcedure
+    .use(errorHandling)
     .input(z.object({
       blockPath: z.string(),
       blockKey: z.string(),
@@ -253,19 +235,12 @@ export const appRouter = router({
       const { input } = opts;
       const { blockPath, blockKey } = input;
 
-      try {
-        await runTest(blockPath, blockKey);
-      } catch (error) {
-        console.log(error);
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Could not run test'
-        })
-      }
+      await runTest(blockPath, blockKey);
     }),
   chat: router({
     history: router({
       get: publicProcedure
+      .use(errorHandling)
       .input(z.object({
         blockPath: z.string()
       }))
@@ -277,6 +252,7 @@ export const appRouter = router({
         return chatHistory;
       }),
       update: publicProcedure
+      .use(errorHandling)
       .input(z.object({
         blockPath: z.string(),
         history: z.array(z.any()),
@@ -290,6 +266,7 @@ export const appRouter = router({
     }),
     index: router({
       get: publicProcedure
+      .use(errorHandling)
       .input(z.object({
         blockPath: z.string()
       }))
@@ -301,6 +278,7 @@ export const appRouter = router({
         return chatIndex;
       }),
       update: publicProcedure
+      .use(errorHandling)
       .input(z.object({
         blockPath: z.string(),
         index: z.number(),
