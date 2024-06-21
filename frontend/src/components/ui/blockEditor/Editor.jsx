@@ -45,7 +45,7 @@ export default function Editor({blockKey, blockPath}) {
           <p className="text-sm">{blockKey}</p>
         </div>
         <div className="flex flex-row items-center justify-end">
-          <IconButton kind="ghost" size="lg" className="my-px-16" onClick={toggleMaximize} label="Maximize">
+          <IconButton kind="ghost" size="lg" className="my-px-16" onClick={toggleMaximize} label={isMaximized ? "Minimize" : "Maximize"}>
             {isMaximized ? <Minimize size={24} /> : <Maximize size={24} />}
           </IconButton>
           <IconButton kind="ghost" size="lg" onClick={handleClose} label="Close">
