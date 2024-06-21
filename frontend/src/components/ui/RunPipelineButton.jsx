@@ -1,190 +1,159 @@
 import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { mixpanelAtom } from "@/atoms/mixpanelAtom";
 import generateSchema from '@/utils/schemaValidation';
 import { trpc } from "@/utils/trpc";
 import { Button } from "@carbon/react";
-import axios from "axios";
 import { useAtom } from "jotai";
 import { useImmerAtom } from "jotai-immer";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { uuidv7 } from "uuidv7";
 import ClosableModal from "./modal/ClosableModal";
 import { workspaceAtom } from "@/atoms/pipelineAtom";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { useLoadServerPipeline } from "./useLoadPipeline";
 
-const usePostExecution = (queryClient, configuration, setWorkspace, loadServerPipeline) => {
-  const mutation = useMutation({
-    mutationFn: async (execution) => {
-      const response = await fetch(`http://${configuration.host}:${configuration.anvilPort}/execute`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(execution),
-      })
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(`Request failed: ${data}`);
-      }
-
-      return data;
-    },
-    onSuccess: (newExecution) => {
-      queryClient.setQueryData(['pipelines'], (oldExecutions) => {
-        let updatedPipelines = [];
-
-        if (oldExecutions && Array.isArray(oldExecutions)) {
-          // Check if the new execution already exists in the array
-          const existingIndex = oldExecutions.findIndex(
-            (execution) => execution.Execution === newExecution.Execution
-          );
-
-          if (existingIndex !== -1) {
-            // If the execution exists, replace it with the new execution
-            updatedPipelines = [
-              ...oldExecutions.slice(0, existingIndex),
-              newExecution,
-              ...oldExecutions.slice(existingIndex + 1),
-            ];
-          } else {
-            // If the execution doesn't exist, add it to the beginning of the array
-            updatedPipelines = [newExecution, ...oldExecutions];
-          }
-        } else {
-          // If oldExecutions is not an array, return a new array with the new execution
-          updatedPipelines = [newExecution];
-        }
-        return updatedPipelines
-      });
-
-      setWorkspace((draft) => {
-        const currentTab = draft.active
-        const newKey = newExecution.Uuid + "." + newExecution.Execution
-        const pipeline = draft.pipelines[newKey]
-        if (!pipeline) {
-          // key hasn't updated yet
-          const loaded = loadServerPipeline(newExecution, configuration)
-          draft.pipelines[newKey] = loaded
-          draft.executions[loaded.record.Execution] = loaded
-        }
-        draft.tabs[newKey] = {}
-        draft.active = newKey
-        delete draft.tabs[currentTab]
-      })
-    },
-  });
-
-  return mutation;
-};
-
-const buildSortKeys = (specs) => {
-  for (const blockId in specs.pipeline) {
-    const orderObject = {
-      input: [],
-      output: [],
-    };
-
-    const block = specs.pipeline[blockId];
-    const inputKeys = Object.keys(block.inputs);
-    const outputKeys = Object.keys(block.outputs);
-
-    orderObject.input = (inputKeys);
-    orderObject.output = (outputKeys);
-
-    block.views.node.order = orderObject
-  }
-
-  return specs
-}
-
-export default function RunPipelineButton({ modalPopper, children, action }) {
+export default function RunPipelineButton({ children, action }) {
   const [editor] = useAtom(drawflowEditorAtom);
-  const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
-  const [workspace, setWorkspace] = useImmerAtom(workspaceAtom)
+  const [pipeline,] = useImmerAtom(pipelineAtom);
+  const [,setWorkspace] = useImmerAtom(workspaceAtom);
   const [validationErrorMsg, setValidationErrorMsg] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [mixpanelService] = useAtom(mixpanelAtom)
   const [configuration] = useAtom(activeConfigurationAtom);
+  const executePipeline = trpc.executePipeline.useMutation();
   const queryClient = useQueryClient();
   const loadServerPipeline = useLoadServerPipeline();
 
-  const postExecution = usePostExecution(queryClient, configuration, setWorkspace, loadServerPipeline);
-  const uploadParameterBlocks = trpc.uploadParameterBlocks.useMutation();
+  const runPipeline = async () => {
+    if (!validatePipelineExists()) return;
 
-  const runPipeline = async (editor, pipeline) => {
-    // check if pipeline structure exists
-    if (!pipeline.data || !Object.keys(pipeline.data).length) return null;
-    setValidationErrorMsg([])
+    setValidationErrorMsg([]);
 
-    let pipelineSpecs = editor.convert_drawflow_to_block(pipeline.name, pipeline.data);
+    const pipelineSpecs = editor.convert_drawflow_to_block(pipeline.name, pipeline.data);
     const executionId = uuidv7();
 
-    try {
-      const res = await axios.get(`http://${configuration.host}:${configuration.anvilPort}/ping`)
-      if (res.status != 200) {
-        throw Error()
+    if (!(await validateAnvilOnline())) return;
+    if (!validateSchema()) return;
+    const newExecution = await execute(pipelineSpecs, executionId);
+    if(!newExecution) {
+      return;
+    }
+    
+    queryClient.setQueryData(['pipelines'], (oldExecutions) => {
+      let updatedPipelines = [];
+
+      if (oldExecutions && Array.isArray(oldExecutions)) {
+        // Check if the new execution already exists in the array
+        const existingIndex = oldExecutions.findIndex(
+          (execution) => execution.Execution === newExecution.Execution
+        );
+
+        if (existingIndex !== -1) {
+          // If the execution exists, replace it with the new execution
+          updatedPipelines = [
+            ...oldExecutions.slice(0, existingIndex),
+            newExecution,
+            ...oldExecutions.slice(existingIndex + 1),
+          ];
+        } else {
+          // If the execution doesn't exist, add it to the beginning of the array
+          updatedPipelines = [newExecution, ...oldExecutions];
+        }
+      } else {
+        // If oldExecutions is not an array, return a new array with the new execution
+        updatedPipelines = [newExecution];
       }
-    } catch(error) {
+      return updatedPipelines
+    });
+
+    setWorkspace((draft) => {
+      const currentTab = draft.active
+      const newKey = newExecution.Uuid + "." + newExecution.Execution
+      const pipeline = draft.pipelines[newKey]
+      if (!pipeline) {
+        // key hasn't updated yet
+        const loaded = loadServerPipeline(newExecution, configuration)
+        draft.pipelines[newKey] = loaded
+        draft.executions[loaded.record.Execution] = loaded
+      }
+      draft.tabs[newKey] = {}
+      draft.active = newKey
+      delete draft.tabs[currentTab]
+    })
+
+    trackMixpanelRunCreated();
+  };
+  
+
+  const validatePipelineExists = async () => {
+    return pipeline.data && Object.keys(pipeline.data).length
+  }
+
+  const validateAnvilOnline =  async () => {
+    if (await pingAnvil()){
+      return true
+    } else {
       setValidationErrorMsg(["Seaweed ping did not return ok. Please wait a few seconds and retry."])
       setIsOpen(true)
-      return null;
+      return false;
     }
+  }
 
+  const pingAnvil = async () => {
     try {
-      pipelineSpecs = await uploadParameterBlocks.mutateAsync({
-        pipelineId: pipeline.id,
+      const response = await fetch(`http://${configuration.host}:${configuration.anvilPort}/ping`);
+      return response.ok;
+    } catch {
+      return false
+    }
+  }
+
+  const execute = async (pipelineSpecs, executionId) => {
+    try {
+      const rebuild = (action == "Rebuild")
+      const newExecution = await executePipeline.mutateAsync({
+        id: pipeline.id,
         executionId: executionId,
-        pipelineSpecs: pipelineSpecs,
+        specs: pipelineSpecs,
+        path: pipeline.path,
         buffer: pipeline.buffer,
+        name: pipeline.name,
+        rebuild: rebuild,
         anvilConfiguration: configuration,
       });
+      return newExecution; 
     } catch (error) {
-      setValidationErrorMsg([`Failed to upload files to anvil server: ${error}`])
+      console.error(`Pipeline execution failed: ${error}`)
+      setValidationErrorMsg(["Pipeline execution failed"])
       setIsOpen(true)
-      return null;
+      return false
     }
+  }
 
+  const validateSchema = () => {
     const schema = generateSchema(pipeline.data);
     const results = schema.safeParse(pipeline.data);
 
-    if (!results.success) {
-      setValidationErrorMsg(prev => {
+    if (results.success) {
+      return true;
+    } else {
+      setValidationErrorMsg(() => {
         return results.error.issues.map(block => `${block.path[0]}: ${block.message}`)
       })
       setIsOpen(true)
-      return null;
-    } else {
-      setValidationErrorMsg([]);
+      return false;
     }
+  }
 
-    try {
-      const sortedPipeline = buildSortKeys(pipelineSpecs)
-      // tries to put history in a user path if it exists, if not
-      // will put it into the buffer path (.cache)
-      sortedPipeline['sink'] = pipeline.path ? pipeline.path : pipeline.buffer
-      // Pull containers from the buffer to ensure the most recent ones
-      // In the case where a user has a savePath but a mod has happened since
-      // Last save
-      sortedPipeline['build'] = pipeline.buffer
-      sortedPipeline['name'] = pipeline.name
-      sortedPipeline['id'] = pipeline.id
-      const rebuild = (action == "Rebuild")
-      const execution = {
-        id: executionId,
-        pipeline: sortedPipeline,
-        build: rebuild
+  const trackMixpanelRunCreated = () => {
+      try {
+        mixpanelService.trackEvent('Run Created')
+      } catch (err) {
+        console.error("Mixpanel run tracking failed");
       }
-
-      const response = await postExecution.mutateAsync(execution)
-    } catch (error) {
-      setValidationErrorMsg([error.message])
-      setIsOpen(true)
-    }
-  };
+  }
 
   const styles = {
     margin: '5px',
@@ -193,7 +162,7 @@ export default function RunPipelineButton({ modalPopper, children, action }) {
 
   return (
     <>
-      <Button style={styles} size="sm" onClick={() => { runPipeline(editor, pipeline) }}>
+      <Button style={styles} size="sm" onClick={() => runPipeline()}>
         <span>{action}</span>
         {children}
       </Button>

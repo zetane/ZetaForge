@@ -63,6 +63,8 @@ type Local struct {
 type Cloud struct {
 	Registry     string
 	RegistryAddr string
+	RegistryPort int
+	IsDebug      bool
 	RegistryUser string
 	RegistryPass string
 	ClusterIP    string
@@ -334,6 +336,20 @@ func main() {
 			os.Exit(1)
 		}
 		setup(ctx, config, client, db)
+	} else if config.Cloud.IsDebug {
+		client = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+			clientcmd.NewDefaultClientConfigLoadingRules(),
+			&clientcmd.ConfigOverrides{},
+		)
+
+		// Switching to Cobra if we need more arguments
+		if len(os.Args) > 1 {
+			if os.Args[1] == "--uninstall" {
+				uninstall(ctx, client, db)
+				return
+			}
+			os.Exit(1)
+		}
 	} else {
 		cacert, err := base64.StdEncoding.DecodeString(config.Cloud.CaCert)
 		if err != nil {
@@ -402,8 +418,7 @@ func main() {
 			ctx.String(err.Status(), err.Error())
 			return
 		}
-
-		if config.IsLocal {
+		if config.IsLocal || config.Cloud.IsDebug {
 			go localExecute(&execution.Pipeline, newExecution.ID, execution.Id, execution.Build, config, client, db, hub)
 		} else {
 			go cloudExecute(&execution.Pipeline, newExecution.ID, execution.Id, execution.Build, config, client, db, hub)
@@ -451,14 +466,25 @@ func main() {
 			ctx.String(err.Status(), err.Error())
 		}
 	})
+	router.POST("/build-context-status", func(ctx *gin.Context) {
+		pipeline, err := validateJson[zjson.Pipeline](ctx.Request.Body)
+		if err != nil {
+			log.Printf("Invalid json request; err=%v", err)
+			ctx.String(err.Status(), err.Error())
+			return
+		}
+
+		buildContextStatus := getBuildContextStatus(&pipeline, config)
+
+		ctx.JSON(http.StatusOK, buildContextStatus)
+	})
+
 	execution := router.Group("/execution")
 	execution.GET("/running", func(ctx *gin.Context) {
 		res, err := listRunningExecutions(ctx.Request.Context(), db)
 
 		if err != nil {
 			log.Printf("Failed to get running executions; err=%v", err)
-			ctx.String(err.Status(), err.Error())
-			return
 		}
 
 		var response []ResponseExecution
@@ -730,8 +756,8 @@ func main() {
 			return
 		}
 
-		if config.IsLocal {
-			go localExecute(&pipeline, newExecution.ID, executionId.String(), false, config, client, db, hub)
+		if config.IsLocal || config.Cloud.IsDebug {
+			go localExecute(&pipeline, res.ID, executionId.String(), false, config, client, db, hub)
 		} else {
 			go cloudExecute(&pipeline, newExecution.ID, executionId.String(), false, config, client, db, hub)
 		}
