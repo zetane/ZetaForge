@@ -403,7 +403,7 @@ const BlockInputs = ({ inputs, id, history, addNodeRefs, removeNodeRefs }) =>{
       {Object.entries(inputs).map(([name, input], i, array) => (
         <div key={name} className="block-input">
           <div
-            className={`input ${name} ${id}-input-${name}`}
+            className={`input ${name}`}
             ref={(el) => {
               if (el) {
                 nodeRef.current[`${id}-input-${name}`] = el;
@@ -446,7 +446,7 @@ const BlockOutputs = ({ outputs, id, history, addNodeRefs, removeNodeRefs }) => 
             <i className={getIcon(output.type)}></i>
           </span>
           <div
-            className={`output ${name} ${id}-output-${name}`}
+            className={`output ${name}`}
             ref={(el) => {
               if (el) {
                 nodeRef.current[`${id}-output-${name}`] = el;
