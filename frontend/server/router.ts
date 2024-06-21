@@ -9,7 +9,6 @@ import { readPipelines, readSpecs } from "./fileSystem.js";
 import { copyPipeline, executePipeline, getBlockPath, removeBlock, saveBlock, saveSpec } from './pipelineSerialization.js';
 import { publicProcedure, router } from './trpc';
 import { errorHandling } from "./middleware"
-import { HttpStatus, ServerError } from "./serverError.js";
 
 export const appRouter = router({
   getBlocks: publicProcedure
@@ -20,8 +19,6 @@ export const appRouter = router({
       if (app.isPackaged) {
         coreBlocks = path.join(resources, "core", "blocks")
       }
-
-      throw new ServerError("This is a servererror", HttpStatus.BAD_REQUEST, new Error("Inner Error"))
 
       try {
         const blocks = await readSpecs(coreBlocks)
