@@ -1,3 +1,4 @@
+
 export class ServerError extends Error {
   public readonly statusCode: HttpStatus;
   public readonly cause: Error;
@@ -23,3 +24,4 @@ export enum HttpStatus {
   CLIENT_CLOSED_REQUEST = 'CLIENT_CLOSED_REQUEST ',
   INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR ',
 }
+
