@@ -8,9 +8,11 @@ import { getHistory, getIndex, updateHistory, updateIndex } from "./chat.js";
 import { readPipelines, readSpecs } from "./fileSystem.js";
 import { copyPipeline, executePipeline, getBlockPath, removeBlock, saveBlock, saveSpec } from './pipelineSerialization.js';
 import { publicProcedure, router } from './trpc';
+import { errorHandling } from "./middleware"
 
 export const appRouter = router({
   getBlocks: publicProcedure
+    .use(errorHandling)
     .query(async () => {
       const resources = process.resourcesPath
       let coreBlocks = "core/blocks"
