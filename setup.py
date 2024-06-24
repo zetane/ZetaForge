@@ -3,7 +3,6 @@ import os
 
 from setuptools import find_packages, setup
 
-
 def get_package_version():
     # Specify the path to the package.json file
     package_json_path = os.path.join(os.path.dirname(__file__), 'frontend', 'package.json')
@@ -11,18 +10,19 @@ def get_package_version():
         # Read the contents of package.json
         with open(package_json_path, 'r') as file:
             package_data = json.load(file)
-        
+
         # Extract the version from the package data
         version = package_data.get('version')
-        
+
         if version:
             # Set the __version__ variable in your package's __init__.py
             with open("zetaforge/__init__.py", "w") as fp:
+                fp.write(f"from .block_maker.zetahelper import block_maker\n")
                 fp.write(f"__version__ = '{version}'\n")
             return version
         else:
             raise ValueError("Version not found in package.json")
-    
+
     except FileNotFoundError:
         raise FileNotFoundError("package.json not found")
     except json.JSONDecodeError:
@@ -36,6 +36,6 @@ setup(
             'zetaforge = zetaforge.forge_cli:main'
         ]
     },
-    packages=find_packages(include=('zetaforge',)),
+    packages=find_packages(include=('zetaforge','zetaforge.*')),
     include_package_data=True,
-    package_data={'zetaforge': ['utils/*', 'executables/*'],},)
+    package_data={'zetaforge': ['executables/*'],},)

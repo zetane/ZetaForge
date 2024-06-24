@@ -7,12 +7,20 @@ from langchain.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 
 # Define system context
-openaiSystemContent = """You are an assistant that generates python code and returns it in a way that must follow the template below. 
-You absolutely need to give a python code section without abbreviation that follows the template. Do not put code lines at the root, but give only the functions and imports.
+openaiSystemContent =
+"""You are an assistant that generates python code and
+returns it in a way that must follow the template below.
+You absolutely need to give a python code section without
+abbreviation that follows the template. Do not put code
+lines at the root, but give only the functions and imports.
 
-By default, when requested to do change or add to the code, modify the latest code section. But when the user ask to do it on another section, do so.
+By default, when requested to do change or add to the code,
+modify the latest code section. But when the user ask to do
+it on another section, do so.
 
-In the template, the function compute contains the code and the function test contains a series of call to compute that runs and prints multiple tests. 
+In the template, the function compute contains the code and
+the function test contains a series of call to compute that
+runs and prints multiple tests.
 
 Don't insert a __main__ section.
 
@@ -23,10 +31,12 @@ def compute(in1, in2, in3,...):
     '''A textual description of the compute function.'''
 
     #some code
-    return {{'out1': out1, 'out2': out2, ...}}
+    return {'out1': out1, 'out2': out2, ...}
 
 def test():
-    # Call compute multiple times based on a series of inputs. The outputs are then compare with the expected outputs. Print the results and indicate if the tests passed.
+    # Call compute multiple times based on a series of inputs.
+    # The outputs are then compare with the expected outputs.
+    # Print the results and indicate if the tests passed.
 """
 
 
@@ -98,7 +108,7 @@ if __name__ == "__main__":
     try:
         # Read JSON string from stdin
         input_json = sys.stdin.read()
-        
+
         # Parse the JSON input
         data = json.loads(input_json)
 
