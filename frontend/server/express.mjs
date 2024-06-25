@@ -9,6 +9,8 @@ import fs, { readFileSync } from "fs";
 import multer from "multer";
 import { Configuration, OpenAIApi } from "openai";
 import path from "path";
+import sha256 from 'sha256';
+import getMAC from "getmac";
 import { BLOCK_SPECS_FILE_NAME } from "../src/utils/constants";
 
 function startExpressServer() {
@@ -55,6 +57,32 @@ function startExpressServer() {
           return null;
       }
   }
+
+  app.get('/distinct-id', async(req, res) => {
+
+    try {
+      const macAddress = getMAC();
+      let macAsBigInt = BigInt(`0x${macAddress.split(':').join('')}`);
+
+      // Check if the MAC address is universally administered
+      const isUniversallyAdministered = (macAsBigInt & BigInt(0x020000000000)) === BigInt(0);
+
+      // If not universally administered, set the multicast bit
+      if (!isUniversallyAdministered) {
+          macAsBigInt |= BigInt(0x010000000000);
+      }
+      const distinctId = sha256(macAsBigInt.toString());
+      return res.send(distinctId);
+    } catch (error) {
+      console.log("Can't generate distinct_id for mixpanel. Using default distinct_id");
+      console.log(error);
+      return res.send(sha256(BigInt(0).toString())); // Sending default distinct_id
+    }
+  });
+
+  app.get("/is-dev", async(req, res) => {
+    return res.send( !electronApp.isPackaged || (electronApp.isPackaged && process.env.VITE_ZETAFORGE_IS_DEV === 'True') )
+  })
 
   app.post("/import-files", upload.array("files"), (req, res) => {
     const files = req.files;
