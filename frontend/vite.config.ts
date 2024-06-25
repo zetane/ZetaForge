@@ -76,6 +76,7 @@ export default defineConfig(({ command }) => {
     // Fixes a bug with s3 and nodejs 
     // see https://github.com/aws/aws-sdk-js-v3/discussions/3950
     build: {
+      sourcemap: true,
       rollupOptions: {
         output: {
           globals: {crypto: 'crypto'},

@@ -125,8 +125,7 @@ export default function RunPipelineButton({ children, action }) {
       });
       return newExecution; 
     } catch (error) {
-      console.error(`Pipeline execution failed: ${error}`)
-      setValidationErrorMsg(["Pipeline execution failed"])
+      setValidationErrorMsg([error.message])
       setIsOpen(true)
       return false
     }

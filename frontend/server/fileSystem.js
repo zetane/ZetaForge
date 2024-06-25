@@ -4,6 +4,7 @@ import { tmpdir } from "os";
 import path from "path";
 import { BLOCK_SPECS_FILE_NAME, PIPELINE_SPECS_FILE_NAME } from "../src/utils/constants";
 import { logger } from './logger';
+import { ServerError, HttpStatus } from "./serverError";
 
 export const readPipelines = async (dir) => {
   const items = await fs.readdir(dir);

@@ -9,15 +9,16 @@ import { fileURLToPath } from 'node:url';
 import "../../polyfill/crypto";
 import { startExpressServer } from "../../server/express.mjs";
 import { update } from './update';
+import sourcemap from 'source-map-support';
 
 Sentry.init({ dsn: "https://7fb18e8e487455a950298625457264f3@o1096443.ingest.us.sentry.io/4507031960223744" });
-
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
 import { appRouter } from "../../server/router";
 
+sourcemap.install()
 // The built directory structure
 //
 // ├─┬ dist-electron

@@ -42,12 +42,13 @@ export async function createExecution(
     },
   );
 
-  const body = await response.json();
 
   if (!response.ok) {
-    throw new ServerError(`Anvil could not start the execution: ${response.json()}`, HttpStatus.BAD_REQUEST, null)
+    const errorMessage = await response.text()
+    throw new ServerError(`Anvil could not start the execution: ${errorMessage}`, HttpStatus.BAD_REQUEST, null)
   }
 
+  const body = await response.json();
   return body;
 }
 
