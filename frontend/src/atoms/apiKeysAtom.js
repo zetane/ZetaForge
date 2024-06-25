@@ -1,5 +1,5 @@
-import { atomWithStorage } from "jotai/utils"
+import { atomWithStorage } from "jotai/utils";
 
-const openAIApiKeyAtom = atomWithStorage('openAIApiKey', "")
+const openAIApiKeyAtom = atomWithStorage("openAIApiKey", "");
 
-export { openAIApiKeyAtom }
+export { openAIApiKeyAtom };

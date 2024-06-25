@@ -8,38 +8,38 @@ const START_PROMPT = "Code Template";
 
 export async function getHistory(blockPath) {
   const chat = await getChat(blockPath);
-  return chat.history
+  return chat.history;
 }
 
 export async function updateHistory(blockPath, newHistory) {
   const chatPath = path.join(blockPath, CHAT_HISTORY_FILE_NAME);
   const chat = await getChat(blockPath);
-  chat.history = newHistory
+  chat.history = newHistory;
   await fs.writeFile(chatPath, JSON.stringify(chat, null, 2));
 }
 
 export async function getIndex(blockPath) {
   const chat = await getChat(blockPath);
-  return chat.index
+  return chat.index;
 }
 
 export async function updateIndex(blockPath, newIndex) {
   const chatPath = path.join(blockPath, CHAT_HISTORY_FILE_NAME);
   const chat = await getChat(blockPath);
-  chat.index = newIndex
+  chat.index = newIndex;
   await fs.writeFile(chatPath, JSON.stringify(chat, null, 2));
 }
 
 async function getChat(blockPath) {
   const chatPath = path.join(blockPath, CHAT_HISTORY_FILE_NAME);
   let chat = undefined;
-  if ((await fileExists(chatPath))) {
+  if (await fileExists(chatPath)) {
     chat = await readJsonToObject(chatPath);
   } else {
-    chat = (await createChat(blockPath));
+    chat = await createChat(blockPath);
     await fs.writeFile(chatPath, JSON.stringify(chat, null, 2));
   }
-  return chat
+  return chat;
 }
 
 async function createChat(blockPath) {
@@ -47,10 +47,13 @@ async function createChat(blockPath) {
   const codeTemplate = await fs.readFile(codeTemplatePath, "utf8");
   const chatHistory = {
     index: 0,
-    history: [{
-      timestamp: Date.now(),
-      prompt: START_PROMPT,
-      response: codeTemplate,
-  }]};
-  return chatHistory; 
+    history: [
+      {
+        timestamp: Date.now(),
+        prompt: START_PROMPT,
+        response: codeTemplate,
+      },
+    ],
+  };
+  return chatHistory;
 }

@@ -5,13 +5,12 @@ import { useAtom } from "jotai";
 import { useRef } from "react";
 import { useLoadPipeline } from "./useLoadPipeline";
 
-
 const FILE_EXTENSION_REGEX = /\.[^/.]+$/;
 
 export default function LoadPipelineButton() {
   const loadPipeline = useLoadPipeline();
   const fileInput = useRef();
-  const [mixpanelService] = useAtom(mixpanelAtom)
+  const [mixpanelService] = useAtom(mixpanelAtom);
 
   const selectFile = () => {
     fileInput.current.click();
@@ -19,26 +18,27 @@ export default function LoadPipelineButton() {
 
   const handleFileChange = async (event) => {
     try {
-      mixpanelService.trackEvent('Load Pipeline')
-    } catch(err) {
-      
-    }    
-    const files = event.target.files
+      mixpanelService.trackEvent("Load Pipeline");
+    } catch (err) {}
+    const files = event.target.files;
     for (const key in files) {
-      const file = files[key]
-      let relPath = file.webkitRelativePath
+      const file = files[key];
+      let relPath = file.webkitRelativePath;
       if (!relPath) {
         continue;
       }
-      relPath = relPath.replaceAll('\\', '/')
-      const parts = relPath.split("/")
+      relPath = relPath.replaceAll("\\", "/");
+      const parts = relPath.split("/");
       if (parts.length == 2) {
-        const pipelineName = parts[0]
+        const pipelineName = parts[0];
         const fileName = parts[1];
         const fileNameNoExtension = parts[1].replace(FILE_EXTENSION_REGEX, "");
-        if (fileNameNoExtension == pipelineName || fileName == PIPELINE_SPECS_FILE_NAME) {
+        if (
+          fileNameNoExtension == pipelineName ||
+          fileName == PIPELINE_SPECS_FILE_NAME
+        ) {
           await loadPipeline(file);
-          event.target.value = ''; // Reset the file input
+          event.target.value = ""; // Reset the file input
         }
       }
     }
@@ -57,4 +57,4 @@ export default function LoadPipelineButton() {
       />
     </div>
   );
-};
+}

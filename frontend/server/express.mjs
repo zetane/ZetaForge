@@ -2,12 +2,12 @@ import bodyParser from "body-parser";
 import { spawn } from "child_process";
 import compression from "compression";
 import cors from "cors";
-import 'dotenv/config';
-import { app as electronApp } from 'electron';
+import "dotenv/config";
+import { app as electronApp } from "electron";
 import express from "express";
-import fs, { readFileSync } from "fs";
+import fs from "fs";
 import multer from "multer";
-import { Configuration, OpenAIApi } from "openai";
+import { Configuration } from "openai";
 import path from "path";
 import { BLOCK_SPECS_FILE_NAME } from "../src/utils/constants";
 
@@ -15,7 +15,7 @@ function startExpressServer() {
   const app = express();
   const port = 3330;
 
-  app.use(cors())
+  app.use(cors());
   app.use(compression());
 
   // http://expressjs.com/en/advanced/best-practice-security.html#at-a-minimum-disable-x-powered-by-header
@@ -30,31 +30,14 @@ function startExpressServer() {
   // Everything else (like favicon.ico) is cached for an hour. You may want to be
   // more aggressive with this caching.
   app.use(express.json());
-  app.use(express.static('public'));
+  app.use(express.static("public"));
   app.use(bodyParser.json());
 
   // OpenAI
-  const configuration = new Configuration({
+  new Configuration({
     apiKey: process.env.OPENAI_API_KEY,
   });
-  const openai = new OpenAIApi(configuration);
-
   const upload = multer({ dest: "_temp_import" });
-
-  function getActiveRun() {
-      try {
-          // Read the JSON file synchronously
-          const data = readFileSync(path.join(__dirname, '..', '..', 'history', 'active_run.json'), 'utf8');
-
-          // Parse the JSON content
-          const parsedData = JSON.parse(data);
-
-          return parsedData;
-      } catch (err) {
-          // console.error("Error reading or parsing the JSON file:", err);
-          return null;
-      }
-  }
 
   app.post("/import-files", upload.array("files"), (req, res) => {
     const files = req.files;
@@ -94,7 +77,6 @@ function startExpressServer() {
     res.send("Folder imported successfully");
   });
 
-
   app.post("/save-file", (req, res) => {
     const { pipelinePath, filePath, content } = req.body;
     const pipelineFilePath = path.join(pipelinePath, filePath);
@@ -111,7 +93,7 @@ function startExpressServer() {
 
   app.post("/get-agent", async (req, res) => {
     const { blockPath } = req.body;
-    const specsPath = path.join(blockPath, BLOCK_SPECS_FILE_NAME)
+    const specsPath = path.join(blockPath, BLOCK_SPECS_FILE_NAME);
 
     fs.readFile(specsPath, (err, data) => {
       if (err) {
@@ -130,16 +112,21 @@ function startExpressServer() {
   });
 
   app.post("/api/call-agent", async (req, res) => {
-    const { userMessage, agentName, conversationHistory, apiKey} = req.body
+    const { userMessage, agentName, conversationHistory, apiKey } = req.body;
     console.log("USER MESSAGE", userMessage);
 
     try {
       // Path to the Python script
-      let agents = "agents"
-      if(electronApp.isPackaged) {
-        agents = path.join(process.resourcesPath, "agents")
+      let agents = "agents";
+      if (electronApp.isPackaged) {
+        agents = path.join(process.resourcesPath, "agents");
       }
-      const scriptPath = path.join(agents, agentName, "generate", "computations.py")
+      const scriptPath = path.join(
+        agents,
+        agentName,
+        "generate",
+        "computations.py",
+      );
       const pythonProcess = spawn("python", [scriptPath]);
 
       const inputData = { apiKey, userMessage, conversationHistory };

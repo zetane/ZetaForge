@@ -1,13 +1,15 @@
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import fs from "fs/promises";
 import { tmpdir } from "os";
 import path from "path";
-import { BLOCK_SPECS_FILE_NAME, PIPELINE_SPECS_FILE_NAME } from "../src/utils/constants";
+import {
+  BLOCK_SPECS_FILE_NAME,
+  PIPELINE_SPECS_FILE_NAME,
+} from "../src/utils/constants";
 
 export const readPipelines = async (dir) => {
   const items = await fs.readdir(dir);
   return pipelineSpecBuilder(items, dir);
-}
+};
 
 const pipelineSpecBuilder = async (items, dir) => {
   const pipelinesData = [];
@@ -21,7 +23,7 @@ const pipelineSpecBuilder = async (items, dir) => {
         const pipelineSpecFile = path.join(itemPath, PIPELINE_SPECS_FILE_NAME);
         try {
           await fs.stat(pipelineSpecFile);
-          const pipelineData = await fs.readFile(pipelineSpecFile, 'utf8');
+          const pipelineData = await fs.readFile(pipelineSpecFile, "utf8");
           const parsedPipelineData = JSON.parse(pipelineData);
           parsedPipelineData.folderName = item; // Add the folder name to the pipeline data
           pipelinesData.push(parsedPipelineData);
@@ -35,41 +37,39 @@ const pipelineSpecBuilder = async (items, dir) => {
   }
 
   return pipelinesData;
-}
+};
 
 export const readSpecs = async (dir) => {
   const items = await fs.readdir(dir);
   //const pipelines = await fs.readdir("../pipelines");
   return specBuilder(items, dir);
-}
+};
 
 const specBuilder = async (specs, dir) => {
   const specsData = [];
 
   for (const item of specs) {
     try {
-      const itemPath = path.join(dir, item)
+      const itemPath = path.join(dir, item);
       const stat = await fs.stat(itemPath);
 
       if (stat.isDirectory()) {
         const specs = path.join(itemPath, BLOCK_SPECS_FILE_NAME);
         try {
-          await fs.stat(specs)
-          const specData = await fs.readFile(specs)
-          specsData.push(JSON.parse(specData))
+          await fs.stat(specs);
+          const specData = await fs.readFile(specs);
+          specsData.push(JSON.parse(specData));
         } catch (error) {
-          console.log("ERROR: ", error)
+          console.log("ERROR: ", error);
         }
       }
-
     } catch (error) {
-      console.log("ERRRRRROR: ", error)
+      console.log("ERRRRRROR: ", error);
     }
-
   }
 
   return specsData;
-}
+};
 
 export async function fileExists(filePath) {
   try {
@@ -89,8 +89,8 @@ export async function filterDirectories(filePaths) {
   const stats = await Promise.all(filePaths.map((p) => fs.stat(p)));
   return filePaths
     .map((p, i) => [p, stats[i]])
-    .filter(([p, s]) => s.isDirectory())
-    .map(([p, s]) => p);
+    .filter(([, s]) => s.isDirectory())
+    .map(([p]) => p);
 }
 
 export async function withFileSystemRollback(restorablePaths, workFunction) {
@@ -112,7 +112,7 @@ export async function withFileSystemRollback(restorablePaths, workFunction) {
   } catch (e) {
     console.error(
       "File system operations failed. Starting file rollback. Caused by:",
-      e
+      e,
     );
     for (const p of existingFiles) {
       await fs.rm(p, { recursive: true });

@@ -1,8 +1,8 @@
 import { darkModeAtom } from "@/atoms/themeAtom";
 import { EditorView } from "@codemirror/view";
 import { loadLanguage } from "@uiw/codemirror-extensions-langs";
-import { githubLight } from '@uiw/codemirror-theme-github';
-import { vscodeDark } from '@uiw/codemirror-theme-vscode';
+import { githubLight } from "@uiw/codemirror-theme-github";
+import { vscodeDark } from "@uiw/codemirror-theme-vscode";
 
 import CodeMirror from "@uiw/react-codemirror";
 import { atom, useAtom } from "jotai";
@@ -12,8 +12,8 @@ const backgroundTheme = EditorView.theme({
     backgroundColor: "var(--beCodeEditorBackground)",
     "& ::selection": {
       backgroundColor: "#ffcc00",
-    }
-  }
+    },
+  },
 });
 
 const viewerBackgroundTheme = EditorView.theme({
@@ -21,11 +21,11 @@ const viewerBackgroundTheme = EditorView.theme({
     backgroundColor: "var(--beCodeViewerBackground)",
     "& ::selection": {
       backgroundColor: "#ffcc00",
-    }
-  }
+    },
+  },
 });
 
-const themeAtom = atom((get) => get(darkModeAtom) ? vscodeDark : githubLight);
+const themeAtom = atom((get) => (get(darkModeAtom) ? vscodeDark : githubLight));
 
 export const ViewerCodeMirror = ({ code }) => {
   const [theme] = useAtom(themeAtom);
