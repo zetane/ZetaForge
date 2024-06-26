@@ -63,6 +63,8 @@ type Local struct {
 type Cloud struct {
 	Registry     string
 	RegistryAddr string
+	RegistryPort int
+	IsDebug      bool
 	RegistryUser string
 	RegistryPass string
 	ClusterIP    string
@@ -290,12 +292,12 @@ func main() {
 	ctx := context.Background()
 	file, err := os.ReadFile("config.json")
 	if err != nil {
-		log.Fatalf("Config file missing; err=%v", err)
+		log.Fatalf("config file missing; err=%v", err)
 		return
 	}
 	var config Config
 	if err := json.Unmarshal(file, &config); err != nil {
-		log.Fatalf("Config file invalid; err=%v", err)
+		log.Fatalf("config file invalid; err=%v", err)
 		return
 	}
 
@@ -305,17 +307,17 @@ func main() {
 
 	db, err := sql.Open("sqlite3", config.Database)
 	if err != nil {
-		log.Fatalf("Failed to load database; err=%v", err)
+		log.Fatalf("failed to load database; err=%v", err)
 	}
 
 	goose.SetBaseFS(migrations)
 
 	if err := goose.SetDialect(string(goose.DialectSQLite3)); err != nil {
-		log.Fatalf("Failed to set database dialect; err=%v", err)
+		log.Fatalf("failed to set database dialect; err=%v", err)
 	}
 
 	if err := goose.Up(db, "db/migrations"); err != nil {
-		log.Fatalf("Failed to migrate database; err=%v", err)
+		log.Fatalf("failed to migrate database; err=%v", err)
 	}
 
 	var client clientcmd.ClientConfig
@@ -334,10 +336,24 @@ func main() {
 			os.Exit(1)
 		}
 		setup(ctx, config, client, db)
+	} else if config.Cloud.IsDebug {
+		client = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+			clientcmd.NewDefaultClientConfigLoadingRules(),
+			&clientcmd.ConfigOverrides{},
+		)
+
+		// Switching to Cobra if we need more arguments
+		if len(os.Args) > 1 {
+			if os.Args[1] == "--uninstall" {
+				uninstall(ctx, client, db)
+				return
+			}
+			os.Exit(1)
+		}
 	} else {
 		cacert, err := base64.StdEncoding.DecodeString(config.Cloud.CaCert)
 		if err != nil {
-			log.Fatalf("Invalid CA certificate; err=%v", err)
+			log.Fatalf("invalid CA certificate; err=%v", err)
 		}
 
 		cfg := clientcmdapi.NewConfig()
@@ -384,26 +400,25 @@ func main() {
 	router.POST("/execute", func(ctx *gin.Context) {
 		execution, err := validateJson[zjson.Execution](ctx.Request.Body)
 		if err != nil {
-			log.Printf("Invalid json request; err=%v", err)
+			log.Printf("invalid json request; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
 
 		res, err := createPipeline(ctx.Request.Context(), db, "org", execution.Pipeline)
 		if err != nil {
-			log.Printf("Failed to create pipeline; err=%v", err)
+			log.Printf("failed to create pipeline; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
 		newExecution, err := createExecution(ctx, db, res.ID, execution.Id)
 
 		if err != nil {
-			log.Printf("Failed to write execution to database; err=%v", err)
+			log.Printf("failed to write execution to database; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
-
-		if config.IsLocal {
+		if config.IsLocal || config.Cloud.IsDebug {
 			go localExecute(&execution.Pipeline, newExecution.ID, execution.Id, execution.Build, config, client, db, hub)
 		} else {
 			go cloudExecute(&execution.Pipeline, newExecution.ID, execution.Id, execution.Build, config, client, db, hub)
@@ -411,13 +426,13 @@ func main() {
 
 		retData, err := filterPipeline(ctx, db, execution.Id)
 		if err != nil {
-			log.Printf("Failed to get pipeline record; err=%v", err)
+			log.Printf("failed to get pipeline record; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
 		response, err := newResponsePipelineExecution(retData, []string{})
 		if err != nil {
-			log.Printf("Failed to create response payload; err=%v", err)
+			log.Printf("failed to create response payload; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
@@ -451,14 +466,25 @@ func main() {
 			ctx.String(err.Status(), err.Error())
 		}
 	})
+	router.POST("/build-context-status", func(ctx *gin.Context) {
+		pipeline, err := validateJson[zjson.Pipeline](ctx.Request.Body)
+		if err != nil {
+			log.Printf("invalid json request; err=%v", err)
+			ctx.String(err.Status(), err.Error())
+			return
+		}
+
+		buildContextStatus := getBuildContextStatus(&pipeline, config)
+
+		ctx.JSON(http.StatusOK, buildContextStatus)
+	})
+
 	execution := router.Group("/execution")
 	execution.GET("/running", func(ctx *gin.Context) {
 		res, err := listRunningExecutions(ctx.Request.Context(), db)
 
 		if err != nil {
-			log.Printf("Failed to get running executions; err=%v", err)
-			ctx.String(err.Status(), err.Error())
-			return
+			log.Printf("failed to get running executions; err=%v", err)
 		}
 
 		var response []ResponseExecution
@@ -472,7 +498,7 @@ func main() {
 		executionId := ctx.Param("executionId")
 		res, err := getExecutionById(ctx.Request.Context(), db, executionId)
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve execution"})
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to retrieve execution"})
 			return
 		}
 
@@ -480,7 +506,7 @@ func main() {
 		if res.Status == "Running" {
 			logData, err := readTempLog(tempLog)
 			if err != nil {
-				ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read temporary log"})
+				ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to read temporary log"})
 				return
 			}
 			ctx.JSON(http.StatusOK, logData)
@@ -493,7 +519,7 @@ func main() {
 		res, err := getExecutionById(ctx.Request.Context(), db, executionId)
 
 		if err != nil {
-			log.Printf("Failed to get execution; err=%v", err)
+			log.Printf("failed to get execution; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
@@ -519,7 +545,7 @@ func main() {
 
 		res, err := createPipeline(ctx.Request.Context(), db, "org", pipeline)
 		if err != nil {
-			log.Printf("Failed to create pipeline; err=%v", err)
+			log.Printf("failed to create pipeline; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
@@ -574,7 +600,7 @@ func main() {
 
 		res, httpErr := filterPipelines(ctx, db, int64(limit), int64(offset))
 		if httpErr != nil {
-			log.Printf("Failed to get filter pipelines; err=%v", err)
+			log.Printf("failed to get filter pipelines; err=%v", err)
 			ctx.String(httpErr.Status(), err.Error())
 			return
 		}
@@ -587,7 +613,7 @@ func main() {
 			if execution.Status == "Running" {
 				logOutput, err = readTempLog(tempLog)
 				if err != nil {
-					fmt.Printf("Failed to retrieve writing log; err=%v", err)
+					fmt.Printf("failed to retrieve writing log; err=%v", err)
 				}
 			} else if execution.Status != "Pending" {
 				s3key = execution.Uuid + "/" + execution.Executionid + "/" + execution.Executionid + ".log"
@@ -596,7 +622,7 @@ func main() {
 				logOutput, err = readTempLog(tempLog)
 
 				if err != nil {
-					fmt.Printf("No temp log on the server; err=%v\n", err)
+					fmt.Printf("no temp log on the server; err=%v\n", err)
 				}
 			}
 			newRes, err := newResponsePipelinesExecution(execution, logOutput, s3key)
@@ -613,7 +639,7 @@ func main() {
 		hash := ctx.Param("hash")
 
 		if err := softDeletePipeline(ctx.Request.Context(), db, "org", uuid, hash); err != nil {
-			log.Printf("Failed to delete pipeline; err=%v", err)
+			log.Printf("failed to delete pipeline; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
@@ -623,7 +649,7 @@ func main() {
 		hash := ctx.Param("hash")
 
 		if err := deployPipeline(ctx.Request.Context(), db, "org", uuid, hash); err != nil {
-			log.Printf("Failed to deploy pipeline; err=%v", err)
+			log.Printf("failed to deploy pipeline; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
@@ -634,7 +660,7 @@ func main() {
 		res, err := listAllExecutions(ctx.Request.Context(), db, "org", uuid)
 
 		if err != nil {
-			log.Printf("Failed to list executions; err=%v", err)
+			log.Printf("failed to list executions; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
@@ -657,7 +683,7 @@ func main() {
 
 		res, httpErr := getExecution(ctx.Request.Context(), db, "org", uuid, hash, index)
 		if httpErr != nil {
-			log.Printf("Failed to delete execution; err=%v", err)
+			log.Printf("failed to delete execution; err=%v", err)
 			ctx.String(httpErr.Status(), httpErr.Error())
 			return
 		}
@@ -671,7 +697,7 @@ func main() {
 		res, err := listExecutions(ctx.Request.Context(), db, "org", uuid, hash)
 
 		if err != nil {
-			log.Printf("Failed to list executions; err=%v", err)
+			log.Printf("failed to list executions; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
@@ -688,7 +714,7 @@ func main() {
 		hash := ctx.Param("hash")
 		res, err := getPipeline(ctx.Request.Context(), db, "org", paramUuid, hash)
 		if err != nil {
-			log.Printf("Failed to get pipeline; err=%v", err)
+			log.Printf("failed to get pipeline; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
@@ -704,7 +730,7 @@ func main() {
 		hash := ctx.Param("hash")
 		res, err := getPipeline(ctx.Request.Context(), db, "org", paramUuid, hash)
 		if err != nil {
-			log.Printf("Failed to get pipeline; err=%v", err)
+			log.Printf("failed to get pipeline; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
@@ -725,13 +751,13 @@ func main() {
 		newExecution, err := createExecution(ctx, db, res.ID, executionId.String())
 
 		if err != nil {
-			log.Printf("Failed to write execution to database; err=%v", err)
+			log.Printf("failed to write execution to database; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
 
-		if config.IsLocal {
-			go localExecute(&pipeline, newExecution.ID, executionId.String(), false, config, client, db, hub)
+		if config.IsLocal || config.Cloud.IsDebug {
+			go localExecute(&pipeline, res.ID, executionId.String(), false, config, client, db, hub)
 		} else {
 			go cloudExecute(&pipeline, newExecution.ID, executionId.String(), false, config, client, db, hub)
 		}
@@ -752,7 +778,7 @@ func main() {
 		}
 
 		if err := softDeleteExecution(ctx.Request.Context(), db, "org", uuid, hash, index); err != nil {
-			log.Printf("Failed to delete execution; err=%v", err)
+			log.Printf("failed to delete execution; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
