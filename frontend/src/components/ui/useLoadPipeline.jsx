@@ -161,6 +161,8 @@ export const useLoadServerPipeline = () => {
       pipelineData = JSON.parse(pipeline.Results)
     }
     let logs = pipeline?.Log
+    const bufferPath = `${window.cache.local}${pipelineData.id}`;
+    const executionId = pipeline.Execution
 
     const loadedPipeline = {
       name: pipelineData.name ? pipelineData.name : pipelineData.id,
