@@ -752,7 +752,8 @@ export default class Drawflow {
             console.warn(`Node reference not found for input ${input_id}-${input_class} or output ${output_id}-${output_class}`);
             return false;
           }
-  
+
+          // if id and class are both falsy, input/output element will be falsy meaning the variable isn't used
           inputElement = inputRef;
           outputElement = outputRef;
           return true;
@@ -911,6 +912,7 @@ export default class Drawflow {
             return false;
           }
   
+          // if id and class are both falsy, input/output element will be falsy meaning the variable isn't used
           inputElement = inputRef;
           outputElement = outputRef;
           return true;

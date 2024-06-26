@@ -397,7 +397,7 @@ const BlockInputs = React.memo(({ inputs, id, history, addNodeRefs, removeNodeRe
     return () => {
       removeNodeRefs(`${id}-input-`)
     }
-  }, [nodeRef.current, isReady])
+  }, [nodeRef.current, isReady, inputs])
 
   return (
     <div className="inputs">
@@ -436,7 +436,7 @@ const BlockOutputs = React.memo(({ outputs, id, history, addNodeRefs, removeNode
     return () => {
       removeNodeRefs(`${id}-output-`)
     }
-  }, [nodeRef.current, isReady])
+  }, [nodeRef.current, isReady, outputs])
 
   return (
     <div className="outputs">
