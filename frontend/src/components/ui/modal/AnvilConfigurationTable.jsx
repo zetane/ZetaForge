@@ -1,6 +1,9 @@
-import { defaultAnvilConfigurationAtom, userAnvilConfigurationsAtom, removeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
+import { defaultAnvilConfigurationAtom, userAnvilConfigurationsAtom, removeConfigurationAtom, activeIndexAtom } from "@/atoms/anvilConfigurationsAtom";
+import { useAtom } from "jotai";
+import { Table, TableRow, TableHead, TableHeader, TableBody, TableCell, TableSelectRow, Button } from "@carbon/react";
+import { Add, TrashCan } from "@carbon/icons-react";
 
-export default function ConfigTable({ onNew }) {
+export default function AnvilConfigurationTable({ onNew }) {
   const [defaultAnvilConfiguration] = useAtom(defaultAnvilConfigurationAtom);
   const [userAnvilConfigurations] = useAtom(userAnvilConfigurationsAtom);
 
