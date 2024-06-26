@@ -8,7 +8,6 @@ import {
   PasswordInput,
   Toggle,
 } from "@carbon/react";
-import { Add } from "@carbon/icons-react";
 import { useState } from "react";
 import { useAtom } from "jotai";
 import {
@@ -37,19 +36,11 @@ export default function AnvilConfigurationForm({
     },
   );
 
-  function handleTextInputChange(e) {
+  function handleInputChange(e) {
     const { name, value } = e.target;
     setConfigForm((prev) => ({
       ...prev,
       [name]: value,
-    }));
-  }
-
-  function handleNumberInputChange(e) {
-    const { name, value } = e.target;
-    setConfigForm((prev) => ({
-      ...prev,
-      [name]: parseInt(value) || undefined,
     }));
   }
 
@@ -94,7 +85,7 @@ export default function AnvilConfigurationForm({
         placeholder={defaultConfig.name}
         name="name"
         value={configForm.name}
-        onChange={handleTextInputChange}
+        onChange={handleInputChange}
       />
 
       <Section level={5}>
@@ -105,7 +96,7 @@ export default function AnvilConfigurationForm({
             placeholder={defaultConfig.anvil.host}
             name="anvilHost"
             value={configForm.anvilHost}
-            onChange={handleTextInputChange}
+            onChange={handleInputChange}
           />
           <NumberInput
             label="Port"
@@ -116,7 +107,7 @@ export default function AnvilConfigurationForm({
             max={65535}
             name="anvilPort"
             value={configForm.anvilPort}
-            onChange={handleNumberInputChange}
+            onChange={handleInputChange}
           />
         </Stack>
       </Section>
@@ -129,7 +120,7 @@ export default function AnvilConfigurationForm({
             placeholder={defaultConfig.s3.host}
             name="s3Host"
             value={configForm.s3Host}
-            onChange={handleTextInputChange}
+            onChange={handleInputChange}
           />
           <ToggleableElement
             initialState={true}
@@ -149,7 +140,7 @@ export default function AnvilConfigurationForm({
               max={65535}
               name="s3Port"
               value={configForm.s3Port}
-              onChange={handleNumberInputChange}
+              onChange={handleInputChange}
             />
           </ToggleableElement>
           <TextInput
@@ -157,28 +148,28 @@ export default function AnvilConfigurationForm({
             placeholder={defaultConfig.s3.region}
             name="s3Region"
             value={configForm.s3Region}
-            onChange={handleTextInputChange}
+            onChange={handleInputChange}
           />
           <TextInput
             labelText="Bucket"
             placeholder={defaultConfig.s3.bucket}
             name="s3Bucket"
             value={configForm.s3Bucket}
-            onChange={handleTextInputChange}
+            onChange={handleInputChange}
           />
           <PasswordInput
             labelText="Access Key ID"
             placeholder={defaultConfig.s3.accessKeyId}
             name="s3AccessKeyId"
             value={configForm.s3AccessKeyId}
-            onChange={handleTextInputChange}
+            onChange={handleInputChange}
           />
           <PasswordInput
             labelText="Secret Access Key"
             placeholder={defaultConfig.s3.secretAccessKey}
             name="s3SecretAccessKey"
             value={configForm.s3SecretAccessKey}
-            onChange={handleTextInputChange}
+            onChange={handleInputChange}
           />
         </Stack>
       </Section>

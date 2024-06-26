@@ -191,9 +191,18 @@ export const appRouter = router({
       rebuild: z.boolean(),
       anvilConfiguration: z.object({
         name: z.string(),
-        host: z.string(),
-        s3Port: z.string(),
-        anvilPort: z.string(),
+        anvil: z.object({
+          host: z.string(),
+          port: z.string(),
+        }),
+        s3: z.object({
+          host: z.string(),
+          port: z.string(),
+          region: z.string(),
+          bucket: z.string(),
+          accessKeyId: z.string(),
+          secretAccessKey: z.string(),
+        }),
       })
     }))
     .mutation(async (opts) => {
