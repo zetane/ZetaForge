@@ -743,10 +743,28 @@ export default class Drawflow {
       Object.keys(elemsOut).map(function (item, index) {
         let inputElement;
         let outputElement;
+        const checkAndAssignElements = (input_id, input_class, output_id, output_class) => {
+          const inputRef = nodeRefs[`${input_id}-input-${input_class}`];
+          const outputRef = nodeRefs[`${output_id}-output-${output_class}`];
+  
+          // If input or output ref is falsy when the id and class are truthy => key could not be found
+          if ((!inputRef && input_id && input_class) || (!outputRef && output_id && output_class)) {
+            console.warn(`Node reference not found for input ${input_id}-${input_class} or output ${output_id}-${output_class}`);
+            return false;
+          }
+  
+          inputElement = inputRef;
+          outputElement = outputRef;
+          return true;
+        };
+
         if (elemsOut[item].querySelector('.point') === null) { 
   
           const svgName = "." + elemsOut[item].classList.value.split(" ").join(".");
           const { input_class, input_id, output_class, output_id } = connection_list[svgName];
+          if (!checkAndAssignElements(input_id, input_class, output_id, output_class)) {
+            return;
+          }
   
           inputElement = nodeRefs[`${input_id}-input-${input_class}`];
           outputElement = nodeRefs[`${output_id}-output-${output_class}`];
@@ -773,8 +791,10 @@ export default class Drawflow {
             const { input_class, input_id, output_class, output_id } = connection_list[svgName];
             const circleElement = item;
             if (i === 0 && ((points.length - 1) === 0)) {
-              inputElement = nodeRefs[`${input_id}-input-${input_class}`];
-              outputElement = nodeRefs[`${output_id}-output-${output_class}`];
+              
+              if (!checkAndAssignElements(input_id, input_class, output_id, output_class)) {
+                return;
+              }
   
               var eX = (circleElement.getBoundingClientRect().x - precanvas.getBoundingClientRect().x) * precanvasWitdhZoom + rerouteWidth;
               var eY = (circleElement.getBoundingClientRect().y - precanvas.getBoundingClientRect().y) * precanvasHeightZoom + rerouteWidth;
@@ -802,7 +822,9 @@ export default class Drawflow {
               reoute_fix.push(lineCurveSearch);
   
             } else if (i === 0) { 
-              outputElement = nodeRefs[`${output_id}-output-${output_class}`];
+              if (!checkAndAssignElements(null, null, output_id, output_class)) {
+                return;
+              }
   
               var eX = (circleElement.getBoundingClientRect().x - precanvas.getBoundingClientRect().x) * precanvasWitdhZoom + rerouteWidth;
               var eY = (circleElement.getBoundingClientRect().y - precanvas.getBoundingClientRect().y) * precanvasHeightZoom + rerouteWidth;
@@ -832,7 +854,9 @@ export default class Drawflow {
               reoute_fix.push(lineCurveSearch);
   
             } else if (i === (points.length - 1)) {
-              inputElement = nodeRefs[`${input_id}-input-${input_class}`];
+              if (!checkAndAssignElements(input_id, input_class, null, null)) {
+                return;
+              }
               var eX = inputElement.offsetWidth / 2 + (inputElement.getBoundingClientRect().x - precanvas.getBoundingClientRect().x) * precanvasWitdhZoom;
               var eY = inputElement.offsetHeight / 2 + (inputElement.getBoundingClientRect().y - precanvas.getBoundingClientRect().y) * precanvasHeightZoom;
               var line_x = (circleElement.getBoundingClientRect().x - precanvas.getBoundingClientRect().x) * (precanvas.clientWidth / (precanvas.clientWidth * zoom)) + rerouteWidth;
@@ -876,12 +900,28 @@ export default class Drawflow {
       Object.keys(elems).map(function (item, index) {
         let inputElement;
         let outputElement;
+        const checkAndAssignElements = (input_id, input_class, output_id, output_class) => {
+
+          const inputRef = nodeRefs[`${input_id}-input-${input_class}`];
+          const outputRef = nodeRefs[`${output_id}-output-${output_class}`];
+  
+          // If input or output ref is falsy when the id and class are truthy => key could not be found
+          if ((!inputRef && input_id && input_class) || (!outputRef && output_id && output_class)) {
+            console.warn(`Node reference not found for input ${input_id}-${input_class} or output ${output_id}-${output_class}`);
+            return false;
+          }
+  
+          inputElement = inputRef;
+          outputElement = outputRef;
+          return true;
+        };
+
         if (elems[item].querySelector('.point') === null) {
           const svgName = "." + elems[item].classList.value.split(" ").join(".");
           const { input_class, input_id, output_class, output_id } = connection_list[svgName];
-  
-          inputElement = nodeRefs[`${input_id}-input-${input_class}`];
-          outputElement = nodeRefs[`${output_id}-output-${output_class}`];
+          if (!checkAndAssignElements(input_id, input_class, output_id, output_class)) {
+            return;
+          }
           
           var line_x = outputElement.offsetWidth / 2 + (outputElement.getBoundingClientRect().x - precanvas.getBoundingClientRect().x) * precanvasWitdhZoom;
           var line_y = outputElement.offsetHeight / 2 + (outputElement.getBoundingClientRect().y - precanvas.getBoundingClientRect().y) * precanvasHeightZoom;
@@ -902,9 +942,10 @@ export default class Drawflow {
             const circleElement = item;
             const { input_class, input_id, output_class, output_id } = connection_list[svgName];
             if (i === 0 && ((points.length - 1) === 0)) {
-  
-              inputElement = nodeRefs[`${input_id}-input-${input_class}`];
-              outputElement = nodeRefs[`${output_id}-output-${output_class}`];
+              
+              if (!checkAndAssignElements(input_id, input_class, output_id, output_class)) {
+                return;
+              }
        
               var line_x = (circleElement.getBoundingClientRect().x - precanvas.getBoundingClientRect().x) * precanvasWitdhZoom + rerouteWidth;
               var line_y = (circleElement.getBoundingClientRect().y - precanvas.getBoundingClientRect().y) * precanvasHeightZoom + rerouteWidth;
@@ -933,7 +974,9 @@ export default class Drawflow {
               reoute_fix.push(lineCurveSearch);
             } else if (i === 0) {
               // FIRST
-              outputElement = nodeRefs[`${output_id}-output-${output_class}`];
+              if (!checkAndAssignElements(null, null, output_id, output_class)) {
+                return;
+              }
   
               var line_x = outputElement.offsetWidth / 2 + (outputElement.getBoundingClientRect().x - precanvas.getBoundingClientRect().x) * precanvasWitdhZoom;
               var line_y = outputElement.offsetHeight / 2 + (outputElement.getBoundingClientRect().y - precanvas.getBoundingClientRect().y) * precanvasHeightZoom;
@@ -964,7 +1007,9 @@ export default class Drawflow {
   
             } else if (i === (points.length - 1)) {
   
-              inputElement = nodeRefs[`${input_id}-input-${input_class}`];
+              if (!checkAndAssignElements(input_id, input_class, null, null)) {
+                return;
+              }
   
               var eX = inputElement.offsetWidth / 2 + (inputElement.getBoundingClientRect().x - precanvas.getBoundingClientRect().x) * precanvasWitdhZoom;
               var eY = inputElement.offsetHeight / 2 + (inputElement.getBoundingClientRect().y - precanvas.getBoundingClientRect().y) * precanvasHeightZoom;

@@ -9,6 +9,7 @@ import { modalContentAtom } from "@/atoms/modalAtom";
 import { useAtom } from "jotai";
 import ClosableModal from "@/components/ui/modal/ClosableModal";
 import { trimQuotes } from "@/utils/blockUtils";
+import React from 'react';
 
 const isTypeDisabled = (action) => {
   if (!action.parameters) {
@@ -385,7 +386,7 @@ const BlockContent = ({ html, block, onInputChange, id, history, nodeRefs }) => 
   );
 };
 
-const BlockInputs = ({ inputs, id, history, addNodeRefs, removeNodeRefs }) =>{
+const BlockInputs = React.memo(({ inputs, id, history, addNodeRefs, removeNodeRefs }) =>{
   const nodeRef = useRef({});
   const [isReady, setIsReady] = useState(false);
 
@@ -422,9 +423,9 @@ const BlockInputs = ({ inputs, id, history, addNodeRefs, removeNodeRefs }) =>{
       ))}
     </div>
   );
-} 
+}) 
 
-const BlockOutputs = ({ outputs, id, history, addNodeRefs, removeNodeRefs }) => {
+const BlockOutputs = React.memo(({ outputs, id, history, addNodeRefs, removeNodeRefs }) => {
   const nodeRef = useRef({});
   const [isReady, setIsReady] = useState(false);
 
@@ -461,7 +462,7 @@ const BlockOutputs = ({ outputs, id, history, addNodeRefs, removeNodeRefs }) => 
       ))}
     </div>
   );
-}
+})
 
 const getIcon = (type) => {
   if (type == 'filepath') {
