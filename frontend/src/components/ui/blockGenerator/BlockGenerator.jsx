@@ -52,7 +52,7 @@ const BlockGenerator = ({ block, openView, id, history, addNodeRefs, removeNodeR
     if (block.events.outputs?.html) {
       // these outputs are a special case
       const html = trimQuotes(block.events.outputs.html)
-      const fileUrl = `http://${configuration.host}:${configuration.s3Port}/zetaforge/${history}/${html}`
+      const fileUrl = `http://${configuration.anvil.host}:${configuration.anvil.port}/zetaforge/${history}/${html}`
       checkPath(fileUrl, 0, setIframeSrc)
     }
   }, [block.events.outputs?.html])

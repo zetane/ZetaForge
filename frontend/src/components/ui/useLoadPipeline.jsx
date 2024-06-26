@@ -161,8 +161,6 @@ export const useLoadServerPipeline = () => {
       pipelineData = JSON.parse(pipeline.Results)
     }
     let logs = pipeline?.Log
-    const bufferPath = `${window.cache.local}${pipelineData.id}`;
-    const executionId = pipeline.Execution
 
     const loadedPipeline = {
       name: pipelineData.name ? pipelineData.name : pipelineData.id,
@@ -173,7 +171,7 @@ export const useLoadServerPipeline = () => {
       id: pipelineData.id,
       history: pipelineData.id + "/" + executionId,
       record: pipeline,
-      socketUrl: `ws://${configuration.host}:${configuration.anvilPort}/ws/${executionId}`,
+      socketUrl: `ws://${configuration.anvil.host}:${configuration.anvil.port}/ws/${executionId}`,
       logs: logs
     }
 

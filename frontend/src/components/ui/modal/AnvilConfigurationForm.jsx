@@ -109,7 +109,6 @@ export default function AnvilConfigurationForm({
           />
           <NumberInput
             label="Port"
-            helperText="Leave empty to use the default port"
             placeholder={defaultConfig.anvil.port}
             allowEmpty
             hideSteppers
@@ -143,7 +142,6 @@ export default function AnvilConfigurationForm({
           >
             <NumberInput
               label="Port"
-              helperText="Leave emtpy to use the default port"
               placeholder={defaultConfig.s3.port}
               allowEmpty
               hideSteppers
