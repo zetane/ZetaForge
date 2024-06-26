@@ -3,10 +3,19 @@ import config from "../../config";
 import { atomWithStorage } from "jotai/utils";
 
 export const defaultAnvilConfigurationAtom = atom(() => ({
-  name: "Default",
-  host: config.anvil.host,
-  anvilPort: config.anvil.port,
-  s3Port: config.s3.port,
+  name: "default",
+  anvil: {
+    host: config.anvil.host,
+    port: config.anvil.port
+  },
+  s3: {
+    host: config.s3.host,
+    port: config.s3.port,
+    region: config.s3.region,
+    bucket: config.s3.bucket,
+    accessKeyId: config.s3.accessKeyId,
+    secretAccessKey: config.s3.secretAccessKey,
+  }
 }));
 export const userAnvilConfigurationsAtom = atomWithStorage(
   "userAnvilConfigurationsAtom",
