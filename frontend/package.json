@@ -29,6 +29,7 @@
   "dependencies": {
     "@sentry/electron": "^4.22.0",
     "@sentry/react": "^7.112.2",
+    "@types/source-map-support": "^0.5.10",
     "@uiw/codemirror-theme-github": "^4.21.25",
     "electron-trpc": "^0.5.2",
     "electron-updater": "^6.1.1",

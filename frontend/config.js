@@ -5,11 +5,14 @@ export default {
     secretAccessKey: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
     port: import.meta.env.VITE_S3_PORT,
     forcePathStyle: true,
-    bucket: import.meta.env.VITE_BUCKET
+    bucket: import.meta.env.VITE_BUCKET,
   },
   anvil: {
     host: import.meta.env.VITE_ANVIL_HOST,
-    port: import.meta.env.VITE_ANVIL_PORT
+    port: import.meta.env.VITE_ANVIL_PORT,
   },
-  logLevel: import.meta.env.VITE_LOG_LEVEL
-}
+  logger: {
+    level: import.meta.env.VITE_LOG_LEVEL,
+    pretty: import.meta.env.VITE_LOG_PRETTY,
+  },
+};
