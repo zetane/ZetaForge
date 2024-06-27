@@ -3,6 +3,7 @@ import fs from 'fs/promises';
 import config from "../config";
 import { getDirectoryFilesRecursive } from "./fileSystem";
 import path from "path";
+import { logger } from "./logger";
 
 function getClient(configuration) {
   const endpoint = `http://${configuration.host}:${configuration.s3Port}`;
@@ -41,7 +42,7 @@ async function copy(newKey, copyKey, anvilConfiguration) {
     return res;
   } catch (err) {
     const message = `Could not copy file in S3 from ${source} to ${newKey}`;
-    console.error(message, err, err?.stack);
+    logger.error(message, err, err?.stack);
     throw new Error(message);
   }
 }
@@ -77,7 +78,7 @@ async function upload(key, filePath, anvilConfiguration) {
     return res
   } catch (err) {
     const message = 'Could not upload file to S3';
-    console.error(message, err, err.stack);
+    logger.error(message, err, err.stack);
     throw new Error(message);
   }
 }
@@ -96,7 +97,7 @@ async function fileExists(key, anvilConfiguration) {
       return false;
     }
     const message = 'Error checking file existence in S3';
-    console.error(message, err, err.stack);
+    logger.error(message, err, err.stack);
     throw new Error(message);
   }
 }
@@ -116,11 +117,11 @@ export async function getFileData(key, anvilConfiguration) {
       return fileData;
     } catch (err) {
       const message = 'Could not retrieve file from S3';
-      console.error(message, err);
+      logger.error(message, err);
       throw new Error(message);
     }
   } else {
-    console.log(`File with key ${key} does not exist in S3`);
+    logger.debug(`File with key ${key} does not exist in S3`);
     return null;
   }
 }
@@ -141,10 +142,10 @@ export async function getFile(key, destinationPath, anvilConfiguration) {
       fileStream.on('error', reject);
     });
 
-    console.log(`File downloaded successfully to ${destinationPath}`);
+    logger.debug(`File downloaded successfully to ${destinationPath}`);
   } catch (err) {
     const message = 'Could not download file from S3';
-    console.error(message, err);
+    logger.error(message, err);
     throw new Error(message);
   }
 }

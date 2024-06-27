@@ -4,6 +4,7 @@ import fs from "fs/promises";
 import path from "path";
 import { BLOCK_SPECS_FILE_NAME } from "../src/utils/constants";
 import { fileExists } from "./fileSystem";
+import { logger } from "./logger";
 
 export async function compileComputation(blockPath) {
   const sourcePath = path.join(blockPath, "computations.py")
@@ -54,8 +55,8 @@ export async function runTest(blockPath, blockKey) {
         reject(error);
       }
 
-      console.log(stdout);
-      console.error(stderr);
+      logger.debug(stdout);
+      logger.error(stderr);
       resolve();
     })
   })
