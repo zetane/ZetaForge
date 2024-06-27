@@ -130,7 +130,6 @@ export default function ComputationsFileEditor({ fetchFileSystem }) {
 
   useEffect(() => {
     if (editorRef.current) {
-      console.log("timeout in save: ", editorRef.current.offsetHeight);
       setTimeout(() => {
         editorRef.current.scrollIntoView({
           behavior: "smooth",
