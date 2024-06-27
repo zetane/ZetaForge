@@ -6,7 +6,6 @@ import {
   Heading,
   Button,
   PasswordInput,
-  Toggle,
 } from "@carbon/react";
 import { useState } from "react";
 import { useAtom } from "jotai";
@@ -61,15 +60,6 @@ export default function AnvilConfigurationForm({
       },
     });
     onClose();
-  }
-
-  function handleToggle(name, value) {
-    if (value) {
-      setConfigForm((prev) => ({
-        ...prev,
-        [name]: undefined,
-      }));
-    }
   }
 
   function handleCancel() {
@@ -165,8 +155,8 @@ export default function AnvilConfigurationForm({
         <Button
           iconDescription="Cancel"
           tooltipAlignment="end"
-          kind="ghost"
-          size="sm"
+          kind="secondary"
+          size="md"
           onClick={handleCancel}
         >
           Cancel
@@ -174,7 +164,8 @@ export default function AnvilConfigurationForm({
         <Button
           iconDescription="Add"
           tooltipAlignment="end"
-          size="sm"
+          kind="primary"
+          size="md"
           onClick={handleSave}
         >
           Add
@@ -184,18 +175,3 @@ export default function AnvilConfigurationForm({
   );
 }
 
-function ToggleableElement({ children, onToggle, initialState, ...props }) {
-  const [toggle, setToggle] = useState(initialState);
-
-  function handleToggle() {
-    setToggle((prev) => !prev);
-    onToggle(!toggle);
-  }
-
-  return (
-    <Stack>
-      <Toggle {...props} toggled={toggle} onToggle={handleToggle} />
-      {toggle && children}
-    </Stack>
-  );
-}
