@@ -9,6 +9,7 @@ import { modalContentAtom } from "@/atoms/modalAtom";
 import { useAtom } from "jotai";
 import ClosableModal from "@/components/ui/modal/ClosableModal";
 import { trimQuotes } from "@/utils/blockUtils";
+import React from 'react';
 
 const isTypeDisabled = (action) => {
   if (!action.parameters) {
@@ -36,7 +37,7 @@ const checkPath = async (path, count, setIframeSrc) => {
     });
 }
 
-const BlockGenerator = ({ block, openView, id, history }) => {
+const BlockGenerator = ({ block, openView, id, history, addNodeRefs, removeNodeRefs, nodeRefs }) => {
   const [pipeline, setFocusAction] = useImmerAtom(pipelineAtom)
   const [editor, _s] = useAtom(drawflowEditorAtom);
   const [configuration] = useAtom(activeConfigurationAtom)
@@ -71,6 +72,7 @@ const BlockGenerator = ({ block, openView, id, history }) => {
     onInputChange={handleInputChange}
     id={id}
     history={history}
+    nodeRefs={nodeRefs}
     />)
   const type = block?.action?.parameters?.path?.type
   if (type == "file" || type == "blob" || type == "fileLoad") {
@@ -97,8 +99,8 @@ const BlockGenerator = ({ block, openView, id, history }) => {
           />
           <div className="block-body">
             <div className="block-io">
-              <BlockInputs inputs={block.inputs} history={history} block={block}/>
-              <BlockOutputs outputs={block.outputs} history={history} block={block}/>
+              <BlockInputs inputs={block.inputs} id={id} history={history} block={block}  addNodeRefs={addNodeRefs} removeNodeRefs={removeNodeRefs}/>
+              <BlockOutputs outputs={block.outputs} id={id}  history={history} block={block} addNodeRefs={addNodeRefs} removeNodeRefs={removeNodeRefs}/>
             </div>
             {content}
           </div>
@@ -189,7 +191,7 @@ const parseHtmlToInputs = (html) => {
   return inputs;
 };
 
-const InputField = ({ type, value, name, step, parameterName, onChange, id }) => {
+const InputField = ({ type, value, name, step, parameterName, onChange, id, nodeRefs }) => {
   const [editor, _] = useAtom(drawflowEditorAtom);
   const [currentValue, setCurrentValue] = useState(value);
   const inputRef = useRef(null);
@@ -356,7 +358,7 @@ const InputField = ({ type, value, name, step, parameterName, onChange, id }) =>
   }
 };
 
-const BlockContent = ({ html, block, onInputChange, id, history }) => {
+const BlockContent = ({ html, block, onInputChange, id, history, nodeRefs }) => {
   const parsedInputs = parseHtmlToInputs(html);
 
   return (
@@ -376,6 +378,7 @@ const BlockContent = ({ html, block, onInputChange, id, history }) => {
               onInputChange(name, value, parameterName)
             }
             id={id}
+            nodeRefs={nodeRefs}
           />
         )
       })}
@@ -383,33 +386,83 @@ const BlockContent = ({ html, block, onInputChange, id, history }) => {
   );
 };
 
-const BlockInputs = ({ inputs, history }) => (
-  <div className="inputs">
-    {Object.entries(inputs).map(([name, input]) => (
-      <div key={name} className="block-input">
-        <div className={`input ${name}`}></div>
-        <span className="type-icon">
-          <i className={getIcon(input.type)}></i>
-        </span>
-        <span className="input-name">{name}</span>
-      </div>
-    ))}
-  </div>
-);
+const BlockInputs = React.memo(({ inputs, id, history, addNodeRefs, removeNodeRefs }) =>{
+  const nodeRef = useRef({});
+  const [isReady, setIsReady] = useState(false);
 
-const BlockOutputs = ({ outputs, history }) => (
-  <div className="outputs">
-    {Object.entries(outputs).map(([name, output]) => (
-      <div key={name} className="block-output">
-        <span className="output-name">{name}</span>
-        <span className="type-icon">
-          <i className={getIcon(output.type)}></i>
-        </span>
-        <div className={`output ${name}`}></div>
-      </div>
-    ))}
-  </div>
-);
+  useEffect(() => {
+    if (nodeRef.current && isReady) {
+      addNodeRefs(nodeRef.current)
+    }
+    return () => {
+      removeNodeRefs(`${id}-input-`)
+    }
+  }, [nodeRef.current, isReady, inputs])
+
+  return (
+    <div className="inputs">
+      {Object.entries(inputs).map(([name, input], i, array) => (
+        <div key={name} className="block-input">
+          <div
+            className={`input ${name}`}
+            ref={(el) => {
+              if (el) {
+                nodeRef.current[`${id}-input-${name}`] = el;
+              }
+              if (i === array.length - 1) {
+                setIsReady(true);
+              }
+            }}
+          >
+          </div>
+          <span className="type-icon">
+            <i className={getIcon(input.type)}></i>
+          </span>
+          <span className="input-name">{name}</span>
+        </div>
+      ))}
+    </div>
+  );
+}) 
+
+const BlockOutputs = React.memo(({ outputs, id, history, addNodeRefs, removeNodeRefs }) => {
+  const nodeRef = useRef({});
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    if (nodeRef.current && isReady) {
+      addNodeRefs(nodeRef.current)
+    }
+    return () => {
+      removeNodeRefs(`${id}-output-`)
+    }
+  }, [nodeRef.current, isReady, outputs])
+
+  return (
+    <div className="outputs">
+      {Object.entries(outputs).map(([name, output], i, array) => (
+        <div key={name} className="block-output">
+          <span className="output-name">{name}</span>
+          <span className="type-icon">
+            <i className={getIcon(output.type)}></i>
+          </span>
+          <div
+            className={`output ${name}`}
+            ref={(el) => {
+              if (el) {
+                nodeRef.current[`${id}-output-${name}`] = el;
+              }
+              if (i === array.length - 1) {
+                setIsReady(true);
+              }
+            }}
+          >
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+})
 
 const getIcon = (type) => {
   if (type == 'filepath') {
