@@ -48,7 +48,7 @@ export default function AnvilConfigurationForm({
       name: configForm.name,
       anvil: {
         host: configForm.anvilHost,
-        port: configForm.anvilport,
+        port: configForm.anvilPort,
       },
       s3: {
         host: configForm.s3Host,
