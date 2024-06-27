@@ -1,6 +1,9 @@
 import { atom } from "jotai";
 import config from "../../config";
 import { atomWithStorage } from "jotai/utils";
+import { runMigrations } from "@/migration/anvilConfigurationMigration";
+
+runMigrations()
 
 export const defaultAnvilConfigurationAtom = atom(() => ({
   name: "default",
