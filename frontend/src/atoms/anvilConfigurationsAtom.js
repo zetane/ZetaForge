@@ -44,3 +44,8 @@ export const removeConfigurationAtom = atom(null, (get, set, index) => {
     return prev.filter((_, i) => i != index);
   });
 });
+
+export const editConfigurationAtom = atom(null, (_, set, [index, configuration]) => {
+  set(userAnvilConfigurationsAtom, prev => prev.with(index, configuration))
+})
+

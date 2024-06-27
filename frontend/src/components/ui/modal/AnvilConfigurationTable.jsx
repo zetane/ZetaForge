@@ -1,9 +1,23 @@
-import { defaultAnvilConfigurationAtom, userAnvilConfigurationsAtom, removeConfigurationAtom, activeIndexAtom } from "@/atoms/anvilConfigurationsAtom";
+import {
+  defaultAnvilConfigurationAtom,
+  userAnvilConfigurationsAtom,
+  removeConfigurationAtom,
+  activeIndexAtom,
+} from "@/atoms/anvilConfigurationsAtom";
 import { useAtom } from "jotai";
-import { Table, TableRow, TableHead, TableHeader, TableBody, TableCell, TableSelectRow, Button } from "@carbon/react";
-import { Add, TrashCan } from "@carbon/icons-react";
+import {
+  Table,
+  TableRow,
+  TableHead,
+  TableHeader,
+  TableBody,
+  TableCell,
+  TableSelectRow,
+  Button,
+} from "@carbon/react";
+import { Add, TrashCan, Edit } from "@carbon/icons-react";
 
-export default function AnvilConfigurationTable({ onNew }) {
+export default function AnvilConfigurationTable({ onNew, onEdit }) {
   const [defaultAnvilConfiguration] = useAtom(defaultAnvilConfigurationAtom);
   const [userAnvilConfigurations] = useAtom(userAnvilConfigurationsAtom);
 
@@ -34,7 +48,7 @@ export default function AnvilConfigurationTable({ onNew }) {
           </TableRow>
         </TableHead>
         <TableBody>
-          <ConfigRows rows={rows} />
+          <ConfigRows rows={rows} onEdit={onEdit} />
         </TableBody>
       </Table>
       <div className="flex justify-center">
@@ -52,20 +66,30 @@ export default function AnvilConfigurationTable({ onNew }) {
   );
 }
 
-function ConfigRows({ rows }) {
-  return rows.map((r, i) => <ConfigRow key={i} {...r} />);
+function ConfigRows({ rows, onEdit }) {
+  return rows.map((r, i) => <ConfigRow key={i} onEdit={onEdit} {...r} />);
 }
 
-function ConfigRow({ configuration, removeable, removeIndex, selectIndex }) {
+function ConfigRow({
+  configuration,
+  removeable,
+  removeIndex,
+  selectIndex,
+  onEdit,
+}) {
   const [, removeConfiguration] = useAtom(removeConfigurationAtom);
   const [active, setActive] = useAtom(activeIndexAtom);
 
-  function handleRemoveConfiguration() {
-    removeConfiguration(removeIndex);
+  function handleEditConfiguration() {
+    onEdit(removeIndex, configuration);
   }
 
   function handleSelectConfiguration() {
     setActive(selectIndex);
+  }
+
+  function handleRemoveConfiguration() {
+    removeConfiguration(removeIndex);
   }
 
   return (
@@ -78,15 +102,26 @@ function ConfigRow({ configuration, removeable, removeIndex, selectIndex }) {
       <ConfigCells configuration={configuration} />
       {removeable ? (
         <TableCell>
-          <Button
-            onClick={handleRemoveConfiguration}
-            renderIcon={TrashCan}
-            hasIconOnly
-            iconDescription="Remove"
-            tooltipAlignment="end"
-            kind="ghost"
-            size="sm"
-          />
+          <div className="flex justify-end gap-2">
+            <Button
+              onClick={handleEditConfiguration}
+              renderIcon={Edit}
+              hasIconOnly
+              iconDescription="Edit"
+              tooltipAlignment="end"
+              kind="ghost"
+              size="sm"
+            />
+            <Button
+              onClick={handleRemoveConfiguration}
+              renderIcon={TrashCan}
+              hasIconOnly
+              iconDescription="Remove"
+              tooltipAlignment="end"
+              kind="ghost"
+              size="sm"
+            />
+          </div>
         </TableCell>
       ) : (
         <TableCell />

@@ -10,30 +10,40 @@ import {
 import { useState } from "react";
 import { useAtom } from "jotai";
 import {
-  addConfigurationAtom,
   defaultAnvilConfigurationAtom,
 } from "@/atoms/anvilConfigurationsAtom";
 
 export default function AnvilConfigurationForm({
-  onClose,
+  onCancel,
+  onSave,
   initialConfiguration,
 }) {
   const [defaultConfig] = useAtom(defaultAnvilConfigurationAtom);
-  const [, addConfig] = useAtom(addConfigurationAtom);
 
   const [configForm, setConfigForm] = useState(
-    initialConfiguration ?? {
-      name: "",
-      anvilHost: "",
-      anvilPort: "",
-      s3Host: "",
-      s3Port: "",
-      s3Region: "",
-      s3Bucket: "",
-      s3AccessKeyId: "",
-      s3SecretAccessKey: "",
-    },
-  );
+    initialConfiguration
+      ? {
+          name: initialConfiguration.name,
+          anvilHost: initialConfiguration.anvil.host,
+          anvilPort: initialConfiguration.anvil.port,
+          s3Host: initialConfiguration.s3.host,
+          s3Port: initialConfiguration.s3.port,
+          s3Region: initialConfiguration.s3.region,
+          s3Bucket: initialConfiguration.s3.bucket,
+          s3AccessKeyId: initialConfiguration.s3.accessKeyId,
+          s3SecretAccessKey: initialConfiguration.s3.secretAccessKey,
+        }
+      : {
+          name: "",
+          anvilHost: "",
+          anvilPort: "",
+          s3Host: "",
+          s3Port: "",
+          s3Region: "",
+          s3Bucket: "",
+          s3AccessKeyId: "",
+          s3SecretAccessKey: "",
+        }, );
 
   function handleInputChange(e) {
     const { name, value } = e.target;
@@ -44,7 +54,7 @@ export default function AnvilConfigurationForm({
   }
 
   function handleSave() {
-    addConfig({
+    onSave({
       name: configForm.name,
       anvil: {
         host: configForm.anvilHost,
@@ -59,11 +69,10 @@ export default function AnvilConfigurationForm({
         secretAccessKey: configForm.s3SecretAccessKey,
       },
     });
-    onClose();
   }
 
   function handleCancel() {
-    onClose();
+    onCancel();
   }
 
   return (
@@ -162,16 +171,15 @@ export default function AnvilConfigurationForm({
           Cancel
         </Button>
         <Button
-          iconDescription="Add"
+          iconDescription="Save"
           tooltipAlignment="end"
           kind="primary"
           size="md"
           onClick={handleSave}
         >
-          Add
+          Save
         </Button>
       </div>
     </Stack>
   );
 }
-
