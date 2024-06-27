@@ -45,7 +45,6 @@ export default function AnvilConfigurationForm({
   }
 
   function handleSave() {
-    console.log(configForm);
     addConfig({
       name: configForm.name,
       anvil: {
@@ -71,7 +70,6 @@ export default function AnvilConfigurationForm({
         [name]: undefined,
       }));
     }
-    console.log(configForm);
   }
 
   function handleCancel() {
@@ -122,27 +120,17 @@ export default function AnvilConfigurationForm({
             value={configForm.s3Host}
             onChange={handleInputChange}
           />
-          <ToggleableElement
-            initialState={true}
-            labelText="Custom port"
-            labelA="default"
-            labelB="custom"
-            id="toggleS3Port"
-            size="sm"
-            onToggle={(value) => handleToggle("s3Port", value)}
-          >
-            <NumberInput
-              label="Port"
-              placeholder={defaultConfig.s3.port}
-              allowEmpty
-              hideSteppers
-              min={0}
-              max={65535}
-              name="s3Port"
-              value={configForm.s3Port}
-              onChange={handleInputChange}
-            />
-          </ToggleableElement>
+          <NumberInput
+            label="Port"
+            placeholder={defaultConfig.s3.port}
+            allowEmpty
+            hideSteppers
+            min={0}
+            max={65535}
+            name="s3Port"
+            value={configForm.s3Port}
+            onChange={handleInputChange}
+          />
           <TextInput
             labelText="Region"
             placeholder={defaultConfig.s3.region}
