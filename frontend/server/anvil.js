@@ -1,3 +1,6 @@
+import { logger } from "./logger";
+import { HttpStatus, ServerError } from "./serverError";
+
 export async function getBuildContextStatus(configuration, pipelineSpecs) {
   const response = await handleRequest(
     buildPath(
@@ -39,8 +42,13 @@ export async function createExecution(
     },
   );
 
-  const body = await response.json();
 
+  if (!response.ok) {
+    const errorMessage = await response.text()
+    throw new ServerError(`Anvil could not start the execution: ${errorMessage}`, HttpStatus.BAD_REQUEST, null)
+  }
+
+  const body = await response.json();
   return body;
 }
 
@@ -67,7 +75,7 @@ async function handleRequest(url, method, headers, body = null) {
     return response;
   } catch (error) {
     const message = `Anvil request failed: ${error}`;
-    console.trace(message);
+    logger.error(message);
     throw new Error(message);
   }
 }

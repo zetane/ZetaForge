@@ -1,6 +1,6 @@
 // When we load pipelines, we must draw the connection
 
-export const createConnections = (pipeline) => {
+export const createConnections = (pipeline, existingConnectionList) => {
     const connectionList = {}
     for (const [output_id, block] of Object.entries(pipeline)) {
         let outputNames = block.outputs
@@ -9,13 +9,18 @@ export const createConnections = (pipeline) => {
             for (const input of inputConnections) {
                 const input_id = input.block;
                 const input_class = input.variable;
-                const svgName = '.connection.node_in_node-' + input_id + '.node_out_node-' + output_id + '.' + output_class + '.' + input_class;
+                const svgName = output_class !== input_class ? (
+                    '.connection.node_in_node-' + input_id + '.node_out_node-' + output_id + '.' + output_class + '.' + input_class
+                  ) : (
+                    '.connection.node_in_node-' + input_id + '.node_out_node-' + output_id + '.' + output_class
+                  );
                 if (!connectionList[svgName]) {
                     connectionList[svgName] = {
                         input_id,
                         input_class,
                         output_id,
                         output_class,
+                        path: existingConnectionList?.[svgName] ? existingConnectionList[svgName].path : []
                     }
                 }
 
