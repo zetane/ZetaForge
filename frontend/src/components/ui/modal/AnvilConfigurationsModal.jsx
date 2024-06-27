@@ -14,7 +14,7 @@ const EDIT_CONFGURATION_TITLE = "Edit Configuration";
 export default function AnvilConfigurationsModal() {
   const [, addConfiguration] = useAtom(addConfigurationAtom);
   const [, editConfiguration] = useAtom(editConfigurationAtom);
-  const [formOpen, setFormOpen] = useState(true);
+  const [formOpen, setFormOpen] = useState(false);
   const [initialConfiguration, setInitialConfiguration] = useState(undefined);
   const [handleSave, setHandleSave] = useState(undefined);
   const [title, setTitle] = useState(CONFIGURATION_TABLE_TITLE);
