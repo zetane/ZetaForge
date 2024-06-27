@@ -3,16 +3,20 @@ import { RadioButton, Button } from "@carbon/react";
 import { ViewerCodeMirror } from "./CodeMirrorComponents";
 import { Edit } from "@carbon/icons-react";
 
-export default function ViewerFragment({code, prompt, currentIndex, selectedIndex, handleGenerate, handleEdit}) {
-  console.log(currentIndex, selectedIndex)
-  const selected = (currentIndex == selectedIndex)
+export default function ViewerFragment({
+  code,
+  prompt,
+  currentIndex,
+  selectedIndex,
+  handleGenerate,
+  handleEdit,
+}) {
+  const selected = currentIndex == selectedIndex;
   return (
     <Fragment key={currentIndex}>
-      <span className="block-editor-prompt">
-        {prompt}
-      </span>
+      <span className="block-editor-prompt">{prompt}</span>
       <div>
-        <div className="flex items-center mb-4">
+        <div className="mb-4 flex items-center">
           <RadioButton
             checked={selected}
             onChange={() => handleGenerate(currentIndex)}
@@ -22,14 +26,11 @@ export default function ViewerFragment({code, prompt, currentIndex, selectedInde
         <div
           className="relative"
           style={{
-            border:
-              selected
-                ? "2px solid darkorange"
-                : "none",
+            border: selected ? "2px solid darkorange" : "none",
           }}
         >
           <ViewerCodeMirror
-            key={currentIndex+"-viewer"}
+            key={currentIndex + "-viewer"}
             currentIndex={currentIndex}
             code={code}
           />
@@ -46,5 +47,5 @@ export default function ViewerFragment({code, prompt, currentIndex, selectedInde
         </div>
       </div>
     </Fragment>
-  )
+  );
 }
