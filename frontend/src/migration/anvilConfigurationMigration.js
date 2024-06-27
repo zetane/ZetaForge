@@ -7,7 +7,7 @@ const migrations = [
     up: () => {
       localStorage.setItem(
         key,
-        JSON.parse(localStorage.getItem(key)).map((e) => ({
+        JSON.stringify(JSON.parse(localStorage.getItem(key)).map((e) => ({
 	  name: e.name,
 	  anvil: {
 	    host: e.host,
@@ -21,7 +21,7 @@ const migrations = [
 	    accessKeyId: "AKIAIOSFODNN7EXAMPLE",
 	    secretAccessKey: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
 	  }
-	})),
+	}))),
       );
     },
   },
