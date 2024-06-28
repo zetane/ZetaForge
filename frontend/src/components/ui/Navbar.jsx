@@ -42,7 +42,7 @@ export default function Navbar({ children }) {
   const { pending, error, data } = useQuery({
     queryKey: ['pipelines'],
     queryFn: async () => {
-      const res = await axios.get(`http://${configuration.host}:${configuration.anvilPort}/pipeline/filter?limit=100000&offset=0`)
+      const res = await axios.get(`http://${configuration.anvil.host}:${configuration.anvil.port}/pipeline/filter?limit=100000&offset=0`)
       return res.data;
     },
     refetchInterval: workspace.fetchInterval

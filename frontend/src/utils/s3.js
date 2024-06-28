@@ -2,12 +2,12 @@ import { HeadObjectCommand, PutObjectCommand, GetObjectCommand, CopyObjectComman
 import config from "../../config";
 
 function getClient(configuration) {
-  const endpoint = `http://${configuration.host}:${configuration.s3Port}`;
+  const endpoint =  `http://${configuration.s3.host}:${configuration.s3.port}`;
   return new S3Client({
-    region: config.s3.region,
+    region: configuration.s3.region,
     credentials: {
-      accessKeyId: config.s3.accessKeyId,
-      secretAccessKey: config.s3.secretAccessKey
+      accessKeyId: configuration.s3.accessKeyId,
+      secretAccessKey: configuration.s3.secretAccessKey
     },
     endpoint: endpoint,
     forcePathStyle: config.s3.forcePathStyle,

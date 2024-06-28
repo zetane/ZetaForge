@@ -103,7 +103,7 @@ export default function RunPipelineButton({ children, action }) {
 
   const pingAnvil = async () => {
     try {
-      const response = await fetch(`http://${configuration.host}:${configuration.anvilPort}/ping`);
+      const response = await fetch(`http://${configuration.anvil.host}:${configuration.anvil.port}/ping`);
       return response.ok;
     } catch {
       return false

@@ -173,7 +173,7 @@ export const useLoadServerPipeline = () => {
       id: pipelineData.id,
       history: pipelineData.id + "/" + executionId,
       record: pipeline,
-      socketUrl: `ws://${configuration.host}:${configuration.anvilPort}/ws/${executionId}`,
+      socketUrl: `ws://${configuration.anvil.host}:${configuration.anvil.port}/ws/${executionId}`,
       logs: logs
     }
 

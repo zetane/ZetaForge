@@ -5,8 +5,8 @@ export async function getBuildContextStatus(configuration, pipelineSpecs) {
   const response = await handleRequest(
     buildPath(
       DEFAULT_SCHEME,
-      configuration.host,
-      configuration.anvilPort,
+      configuration.anvil.host,
+      configuration.anvil.port,
       "build-context-status",
     ),
     HttpMethod.POST,
@@ -29,8 +29,8 @@ export async function createExecution(
   const response = await handleRequest(
     buildPath(
       DEFAULT_SCHEME,
-      configuration.host,
-      configuration.anvilPort,
+      configuration.anvil.host,
+      configuration.anvil.port,
       "execute",
     ),
     HttpMethod.POST,

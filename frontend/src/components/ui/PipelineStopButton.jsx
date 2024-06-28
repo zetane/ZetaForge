@@ -8,7 +8,7 @@ export const PipelineStopButton = ({executionId, configuration}) => {
   const [isTerminating, setIsTerminating] = useState(false)
   const terminate = useMutation({
     mutationFn: async () => {
-      const url = `http://${configuration.host}:${configuration.anvilPort}/execution/${executionId}/terminate`
+      const url = `http://${configuration.anvil.host}:${configuration.anvil.port}/execution/${executionId}/terminate`
       const res = axios.post(url)
       return res.data
     },
@@ -45,3 +45,4 @@ export const PipelineStopButton = ({executionId, configuration}) => {
     </Button>
   )
 }
+
