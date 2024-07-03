@@ -5,7 +5,7 @@
     "description": "Text block parameter input.",
     "block_version": "0.1",
     "block_source": "core/blocks",
-    "block_type": "compute",
+    "block_type": "entry",
     "system_versions": [
       "0.1"
     ]

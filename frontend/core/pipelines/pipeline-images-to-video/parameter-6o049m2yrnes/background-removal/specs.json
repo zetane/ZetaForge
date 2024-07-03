@@ -1,0 +1,50 @@
+{
+  "information": {
+    "id": "background-removal",
+    "name": "Image Background Removal",
+    "description": "This function takes the path to an image file, removes its background, and saves the resulting image to a new file.\nThe function returns the path to the output image.\n\nParameters:\n- input_image_path (str): Path to the input image file.\n\nReturns:\n- dict: A dictionary containing the path to the output image with the key 'output_path'.",
+    "system_versions": [
+      "0.1"
+    ],
+    "block_version": "block version number",
+    "block_source": "core/blocks/background-removal",
+    "block_type": "compute"
+  },
+  "inputs": {
+    "input_image_path": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    }
+  },
+  "outputs": {
+    "output_path": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    }
+  },
+  "action": {
+    "container": {
+      "image": "background-removal",
+      "version": "latest",
+      "command_line": [
+        "python",
+        "entrypoint.py"
+      ]
+    }
+  },
+  "views": {
+    "node": {
+      "behavior": "modal",
+      "active": "True or False",
+      "title_bar": {},
+      "preview": {},
+      "html": "",
+      "pos_x": "1027",
+      "pos_y": "466",
+      "pos_z": "999"
+    }
+  },
+  "events": {}
+}

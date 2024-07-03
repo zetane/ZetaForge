@@ -1,0 +1,130 @@
+{
+  "information": {
+    "id": "post-maker",
+    "name": "Post Maker",
+    "description": "Generates a post based on requested content, a theme of the week and message tone.",
+    "system_versions": [
+      "0.1"
+    ],
+    "block_version": "block version number",
+    "block_source": "core/blocks/post-maker",
+    "block_type": "compute"
+  },
+  "inputs": {
+    "content": {
+      "type": "Any",
+      "connections": [
+        {
+          "variable": "text",
+          "block": "text-9jo8mqcwzest"
+        }
+      ]
+    },
+    "theme": {
+      "type": "Any",
+      "connections": [
+        {
+          "block": "parameter-dn42wgwlkhix",
+          "variable": "parameter"
+        }
+      ]
+    },
+    "tone": {
+      "type": "Any",
+      "connections": [
+        {
+          "block": "parameter-zb07qcaggamp",
+          "variable": "parameter"
+        }
+      ]
+    },
+    "api_key": {
+      "type": "Any",
+      "connections": [
+        {
+          "block": "password-xazcy6rakjjl",
+          "variable": "password"
+        }
+      ]
+    }
+  },
+  "outputs": {
+    "LinkedIn": {
+      "type": "Any",
+      "connections": [
+        {
+          "block": "text-as-html-nh4m9k9fc1oh",
+          "variable": "data_view"
+        }
+      ]
+    },
+    "Instagram": {
+      "type": "Any",
+      "connections": [
+        {
+          "block": "text-as-html-oc3jrxu83zvi",
+          "variable": "data_view"
+        },
+        {
+          "block": "stable-diffusion-1-cvbx2z4ncvck",
+          "variable": "prompt"
+        }
+      ]
+    },
+    "Facebook": {
+      "type": "Any",
+      "connections": [
+        {
+          "block": "text-as-html-60kexk1x7hyf",
+          "variable": "data_view"
+        }
+      ]
+    },
+    "X": {
+      "type": "Any",
+      "connections": [
+        {
+          "block": "text-as-html-knu1wtwnody1",
+          "variable": "data_view"
+        }
+      ]
+    }
+  },
+  "action": {
+    "container": {
+      "image": "post-maker",
+      "version": "post-maker-m718275ddyldd62d31",
+      "command_line": [
+        "python",
+        "entrypoint.py"
+      ]
+    }
+  },
+  "views": {
+    "node": {
+      "active": "True or False",
+      "title_bar": {},
+      "preview": {},
+      "html": "",
+      "pos_x": "1372",
+      "pos_y": "372",
+      "pos_z": "999",
+      "behavior": "modal",
+      "order": {
+        "input": [
+          "content",
+          "theme",
+          "tone",
+          "api_key"
+        ],
+        "output": [
+          "LinkedIn",
+          "Instagram",
+          "Facebook",
+          "X"
+        ]
+      }
+    }
+  },
+  "events": {}
+}

@@ -1,0 +1,66 @@
+{
+  "information": {
+    "id": "images-to-video",
+    "name": "Images to Video",
+    "description": "This function takes a list of image filepaths and compiles them into a video file.",
+    "system_versions": [
+      "0.1"
+    ],
+    "block_version": "block version number",
+    "block_source": "core/blocks/images-to-video",
+    "block_type": "compute"
+  },
+  "inputs": {
+    "images": {
+      "type": "Any",
+      "connections": [
+        {
+          "block": "canny-edge-do6x3zn52vcq",
+          "variable": "image_paths"
+        }
+      ]
+    }
+  },
+  "outputs": {
+    "video_path": {
+      "type": "Any",
+      "connections": [
+        {
+          "block": "view-videos-56aeg14tzl3g",
+          "variable": "media_paths_view"
+        }
+      ]
+    }
+  },
+  "action": {
+    "container": {
+      "image": "images-to-video",
+      "version": "images-to-video-d3ctdctemkj51",
+      "command_line": [
+        "python",
+        "entrypoint.py"
+      ]
+    }
+  },
+  "views": {
+    "node": {
+      "active": "True or False",
+      "title_bar": {},
+      "preview": {},
+      "html": "",
+      "pos_x": "1588",
+      "pos_y": "609",
+      "pos_z": "999",
+      "behavior": "modal",
+      "order": {
+        "input": [
+          "images"
+        ],
+        "output": [
+          "video_path"
+        ]
+      }
+    }
+  },
+  "events": {}
+}

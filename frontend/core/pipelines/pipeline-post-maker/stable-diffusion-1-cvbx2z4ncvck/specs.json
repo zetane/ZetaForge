@@ -1,0 +1,76 @@
+{
+  "information": {
+    "id": "stable-diffusion-1",
+    "name": "Stable Diffusion",
+    "description": "This block generates images based on a text prompt using Stable Diffusion.",
+    "system_versions": [
+      "0.1"
+    ],
+    "block_version": "block version number",
+    "block_source": "core/blocks/stable-diffusion-1",
+    "block_type": "compute"
+  },
+  "inputs": {
+    "api_key": {
+      "type": "Any",
+      "connections": [
+        {
+          "block": "password-7r402unwl017",
+          "variable": "password"
+        }
+      ]
+    },
+    "prompt": {
+      "type": "Any",
+      "connections": [
+        {
+          "block": "new-python-m718275l6231",
+          "variable": "Instagram"
+        }
+      ]
+    }
+  },
+  "outputs": {
+    "image_path": {
+      "type": "Any",
+      "connections": [
+        {
+          "block": "view-images-2ngso0wmaain",
+          "variable": "image_paths_view"
+        }
+      ]
+    }
+  },
+  "action": {
+    "container": {
+      "image": "stable-diffusion-1",
+      "version": "stable-diffusion-1-cvbx2z4ncvck",
+      "command_line": [
+        "python",
+        "entrypoint.py"
+      ]
+    }
+  },
+  "views": {
+    "node": {
+      "active": "True",
+      "title_bar": {},
+      "preview": {},
+      "html": "",
+      "pos_x": "2688",
+      "pos_y": "-128",
+      "pos_z": "999",
+      "behavior": "modal",
+      "order": {
+        "output": [
+          "image_path"
+        ],
+        "input": [
+          "api_key",
+          "prompt"
+        ]
+      }
+    }
+  },
+  "events": {}
+}
