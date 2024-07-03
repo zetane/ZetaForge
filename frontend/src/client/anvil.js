@@ -31,10 +31,10 @@ export async function getAllPipelines(configuration) {
     {},
   );
 
-  const body = await response.json();
+  const body = await response.json()
 
-  return body;
-}
+  return body
+} 
 
 export async function ping(configuration) {
   const response = await handleRequest(
@@ -73,3 +73,4 @@ async function handleRequest(url, method, headers, body = null) {
     throw new Error(message);
   }
 }
+
