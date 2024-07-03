@@ -197,8 +197,20 @@ const InputField = ({ type, value, name, step, parameterName, onChange, id, node
   const inputRef = useRef(null);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
+  useEffect(() => { // Do not change without testing effects on textbox with auto quotes
+    if (currentValue === "") {
+      onChange(name, "", parameterName)
+      setCurrentValue("")
+    }
+  }, [currentValue])
+
   useEffect(() => {
-    setCurrentValue(value)
+    if (inputRef?.current) {
+      const { selectionStart, selectionEnd, value } = inputRef?.current;
+      if (selectionStart === 3 && selectionEnd === 3 && value?.length === 3) {
+        setCursorPosition(2);
+      }
+    }
   }, [value])
 
   useEffect(() => {
@@ -237,7 +249,8 @@ const InputField = ({ type, value, name, step, parameterName, onChange, id, node
       key === "Backspace" && (atBeginning || selectionStart === 1) && !isRangedSelection ||
       key === "Delete" && (atEnd || selectionEnd - 1 === currentValue.length) && !isRangedSelection ||
       key === 'ArrowLeft' && atEnd ||
-      key === 'ArrowRight' && atBeginning;
+      key === 'ArrowRight' && atBeginning ||
+      key === 'Enter';
 
     if (boundaries) event.preventDefault();
 
