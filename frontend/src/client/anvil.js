@@ -14,9 +14,9 @@ export async function terminateExecution(configuration, executionId) {
     {},
   );
 
-  const body = await response.json()
+  const body = await response.json();
 
-  return body
+  return body;
 }
 
 export async function getAllPipelines(configuration) {
@@ -25,16 +25,16 @@ export async function getAllPipelines(configuration) {
       getScheme(configuration.anvil.host),
       configuration.anvil.host,
       configuration.anvil.port,
-      "pipeline/filter?limit=100000&offset=0"
+      "pipeline/filter?limit=100000&offset=0",
     ),
     HttpMethod.GET,
     {},
   );
 
-  const body = await response.json()
+  const body = await response.json();
 
-  return body
-} 
+  return body;
+}
 
 export async function ping(configuration) {
   const response = await handleRequest(
@@ -51,7 +51,7 @@ export async function ping(configuration) {
   try {
     return response.ok;
   } catch {
-    return false
+    return false;
   }
 }
 
@@ -73,4 +73,3 @@ async function handleRequest(url, method, headers, body = null) {
     throw new Error(message);
   }
 }
-

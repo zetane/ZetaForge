@@ -94,9 +94,9 @@ export default function RunPipelineButton({ children, action }) {
     return pipeline.data && Object.keys(pipeline.data).length;
   };
 
-  const validateAnvilOnline =  async () => {
-    if (await ping(configuration)){
-      return true
+  const validateAnvilOnline = async () => {
+    if (await ping(configuration)) {
+      return true;
     } else {
       setValidationErrorMsg([
         "Seaweed ping did not return ok. Please wait a few seconds and retry.",
