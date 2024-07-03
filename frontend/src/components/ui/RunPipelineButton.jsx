@@ -13,6 +13,7 @@ import ClosableModal from "./modal/ClosableModal";
 import { workspaceAtom } from "@/atoms/pipelineAtom";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { useLoadServerPipeline } from "./useLoadPipeline";
+import { ping } from "@/client/anvil";
 
 export default function RunPipelineButton({ children, action }) {
   const [editor] = useAtom(drawflowEditorAtom);
@@ -93,25 +94,14 @@ export default function RunPipelineButton({ children, action }) {
     return pipeline.data && Object.keys(pipeline.data).length;
   };
 
-  const validateAnvilOnline = async () => {
-    if (await pingAnvil()) {
-      return true;
+  const validateAnvilOnline =  async () => {
+    if (await ping(configuration)){
+      return true
     } else {
       setValidationErrorMsg([
         "Seaweed ping did not return ok. Please wait a few seconds and retry.",
       ]);
       setIsOpen(true);
-      return false;
-    }
-  };
-
-  const pingAnvil = async () => {
-    try {
-      const response = await fetch(
-        `http://${configuration.anvil.host}:${configuration.anvil.port}/ping`,
-      );
-      return response.ok;
-    } catch {
       return false;
     }
   };
