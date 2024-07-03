@@ -9,9 +9,7 @@ import {
 } from "@carbon/react";
 import { useState } from "react";
 import { useAtom } from "jotai";
-import {
-  defaultAnvilConfigurationAtom,
-} from "@/atoms/anvilConfigurationsAtom";
+import { defaultAnvilConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 
 export default function AnvilConfigurationForm({
   onCancel,
@@ -43,7 +41,8 @@ export default function AnvilConfigurationForm({
           s3Bucket: "",
           s3AccessKeyId: "",
           s3SecretAccessKey: "",
-        }, );
+        },
+  );
 
   function handleInputChange(e) {
     const { name, value } = e.target;

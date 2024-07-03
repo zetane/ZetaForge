@@ -62,8 +62,8 @@ export interface Parameter {
 }
 
 export interface Event {
-  inputs?: {[key: string]: string};
-  outputs?: {[key: string]: string};
+  inputs?: { [key: string]: string };
+  outputs?: { [key: string]: string };
   log?: string[];
 }
 

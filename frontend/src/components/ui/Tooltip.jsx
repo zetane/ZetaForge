@@ -1,15 +1,10 @@
-
 export default function Tooltip({ children, label }) {
-
   return (
     <div className="group">
       {children}
-      <span
-        className="absolute invisible group-hover:visible -bottom-2 left-0">
-        <span className="fixed tooltip">
-          {label}
-        </span>
+      <span className="invisible absolute -bottom-2 left-0 group-hover:visible">
+        <span className="tooltip fixed">{label}</span>
       </span>
-    </div >
-  )
+    </div>
+  );
 }

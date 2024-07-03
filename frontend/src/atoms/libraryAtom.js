@@ -1,5 +1,5 @@
-import { atomWithStorage } from 'jotai/utils'
+import { atomWithStorage } from "jotai/utils";
 
-const libraryAtom = atomWithStorage('showLibrary', true)
+const libraryAtom = atomWithStorage("showLibrary", true);
 
-export {libraryAtom}
+export { libraryAtom };

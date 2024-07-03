@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect } from "react";
 import { modalContentAtom } from "@/atoms/modalAtom";
 import { Modal } from "@carbon/react";
 import { useAtom } from "jotai";

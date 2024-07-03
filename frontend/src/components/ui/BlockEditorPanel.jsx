@@ -7,10 +7,13 @@ export default function BlockEditorPanel() {
   const [isEditorOpen] = useAtom(isBlockEditorOpenAtom);
   const [blockPath] = useAtom(blockEditorRootAtom);
   const [pipeline] = useAtom(pipelineAtom);
-  const blockKey = blockPath?.replaceAll('\\', '/').split("/").pop() ?? "";
-  
-  return <>
-    {(isEditorOpen && pipeline.data[blockKey]) && <Editor blockKey={blockKey} blockPath={blockPath}/>}
-  </>
-}
+  const blockKey = blockPath?.replaceAll("\\", "/").split("/").pop() ?? "";
 
+  return (
+    <>
+      {isEditorOpen && pipeline.data[blockKey] && (
+        <Editor blockKey={blockKey} blockPath={blockPath} />
+      )}
+    </>
+  );
+}
