@@ -2,14 +2,14 @@ import bodyParser from "body-parser";
 import { spawn } from "child_process";
 import compression from "compression";
 import cors from "cors";
-import 'dotenv/config';
-import { app as electronApp } from 'electron';
+import "dotenv/config";
+import { app as electronApp } from "electron";
 import express from "express";
 import fs, { readFileSync } from "fs";
 import multer from "multer";
 import { Configuration, OpenAIApi } from "openai";
 import path from "path";
-import sha256 from 'sha256';
+import sha256 from "sha256";
 import getMAC from "getmac";
 import { BLOCK_SPECS_FILE_NAME } from "../src/utils/constants";
 
@@ -17,7 +17,7 @@ function startExpressServer() {
   const app = express();
   const port = 3330;
 
-  app.use(cors())
+  app.use(cors());
   app.use(compression());
 
   // http://expressjs.com/en/advanced/best-practice-security.html#at-a-minimum-disable-x-powered-by-header
@@ -32,7 +32,7 @@ function startExpressServer() {
   // Everything else (like favicon.ico) is cached for an hour. You may want to be
   // more aggressive with this caching.
   app.use(express.json());
-  app.use(express.static('public'));
+  app.use(express.static("public"));
   app.use(bodyParser.json());
 
   // OpenAI
@@ -44,45 +44,54 @@ function startExpressServer() {
   const upload = multer({ dest: "_temp_import" });
 
   function getActiveRun() {
-      try {
-          // Read the JSON file synchronously
-          const data = readFileSync(path.join(__dirname, '..', '..', 'history', 'active_run.json'), 'utf8');
+    try {
+      // Read the JSON file synchronously
+      const data = readFileSync(
+        path.join(__dirname, "..", "..", "history", "active_run.json"),
+        "utf8",
+      );
 
-          // Parse the JSON content
-          const parsedData = JSON.parse(data);
+      // Parse the JSON content
+      const parsedData = JSON.parse(data);
 
-          return parsedData;
-      } catch (err) {
-          // console.error("Error reading or parsing the JSON file:", err);
-          return null;
-      }
+      return parsedData;
+    } catch (err) {
+      // console.error("Error reading or parsing the JSON file:", err);
+      return null;
+    }
   }
 
-  app.get('/distinct-id', async(req, res) => {
-
+  app.get("/distinct-id", async (req, res) => {
     try {
       const macAddress = getMAC();
-      let macAsBigInt = BigInt(`0x${macAddress.split(':').join('')}`);
+      let macAsBigInt = BigInt(`0x${macAddress.split(":").join("")}`);
 
       // Check if the MAC address is universally administered
-      const isUniversallyAdministered = (macAsBigInt & BigInt(0x020000000000)) === BigInt(0);
+      const isUniversallyAdministered =
+        (macAsBigInt & BigInt(0x020000000000)) === BigInt(0);
 
       // If not universally administered, set the multicast bit
       if (!isUniversallyAdministered) {
-          macAsBigInt |= BigInt(0x010000000000);
+        macAsBigInt |= BigInt(0x010000000000);
       }
       const distinctId = sha256(macAsBigInt.toString());
       return res.send(distinctId);
     } catch (error) {
-      console.log("Can't generate distinct_id for mixpanel. Using default distinct_id");
+      console.log(
+        "Can't generate distinct_id for mixpanel. Using default distinct_id",
+      );
       console.log(error);
       return res.send(sha256(BigInt(0).toString())); // Sending default distinct_id
     }
   });
 
-  app.get("/is-dev", async(req, res) => {
-    return res.send( !electronApp.isPackaged || (electronApp.isPackaged && process.env.VITE_ZETAFORGE_IS_DEV === 'True') )
-  })
+  app.get("/is-dev", async (req, res) => {
+    return res.send(
+      !electronApp.isPackaged ||
+        (electronApp.isPackaged &&
+          process.env.VITE_ZETAFORGE_IS_DEV === "True"),
+    );
+  });
 
   app.post("/import-files", upload.array("files"), (req, res) => {
     const files = req.files;
@@ -122,7 +131,6 @@ function startExpressServer() {
     res.send("Folder imported successfully");
   });
 
-
   app.post("/save-file", (req, res) => {
     const { pipelinePath, filePath, content } = req.body;
     const pipelineFilePath = path.join(pipelinePath, filePath);
@@ -139,7 +147,7 @@ function startExpressServer() {
 
   app.post("/get-agent", async (req, res) => {
     const { blockPath } = req.body;
-    const specsPath = path.join(blockPath, BLOCK_SPECS_FILE_NAME)
+    const specsPath = path.join(blockPath, BLOCK_SPECS_FILE_NAME);
 
     fs.readFile(specsPath, (err, data) => {
       if (err) {
@@ -158,16 +166,21 @@ function startExpressServer() {
   });
 
   app.post("/api/call-agent", async (req, res) => {
-    const { userMessage, agentName, conversationHistory, apiKey} = req.body
+    const { userMessage, agentName, conversationHistory, apiKey } = req.body;
     console.log("USER MESSAGE", userMessage);
 
     try {
       // Path to the Python script
-      let agents = "agents"
-      if(electronApp.isPackaged) {
-        agents = path.join(process.resourcesPath, "agents")
+      let agents = "agents";
+      if (electronApp.isPackaged) {
+        agents = path.join(process.resourcesPath, "agents");
       }
-      const scriptPath = path.join(agents, agentName, "generate", "computations.py")
+      const scriptPath = path.join(
+        agents,
+        agentName,
+        "generate",
+        "computations.py",
+      );
       const pythonProcess = spawn("python", [scriptPath]);
 
       const inputData = { apiKey, userMessage, conversationHistory };

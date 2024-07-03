@@ -1,37 +1,26 @@
-import { openAIApiKeyAtom } from '@/atoms/apiKeysAtom';
-import { compilationErrorToastAtom } from '@/atoms/compilationErrorToast';
-import { drawflowEditorAtom } from '@/atoms/drawflowAtom';
+import { openAIApiKeyAtom } from "@/atoms/apiKeysAtom";
+import { compilationErrorToastAtom } from "@/atoms/compilationErrorToast";
+import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
 import { blockEditorRootAtom } from "@/atoms/editorAtom";
-import { pipelineAtom } from '@/atoms/pipelineAtom';
-import { updateSpecs } from '@/utils/specs';
-import { trpc } from '@/utils/trpc';
-import {
-  Bot,
-  Edit,
-  Save,
-  SendFilled
-} from "@carbon/icons-react";
-import {
-  Button,
-  IconButton,
-  Loading,
-  RadioButton
-} from "@carbon/react";
+import { pipelineAtom } from "@/atoms/pipelineAtom";
+import { updateSpecs } from "@/utils/specs";
+import { trpc } from "@/utils/trpc";
+import { Bot, Edit, Save, SendFilled } from "@carbon/icons-react";
+import { Button, IconButton, Loading, RadioButton } from "@carbon/react";
 import { useAtom } from "jotai";
-import { useImmerAtom } from 'jotai-immer';
+import { useImmerAtom } from "jotai-immer";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { EditorCodeMirror, ViewerCodeMirror } from "./CodeMirrorComponents";
-
 
 export default function ComputationsFileEditor({ fetchFileSystem }) {
   const serverAddress = "http://localhost:3330";
   const [blockPath] = useAtom(blockEditorRootAtom);
-  const relPath = blockPath.replaceAll('\\', '/')
+  const relPath = blockPath.replaceAll("\\", "/");
   const blockFolderName = relPath.split("/").pop();
   const [openAIApiKey] = useAtom(openAIApiKeyAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const [editor] = useAtom(drawflowEditorAtom);
-  const [,setCompilationErrorToast] = useAtom(compilationErrorToastAtom)
+  const [, setCompilationErrorToast] = useAtom(compilationErrorToastAtom);
 
   const [agentName, setAgent] = useState("gpt-4_python_compute");
 
@@ -48,14 +37,14 @@ export default function ComputationsFileEditor({ fetchFileSystem }) {
   const history = trpc.chat.history.get.useQuery({ blockPath });
   const updateHistory = trpc.chat.history.update.useMutation({
     onSuccess(input) {
-      utils.chat.history.get.invalidate({ blockPath })
-    }
+      utils.chat.history.get.invalidate({ blockPath });
+    },
   });
   const index = trpc.chat.index.get.useQuery({ blockPath });
   const updateIndex = trpc.chat.index.update.useMutation({
     onSuccess(input) {
-      utils.chat.index.get.invalidate({ blockPath })
-    }
+      utils.chat.index.get.invalidate({ blockPath });
+    },
   });
 
   useEffect(() => {
@@ -90,9 +79,9 @@ export default function ComputationsFileEditor({ fetchFileSystem }) {
           timestamp: Date.now(),
           prompt: promptToRecord,
           response: codeToRecord,
-        }
-      ]
-    })
+        },
+      ],
+    });
   };
 
   const handleEditorChange = (value) => {
@@ -108,7 +97,7 @@ export default function ComputationsFileEditor({ fetchFileSystem }) {
       userMessage: newPrompt,
       agentName: agentName,
       conversationHistory: history.data,
-      apiKey: openAIApiKey
+      apiKey: openAIApiKey,
     };
 
     if (newPrompt) {
@@ -145,7 +134,7 @@ export default function ComputationsFileEditor({ fetchFileSystem }) {
     setShowEditor(false);
     if (panel.current) {
       setTimeout(() => {
-        panel.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        panel.current.scrollIntoView({ behavior: "smooth", block: "end" });
       }, 100);
     }
   };
@@ -159,13 +148,12 @@ export default function ComputationsFileEditor({ fetchFileSystem }) {
 
     if (panel.current) {
       setTimeout(() => {
-        panel.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        panel.current.scrollIntoView({ behavior: "smooth", block: "end" });
       }, 100);
     }
   };
 
   const handleGenerate = async (index) => {
-
     let code_content = history.data[index].response;
 
     const requestBody = JSON.stringify({
@@ -174,7 +162,7 @@ export default function ComputationsFileEditor({ fetchFileSystem }) {
       agent_name: agentName,
       blockPath: blockPath,
       computations_script: code_content,
-      chatHistoryIndex: index
+      chatHistoryIndex: index,
     });
 
     try {
@@ -194,66 +182,70 @@ export default function ComputationsFileEditor({ fetchFileSystem }) {
     }
 
     try {
-      const newSpecsIO = await compileComputation.mutateAsync({ blockPath: blockPath });
-      const newSpecs = await updateSpecs(blockFolderName, newSpecsIO, pipeline.data, editor);
+      const newSpecsIO = await compileComputation.mutateAsync({
+        blockPath: blockPath,
+      });
+      const newSpecs = await updateSpecs(
+        blockFolderName,
+        newSpecsIO,
+        pipeline.data,
+        editor,
+      );
       setPipeline((draft) => {
         draft.data[blockFolderName] = newSpecs;
-      })
-      await saveBlockSpecs.mutateAsync({ blockPath: blockPath, blockSpecs: newSpecs });
+      });
+      await saveBlockSpecs.mutateAsync({
+        blockPath: blockPath,
+        blockSpecs: newSpecs,
+      });
     } catch (error) {
-      console.error(error)
+      console.error(error);
       setCompilationErrorToast(true);
     }
 
     updateIndex.mutateAsync({
       blockPath: blockPath,
-      index: index
-    })
+      index: index,
+    });
 
     fetchFileSystem();
   };
 
   return (
     <div ref={panel} className="flex flex-col gap-y-12">
-      {history.isSuccess & index.isSuccess && history.data.map((item, i) => (
-        <Fragment key={i}>
-          <span className="block-editor-prompt">
-            {item.prompt}
-          </span>
-          <div>
-            <div className="flex items-center mb-4">
-              <RadioButton
-                checked={index.data === i}
-                onChange={() => handleGenerate(i)}
-                labelText={`Select Code #${i}`}
-              />
-            </div>
-            <div
-              className="relative"
-              style={{
-                border:
-                  index.data === i
-                    ? "2px solid darkorange"
-                    : "none",
-              }}
-            >
-              <ViewerCodeMirror
-                code={item.response}
-              />
-              <div className="absolute right-4 top-4">
-                <Button
-                  renderIcon={Edit}
-                  iconDescription="Edit Code"
-                  tooltipPosition="top"
-                  hasIconOnly
-                  size="md"
-                  onClick={() => handleEdit(i)}
+      {history.isSuccess & index.isSuccess &&
+        history.data.map((item, i) => (
+          <Fragment key={i}>
+            <span className="block-editor-prompt">{item.prompt}</span>
+            <div>
+              <div className="mb-4 flex items-center">
+                <RadioButton
+                  checked={index.data === i}
+                  onChange={() => handleGenerate(i)}
+                  labelText={`Select Code #${i}`}
                 />
               </div>
+              <div
+                className="relative"
+                style={{
+                  border: index.data === i ? "2px solid darkorange" : "none",
+                }}
+              >
+                <ViewerCodeMirror code={item.response} />
+                <div className="absolute right-4 top-4">
+                  <Button
+                    renderIcon={Edit}
+                    iconDescription="Edit Code"
+                    tooltipPosition="top"
+                    hasIconOnly
+                    size="md"
+                    onClick={() => handleEdit(i)}
+                  />
+                </div>
+              </div>
             </div>
-          </div>
-        </Fragment>
-      ))}
+          </Fragment>
+        ))}
       {showEditor ? (
         <div>
           <div>{editorManualPrompt}</div>
@@ -276,39 +268,48 @@ export default function ComputationsFileEditor({ fetchFileSystem }) {
         </div>
       ) : (
         <>
-            {openAIApiKey &&
-              <div className="relative">
-                <div className="text-right">
-                  <div className="inline-block p-2">
-                    <Bot size={24} className="align-middle" />
-                    <span className="text-md align-middle">{agentName}</span>
-                  </div>
-                  <textarea
-                    className="w-full p-2 block-editor-prompt-input resize-none"
-                    ref={chatTextarea}
-                    placeholder="Ask to generate code or modify last code"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSubmit(e);
-                      }
-                    }}
-                  />
+          {openAIApiKey && (
+            <div className="relative">
+              <div className="text-right">
+                <div className="inline-block p-2">
+                  <Bot size={24} className="align-middle" />
+                  <span className="text-md align-middle">{agentName}</span>
                 </div>
+                <textarea
+                  className="block-editor-prompt-input w-full resize-none p-2"
+                  ref={chatTextarea}
+                  placeholder="Ask to generate code or modify last code"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSubmit(e);
+                    }
+                  }}
+                />
+              </div>
 
-                <div className="absolute bottom-2 right-1">
-                  {isLoading ? (
-                    <div className='prompt-spinner'>
-                      <Loading active={true} description="Sending..." withOverlay={false} />
-                    </div>
-                  ) : (
-                    <IconButton iconDescription="Send Prompt" label="Send Prompt" kind='ghost' onClick={handleSubmit}>
-                        <SendFilled size={24} />
-                    </IconButton>
-                  )}
-                </div>
+              <div className="absolute bottom-2 right-1">
+                {isLoading ? (
+                  <div className="prompt-spinner">
+                    <Loading
+                      active={true}
+                      description="Sending..."
+                      withOverlay={false}
+                    />
+                  </div>
+                ) : (
+                  <IconButton
+                    iconDescription="Send Prompt"
+                    label="Send Prompt"
+                    kind="ghost"
+                    onClick={handleSubmit}
+                  >
+                    <SendFilled size={24} />
+                  </IconButton>
+                )}
+              </div>
             </div>
-            }
+          )}
         </>
       )}
     </div>

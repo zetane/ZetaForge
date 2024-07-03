@@ -16,14 +16,19 @@ export default function LogsButton() {
   };
 
   const styles = {
-    margin: '5px',
+    margin: "5px",
   };
 
-  const svgOverride = { position: 'absolute', right: '15px', top: '5px'}
+  const svgOverride = { position: "absolute", right: "15px", top: "5px" };
   return (
-    <Button style={styles} size="sm" kind="secondary" onClick={() => modalPopper(<PipelineLogs />)}>
+    <Button
+      style={styles}
+      size="sm"
+      kind="secondary"
+      onClick={() => modalPopper(<PipelineLogs />)}
+    >
       Log
       <CloudLogging size="20" style={svgOverride} />
     </Button>
-  )
+  );
 }

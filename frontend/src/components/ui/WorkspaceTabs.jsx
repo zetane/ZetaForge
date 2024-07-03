@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Tabs, TabList, Tab, TabPanels, TabPanel } from '@carbon/react';
+import { Tabs, TabList, Tab, TabPanels, TabPanel } from "@carbon/react";
 import { workspaceAtom } from "@/atoms/pipelineAtom";
 import { useImmerAtom } from "jotai-immer";
 
@@ -9,27 +9,27 @@ export default function WorkspaceTabs() {
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   useEffect(() => {
-    const pipelineTabs = []
+    const pipelineTabs = [];
     let index = 0;
     Object.keys(workspace.tabs).forEach((key) => {
-      const pipeline = workspace.pipelines[key]
-      const label = pipeline?.name
-      pipelineTabs.push({id: key, label: label, panel: <TabPanel/>})
+      const pipeline = workspace.pipelines[key];
+      const label = pipeline?.name;
+      pipelineTabs.push({ id: key, label: label, panel: <TabPanel /> });
 
       if (workspace.active == key) {
-         setSelectedIndex(index)
+        setSelectedIndex(index);
       }
-      index++
-    })
-    setRenderedTabs(pipelineTabs)
-  }, [workspace])
+      index++;
+    });
+    setRenderedTabs(pipelineTabs);
+  }, [workspace]);
 
   const handleTabChange = (evt) => {
-    const index = evt.selectedIndex
-    const key = renderedTabs[index]?.id
+    const index = evt.selectedIndex;
+    const key = renderedTabs[index]?.id;
     setWorkspace((draft) => {
-      draft.active = key
-    })
+      draft.active = key;
+    });
   };
 
   const handleCloseTabRequest = (deleteIndex) => {
@@ -38,19 +38,19 @@ export default function WorkspaceTabs() {
       return;
     }
     // TODO: Pop modal for deleting last tab
-    console.log(workspace.tabs)
+    console.log(workspace.tabs);
     if (Object.keys(workspace.tabs).length > 1) {
       const deleteTab = renderedTabs[deleteIndex];
       const selectedTab = renderedTabs[selectedIndex];
-      const key = deleteTab.id
-      const {[key]: _, ...filteredTabs} = workspace.tabs
-      const newTabArray = Object.keys(filteredTabs)
+      const key = deleteTab.id;
+      const { [key]: _, ...filteredTabs } = workspace.tabs;
+      const newTabArray = Object.keys(filteredTabs);
 
       setWorkspace((draft) => {
         // make the same tab we're deleting active, unless it's at the end, in which case we get -1
         if (deleteIndex == selectedIndex) {
           if (deleteIndex >= newTabArray.length) {
-            deleteIndex = (newTabArray.length - 1)
+            deleteIndex = newTabArray.length - 1;
           }
         } else {
           // we're re-calculating the selectedIndex since the selected tab's index might have shifted
@@ -58,12 +58,11 @@ export default function WorkspaceTabs() {
           deleteIndex = newTabArray.indexOf(selectedTab.id);
         }
 
-        draft.tabs = filteredTabs
+        draft.tabs = filteredTabs;
         draft.active = newTabArray[deleteIndex];
-      })
+      });
     }
   };
-
 
   return (
     <div className="tab-bar flex flex-wrap">
@@ -72,7 +71,8 @@ export default function WorkspaceTabs() {
           selectedIndex={selectedIndex}
           onChange={handleTabChange}
           dismissable
-          onTabCloseRequest={handleCloseTabRequest}>
+          onTabCloseRequest={handleCloseTabRequest}
+        >
           <TabList aria-label="List of tabs" contained>
             {renderedTabs.map((tab, index) => (
               <Tab key={index} disabled={tab?.disabled}>

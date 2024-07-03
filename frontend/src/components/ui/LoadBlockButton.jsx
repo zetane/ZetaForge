@@ -6,13 +6,13 @@ import { generateId, replaceIds } from "@/utils/blockUtils";
 import { trpc } from "@/utils/trpc";
 import { HeaderMenuItem } from "@carbon/react";
 import { useAtom } from "jotai";
-import { useImmerAtom } from 'jotai-immer';
+import { useImmerAtom } from "jotai-immer";
 import { useRef } from "react";
 
 export default function LoadBlockButton() {
-  const [pipeline, setPipeline] = useImmerAtom(pipelineAtom)
-  const [mixpanelService] = useAtom(mixpanelAtom)
-  const [editor] = useAtom(drawflowEditorAtom)
+  const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
+  const [mixpanelService] = useAtom(mixpanelAtom);
+  const [editor] = useAtom(drawflowEditorAtom);
 
   const fileInput = useRef();
 
@@ -24,51 +24,49 @@ export default function LoadBlockButton() {
 
   const addBlockToPipeline = async (block, path) => {
     const id = generateId(block);
-    block = replaceIds(block, id)
-    block = centerBlockPosition(block)
+    block = replaceIds(block, id);
+    block = centerBlockPosition(block);
     block = removeConnections(block);
-    const newPipeline = getPipelineFormat(pipeline)
-    let newPipelineData = JSON.parse(JSON.stringify(pipeline.data))
-    newPipelineData[id] = block
-    newPipeline.pipeline = newPipelineData
+    const newPipeline = getPipelineFormat(pipeline);
+    let newPipelineData = JSON.parse(JSON.stringify(pipeline.data));
+    newPipelineData[id] = block;
+    newPipeline.pipeline = newPipelineData;
 
     const cacheData = {
-      pipelineSpec: newPipeline,      
+      pipelineSpec: newPipeline,
       blockSpec: block,
       blockId: id,
       blockPath: path,
-      pipelinePath: pipeline.buffer
-    }
-    const res = await saveBlockMutation.mutateAsync(cacheData)
+      pipelinePath: pipeline.buffer,
+    };
+    const res = await saveBlockMutation.mutateAsync(cacheData);
 
     setPipeline((draft) => {
       draft.data[id] = block;
-    })
+    });
     return id;
-  }
+  };
 
   const loadBlock = async (pipeline) => {
     try {
-      mixpanelService.trackEvent('Load Block')
-    } catch (err) {
-
-    }
-    const files = fileInput.current.files
+      mixpanelService.trackEvent("Load Block");
+    } catch (err) {}
+    const files = fileInput.current.files;
     for (let i = 0; i < files.length; i++) {
-      const file = files.item(i)
-      let relPath = file.webkitRelativePath
-      relPath = relPath.replaceAll('\\', '/')
-      const parts = relPath.split("/")
+      const file = files.item(i);
+      let relPath = file.webkitRelativePath;
+      relPath = relPath.replaceAll("\\", "/");
+      const parts = relPath.split("/");
       if (parts.length == 2) {
-        const name = parts[1]
+        const name = parts[1];
         if (isSpecsFile(name)) {
-          const spec = JSON.parse(await (new Blob([file])).text())
-          let folderPath = getDirectoryPath(file.path)
-          folderPath = folderPath.replaceAll('\\', '/')
+          const spec = JSON.parse(await new Blob([file]).text());
+          let folderPath = getDirectoryPath(file.path);
+          folderPath = folderPath.replaceAll("\\", "/");
 
-          await addBlockToPipeline(spec, folderPath)
+          await addBlockToPipeline(spec, folderPath);
 
-          fileInput.current.value = ''
+          fileInput.current.value = "";
           break;
         }
       }
@@ -76,10 +74,16 @@ export default function LoadBlockButton() {
   };
 
   const centerBlockPosition = (block) => {
-    block.views.node.pos_x = ((editor.precanvas.clientWidth / 2) - editor.precanvas.getBoundingClientRect().x) / editor.zoom;
-    block.views.node.pos_y = ((editor.precanvas.clientHeight / 2) - editor.precanvas.getBoundingClientRect().y) / editor.zoom;
+    block.views.node.pos_x =
+      (editor.precanvas.clientWidth / 2 -
+        editor.precanvas.getBoundingClientRect().x) /
+      editor.zoom;
+    block.views.node.pos_y =
+      (editor.precanvas.clientHeight / 2 -
+        editor.precanvas.getBoundingClientRect().y) /
+      editor.zoom;
     return block;
-  }
+  };
 
   const removeConnections = (block) => {
     for (const k of ["inputs", "outputs"]) {
@@ -88,11 +92,11 @@ export default function LoadBlockButton() {
       }
     }
     return block;
-  }
+  };
 
   const isSpecsFile = (fileName) => {
-    return fileName.startsWith("specs") && fileName.endsWith('.json')
-  } 
+    return fileName.startsWith("specs") && fileName.endsWith(".json");
+  };
 
   return (
     <div>
@@ -102,7 +106,9 @@ export default function LoadBlockButton() {
         webkitdirectory=""
         directory=""
         ref={fileInput}
-        onChange={(e) => { loadBlock(pipeline) }}
+        onChange={(e) => {
+          loadBlock(pipeline);
+        }}
         hidden
       />
     </div>

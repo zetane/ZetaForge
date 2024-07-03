@@ -145,4 +145,3 @@ function ConfigCells({ configuration }) {
     <TableCell key={i}>{r}</TableCell>
   ));
 }
-
