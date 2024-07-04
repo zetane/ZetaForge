@@ -60,6 +60,7 @@ export default function AnvilConfigurationForm({
       anvil: {
         host: configForm.anvilHost,
         port: configForm.anvilPort,
+        certificate: configForm.anvilCertificate,
       },
       s3: {
         host: configForm.s3Host,
