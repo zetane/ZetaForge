@@ -24,6 +24,7 @@ export default function AnvilConfigurationForm({
           name: initialConfiguration.name,
           anvilHost: initialConfiguration.anvil.host,
           anvilPort: initialConfiguration.anvil.port,
+          anvilCertificate: initialConfiguration.anvil.certificate,
           s3Host: initialConfiguration.s3.host,
           s3Port: initialConfiguration.s3.port,
           s3Region: initialConfiguration.s3.region,
@@ -35,6 +36,7 @@ export default function AnvilConfigurationForm({
           name: "",
           anvilHost: "",
           anvilPort: "",
+          anvilCertificate: "",
           s3Host: "",
           s3Port: "",
           s3Region: "",
@@ -103,6 +105,13 @@ export default function AnvilConfigurationForm({
             max={65535}
             name="anvilPort"
             value={configForm.anvilPort}
+            onChange={handleInputChange}
+          />
+          <PasswordInput
+            labelText="Certificate"
+            placeholder={""}
+            name="anvilCertificate"
+            value={configForm.anvilCertificate}
             onChange={handleInputChange}
           />
         </Stack>
