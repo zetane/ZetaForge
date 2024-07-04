@@ -11,6 +11,7 @@ export async function terminateExecution(configuration, executionId) {
       `execution/${executionId}/terminate`,
     ),
     HttpMethod.POST,
+    configuration.anvil.certificate,
     {},
   );
 
@@ -28,6 +29,7 @@ export async function getAllPipelines(configuration) {
       "pipeline/filter?limit=100000&offset=0",
     ),
     HttpMethod.GET,
+    configuration.anvil.certificate,
     {},
   );
 
@@ -45,6 +47,7 @@ export async function ping(configuration) {
       "ping",
     ),
     HttpMethod.GET,
+    configuration.anvil.certificate,
     {},
   );
 
@@ -59,7 +62,14 @@ function getScheme(host) {
   return LOCAL_DOMAINS.includes(host) ? "http" : "https";
 }
 
-async function handleRequest(url, method, headers, body = null) {
+async function handleRequest(url, method, token, headers, body = null) {
+  if (token) {
+    headers = {
+      ...headers,
+      "Authorization": `Bearer ${token}`
+    }
+  }
+
   try {
     const response = await fetch(url, {
       method: method,
