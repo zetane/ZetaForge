@@ -696,7 +696,7 @@ func localExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 		log.Printf("error creating pipeline log: %v", err)
 	}
 
-	pipelineLogger := createLogger(executionUuid, file, func(message string, executionUuid string) {
+	pipelineLogger := createLogger(executionUuid, func(message string, executionUuid string) {
 		if executionUuid != "" {
 			// log printf produces a timestamp by default
 			// remove it here

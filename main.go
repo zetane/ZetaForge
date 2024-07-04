@@ -76,7 +76,7 @@ func (w *WebSocketWriter) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-func createLogger(id string, file io.Writer, messageFunc func(string, string)) io.Writer {
+func createLogger(id string, messageFunc func(string, string)) io.Writer {
 	wsWriter := &WebSocketWriter{
 		Id:          id,
 		MessageFunc: messageFunc,
@@ -287,6 +287,11 @@ func main() {
 		configPath = "config.json"
 	}
 
+	certsPath := os.Getenv("ZETAFORGE_CERTS")
+	if certsPath == "" {
+		certsPath = "certs"
+	}
+
 	file, err := os.ReadFile(configPath)
 	if err != nil {
 		log.Fatalf("config file missing; err=%v", err)
@@ -317,6 +322,8 @@ func main() {
 		log.Fatalf("failed to migrate database; err=%v", err)
 	}
 
+	router := gin.Default()
+
 	if config.IsLocal || config.Cloud.Provider == "Debug" {
 		// Switching to Cobra if we need more arguments
 		if len(os.Args) > 1 {
@@ -327,12 +334,20 @@ func main() {
 			os.Exit(1)
 		}
 		setup(ctx, config, db)
+	} else {
+		router.Use(func(ctx *gin.Context) {
+			code := validateToken(ctx, certsPath)
+			if code != http.StatusOK {
+				ctx.AbortWithStatus(code)
+				return
+			}
+			ctx.Next()
+		})
 	}
 
 	hub := newHub()
 	go hub.Run()
 
-	router := gin.Default()
 	// CORS middleware
 	router.Use(func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
@@ -741,5 +756,19 @@ func main() {
 		}
 	})
 
-	router.Run(fmt.Sprintf(":%d", config.ServerPort))
+	if config.IsLocal || config.Cloud.Provider == "Debug" {
+		router.Run(fmt.Sprintf(":%d", config.ServerPort))
+	} else {
+		tlsCertPath := os.Getenv("TLS_CERT_PATH")
+		tlsKeyPath := os.Getenv("TLS_KEY_PATH")
+
+		err := router.SetTrustedProxies(nil)
+		if err != nil {
+			log.Fatalf("trusted proxies incorrectly set; err=%v", err)
+		}
+		router.RunTLS(fmt.Sprintf(":%d", config.ServerPort), tlsCertPath, tlsKeyPath)
+		if err != nil {
+			log.Fatalf("failed to start server; err=%v", err)
+		}
+	}
 }

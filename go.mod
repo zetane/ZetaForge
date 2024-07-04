@@ -17,6 +17,7 @@ require (
 	github.com/getsentry/sentry-go v0.27.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-cmd/cmd v1.4.2
+	github.com/golang-jwt/jwt/v5 v5.0.0
 	github.com/google/go-containerregistry v0.19.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.1
