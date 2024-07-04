@@ -121,6 +121,7 @@ export const appRouter = router({
     )
     .mutation(async (opts) => {
       const { input } = opts;
+      // eslint-disable-next-line prefer-const
       let { specs, name, buffer, writePath } = input;
       if (!writePath) {
         const savePath = await dialog.showSaveDialog({

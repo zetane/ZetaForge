@@ -12,39 +12,6 @@ import {
   Pipeline,
   Connection,
 } from "./zjson-1";
-
-const readSpecs = async (dir: string, transformFunc: Function) => {
-  console.log("!!! CWD: ", process.cwd());
-
-  try {
-    const items = await fs.promises.readdir(dir);
-    const specsData = [];
-
-    for (const item of items) {
-      try {
-        const itemPath = path.join(dir, item);
-        const stat = await fs.promises.stat(itemPath);
-        const files = [];
-
-        if (stat.isDirectory()) {
-          try {
-            await fs.promises.stat(itemPath);
-            transformFunc(itemPath);
-          } catch (error) {
-            console.log("ERROR: ", error);
-            continue;
-          }
-        }
-      } catch (error) {
-        console.log("ERRRRRROR: ", error);
-      }
-    }
-  } catch (err) {
-    console.error("Error reading directory:", err);
-    throw err;
-  }
-};
-
 // Function to read a JSON file
 function readJsonFile<T>(filename: string): T {
   try {
@@ -69,6 +36,7 @@ function saveJsonFile(filename: string, data: any): void {
 }
 
 // Function to convert from specs to Block
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function convertBlockV1(input_block: any): Block {
   // Map the source JSON structure to the Block structure
 
@@ -227,7 +195,7 @@ const pipelineConverterV2 = (pipelinePath: string, pipelineName: string) => {
     console.log(Object.keys(pipelineData));
     for (const key of Object.keys(pipelineData) as Array<string>) {
       console.log("key: ", key);
-      let originalBlock = pipelineData[key as any];
+      const originalBlock = pipelineData[key as any];
       console.log(originalBlock);
       blocks[key] = convertBlockV2(originalBlock);
 
@@ -247,34 +215,6 @@ const pipelineConverterV2 = (pipelinePath: string, pipelineName: string) => {
     console.error("An error occured:", error);
   }
 };
-
-const pipelineConverter = (pipeline: string) => {
-  const sourceFilename = `${pipeline}.json`;
-  const target = `../../core/pipelines/${pipeline}-v1.json`;
-
-  try {
-    const sourceData = readJsonFile<string>(sourceFilename);
-    const blocks: { [key: string]: Block } = {};
-    console.log(Object.keys(sourceData));
-    for (const key of Object.keys(sourceData) as Array<string>) {
-      console.log("key: ", key);
-      let originalBlock = sourceData[key as any];
-      console.log(originalBlock);
-      blocks[key] = convertBlockV1(originalBlock);
-    }
-    const pipeline: Pipeline = {
-      id: "1",
-      pipeline: blocks,
-      source: "./my_data",
-      sink: "./history",
-      build: "./my_pipelines",
-    };
-    saveJsonFile(target, pipeline);
-  } catch (error) {
-    console.error("An error occured:", error);
-  }
-};
-
 // Convert a pipeline
 const pipeline = "/Users/jon/pipelines";
 pipelineConverterV2(pipeline, "canny-edge-real");

@@ -5,7 +5,7 @@ import cors from "cors";
 import "dotenv/config";
 import { app as electronApp } from "electron";
 import express from "express";
-import fs, { readFileSync } from "fs";
+import fs from "fs";
 import multer from "multer";
 import { Configuration, OpenAIApi } from "openai";
 import path from "path";
@@ -39,27 +39,8 @@ function startExpressServer() {
   const configuration = new Configuration({
     apiKey: process.env.OPENAI_API_KEY,
   });
-  const openai = new OpenAIApi(configuration);
-
+  new OpenAIApi(configuration);
   const upload = multer({ dest: "_temp_import" });
-
-  function getActiveRun() {
-    try {
-      // Read the JSON file synchronously
-      const data = readFileSync(
-        path.join(__dirname, "..", "..", "history", "active_run.json"),
-        "utf8",
-      );
-
-      // Parse the JSON content
-      const parsedData = JSON.parse(data);
-
-      return parsedData;
-    } catch (err) {
-      // console.error("Error reading or parsing the JSON file:", err);
-      return null;
-    }
-  }
 
   app.get("/distinct-id", async (req, res) => {
     try {

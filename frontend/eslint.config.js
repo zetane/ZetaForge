@@ -8,6 +8,7 @@ export default [
   pluginJs.configs.recommended,
   ...tseslint.configs.recommended,
   pluginReactConfig,
+
   {
     ignores: [
       ".cache/*",
@@ -16,6 +17,7 @@ export default [
       "dist-electron/*",
       "electron/*",
       "release/*",
+      "utils/*",
     ],
   },
 ];
