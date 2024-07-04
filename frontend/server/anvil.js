@@ -13,7 +13,7 @@ export async function getBuildContextStatus(configuration, pipelineSpecs) {
       "build-context-status",
     ),
     HttpMethod.POST,
-    configuration.anvil.certificate,
+    configuration.anvil.token,
     {},
     pipelineSpecs,
   );
@@ -38,7 +38,7 @@ export async function createExecution(
       "execute",
     ),
     HttpMethod.POST,
-    configuration.anvil.certificate,
+    configuration.anvil.token,
     {},
     {
       id: executionId,
