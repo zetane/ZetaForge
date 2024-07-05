@@ -20,11 +20,17 @@ export const defaultAnvilConfigurationAtom = atom(() => ({
     secretAccessKey: config.s3.secretAccessKey,
   },
 }));
+
 export const userAnvilConfigurationsAtom = atomWithStorage(
   "userAnvilConfigurationsAtom",
   [],
 );
-export const activeIndexAtom = atom(0);
+
+export const activeIndexAtom = atomWithStorage(
+  "anvilConfigurationsIndexAtom",
+  0,
+);
+
 export const activeConfigurationAtom = atom(
   (get) =>
     [get(defaultAnvilConfigurationAtom), ...get(userAnvilConfigurationsAtom)][
