@@ -1,28 +1,33 @@
-import { IconButton } from "@carbon/react"
-import { ArrowRight } from "@carbon/icons-react"
-import { useAtom } from "jotai"
-import { libraryAtom } from "@/atoms/libraryAtom"
-import { useEffect, useState } from "react"
+import { IconButton } from "@carbon/react";
+import { ArrowRight } from "@carbon/icons-react";
+import { useAtom } from "jotai";
+import { libraryAtom } from "@/atoms/libraryAtom";
+import { useEffect, useState } from "react";
 
 export default function LibrarySwitcher() {
-  const [showLibrary, setShowLibrary] = useAtom(libraryAtom)
-  const [display, setDisplay] = useState("")
+  const [showLibrary, setShowLibrary] = useAtom(libraryAtom);
+  const [display, setDisplay] = useState("");
 
   useEffect(() => {
     if (showLibrary) {
-      setDisplay("hidden")
+      setDisplay("hidden");
     } else {
-      setDisplay("block")
+      setDisplay("block");
     }
-  }, [showLibrary])
+  }, [showLibrary]);
 
-  const switcherStyles = `library-switcher ${display}`
+  const switcherStyles = `library-switcher ${display}`;
 
   return (
     <div className={switcherStyles}>
-    <IconButton kind="ghost" onClick={() => {setShowLibrary(true)}}>
-      <ArrowRight/>
-    </IconButton>
+      <IconButton
+        kind="ghost"
+        onClick={() => {
+          setShowLibrary(true);
+        }}
+      >
+        <ArrowRight />
+      </IconButton>
     </div>
-  )
+  );
 }

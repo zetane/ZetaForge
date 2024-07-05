@@ -5,8 +5,8 @@ import { blockEditorRootAtom } from "@/atoms/editorAtom";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { updateSpecs } from "@/utils/specs";
 import { trpc } from "@/utils/trpc";
-import { Bot, Edit, Save, SendFilled } from "@carbon/icons-react";
-import { Button, IconButton, Loading, RadioButton } from "@carbon/react";
+import { Bot, SendFilled } from "@carbon/icons-react";
+import { IconButton, Loading } from "@carbon/react";
 import { useAtom } from "jotai";
 import { useImmerAtom } from "jotai-immer";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -264,7 +264,6 @@ export default function ComputationsFileEditor({ fetchFileSystem }) {
                 }}
               />
             </div>
-
             <div className="absolute bottom-2 right-1">
               {isLoading ? (
                 <div className="prompt-spinner">

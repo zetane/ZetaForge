@@ -2,80 +2,61 @@
  * @see https://www.electron.build/configuration/configuration
  */
 {
-  "appId": "com.zetane.zetaforge",
-  "productName": "ZetaForge",
-  "asar": true,
-  "directories": {
-    "output": "release/${version}"
+  appId: "com.zetane.zetaforge",
+  productName: "ZetaForge",
+  asar: true,
+  directories: {
+    output: "release/${version}",
   },
-  "files": [
-    "dist-electron",
-    "dist",
+  files: ["dist-electron", "dist"],
+  mac: {
+    artifactName: "${productName}-${version}-darwin-${arch}.${ext}",
+    target: ["tar.gz"],
+  },
+  win: {
+    target: ["tar.gz"],
+    artifactName: "${productName}-${version}-windows-${arch}.${ext}",
+  },
+  linux: {
+    target: ["tar.gz"],
+    artifactName: "${productName}-${version}-linux-${arch}.${ext}",
+  },
+  extraResources: [
+    {
+      from: "./core",
+      to: "core",
+      filter: ["**/*"],
+    },
+    {
+      from: "./server2",
+      to: "server2",
+      filter: ["**/*"],
+    },
+    {
+      from: "./agents",
+      to: "agents",
+      filter: ["**/*"],
+    },
+    {
+      from: "./agents",
+      to: "agents",
+      filter: ["**/*"],
+    },
+    {
+      from: "./resources",
+      to: "resources",
+      filter: ["**/*"],
+    },
   ],
-  "mac": {
-    "artifactName": "${productName}-${version}-darwin-${arch}.${ext}",
-    "target": [
-      "tar.gz"
-    ],
+  nsis: {
+    oneClick: false,
+    perMachine: false,
+    allowToChangeInstallationDirectory: true,
+    deleteAppDataOnUninstall: false,
   },
-  "win": {
-    "target": [
-      "tar.gz"
-    ],
-    "artifactName": "${productName}-${version}-windows-${arch}.${ext}"
+  publish: {
+    provider: "generic",
+    channel: "latest",
+    url: "https://github.com/electron-vite/electron-vite-react/releases/download/v0.9.9/",
   },
-  "linux": {
-    "target": [
-      "tar.gz"
-    ],
-    "artifactName": "${productName}-${version}-linux-${arch}.${ext}"
-  },
-   "extraResources": [
-    {
-      "from": "./core",
-      "to": "core",
-      "filter": [
-        "**/*"
-      ] 
-    },
-    {
-     "from": "./server2",
-      "to": "server2",
-      "filter": [
-        "**/*"
-      ]
-    },
-    {
-      "from": "./agents",
-      "to": "agents",
-      "filter": [
-        "**/*"
-      ]
-    },
-    {
-      "from": "./agents",
-      "to": "agents",
-      "filter": [
-        "**/*"
-      ]
-    },
-    {
-      "from": "./resources",
-      "to": "resources",
-      "filter": [
-        "**/*"
-      ]
-    }
-  ],
-  "nsis": {
-    "oneClick": false,
-    "perMachine": false,
-    "allowToChangeInstallationDirectory": true,
-    "deleteAppDataOnUninstall": false
-  },
-  "publish": {
-    "provider": "generic",
-    "channel": "latest",
-    "url": "https://github.com/electron-vite/electron-vite-react/releases/download/v0.9.9/"
-  }
 }

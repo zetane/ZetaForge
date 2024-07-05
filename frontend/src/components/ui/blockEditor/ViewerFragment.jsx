@@ -29,11 +29,7 @@ export default function ViewerFragment({
             border: selected ? "2px solid darkorange" : "none",
           }}
         >
-          <ViewerCodeMirror
-            key={currentIndex + "-viewer"}
-            currentIndex={currentIndex}
-            code={code}
-          />
+          <ViewerCodeMirror currentIndex={currentIndex} code={code} />
           <div className="absolute right-4 top-4">
             <Button
               renderIcon={Edit}

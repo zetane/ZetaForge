@@ -2,7 +2,7 @@
   display: flex;
   overflow: hidden;
   touch-action: none;
-  outline:none;
+  outline: none;
 }
 
 .drawflow {
@@ -14,8 +14,8 @@
 }
 
 .drawflow .fa {
-  font-family: var(--fa-style-family,"Font Awesome 6 Free") !important;
-  font-weight: var(--fa-style,900);
+  font-family: var(--fa-style-family, "Font Awesome 6 Free") !important;
+  font-weight: var(--fa-style, 900);
 }
 
 .drawflow .parent-node {
@@ -91,7 +91,8 @@
   pointer-events: all;
 }
 
-.drawflow .connection .point.selected, .drawflow .connection .point:hover {
+.drawflow .connection .point.selected,
+.drawflow .connection .point:hover {
   fill: #1266ab;
 }
 

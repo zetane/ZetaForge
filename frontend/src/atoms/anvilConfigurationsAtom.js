@@ -1,12 +1,24 @@
 import { atom } from "jotai";
 import config from "../../config";
 import { atomWithStorage } from "jotai/utils";
+import { runMigrations } from "@/migration/anvilConfigurationMigration";
+
+runMigrations();
 
 export const defaultAnvilConfigurationAtom = atom(() => ({
-  name: "Default",
-  host: config.anvil.host,
-  anvilPort: config.anvil.port,
-  s3Port: config.s3.port,
+  name: "default",
+  anvil: {
+    host: config.anvil.host,
+    port: config.anvil.port,
+  },
+  s3: {
+    host: config.s3.host,
+    port: config.s3.port,
+    region: config.s3.region,
+    bucket: config.s3.bucket,
+    accessKeyId: config.s3.accessKeyId,
+    secretAccessKey: config.s3.secretAccessKey,
+  },
 }));
 export const userAnvilConfigurationsAtom = atomWithStorage(
   "userAnvilConfigurationsAtom",
@@ -32,3 +44,10 @@ export const removeConfigurationAtom = atom(null, (get, set, index) => {
     return prev.filter((_, i) => i != index);
   });
 });
+
+export const editConfigurationAtom = atom(
+  null,
+  (_, set, [index, configuration]) => {
+    set(userAnvilConfigurationsAtom, (prev) => prev.with(index, configuration));
+  },
+);

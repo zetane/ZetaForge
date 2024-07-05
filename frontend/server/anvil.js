@@ -5,8 +5,8 @@ export async function getBuildContextStatus(configuration, pipelineSpecs) {
   const response = await handleRequest(
     buildPath(
       DEFAULT_SCHEME,
-      configuration.host,
-      configuration.anvilPort,
+      configuration.anvil.host,
+      configuration.anvil.port,
       "build-context-status",
     ),
     HttpMethod.POST,
@@ -29,8 +29,8 @@ export async function createExecution(
   const response = await handleRequest(
     buildPath(
       DEFAULT_SCHEME,
-      configuration.host,
-      configuration.anvilPort,
+      configuration.anvil.host,
+      configuration.anvil.port,
       "execute",
     ),
     HttpMethod.POST,
@@ -42,10 +42,13 @@ export async function createExecution(
     },
   );
 
-
   if (!response.ok) {
-    const errorMessage = await response.text()
-    throw new ServerError(`Anvil could not start the execution: ${errorMessage}`, HttpStatus.BAD_REQUEST, null)
+    const errorMessage = await response.text();
+    throw new ServerError(
+      `Anvil could not start the execution: ${errorMessage}`,
+      HttpStatus.BAD_REQUEST,
+      null,
+    );
   }
 
   const body = await response.json();
@@ -91,11 +94,11 @@ const buildSortKeys = (specs) => {
     const inputKeys = Object.keys(block.inputs);
     const outputKeys = Object.keys(block.outputs);
 
-    orderObject.input = (inputKeys);
-    orderObject.output = (outputKeys);
+    orderObject.input = inputKeys;
+    orderObject.output = outputKeys;
 
-    block.views.node.order = orderObject
+    block.views.node.order = orderObject;
   }
 
-  return specs
-}
+  return specs;
+};

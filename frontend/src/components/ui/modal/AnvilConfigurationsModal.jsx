@@ -1,192 +1,62 @@
-import {
-  defaultAnvilConfigurationAtom,
-  userAnvilConfigurationsAtom,
-  addConfigurationAtom,
-  removeConfigurationAtom,
-  activeIndexAtom,
-} from "@/atoms/anvilConfigurationsAtom";
-import {
-  Button,
-  NumberInput,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-  TableSelectRow,
-  TextInput,
-} from "@carbon/react";
-import { useAtom } from "jotai";
-import ClosableModal from "./ClosableModal";
-import { Add, TrashCan } from "@carbon/icons-react";
 import { useState } from "react";
+import AnvilConfigurationForm from "./AnvilConfigurationForm";
+import ClosableModal from "./ClosableModal";
+import AnvilConfigurationTable from "./AnvilConfigurationTable";
+import {
+  addConfigurationAtom,
+  editConfigurationAtom,
+} from "@/atoms/anvilConfigurationsAtom";
+import { useAtom } from "jotai";
 
+const CONFIGURATION_TABLE_TITLE = "Anvil Configurations";
+const NEW_CONFIGURATION_TITLE = "New Configuration";
+const EDIT_CONFGURATION_TITLE = "Edit Configuration";
 export default function AnvilConfigurationsModal() {
-  const [defaultAnvilConfiguration] = useAtom(defaultAnvilConfigurationAtom);
-  const [userAnvilConfigurations] = useAtom(userAnvilConfigurationsAtom);
+  const [, addConfiguration] = useAtom(addConfigurationAtom);
+  const [, editConfiguration] = useAtom(editConfigurationAtom);
+  const [formOpen, setFormOpen] = useState(false);
+  const [initialConfiguration, setInitialConfiguration] = useState(undefined);
+  const [handleSave, setHandleSave] = useState(undefined);
+  const [title, setTitle] = useState(CONFIGURATION_TABLE_TITLE);
 
-  const defaultRows = [defaultAnvilConfiguration].map((c) => ({
-    configuration: c,
-    deletable: false,
-  }));
-  const userRows = userAnvilConfigurations.map((c, i) => ({
-    configuration: c,
-    removeable: true,
-    removeIndex: i,
-  }));
-  const rows = [...defaultRows, ...userRows].map((r, i) => ({
-    ...r,
-    selectIndex: i,
-  }));
-
-  return (
-    <ClosableModal modalHeading="Anvil Configurations" size="md" passiveModal>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableHeader />
-            <TableHeader>Name</TableHeader>
-            <TableHeader>Host</TableHeader>
-            <TableHeader>Anvil Port</TableHeader>
-            <TableHeader>S3 Port</TableHeader>
-            <TableHeader />
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          <ConfigRows rows={rows} />
-          <AddRow />
-        </TableBody>
-      </Table>
-    </ClosableModal>
-  );
-}
-
-function ConfigRows({ rows }) {
-  return rows.map((r, i) => <ConfigRow key={i} {...r} />);
-}
-
-function ConfigRow({ configuration, removeable, removeIndex, selectIndex }) {
-  const [, removeConfiguration] = useAtom(removeConfigurationAtom);
-  const [active, setActive] = useAtom(activeIndexAtom);
-
-  function handleRemoveConfiguration() {
-    removeConfiguration(removeIndex);
+  function handleNew() {
+    setInitialConfiguration(undefined);
+    setHandleSave(() => (newConfiguration) => {
+      addConfiguration(newConfiguration);
+      setTitle(CONFIGURATION_TABLE_TITLE);
+      setFormOpen(false);
+    });
+    setTitle(NEW_CONFIGURATION_TITLE);
+    setFormOpen(true);
   }
 
-  function handleSelectConfiguration() {
-    setActive(selectIndex);
+  function handleEdit(userConfigurationIndex, configuration) {
+    setInitialConfiguration(configuration);
+    setHandleSave(() => (newConfiguration) => {
+      editConfiguration([userConfigurationIndex, newConfiguration]);
+      setTitle(CONFIGURATION_TABLE_TITLE);
+      setFormOpen(false);
+    });
+    setTitle(EDIT_CONFGURATION_TITLE);
+    setFormOpen(true);
+  }
+
+  function handleCancel() {
+    setTitle(CONFIGURATION_TABLE_TITLE);
+    setFormOpen(false);
   }
 
   return (
-    <TableRow>
-      <TableSelectRow
-        radio
-        checked={active == selectIndex}
-        onSelect={handleSelectConfiguration}
-      />
-      <ConfigCells configuration={configuration} />
-      {removeable ? (
-        <TableCell>
-          <Button
-            onClick={handleRemoveConfiguration}
-            renderIcon={TrashCan}
-            hasIconOnly
-            iconDescription="Remove"
-            tooltipAlignment="end"
-            kind="ghost"
-            size="sm"
-          />
-        </TableCell>
+    <ClosableModal modalHeading={title} size="md" passiveModal>
+      {formOpen ? (
+        <AnvilConfigurationForm
+          onCancel={handleCancel}
+          onSave={handleSave}
+          initialConfiguration={initialConfiguration}
+        />
       ) : (
-        <TableCell />
+        <AnvilConfigurationTable onNew={handleNew} onEdit={handleEdit} />
       )}
-    </TableRow>
-  );
-}
-
-function ConfigCells({ configuration }) {
-  return Object.keys(configuration).map((k) => (
-    <TableCell key={k}>{configuration[k]}</TableCell>
-  ));
-}
-
-function AddRow() {
-  const [, addConfig] = useAtom(addConfigurationAtom);
-  const [config, setConfig] = useState({
-    name: "",
-    host: "",
-    anvilPort: 0,
-    s3Port: 0,
-  });
-
-  function handleKeyDown(event) {
-    if (event.key === "Enter") {
-      addConfig(config);
-    }
-  }
-
-  function handleAddConfiguration() {
-    addConfig(config);
-  }
-
-  function handleInputChange(key, value) {
-    setConfig((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
-  }
-
-  return (
-    <TableRow onKeyDown={handleKeyDown}>
-      <TableCell />
-      <TableCell>
-        <TextInput
-          size="sm"
-          value={config.name}
-          onChange={(e) => handleInputChange("name", e.target.value)}
-        />
-      </TableCell>
-      <TableCell>
-        <TextInput
-          size="sm"
-          alue={config.host}
-          onChange={(e) => handleInputChange("host", e.target.value)}
-        />
-      </TableCell>
-      <TableCell>
-        <NumberInput
-          size="sm"
-          allowEmpty
-          hideSteppers
-          min={0}
-          max={65535}
-          value={config.anvilPort}
-          onChange={(e) => handleInputChange("anvilPort", e.target.value)}
-        />
-      </TableCell>
-      <TableCell>
-        <NumberInput
-          size="sm"
-          allowEmpty
-          hideSteppers
-          min={0}
-          max={65535}
-          value={config.s3Port}
-          onChange={(e) => handleInputChange("s3Port", e.target.value)}
-        />
-      </TableCell>
-      <TableCell>
-        <Button
-          onClick={handleAddConfiguration}
-          renderIcon={Add}
-          hasIconOnly
-          iconDescription="Add"
-          tooltipAlignment="end"
-          kind="ghost"
-          size="sm"
-        />
-      </TableCell>
-    </TableRow>
+    </ClosableModal>
   );
 }

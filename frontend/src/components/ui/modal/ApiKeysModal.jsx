@@ -9,28 +9,32 @@ export default function ApiKeysModal() {
   const [modalContent, setModalContent] = useAtom(modalContentAtom);
   const [openAIApiKey, setOpenApiKey] = useAtom(openAIApiKeyAtom);
   const [openAIApiKeyInput, setOpenAIApiKeyInput] = useState(openAIApiKey);
- 
+
   const saveKeys = () => {
     setOpenApiKey(openAIApiKeyInput);
     setModalContent({
       ...modalContent,
-      show: false
+      show: false,
     });
-  }
+  };
 
   const onApiKeyChange = (e) => {
     setOpenAIApiKeyInput(e.target.value);
-  }
-  
+  };
+
   return (
-    <ClosableModal 
-      modalHeading="API Keys" 
+    <ClosableModal
+      modalHeading="API Keys"
       onRequestSubmit={saveKeys}
       primaryButtonText="Save"
       secondaryButtonText="Cancel"
       size="xs"
     >
-      <TextInput labelText="Active OpenAI" value={openAIApiKeyInput} onChange={onApiKeyChange}></TextInput>
+      <TextInput
+        labelText="Active OpenAI"
+        value={openAIApiKeyInput}
+        onChange={onApiKeyChange}
+      ></TextInput>
     </ClosableModal>
-  )
+  );
 }
