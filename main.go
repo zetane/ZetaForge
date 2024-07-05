@@ -20,7 +20,6 @@ import (
 	"server/zjson"
 
 	"github.com/getsentry/sentry-go"
-	sentrygin "github.com/getsentry/sentry-go/gin"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -340,11 +339,12 @@ func main() {
 				ctx.AbortWithStatus(http.StatusOK)
 				return
 			}
-			code := validateToken(ctx, certsPath)
+			code, prefix := validateToken(ctx, certsPath)
 			if code != http.StatusOK {
 				ctx.AbortWithStatus(code)
 				return
 			}
+			ctx.Set("prefix", prefix)
 			ctx.Next()
 		})
 	}
@@ -352,15 +352,14 @@ func main() {
 	hub := newHub()
 	go hub.Run()
 
-	// CORS middleware
 	router.Use(func(c *gin.Context) {
-		c.Next()
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		origin := c.Request.Header.Get("Origin")
+		c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, PATCH, DELETE")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-	})
 
-	router.Use(sentrygin.New(sentrygin.Options{}))
+		c.Next()
+	})
 
 	router.GET("/ping", func(ctx *gin.Context) {
 		ctx.String(http.StatusOK, "pong")
