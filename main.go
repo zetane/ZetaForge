@@ -766,7 +766,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("trusted proxies incorrectly set; err=%v", err)
 		}
-		router.RunTLS(fmt.Sprintf(":%d", config.ServerPort), tlsCertPath, tlsKeyPath)
+		err = router.RunTLS(fmt.Sprintf(":%d", config.ServerPort), tlsCertPath, tlsKeyPath)
 		if err != nil {
 			log.Fatalf("failed to start server; err=%v", err)
 		}
