@@ -1,10 +1,10 @@
-import { atom } from 'jotai'
+import { atom } from "jotai";
 
-const NotificationContentAtom = atom({ 
-  show: false, 
+const NotificationContentAtom = atom({
+  show: false,
   error: false,
-  content: '',
-  modalHeading: ''
-})
+  content: "",
+  modalHeading: "",
+});
 
-export {NotificationContentAtom}
+export { NotificationContentAtom };

@@ -9,83 +9,104 @@ import { modalContentAtom } from "@/atoms/modalAtom";
 import { useAtom } from "jotai";
 import ClosableModal from "@/components/ui/modal/ClosableModal";
 import { trimQuotes } from "@/utils/blockUtils";
-import React from 'react';
+import React from "react";
 
 const isTypeDisabled = (action) => {
   if (!action.parameters) {
-    return false
+    return false;
   }
-  return true
-}
+  return true;
+};
 
 const checkPath = async (path, count, setIframeSrc) => {
   fetch(path)
-    .then(response => {
+    .then((response) => {
       if (response.status === 404) {
-        console.log('Path not found. Retrying in 1 second...');
+        console.log("Path not found. Retrying in 1 second...");
         if (count < 15) {
           setTimeout(() => {
             checkPath(path, count + 1, setIframeSrc);
           }, 1000);
         }
       } else {
-        setIframeSrc(path)
+        setIframeSrc(path);
       }
     })
-    .catch(error => {
-      console.log('Error:', error);
+    .catch((error) => {
+      console.log("Error:", error);
     });
-}
+};
 
-const BlockGenerator = ({ block, openView, id, history, addNodeRefs, removeNodeRefs, nodeRefs }) => {
-  const [pipeline, setFocusAction] = useImmerAtom(pipelineAtom)
+const BlockGenerator = ({
+  block,
+  openView,
+  id,
+  history,
+  addNodeRefs,
+  removeNodeRefs,
+  nodeRefs,
+}) => {
+  const [pipeline, setFocusAction] = useImmerAtom(pipelineAtom);
   const [editor, _s] = useAtom(drawflowEditorAtom);
-  const [configuration] = useAtom(activeConfigurationAtom)
+  const [configuration] = useAtom(activeConfigurationAtom);
 
   const styles = {
     top: `${block.views.node.pos_y}px`,
-    left: `${block.views.node.pos_x}px`
-  }
+    left: `${block.views.node.pos_x}px`,
+  };
 
-  const [iframeSrc, setIframeSrc] = useState("")
+  const [iframeSrc, setIframeSrc] = useState("");
   useEffect(() => {
     if (block.events.outputs?.html) {
       // these outputs are a special case
-      const html = trimQuotes(block.events.outputs.html)
-      const fileUrl = `http://${configuration.s3.host}:${configuration.s3.port}/zetaforge/${history}/${html}`
-      checkPath(fileUrl, 0, setIframeSrc)
+      const html = trimQuotes(block.events.outputs.html);
+      const fileUrl = `http://${configuration.s3.host}:${configuration.s3.port}/zetaforge/${history}/${html}`;
+      checkPath(fileUrl, 0, setIframeSrc);
     }
-  }, [block.events.outputs?.html])
+  }, [block.events.outputs?.html]);
 
-  const disabled = isTypeDisabled(block.action)
-  const preview = (block.views.node.preview?.active == "true")
+  const disabled = isTypeDisabled(block.action);
+  const preview = block.views.node.preview?.active == "true";
 
   const handleInputChange = (name, value, parameterName) => {
     setFocusAction((draft) => {
-      draft.data[id].action.parameters[parameterName].value = value
-    })
-  }
+      draft.data[id].action.parameters[parameterName].value = value;
+    });
+  };
 
-  let content = (<BlockContent
-    html={block.views.node.html}
-    block={block}
-    onInputChange={handleInputChange}
-    id={id}
-    history={history}
-    nodeRefs={nodeRefs}
-    />)
-  const type = block?.action?.parameters?.path?.type
+  let content = (
+    <BlockContent
+      html={block.views.node.html}
+      block={block}
+      onInputChange={handleInputChange}
+      id={id}
+      history={history}
+      nodeRefs={nodeRefs}
+    />
+  );
+  const type = block?.action?.parameters?.path?.type;
   if (type == "file" || type == "blob" || type == "fileLoad") {
-    content = (<FileBlock blockId={id} block={block} setFocusAction={setFocusAction} history={history}/>)
+    content = (
+      <FileBlock
+        blockId={id}
+        block={block}
+        setFocusAction={setFocusAction}
+        history={history}
+      />
+    );
   }
 
-  const backgroundColor = block.views?.node?.title_bar?.background_color || 'var(--title-background-color)';
+  const backgroundColor =
+    block.views?.node?.title_bar?.background_color ||
+    "var(--title-background-color)";
 
   return (
     <div className="parent-node">
       <div className="drawflow-node" id={`node-${id}`} style={styles}>
         <div className="drawflow_content_node">
-          {preview && <BlockPreview id={id} src={iframeSrc} history={history}/>}
+          {preview && (
+            <BlockPreview id={id} src={iframeSrc} history={history} />
+          )}
 
           <BlockTitle
             name={block.information.name}
@@ -99,8 +120,22 @@ const BlockGenerator = ({ block, openView, id, history, addNodeRefs, removeNodeR
           />
           <div className="block-body">
             <div className="block-io">
-              <BlockInputs inputs={block.inputs} id={id} history={history} block={block}  addNodeRefs={addNodeRefs} removeNodeRefs={removeNodeRefs}/>
-              <BlockOutputs outputs={block.outputs} id={id}  history={history} block={block} addNodeRefs={addNodeRefs} removeNodeRefs={removeNodeRefs}/>
+              <BlockInputs
+                inputs={block.inputs}
+                id={id}
+                history={history}
+                block={block}
+                addNodeRefs={addNodeRefs}
+                removeNodeRefs={removeNodeRefs}
+              />
+              <BlockOutputs
+                outputs={block.outputs}
+                id={id}
+                history={history}
+                block={block}
+                addNodeRefs={addNodeRefs}
+                removeNodeRefs={removeNodeRefs}
+              />
             </div>
             {content}
           </div>
@@ -114,41 +149,53 @@ const BlockPreview = ({ id, src }) => {
   return (
     <div className="block-preview">
       <div>
-        <iframe className="iframe-preview" id={id} src={src}>
-        </iframe>
+        <iframe className="iframe-preview" id={id} src={src}></iframe>
       </div>
     </div>
-  )
-}
+  );
+};
 
-
-const BlockTitle = ({ name, id, color, openView, actions, src, blockEvents, history }) => {
+const BlockTitle = ({
+  name,
+  id,
+  color,
+  openView,
+  actions,
+  src,
+  blockEvents,
+  history,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [modalContent, setModalContent] = useAtom(modalContentAtom);
 
   const eventsModal = (
-    <ClosableModal
-      modalHeading="Block Events"
-      passiveModal={true}
-    >
+    <ClosableModal modalHeading="Block Events" passiveModal={true}>
       <div className="flex flex-col gap-4 p-3">
         {JSON.stringify(blockEvents, null, 2)}
       </div>
     </ClosableModal>
-  )
+  );
 
   const handleViewClick = () => {
     if (!src) {
-      modalPopper(eventsModal)
+      modalPopper(eventsModal);
     } else {
-      window.open(src, '_blank');
+      window.open(src, "_blank");
     }
   };
 
   let actionContainer = (
     <div className="action-container">
-      <button id="btn_open_code" className="view-btn" onClick={() => openView(id)}><Code size={20}/></button>
-      <button id="btn_show_view" className="view-btn" onClick={handleViewClick}><View size={20}/></button>
+      <button
+        id="btn_open_code"
+        className="view-btn"
+        onClick={() => openView(id)}
+      >
+        <Code size={20} />
+      </button>
+      <button id="btn_show_view" className="view-btn" onClick={handleViewClick}>
+        <View size={20} />
+      </button>
     </div>
   );
 
@@ -170,14 +217,14 @@ const BlockTitle = ({ name, id, color, openView, actions, src, blockEvents, hist
 
 const parseHtmlToInputs = (html) => {
   const parser = new DOMParser();
-  const doc = parser.parseFromString(html, 'text/html');
-  const inputElements = doc.querySelectorAll('input, textarea');
+  const doc = parser.parseFromString(html, "text/html");
+  const inputElements = doc.querySelectorAll("input, textarea");
 
   const inputs = Array.from(inputElements).map((element) => {
     const parameterAttr = Array.from(element.attributes).find((attr) =>
-      attr.name.startsWith('parameters-')
+      attr.name.startsWith("parameters-"),
     );
-    const parameterName = parameterAttr ? parameterAttr.name.split('-')[1] : '';
+    const parameterName = parameterAttr ? parameterAttr.name.split("-")[1] : "";
 
     return {
       type: element.tagName.toLowerCase(),
@@ -191,7 +238,16 @@ const parseHtmlToInputs = (html) => {
   return inputs;
 };
 
-const InputField = ({ type, value, name, step, parameterName, onChange, id, nodeRefs }) => {
+const InputField = ({
+  type,
+  value,
+  name,
+  step,
+  parameterName,
+  onChange,
+  id,
+  nodeRefs,
+}) => {
   const [editor, _] = useAtom(drawflowEditorAtom);
   const [currentValue, setCurrentValue] = useState(value);
   const inputRef = useRef(null);
@@ -217,18 +273,18 @@ const InputField = ({ type, value, name, step, parameterName, onChange, id, node
     if (!editor) return;
     if (!inputRef && !inputRef.current) return;
 
-    const resizeObserver = new ResizeObserver(entry => {
-      if (entry[0].target.classList.contains('textarea-node')) {
+    const resizeObserver = new ResizeObserver((entry) => {
+      if (entry[0].target.classList.contains("textarea-node")) {
         editor.updateConnectionNodes(`node-${id}`);
       }
     });
 
     if (inputRef?.current) {
-      resizeObserver.observe(inputRef.current)
+      resizeObserver.observe(inputRef.current);
     }
 
     return () => resizeObserver.disconnect();
-  }, [])
+  }, []);
 
   const setCursorPosition = (start, end) => {
     if (!inputRef?.current) return;
@@ -237,7 +293,7 @@ const InputField = ({ type, value, name, step, parameterName, onChange, id, node
   };
 
   const preventQuotation = (event) => {
-    const quotations = ['"', "'", '`'];
+    const quotations = ['"', "'", "`"];
     const { key } = event;
 
     const { selectionStart, selectionEnd } = inputRef?.current;
@@ -246,11 +302,15 @@ const InputField = ({ type, value, name, step, parameterName, onChange, id, node
     const isRangedSelection = selectionStart !== selectionEnd; // substring is highlighted
     const boundaries =
       quotations.includes(key) ||
-      key === "Backspace" && (atBeginning || selectionStart === 1) && !isRangedSelection ||
-      key === "Delete" && (atEnd || selectionEnd - 1 === currentValue.length) && !isRangedSelection ||
-      key === 'ArrowLeft' && atEnd ||
-      key === 'ArrowRight' && atBeginning ||
-      key === 'Enter';
+      (key === "Backspace" &&
+        (atBeginning || selectionStart === 1) &&
+        !isRangedSelection) ||
+      (key === "Delete" &&
+        (atEnd || selectionEnd - 1 === currentValue.length) &&
+        !isRangedSelection) ||
+      (key === "ArrowLeft" && atEnd) ||
+      (key === "ArrowRight" && atBeginning) ||
+      (key === "Enter");
 
     if (boundaries) event.preventDefault();
 
@@ -269,39 +329,57 @@ const InputField = ({ type, value, name, step, parameterName, onChange, id, node
         setCursorPosition(1);
       }
     }
-  }
+  };
 
   const EyeOpenIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="gray" class="bi bi-eye-fill" viewBox="0 0 16 16">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      fill="gray"
+      class="bi bi-eye-fill"
+      viewBox="0 0 16 16"
+    >
       <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0" />
       <path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7" />
     </svg>
   );
 
   const EyeClosedIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="gray" class="bi bi-eye-slash-fill" viewBox="0 0 16 16">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      fill="gray"
+      class="bi bi-eye-slash-fill"
+      viewBox="0 0 16 16"
+    >
       <path d="m10.79 12.912-1.614-1.615a3.5 3.5 0 0 1-4.474-4.474l-2.06-2.06C.938 6.278 0 8 0 8s3 5.5 8 5.5a7 7 0 0 0 2.79-.588M5.21 3.088A7 7 0 0 1 8 2.5c5 0 8 5.5 8 5.5s-.939 1.721-2.641 3.238l-2.062-2.062a3.5 3.5 0 0 0-4.474-4.474z" />
       <path d="M5.525 7.646a2.5 2.5 0 0 0 2.829 2.829zm4.95.708-2.829-2.83a2.5 2.5 0 0 1 2.829 2.829zm3.171 6-12-12 .708-.708 12 12z" />
     </svg>
   );
 
-  const isTextBlock = name === 'text';
+  const isTextBlock = name === "text";
 
   const handleChange = (event) => {
-    const displayedValue = !isTextBlock ? event.target.value : event.target.value.replace(/['"]/g, '');
+    const displayedValue = !isTextBlock
+      ? event.target.value
+      : event.target.value.replace(/['"]/g, "");
     setCurrentValue(displayedValue);
-    const blockValue = !isTextBlock ? event.target.value : JSON.stringify(displayedValue);
+    const blockValue = !isTextBlock
+      ? event.target.value
+      : JSON.stringify(displayedValue);
     onChange(name, blockValue, parameterName);
   };
 
   switch (name) {
-    case 'text':
+    case "text":
       return (
         <textarea
           value={value !== "" ? `"${currentValue}"` : currentValue}
           name={name}
           onChange={handleChange}
-          {...(parameterName && { [`parameters-${parameterName}`]: '' })}
+          {...(parameterName && { [`parameters-${parameterName}`]: "" })}
           className="input-element textarea-node"
           onKeyDown={preventQuotation}
           ref={inputRef}
@@ -311,36 +389,36 @@ const InputField = ({ type, value, name, step, parameterName, onChange, id, node
             height: "100px",
             minHeight: "100px",
             width: "250px",
-            minWidth: "250px"
+            minWidth: "250px",
           }}
         />
       );
 
-    case 'password':
+    case "password":
       return (
-        <div style={{ position: 'relative' }}>
+        <div style={{ position: "relative" }}>
           <input
-            type={isPasswordVisible ? 'text' : 'password'}
+            type={isPasswordVisible ? "text" : "password"}
             value={currentValue}
             name={name}
             onChange={handleChange}
             className="input-element"
             ref={inputRef}
             style={{
-              minWidth: '200px',
-              padding: '10px',
-              paddingRight: '28px'
+              minWidth: "200px",
+              padding: "10px",
+              paddingRight: "28px",
             }}
           />
           <button
             onClick={() => setIsPasswordVisible(!isPasswordVisible)}
             style={{
-              position: 'absolute',
-              right: '16px',
-              top: '25%',
-              background: 'transparent',
-              border: 'none',
-              cursor: 'pointer'
+              position: "absolute",
+              right: "16px",
+              top: "25%",
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
             }}
           >
             {isPasswordVisible ? <EyeOpenIcon /> : <EyeClosedIcon />}
@@ -354,7 +432,7 @@ const InputField = ({ type, value, name, step, parameterName, onChange, id, node
           value={currentValue}
           name={name}
           onChange={handleChange}
-          {...(parameterName && { [`parameters-${parameterName}`]: '' })}
+          {...(parameterName && { [`parameters-${parameterName}`]: "" })}
           className="input-element textarea-node"
           rows="1"
           ref={inputRef}
@@ -364,21 +442,28 @@ const InputField = ({ type, value, name, step, parameterName, onChange, id, node
             height: "30px",
             minHeight: "30px",
             width: "250px",
-            minWidth: "250px"
+            minWidth: "250px",
           }}
         />
       );
   }
 };
 
-const BlockContent = ({ html, block, onInputChange, id, history, nodeRefs }) => {
+const BlockContent = ({
+  html,
+  block,
+  onInputChange,
+  id,
+  history,
+  nodeRefs,
+}) => {
   const parsedInputs = parseHtmlToInputs(html);
 
   return (
     <div className="block-content">
       {parsedInputs.map((input, index) => {
         const parameterName = input.parameterName;
-        const value = block.action?.parameters[parameterName]?.value || '';
+        const value = block.action?.parameters[parameterName]?.value || "";
         return (
           <InputField
             key={index}
@@ -393,121 +478,114 @@ const BlockContent = ({ html, block, onInputChange, id, history, nodeRefs }) => 
             id={id}
             nodeRefs={nodeRefs}
           />
-        )
+        );
       })}
     </div>
   );
 };
 
-const BlockInputs = React.memo(({ inputs, id, history, addNodeRefs, removeNodeRefs }) =>{
-  const nodeRef = useRef({});
-  const [isReady, setIsReady] = useState(false);
+const BlockInputs = React.memo(
+  ({ inputs, id, history, addNodeRefs, removeNodeRefs }) => {
+    const nodeRef = useRef({});
+    const [isReady, setIsReady] = useState(false);
 
-  useEffect(() => {
-    if (nodeRef.current && isReady) {
-      addNodeRefs(nodeRef.current)
-    }
-    return () => {
-      removeNodeRefs(`${id}-input-`)
-    }
-  }, [nodeRef.current, isReady, inputs])
+    useEffect(() => {
+      if (nodeRef.current && isReady) {
+        addNodeRefs(nodeRef.current);
+      }
+      return () => {
+        removeNodeRefs(`${id}-input-`);
+      };
+    }, [nodeRef.current, isReady, inputs]);
 
-  return (
-    <div className="inputs">
-      {Object.entries(inputs).map(([name, input], i, array) => (
-        <div key={name} className="block-input">
-          <div
-            className={`input ${name}`}
-            ref={(el) => {
-              if (el) {
-                nodeRef.current[`${id}-input-${name}`] = el;
-              }
-              if (i === array.length - 1) {
-                setIsReady(true);
-              }
-            }}
-          >
+    return (
+      <div className="inputs">
+        {Object.entries(inputs).map(([name, input], i, array) => (
+          <div key={name} className="block-input">
+            <div
+              className={`input ${name}`}
+              ref={(el) => {
+                if (el) {
+                  nodeRef.current[`${id}-input-${name}`] = el;
+                }
+                if (i === array.length - 1) {
+                  setIsReady(true);
+                }
+              }}
+            ></div>
+            <span className="type-icon">
+              <i className={getIcon(input.type)}></i>
+            </span>
+            <span className="input-name">{name}</span>
           </div>
-          <span className="type-icon">
-            <i className={getIcon(input.type)}></i>
-          </span>
-          <span className="input-name">{name}</span>
-        </div>
-      ))}
-    </div>
-  );
-}) 
+        ))}
+      </div>
+    );
+  },
+);
 
-const BlockOutputs = React.memo(({ outputs, id, history, addNodeRefs, removeNodeRefs }) => {
-  const nodeRef = useRef({});
-  const [isReady, setIsReady] = useState(false);
+const BlockOutputs = React.memo(
+  ({ outputs, id, history, addNodeRefs, removeNodeRefs }) => {
+    const nodeRef = useRef({});
+    const [isReady, setIsReady] = useState(false);
 
-  useEffect(() => {
-    if (nodeRef.current && isReady) {
-      addNodeRefs(nodeRef.current)
-    }
-    return () => {
-      removeNodeRefs(`${id}-output-`)
-    }
-  }, [nodeRef.current, isReady, outputs])
+    useEffect(() => {
+      if (nodeRef.current && isReady) {
+        addNodeRefs(nodeRef.current);
+      }
+      return () => {
+        removeNodeRefs(`${id}-output-`);
+      };
+    }, [nodeRef.current, isReady, outputs]);
 
-  return (
-    <div className="outputs">
-      {Object.entries(outputs).map(([name, output], i, array) => (
-        <div key={name} className="block-output">
-          <span className="output-name">{name}</span>
-          <span className="type-icon">
-            <i className={getIcon(output.type)}></i>
-          </span>
-          <div
-            className={`output ${name}`}
-            ref={(el) => {
-              if (el) {
-                nodeRef.current[`${id}-output-${name}`] = el;
-              }
-              if (i === array.length - 1) {
-                setIsReady(true);
-              }
-            }}
-          >
+    return (
+      <div className="outputs">
+        {Object.entries(outputs).map(([name, output], i, array) => (
+          <div key={name} className="block-output">
+            <span className="output-name">{name}</span>
+            <span className="type-icon">
+              <i className={getIcon(output.type)}></i>
+            </span>
+            <div
+              className={`output ${name}`}
+              ref={(el) => {
+                if (el) {
+                  nodeRef.current[`${id}-output-${name}`] = el;
+                }
+                if (i === array.length - 1) {
+                  setIsReady(true);
+                }
+              }}
+            ></div>
           </div>
-        </div>
-      ))}
-    </div>
-  );
-})
+        ))}
+      </div>
+    );
+  },
+);
 
 const getIcon = (type) => {
-  if (type == 'filepath') {
-    return 'fas fa-regular fa-file'
+  if (type == "filepath") {
+    return "fas fa-regular fa-file";
+  } else if (type == "image") {
+    return "fas fa-thin fa-images";
+  } else if (type == "text") {
+    return "fa fa-font";
+  } else if (type == "str") {
+    return "fa fa-font";
+  } else if (type == "int") {
+    return "fa fa-hashtag";
+  } else if (type == "float") {
+    return "fa fa-hashtag";
+  } else if (type == "List[int]") {
+    return "fa fa-hashtag";
+  } else if (type == "view") {
+    return "fa fa-eye";
+  } else if (type == "controller") {
+    return "fa fa-gamepad";
+  } else {
+    return "fa fa-star";
   }
-  else if (type == 'image') {
-    return 'fas fa-thin fa-images'
-  }
-  else if (type == 'text') {
-    return 'fa fa-font'
-  }
-  else if (type == 'str') {
-    return 'fa fa-font'
-  }
-  else if (type == 'int') {
-    return 'fa fa-hashtag'
-  }
-  else if (type == 'float') {
-    return 'fa fa-hashtag'
-  }
-  else if (type == 'List[int]') {
-    return 'fa fa-hashtag'
-  }
-  else if (type == 'view') {
-    return 'fa fa-eye'
-  }
-  else if (type == 'controller') {
-    return 'fa fa-gamepad'
-  }
-  else {
-    return 'fa fa-star'
-  }
-}
+};
 
 export default BlockGenerator;

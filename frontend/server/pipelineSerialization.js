@@ -2,7 +2,10 @@ import { app } from "electron";
 import fs from "fs/promises";
 import path from "path";
 import process from "process";
-import { BLOCK_SPECS_FILE_NAME, PIPELINE_SPECS_FILE_NAME } from "../src/utils/constants";
+import {
+  BLOCK_SPECS_FILE_NAME,
+  PIPELINE_SPECS_FILE_NAME,
+} from "../src/utils/constants";
 import { setDifference } from "../utils/set.js";
 import {
   fileExists,
@@ -14,7 +17,7 @@ import { createExecution, getBuildContextStatus } from "./anvil";
 import { logger } from "./logger";
 
 export async function saveSpec(spec, writePath) {
-  const pipelineSpecsPath = path.join(writePath, PIPELINE_SPECS_FILE_NAME)
+  const pipelineSpecsPath = path.join(writePath, PIPELINE_SPECS_FILE_NAME);
   await fs.mkdir(writePath, { recursive: true });
   await fs.writeFile(pipelineSpecsPath, JSON.stringify(spec, null, 2));
 }
@@ -24,18 +27,24 @@ export async function saveBlock(blockKey, blockSpec, fromPath, toPath) {
   logger.debug(`saving ${blockKey} from ${fromPath} to ${newFolder}`);
   await fs.mkdir(newFolder, { recursive: true });
   await fs.cp(fromPath, newFolder, { recursive: true });
-  await fs.writeFile(path.join(newFolder, BLOCK_SPECS_FILE_NAME), JSON.stringify(blockSpec, null, 2))
+  await fs.writeFile(
+    path.join(newFolder, BLOCK_SPECS_FILE_NAME),
+    JSON.stringify(blockSpec, null, 2),
+  );
   return newFolder;
 }
 
 export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
-  const bufferPath = path.resolve(process.cwd(), fromDir)
+  const bufferPath = path.resolve(process.cwd(), fromDir);
 
   logger.debug(`supposed to be writing from ${fromDir} to ${toDir}`);
 
   // Takes existing pipeline + spec
   const writePipelineDirectory = toDir;
-  const pipelineSpecsPath = path.join(writePipelineDirectory, PIPELINE_SPECS_FILE_NAME);
+  const pipelineSpecsPath = path.join(
+    writePipelineDirectory,
+    PIPELINE_SPECS_FILE_NAME,
+  );
 
   const fromBlockIndex = await getBlockIndex([bufferPath]);
 
@@ -83,8 +92,11 @@ export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
     logger.debug(`saving ${key} from ${existingBlockPath} to ${newBlockPath}`);
     if (existingBlockPath != newBlockPath) {
       // if it's the same folder, don't try to copy it
-      await fs.cp(existingBlockPath, newBlockPath, {recursive: true})
-      await fs.writeFile(path.join(newBlockPath, BLOCK_SPECS_FILE_NAME), JSON.stringify(blockSpec, null, 2))
+      await fs.cp(existingBlockPath, newBlockPath, { recursive: true });
+      await fs.writeFile(
+        path.join(newBlockPath, BLOCK_SPECS_FILE_NAME),
+        JSON.stringify(blockSpec, null, 2),
+      );
     }
   }
 
@@ -94,7 +106,7 @@ export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
 
   await fs.writeFile(pipelineSpecsPath, JSON.stringify(pipelineSpecs, null, 2));
 
-  return {specs: PIPELINE_SPECS_FILE_NAME, dirPath: writePipelineDirectory}
+  return { specs: PIPELINE_SPECS_FILE_NAME, dirPath: writePipelineDirectory };
 }
 
 async function getBlockIndex(blockDirectories) {
@@ -194,7 +206,12 @@ export async function executePipeline(
 
   await uploadBuildContexts(anvilHostConfiguration, specs, buffer);
 
-  return await createExecution(anvilHostConfiguration, executionId, specs, rebuild);
+  return await createExecution(
+    anvilHostConfiguration,
+    executionId,
+    specs,
+    rebuild,
+  );
 }
 
 async function uploadBlocks(
@@ -223,14 +240,14 @@ async function uploadBlocks(
           if (filePath && filePath.trim()) {
             await checkAndUpload(awsKey, filePath, anvilConfiguration);
             param.value = `"${fileName}"`;
-            param.type = "blob"
+            param.type = "blob";
           }
         } else if (param.type == "blob") {
-          const copyKey = param.value
-          const fileName = param.value.split("/").at(-1)
-          const newAwsKey = `${pipelineId}/${executionId}/${fileName}`
+          const copyKey = param.value;
+          const fileName = param.value.split("/").at(-1);
+          const newAwsKey = `${pipelineId}/${executionId}/${fileName}`;
 
-          await checkAndCopy(newAwsKey, copyKey, anvilConfiguration)
+          await checkAndCopy(newAwsKey, copyKey, anvilConfiguration);
           param.value = `"${fileName}"`;
         }
       }
@@ -249,9 +266,16 @@ async function uploadBlocks(
 }
 
 async function uploadBuildContexts(configuration, pipelineSpecs, buffer) {
-  const buildContextStatuses = await getBuildContextStatus(configuration, pipelineSpecs); 
-  await Promise.all(buildContextStatuses
-    .filter(status => !status.isUploaded)
-    .map(status => [path.join(buffer, status.blockKey), status.s3Key])
-    .map(([blockPath, s3Key]) => uploadDirectory(s3Key, blockPath, configuration)))
+  const buildContextStatuses = await getBuildContextStatus(
+    configuration,
+    pipelineSpecs,
+  );
+  await Promise.all(
+    buildContextStatuses
+      .filter((status) => !status.isUploaded)
+      .map((status) => [path.join(buffer, status.blockKey), status.s3Key])
+      .map(([blockPath, s3Key]) =>
+        uploadDirectory(s3Key, blockPath, configuration),
+      ),
+  );
 }

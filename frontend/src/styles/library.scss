@@ -39,7 +39,9 @@
 
 .library-tile-container {
   overflow: auto;
-  height: calc(100vh - 230px); /* Adjust the 150px based on the height of other elements */
+  height: calc(
+    100vh - 230px
+  ); /* Adjust the 150px based on the height of other elements */
 }
 
 .library-switcher {
@@ -70,7 +72,7 @@
 }
 
 .image-container::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -104,6 +106,7 @@
 
 .custom-modal-size .cds--modal-content {
 }
-.cds--tabs .cds--tabs__nav-link:focus, .cds--tabs .cds--tabs__nav-link:active {
+.cds--tabs .cds--tabs__nav-link:focus,
+.cds--tabs .cds--tabs__nav-link:active {
   outline: none !important;
 }

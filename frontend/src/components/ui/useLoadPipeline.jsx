@@ -3,15 +3,21 @@ import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { pipelineConnectionsAtom } from "@/atoms/pipelineConnectionsAtom";
 import { trpc } from "@/utils/trpc";
 import { getDirectoryPath } from "@/../utils/fileUtils";
-import { workspaceAtom, pipelineFactory, pipelineKey } from "@/atoms/pipelineAtom";
-import { createConnections } from "@/utils/createConnections"
+import {
+  workspaceAtom,
+  pipelineFactory,
+  pipelineKey,
+} from "@/atoms/pipelineAtom";
+import { createConnections } from "@/utils/createConnections";
 import { useAtom } from "jotai";
 import { getFileData } from "@/utils/s3";
 
 export const useLoadPipeline = () => {
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
-  const [pipelineConnections, setPipelineConnections] = useAtom(pipelineConnectionsAtom);
+  const [pipelineConnections, setPipelineConnections] = useAtom(
+    pipelineConnectionsAtom,
+  );
   const savePipelineMutation = trpc.savePipeline.useMutation();
 
   const loadPipeline = async (file) => {
@@ -19,24 +25,24 @@ export const useLoadPipeline = () => {
 
     const FILE_EXTENSION_REGEX = /\.[^/.]+$/;
     let relPath = file.webkitRelativePath;
-    relPath = relPath.replaceAll('\\', '/');
+    relPath = relPath.replaceAll("\\", "/");
     const folder = relPath.split("/")[0];
     const pipelineName = file.name.replace(FILE_EXTENSION_REGEX, "");
 
-    const data = JSON.parse(await (new Blob([file])).text());
+    const data = JSON.parse(await new Blob([file]).text());
     const folderPath = getDirectoryPath(file.path);
 
     // Clear the pipeline object first to avoid key collisions
     const bufferPath = `${window.cache.local}${data.id}`;
 
-    data['sink'] = folderPath
-    data['build'] = bufferPath
+    data["sink"] = folderPath;
+    data["build"] = bufferPath;
 
     const cacheData = {
       specs: data,
       name: data.name,
       buffer: folderPath,
-      writePath: bufferPath
+      writePath: bufferPath,
     };
     await savePipelineMutation.mutateAsync(cacheData);
 
@@ -46,27 +52,28 @@ export const useLoadPipeline = () => {
       saveTime: Date.now(),
       buffer: bufferPath,
       data: data.pipeline,
-      id: data.id
-    }
+      id: data.id,
+    };
 
-    const newPipeline = pipelineFactory(window.cache.local, loadedPipeline)
-    const key = pipelineKey(newPipeline.id, null)
+    const newPipeline = pipelineFactory(window.cache.local, loadedPipeline);
+    const key = pipelineKey(newPipeline.id, null);
 
-    setWorkspace(draft => {
-      draft.tabs[key] = {}
-      draft.pipelines[key] = newPipeline
-      draft.active = key
-    })
+    setWorkspace((draft) => {
+      draft.tabs[key] = {};
+      draft.pipelines[key] = newPipeline;
+      draft.active = key;
+    });
   };
 
   return loadPipeline;
 };
 
 function parseLogLine(line) {
-  if (line.trim() === '') {
+  if (line.trim() === "") {
     return null;
   }
-  let tag, data = null;
+  let tag,
+    data = null;
 
   const { executionId, blockId, message, time, ...jsonObj } = JSON.parse(line);
   const tagAndObject = message.split("|||");
@@ -87,12 +94,13 @@ function parseLogLine(line) {
 }
 
 export function parseLog(log) {
-  const parsedLog = []
-  log = log ?? []
+  const parsedLog = [];
+  log = log ?? [];
   for (const line of log) {
     const parsedLine = parseLogLine(line);
     if (parsedLine) {
-      const { executionId, blockId, message, tag, data, time, jsonObj } = parsedLine;
+      const { executionId, blockId, message, tag, data, time, jsonObj } =
+        parsedLine;
       let shouldLog = true;
 
       if (shouldLog) {
@@ -108,61 +116,62 @@ export function parseLog(log) {
 }
 
 function sortSpecsKeys(pipeline) {
- const updatedPipeline = {};
- const specs = pipeline?.data ?? []
+  const updatedPipeline = {};
+  const specs = pipeline?.data ?? [];
 
- for (const blockId in specs) {
-   const block = specs[blockId];
-   const inputs = block.inputs;
-   const outputs = block.outputs;
+  for (const blockId in specs) {
+    const block = specs[blockId];
+    const inputs = block.inputs;
+    const outputs = block.outputs;
 
-   let inputKeys = Object.keys(inputs);
-   let outputKeys = Object.keys(outputs);
+    let inputKeys = Object.keys(inputs);
+    let outputKeys = Object.keys(outputs);
 
-   if (block.views?.node?.order) {
-     const order = block.views.node.order
+    if (block.views?.node?.order) {
+      const order = block.views.node.order;
 
-     if (
-       order?.input?.length === inputKeys.length &&
-       order?.output?.length === outputKeys.length
-     ) {
-       inputKeys = order.input;
-       outputKeys = order.output;
-     }
-   }
+      if (
+        order?.input?.length === inputKeys.length &&
+        order?.output?.length === outputKeys.length
+      ) {
+        inputKeys = order.input;
+        outputKeys = order.output;
+      }
+    }
 
-   const sortedInputs = {};
-   inputKeys.forEach((key) => {
-     sortedInputs[key] = inputs[key];
-   });
+    const sortedInputs = {};
+    inputKeys.forEach((key) => {
+      sortedInputs[key] = inputs[key];
+    });
 
-   const sortedOutputs = {};
-   outputKeys.forEach((key) => {
-     sortedOutputs[key] = outputs[key];
-   });
+    const sortedOutputs = {};
+    outputKeys.forEach((key) => {
+      sortedOutputs[key] = outputs[key];
+    });
 
-   updatedPipeline[blockId] = {
-     ...block,
-     inputs: sortedInputs,
-     outputs: sortedOutputs,
-   };
- }
+    updatedPipeline[blockId] = {
+      ...block,
+      inputs: sortedInputs,
+      outputs: sortedOutputs,
+    };
+  }
 
- pipeline.data = updatedPipeline
- return pipeline
-
+  pipeline.data = updatedPipeline;
+  return pipeline;
 }
 
 export const useLoadServerPipeline = () => {
   const loadPipeline = (pipeline, configuration) => {
-    if (!pipeline)  { return }
-    let pipelineData = JSON.parse(pipeline.PipelineJson)
-    if (pipeline.Results != "") {
-      pipelineData = JSON.parse(pipeline.Results)
+    if (!pipeline) {
+      return;
     }
-    let logs = pipeline?.Log
+    let pipelineData = JSON.parse(pipeline.PipelineJson);
+    if (pipeline.Results != "") {
+      pipelineData = JSON.parse(pipeline.Results);
+    }
+    let logs = pipeline?.Log;
     const bufferPath = `${window.cache.local}${pipelineData.id}`;
-    const executionId = pipeline.Execution
+    const executionId = pipeline.Execution;
 
     const loadedPipeline = {
       name: pipelineData.name ? pipelineData.name : pipelineData.id,
@@ -174,21 +183,21 @@ export const useLoadServerPipeline = () => {
       history: pipelineData.id + "/" + executionId,
       record: pipeline,
       socketUrl: `ws://${configuration.anvil.host}:${configuration.anvil.port}/ws/${executionId}`,
-      logs: logs
-    }
+      logs: logs,
+    };
 
-    let newPipeline = pipelineFactory(window.cache.local, loadedPipeline)
+    let newPipeline = pipelineFactory(window.cache.local, loadedPipeline);
     if (newPipeline?.logs != null && newPipeline.logs.length) {
       try {
-        const parsedLog = parseLog(newPipeline?.logs)
-        newPipeline.log = parsedLog
+        const parsedLog = parseLog(newPipeline?.logs);
+        newPipeline.log = parsedLog;
       } catch (e) {
         //console.log("Failed to parse server logs: ", e)
       }
     }
     // sort keys
-    newPipeline = sortSpecsKeys(newPipeline)
-    return newPipeline
+    newPipeline = sortSpecsKeys(newPipeline);
+    return newPipeline;
   };
 
   return loadPipeline;

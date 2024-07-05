@@ -1,6 +1,10 @@
 import { modalContentAtom } from "@/atoms/modalAtom";
 import { darkModeAtom } from "@/atoms/themeAtom";
-import { pipelineAtom, pipelineFactory, workspaceAtom } from "@/atoms/pipelineAtom";
+import {
+  pipelineAtom,
+  pipelineFactory,
+  workspaceAtom,
+} from "@/atoms/pipelineAtom";
 import { Play, Password, Renew } from "@carbon/icons-react";
 import {
   Header,
@@ -30,6 +34,7 @@ import SavePipelineButton from "./SavePipelineButton";
 import AnvilConfigurationsModal from "./modal/AnvilConfigurationsModal";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { PipelineStopButton } from "./PipelineStopButton";
+import { getAllPipelines } from "@/client/anvil";
 
 export default function Navbar({ children }) {
   const [darkMode, setDarkMode] = useAtom(darkModeAtom);
@@ -40,30 +45,34 @@ export default function Navbar({ children }) {
   const loadPipeline = useLoadServerPipeline();
 
   const { pending, error, data } = useQuery({
-    queryKey: ['pipelines'],
+    queryKey: ["pipelines"],
     queryFn: async () => {
-      const res = await axios.get(`http://${configuration.anvil.host}:${configuration.anvil.port}/pipeline/filter?limit=100000&offset=0`)
-      return res.data;
+      return await getAllPipelines(configuration);
     },
-    refetchInterval: workspace.fetchInterval
-  })
+    refetchInterval: workspace.fetchInterval,
+  });
 
   useEffect(() => {
-    const pipelines = data ?? []
+    const pipelines = data ?? [];
     setWorkspace((draft) => {
       for (const serverPipeline of pipelines) {
-        const key = serverPipeline.Uuid + "." + serverPipeline.Execution
-        const current = workspace.pipelines[key]
-        const status = current?.record?.Status
-        if (current?.record?.Results || status == "Failed" || status == "Succeeded" || status == "Error") {
-          continue
+        const key = serverPipeline.Uuid + "." + serverPipeline.Execution;
+        const current = workspace.pipelines[key];
+        const status = current?.record?.Status;
+        if (
+          current?.record?.Results ||
+          status == "Failed" ||
+          status == "Succeeded" ||
+          status == "Error"
+        ) {
+          continue;
         }
-        const loaded = loadPipeline(serverPipeline, configuration)
-        draft.pipelines[key] = loaded
-        draft.executions[loaded.record.Execution] = loaded
+        const loaded = loadPipeline(serverPipeline, configuration);
+        draft.pipelines[key] = loaded;
+        draft.executions[loaded.record.Execution] = loaded;
       }
-    })
-  }, [data])
+    });
+  }, [data]);
 
   const modalPopper = (content) => {
     setModalContent({
@@ -73,18 +82,24 @@ export default function Navbar({ children }) {
     });
   };
 
-  const svgOverride = { position: 'absolute', right: '15px', top: '5px' }
+  const svgOverride = { position: "absolute", right: "15px", top: "5px" };
 
-  let runButton =  (
+  let runButton = (
     <RunPipelineButton modalPopper={modalPopper} action="Run">
       <Play size={20} style={svgOverride} />
     </RunPipelineButton>
-  )
+  );
 
-  if (pipeline?.record?.Status == "Running" || pipeline?.record?.Status == "Pending") {
+  if (
+    pipeline?.record?.Status == "Running" ||
+    pipeline?.record?.Status == "Pending"
+  ) {
     runButton = (
-      <PipelineStopButton executionId={pipeline?.record?.Execution} configuration={configuration}/>
-    )
+      <PipelineStopButton
+        executionId={pipeline?.record?.Execution}
+        configuration={configuration}
+      />
+    );
   }
 
   return (
@@ -102,13 +117,13 @@ export default function Navbar({ children }) {
           <LoadBlockButton />
         </HeaderMenu>
         <HeaderMenu menuLinkName="Settings" aria-label="Settings">
-          <HeaderMenuItem
-            onClick={() => modalPopper(<ApiKeysModal />)}>
+          <HeaderMenuItem onClick={() => modalPopper(<ApiKeysModal />)}>
             <Password size={16} className="mx-1 align-middle"></Password>
             <span>API Keys</span>
           </HeaderMenuItem>
           <HeaderMenuItem
-            onClick={() => modalPopper(<AnvilConfigurationsModal />)}>
+            onClick={() => modalPopper(<AnvilConfigurationsModal />)}
+          >
             Anvil Configurations
           </HeaderMenuItem>
           <HeaderMenuItem label="Theme" onClick={() => setDarkMode(!darkMode)}>
@@ -116,19 +131,25 @@ export default function Navbar({ children }) {
           </HeaderMenuItem>
         </HeaderMenu>
         <HeaderMenu menuLinkName="Help" aria-label="Help">
-            <HeaderMenuItem onClick={() => window.open('https://github.com/zetane/zetaforge')}>
-              GitHub
-            </HeaderMenuItem>
-            <HeaderMenuItem onClick={() => window.open('https://discord.gg/zetaforge')}>
-              Discord
-            </HeaderMenuItem>
-            <HeaderMenuItem onClick={() => window.open('https://zetane.com/docs/')}>
-              Docs
-            </HeaderMenuItem>
+          <HeaderMenuItem
+            onClick={() => window.open("https://github.com/zetane/zetaforge")}
+          >
+            GitHub
+          </HeaderMenuItem>
+          <HeaderMenuItem
+            onClick={() => window.open("https://discord.gg/zetaforge")}
+          >
+            Discord
+          </HeaderMenuItem>
+          <HeaderMenuItem
+            onClick={() => window.open("https://zetane.com/docs/")}
+          >
+            Docs
+          </HeaderMenuItem>
         </HeaderMenu>
       </HeaderNavigation>
       <HeaderGlobalBar>
-        { runButton }
+        {runButton}
         <RunPipelineButton modalPopper={modalPopper} action="Rebuild">
           <Renew size={20} style={svgOverride} />
         </RunPipelineButton>
