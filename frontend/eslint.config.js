@@ -17,7 +17,7 @@ export default [
       "dist-electron/*",
       "electron/*",
       "release/*",
-      "utils/*",
+      "utils/schema/*",
     ],
   },
 ];
