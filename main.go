@@ -354,17 +354,10 @@ func main() {
 
 	// CORS middleware
 	router.Use(func(c *gin.Context) {
+		c.Next()
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, PATCH, DELETE")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-
-		// Handle OPTIONS requests for CORS preflight
-		if c.Request.Method == "OPTIONS" {
-			c.AbortWithStatus(http.StatusOK)
-			return
-		}
-
-		c.Next()
 	})
 
 	router.Use(sentrygin.New(sentrygin.Options{}))
