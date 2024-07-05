@@ -336,5 +336,6 @@
   "sink": "",
   "build": "",
   "name": "Canny Edge Demo",
-  "id": "pipeline-y67j70mliceo"
+  "id": "pipeline-y67j70mliceo",
+  "description": "Computes the Canny edge detection on an image at various thresholds, saves and display the results."
 }

@@ -1,0 +1,174 @@
+{
+  "pipeline": {
+    "invader-game-3507nhc90zoa": {
+      "information": {
+        "id": "invader-game",
+        "name": "Invader Game",
+        "description": "Generates an HTML file displaying an Invader game using Three.js.\n\nInputs:\n    player_image_path (str): The file path to the player image asset.\n    enemy_image_path (str): The file path to the enemy image asset.\n\nOutputs:\n    dict: A dictionary with the key 'html' and the value being the name of the generated HTML file.",
+        "block_version": "block version number",
+        "block_source": "core/blocks/invader-game",
+        "block_type": "view",
+        "system_versions": [
+          "0.1"
+        ]
+      },
+      "inputs": {
+        "player_image_path": {
+          "type": "Any",
+          "connections": [
+            {
+              "variable": "path",
+              "block": "file-so5o8rmwf1t9"
+            }
+          ],
+          "relays": []
+        },
+        "enemy_image_path": {
+          "type": "Any",
+          "connections": [
+            {
+              "variable": "path",
+              "block": "file-feabvmcxcxuo"
+            }
+          ],
+          "relays": []
+        }
+      },
+      "outputs": {
+        "html": {
+          "type": "Any",
+          "connections": [],
+          "relays": []
+        }
+      },
+      "action": {
+        "container": {
+          "image": "invader-game",
+          "version": "invader-game-3507nhc90zoa",
+          "command_line": [
+            "python",
+            "entrypoint.py"
+          ]
+        }
+      },
+      "views": {
+        "node": {
+          "behavior": "new_tab",
+          "active": "True",
+          "title_bar": {
+            "background_color": "#D55908"
+          },
+          "preview": {
+            "active": "true"
+          },
+          "html": "",
+          "pos_x": "1521",
+          "pos_y": "488",
+          "pos_z": "999, this is the z-index for 2D canvas"
+        }
+      },
+      "events": {}
+    },
+    "file-so5o8rmwf1t9": {
+      "information": {
+        "id": "file",
+        "name": "File",
+        "description": "File parameter input.",
+        "block_version": "block version number",
+        "block_source": "core/blocks",
+        "block_type": "compute",
+        "system_versions": [
+          "0.1"
+        ]
+      },
+      "inputs": {},
+      "outputs": {
+        "path": {
+          "type": "file",
+          "connections": [
+            {
+              "variable": "player_image_path",
+              "block": "invader-game-3507nhc90zoa"
+            }
+          ],
+          "relays": []
+        }
+      },
+      "action": {
+        "parameters": {
+          "path": {
+            "type": "file",
+            "value": ""
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "True or False",
+          "title_bar": {
+            "background_color": "#909090"
+          },
+          "preview": {},
+          "html": "<input type='file' name='fileInput' parameters-file/>",
+          "pos_x": "1042",
+          "pos_y": "360",
+          "pos_z": "999, this is the z-index for 2D canvas"
+        }
+      },
+      "events": {}
+    },
+    "file-feabvmcxcxuo": {
+      "information": {
+        "id": "file",
+        "name": "File",
+        "description": "File parameter input.",
+        "block_version": "block version number",
+        "block_source": "core/blocks",
+        "block_type": "compute",
+        "system_versions": [
+          "0.1"
+        ]
+      },
+      "inputs": {},
+      "outputs": {
+        "path": {
+          "type": "file",
+          "connections": [
+            {
+              "variable": "enemy_image_path",
+              "block": "invader-game-3507nhc90zoa"
+            }
+          ],
+          "relays": []
+        }
+      },
+      "action": {
+        "parameters": {
+          "path": {
+            "type": "file",
+            "value": ""
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "True or False",
+          "title_bar": {
+            "background_color": "#909090"
+          },
+          "preview": {},
+          "html": "<input type='file' name='fileInput' parameters-file/>",
+          "pos_x": "1055",
+          "pos_y": "638",
+          "pos_z": "999, this is the z-index for 2D canvas"
+        }
+      },
+      "events": {}
+    }
+  },
+  "sink": "",
+  "build": "",
+  "name": "Ivader Game Demo",
+  "id": "pipeline-14hqgq7kfod4",
+  "description": "Three.js space invader game based on image inputs."
+}

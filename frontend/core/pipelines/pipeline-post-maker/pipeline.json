@@ -1,0 +1,820 @@
+{
+  "pipeline": {
+    "password-xazcy6rakjjl": {
+      "information": {
+        "id": "password",
+        "name": "Password",
+        "description": "Password block parameter input.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "0.1",
+        "block_source": "core/blocks",
+        "block_type": "compute"
+      },
+      "inputs": {},
+      "outputs": {
+        "password": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "new-python-m718275l6231",
+              "variable": "api_key"
+            }
+          ]
+        }
+      },
+      "action": {
+        "container": {
+          "image": "",
+          "version": "",
+          "command_line": []
+        },
+        "parameters": {
+          "password": {
+            "value": "",
+            "type": "Any"
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "true",
+          "title_bar": {
+            "background_color": "#909090"
+          },
+          "preview": {},
+          "html": "<textarea style='width: 100%; height: 150px;' parameters-password></textarea>",
+          "pos_x": "776",
+          "pos_y": "714",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "input": [],
+            "output": [
+              "password"
+            ]
+          }
+        }
+      },
+      "events": {}
+    },
+    "password-7r402unwl017": {
+      "information": {
+        "id": "password",
+        "name": "Password",
+        "description": "Password block parameter input.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "0.1",
+        "block_source": "core/blocks",
+        "block_type": "compute"
+      },
+      "inputs": {},
+      "outputs": {
+        "password": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "stable-diffusion-1-cvbx2z4ncvck",
+              "variable": "api_key"
+            }
+          ]
+        }
+      },
+      "action": {
+        "container": {
+          "image": "",
+          "version": "",
+          "command_line": []
+        },
+        "parameters": {
+          "password": {
+            "value": "",
+            "type": "Any"
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "true",
+          "title_bar": {
+            "background_color": "#909090"
+          },
+          "preview": {},
+          "html": "<textarea style='width: 100%; height: 150px;' parameters-password></textarea>",
+          "pos_x": "775",
+          "pos_y": "-73",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "input": [],
+            "output": [
+              "password"
+            ]
+          }
+        }
+      },
+      "events": {}
+    },
+    "text-as-html-oc3jrxu83zvi": {
+      "information": {
+        "id": "text-as-html",
+        "name": "Text as HTML",
+        "description": "Generates an HTML file that displays the provided data and returns the file name.\n\nThis function takes a string, dictionary, or list of dictionaries and generates\nan HTML file to visually present the data. The generated HTML file is saved with\na unique name to avoid conflicts. The HTML content includes styling and scripts\nto format the data for better readability.\n\nParameters:\ndata_view (str, dict, or list): The data to be displayed in the gallery. It can be:\n    - A single string\n    - A single dictionary\n    - A list of strings or dictionaries\n\nReturns:\ndict: A dictionary containing the key 'html' with the value being the name of the\ngenerated HTML file.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks/text-as-html",
+        "block_type": "view"
+      },
+      "inputs": {
+        "data_view": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "new-python-m718275l6231",
+              "variable": "Instagram"
+            }
+          ]
+        }
+      },
+      "outputs": {
+        "html": {
+          "type": "Any",
+          "connections": []
+        }
+      },
+      "action": {
+        "container": {
+          "image": "text-as-html",
+          "version": "text-as-html-oc3jrxu83zvi",
+          "command_line": [
+            "python",
+            "entrypoint.py"
+          ]
+        }
+      },
+      "views": {
+        "node": {
+          "active": "True",
+          "title_bar": {
+            "background_color": "#D55908"
+          },
+          "preview": {
+            "active": "true"
+          },
+          "html": "",
+          "pos_x": "3047",
+          "pos_y": "271",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "input": [
+              "data_view"
+            ],
+            "output": [
+              "html"
+            ]
+          }
+        },
+        "mode": "modal"
+      },
+      "events": {}
+    },
+    "view-images-2ngso0wmaain": {
+      "information": {
+        "id": "view-images",
+        "name": "View Images",
+        "description": "Generates an HTML file with a unique name and returns the file name.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks/view-images",
+        "block_type": "view"
+      },
+      "inputs": {
+        "image_paths_view": {
+          "type": "List[file]",
+          "connections": [
+            {
+              "block": "stable-diffusion-1-cvbx2z4ncvck",
+              "variable": "image_path"
+            }
+          ]
+        }
+      },
+      "outputs": {
+        "html": {
+          "type": "file",
+          "connections": []
+        }
+      },
+      "action": {
+        "container": {
+          "image": "view-images",
+          "version": "view-images-2ngso0wmaain",
+          "command_line": [
+            "python",
+            "entrypoint.py"
+          ]
+        }
+      },
+      "views": {
+        "node": {
+          "active": "True or False",
+          "title_bar": {
+            "background_color": "#D55908"
+          },
+          "preview": {
+            "active": "true"
+          },
+          "html": "",
+          "pos_x": "3069",
+          "pos_y": "-203",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "input": [
+              "image_paths_view"
+            ],
+            "output": [
+              "html"
+            ]
+          }
+        },
+        "mode": "modal"
+      },
+      "events": {}
+    },
+    "parameter-dn42wgwlkhix": {
+      "information": {
+        "id": "parameter",
+        "name": "Parameter",
+        "description": "Parameter input.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks",
+        "block_type": "compute"
+      },
+      "inputs": {},
+      "outputs": {
+        "parameter": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "new-python-m718275l6231",
+              "variable": "theme"
+            }
+          ]
+        }
+      },
+      "action": {
+        "container": {
+          "image": "",
+          "version": "",
+          "command_line": []
+        },
+        "parameters": {
+          "parameter": {
+            "value": "",
+            "type": "Any"
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "true",
+          "title_bar": {
+            "background_color": "#909090"
+          },
+          "preview": {},
+          "html": "<input type='text' value='abcd' parameters-parameter/>",
+          "pos_x": "774",
+          "pos_y": "402",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "input": [],
+            "output": [
+              "parameter"
+            ]
+          }
+        }
+      },
+      "events": {}
+    },
+    "parameter-zb07qcaggamp": {
+      "information": {
+        "id": "parameter",
+        "name": "Parameter",
+        "description": "Parameter input.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks",
+        "block_type": "compute"
+      },
+      "inputs": {},
+      "outputs": {
+        "parameter": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "new-python-m718275l6231",
+              "variable": "tone"
+            }
+          ]
+        }
+      },
+      "action": {
+        "container": {
+          "image": "",
+          "version": "",
+          "command_line": []
+        },
+        "parameters": {
+          "parameter": {
+            "value": "",
+            "type": "Any"
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "true",
+          "title_bar": {
+            "background_color": "#909090"
+          },
+          "preview": {},
+          "html": "<input type='text' value='abcd' parameters-parameter/>",
+          "pos_x": "776",
+          "pos_y": "561",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "input": [],
+            "output": [
+              "parameter"
+            ]
+          }
+        }
+      },
+      "events": {}
+    },
+    "text-as-html-60kexk1x7hyf": {
+      "information": {
+        "id": "text-as-html",
+        "name": "Text as HTML",
+        "description": "Generates an HTML file that displays the provided data and returns the file name.\n\nThis function takes a string, dictionary, or list of dictionaries and generates\nan HTML file to visually present the data. The generated HTML file is saved with\na unique name to avoid conflicts. The HTML content includes styling and scripts\nto format the data for better readability.\n\nParameters:\ndata_view (str, dict, or list): The data to be displayed in the gallery. It can be:\n    - A single string\n    - A single dictionary\n    - A list of strings or dictionaries\n\nReturns:\ndict: A dictionary containing the key 'html' with the value being the name of the\ngenerated HTML file.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks/text-as-html",
+        "block_type": "view"
+      },
+      "inputs": {
+        "data_view": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "new-python-m718275l6231",
+              "variable": "Facebook"
+            }
+          ]
+        }
+      },
+      "outputs": {
+        "html": {
+          "type": "Any",
+          "connections": []
+        }
+      },
+      "action": {
+        "container": {
+          "image": "text-as-html",
+          "version": "text-as-html-60kexk1x7hyf",
+          "command_line": [
+            "python",
+            "entrypoint.py"
+          ]
+        }
+      },
+      "views": {
+        "node": {
+          "active": "True",
+          "title_bar": {
+            "background_color": "#D55908"
+          },
+          "preview": {
+            "active": "true"
+          },
+          "html": "",
+          "pos_x": "1823",
+          "pos_y": "790",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "output": [
+              "html"
+            ],
+            "input": [
+              "data_view"
+            ]
+          }
+        },
+        "mode": "modal"
+      },
+      "events": {}
+    },
+    "text-as-html-knu1wtwnody1": {
+      "information": {
+        "id": "text-as-html",
+        "name": "Text as HTML",
+        "description": "Generates an HTML file that displays the provided data and returns the file name.\n\nThis function takes a string, dictionary, or list of dictionaries and generates\nan HTML file to visually present the data. The generated HTML file is saved with\na unique name to avoid conflicts. The HTML content includes styling and scripts\nto format the data for better readability.\n\nParameters:\ndata_view (str, dict, or list): The data to be displayed in the gallery. It can be:\n    - A single string\n    - A single dictionary\n    - A list of strings or dictionaries\n\nReturns:\ndict: A dictionary containing the key 'html' with the value being the name of the\ngenerated HTML file.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks/text-as-html",
+        "block_type": "view"
+      },
+      "inputs": {
+        "data_view": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "new-python-m718275l6231",
+              "variable": "X"
+            }
+          ]
+        }
+      },
+      "outputs": {
+        "html": {
+          "type": "Any",
+          "connections": []
+        }
+      },
+      "action": {
+        "container": {
+          "image": "text-as-html",
+          "version": "text-as-html-knu1wtwnody1",
+          "command_line": [
+            "python",
+            "entrypoint.py"
+          ]
+        }
+      },
+      "views": {
+        "node": {
+          "active": "True",
+          "title_bar": {
+            "background_color": "#D55908"
+          },
+          "preview": {
+            "active": "true"
+          },
+          "html": "",
+          "pos_x": "1819",
+          "pos_y": "1191",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "input": [
+              "data_view"
+            ],
+            "output": [
+              "html"
+            ]
+          }
+        },
+        "mode": "modal"
+      },
+      "events": {}
+    },
+    "text-as-html-nh4m9k9fc1oh": {
+      "information": {
+        "id": "text-as-html",
+        "name": "Text as HTML",
+        "description": "Generates an HTML file that displays the provided data and returns the file name.\n\nThis function takes a string, dictionary, or list of dictionaries and generates\nan HTML file to visually present the data. The generated HTML file is saved with\na unique name to avoid conflicts. The HTML content includes styling and scripts\nto format the data for better readability.\n\nParameters:\ndata_view (str, dict, or list): The data to be displayed in the gallery. It can be:\n    - A single string\n    - A single dictionary\n    - A list of strings or dictionaries\n\nReturns:\ndict: A dictionary containing the key 'html' with the value being the name of the\ngenerated HTML file.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks/text-as-html",
+        "block_type": "view"
+      },
+      "inputs": {
+        "data_view": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "new-python-m718275l6231",
+              "variable": "LinkedIn"
+            }
+          ]
+        }
+      },
+      "outputs": {
+        "html": {
+          "type": "Any",
+          "connections": []
+        }
+      },
+      "action": {
+        "container": {
+          "image": "text-as-html",
+          "version": "text-as-html-nh4m9k9fc1oh",
+          "command_line": [
+            "python",
+            "entrypoint.py"
+          ]
+        }
+      },
+      "views": {
+        "node": {
+          "active": "True",
+          "title_bar": {
+            "background_color": "#D55908"
+          },
+          "preview": {
+            "active": "true"
+          },
+          "html": "",
+          "pos_x": "1891",
+          "pos_y": "-200",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "input": [
+              "data_view"
+            ],
+            "output": [
+              "html"
+            ]
+          }
+        },
+        "mode": "modal"
+      },
+      "events": {}
+    },
+    "stable-diffusion-1-cvbx2z4ncvck": {
+      "information": {
+        "id": "stable-diffusion-1",
+        "name": "Stable Diffusion",
+        "description": "This block generates images based on a text prompt using Stable Diffusion.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks/stable-diffusion-1",
+        "block_type": "compute"
+      },
+      "inputs": {
+        "api_key": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "password-7r402unwl017",
+              "variable": "password"
+            }
+          ]
+        },
+        "prompt": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "new-python-m718275l6231",
+              "variable": "Instagram"
+            }
+          ]
+        }
+      },
+      "outputs": {
+        "image_path": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "view-images-2ngso0wmaain",
+              "variable": "image_paths_view"
+            }
+          ]
+        }
+      },
+      "action": {
+        "container": {
+          "image": "stable-diffusion-1",
+          "version": "stable-diffusion-1-cvbx2z4ncvck",
+          "command_line": [
+            "python",
+            "entrypoint.py"
+          ]
+        }
+      },
+      "views": {
+        "node": {
+          "active": "True",
+          "title_bar": {},
+          "preview": {},
+          "html": "",
+          "pos_x": "2688",
+          "pos_y": "-128",
+          "pos_z": "999",
+          "behavior": "modal",
+          "order": {
+            "output": [
+              "image_path"
+            ],
+            "input": [
+              "api_key",
+              "prompt"
+            ]
+          }
+        }
+      },
+      "events": {}
+    },
+    "new-python-m718275l6231": {
+      "information": {
+        "id": "post-maker",
+        "name": "Post Maker",
+        "description": "Generates a post based on requested content, a theme of the week and message tone.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks/post-maker",
+        "block_type": "compute"
+      },
+      "inputs": {
+        "content": {
+          "type": "Any",
+          "connections": [
+            {
+              "variable": "text",
+              "block": "text-9jo8mqcwzest"
+            }
+          ]
+        },
+        "theme": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "parameter-dn42wgwlkhix",
+              "variable": "parameter"
+            }
+          ]
+        },
+        "tone": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "parameter-zb07qcaggamp",
+              "variable": "parameter"
+            }
+          ]
+        },
+        "api_key": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "password-xazcy6rakjjl",
+              "variable": "password"
+            }
+          ]
+        }
+      },
+      "outputs": {
+        "LinkedIn": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "text-as-html-nh4m9k9fc1oh",
+              "variable": "data_view"
+            }
+          ]
+        },
+        "Instagram": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "text-as-html-oc3jrxu83zvi",
+              "variable": "data_view"
+            },
+            {
+              "block": "stable-diffusion-1-cvbx2z4ncvck",
+              "variable": "prompt"
+            }
+          ]
+        },
+        "Facebook": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "text-as-html-60kexk1x7hyf",
+              "variable": "data_view"
+            }
+          ]
+        },
+        "X": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "text-as-html-knu1wtwnody1",
+              "variable": "data_view"
+            }
+          ]
+        }
+      },
+      "action": {
+        "container": {
+          "image": "post-maker",
+          "version": "post-maker-m718275ddyldd62d31",
+          "command_line": [
+            "python",
+            "entrypoint.py"
+          ]
+        }
+      },
+      "views": {
+        "node": {
+          "active": "True or False",
+          "title_bar": {},
+          "preview": {},
+          "html": "",
+          "pos_x": "1372",
+          "pos_y": "372",
+          "pos_z": "999",
+          "behavior": "modal",
+          "order": {
+            "input": [
+              "content",
+              "theme",
+              "tone",
+              "api_key"
+            ],
+            "output": [
+              "LinkedIn",
+              "Instagram",
+              "Facebook",
+              "X"
+            ]
+          }
+        }
+      },
+      "events": {}
+    },
+    "text-9jo8mqcwzest": {
+      "information": {
+        "id": "text",
+        "name": "Text",
+        "description": "Text block parameter input.",
+        "block_version": "0.1",
+        "block_source": "core/blocks",
+        "block_type": "compute",
+        "system_versions": [
+          "0.1"
+        ]
+      },
+      "inputs": {},
+      "outputs": {
+        "text": {
+          "type": "str",
+          "connections": [
+            {
+              "variable": "content",
+              "block": "new-python-m718275l6231"
+            }
+          ],
+          "relays": []
+        }
+      },
+      "action": {
+        "parameters": {
+          "text": {
+            "type": "str",
+            "value": ""
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "true",
+          "title_bar": {
+            "background_color": "#909090"
+          },
+          "preview": {},
+          "html": "<textarea style='width: 100%; height: 150px;' parameters-text></textarea>",
+          "pos_x": "776",
+          "pos_y": "165",
+          "pos_z": "999, this is the z-index for 2D canvas"
+        }
+      },
+      "events": {}
+    }
+  },
+  "sink": "",
+  "build": "",
+  "name": "Post Maker Demo",
+  "id": "pipeline-3c6x08ocitvg",
+  "description": "A pipeline for generating social media posts and image content."
+}

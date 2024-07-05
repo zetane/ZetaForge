@@ -1,0 +1,58 @@
+{
+  "information": {
+    "id": "parameter",
+    "name": "Parameter",
+    "description": "Parameter input.",
+    "system_versions": [
+      "0.1"
+    ],
+    "block_version": "block version number",
+    "block_source": "core/blocks",
+    "block_type": "compute"
+  },
+  "inputs": {},
+  "outputs": {
+    "parameter": {
+      "type": "Any",
+      "connections": [
+        {
+          "block": "canny-edge-do6x3zn52vcq",
+          "variable": "range_max"
+        }
+      ]
+    }
+  },
+  "action": {
+    "container": {
+      "image": "",
+      "version": "",
+      "command_line": []
+    },
+    "parameters": {
+      "parameter": {
+        "value": "800",
+        "type": "Any"
+      }
+    }
+  },
+  "views": {
+    "node": {
+      "active": "true",
+      "title_bar": {
+        "background_color": "#909090"
+      },
+      "preview": {},
+      "html": "<input type='text' value='abcd' parameters-parameter/>",
+      "pos_x": "726",
+      "pos_y": "846",
+      "pos_z": "999, this is the z-index for 2D canvas",
+      "order": {
+        "input": [],
+        "output": [
+          "parameter"
+        ]
+      }
+    }
+  },
+  "events": {}
+}

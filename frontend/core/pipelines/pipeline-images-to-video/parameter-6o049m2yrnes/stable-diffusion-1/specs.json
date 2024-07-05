@@ -1,0 +1,55 @@
+{
+  "information": {
+    "id": "stable-diffusion-1",
+    "name": "Stable Diffusion",
+    "description": "This block generates images based on a text prompt using Stable Diffusion.",
+    "system_versions": [
+      "0.1"
+    ],
+    "block_version": "block version number",
+    "block_source": "core/blocks/stable-diffusion-1",
+    "block_type": "compute"
+  },
+  "inputs": {
+    "api_key": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    },
+    "prompt": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    }
+  },
+  "outputs": {
+    "image_path": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    }
+  },
+  "action": {
+    "container": {
+      "image": "stable-diffusion-1",
+      "version": "latest",
+      "command_line": [
+        "python",
+        "entrypoint.py"
+      ]
+    }
+  },
+  "views": {
+    "node": {
+      "behavior": "modal",
+      "active": "True",
+      "title_bar": {},
+      "preview": {},
+      "html": "",
+      "pos_x": "2631",
+      "pos_y": "194",
+      "pos_z": "999"
+    }
+  },
+  "events": {}
+}

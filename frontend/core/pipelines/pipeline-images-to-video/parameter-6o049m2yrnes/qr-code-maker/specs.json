@@ -1,0 +1,50 @@
+{
+  "information": {
+    "id": "qr-code-maker",
+    "name": "QR Code Maker",
+    "description": "Template block for custom computations.",
+    "system_versions": [
+      "0.1"
+    ],
+    "block_version": "block version number",
+    "block_source": "core/blocks/qr-code-maker",
+    "block_type": "compute"
+  },
+  "inputs": {
+    "url": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    }
+  },
+  "outputs": {
+    "qr_code_path": {
+      "type": "file",
+      "connections": [],
+      "relays": []
+    }
+  },
+  "action": {
+    "container": {
+      "image": "qr-code-maker",
+      "version": "latest",
+      "command_line": [
+        "python",
+        "entrypoint.py"
+      ]
+    }
+  },
+  "views": {
+    "node": {
+      "behavior": "modal",
+      "active": "True or False",
+      "title_bar": {},
+      "preview": {},
+      "html": "",
+      "pos_x": "300",
+      "pos_y": "200",
+      "pos_z": "999"
+    }
+  },
+  "events": {}
+}
