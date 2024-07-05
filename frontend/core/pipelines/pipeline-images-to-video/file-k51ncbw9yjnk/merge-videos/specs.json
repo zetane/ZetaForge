@@ -1,0 +1,55 @@
+{
+  "information": {
+    "id": "merge-videos",
+    "name": "Merge Videos",
+    "description": "This function takes two video file paths and creates a new mp4 video with the videos side by side.\n\nInputs:\n    video1_path (str): The file path of the first video\n    video2_path (str): The file path of the second video\n\nOutputs:\n    output_path (str): The file path of the output video\n\nRequired Libraries:\n    moviepy==1.0.3",
+    "system_versions": [
+      "0.1"
+    ],
+    "block_version": "block version number",
+    "block_source": "core/blocks/merge-videos",
+    "block_type": "compute"
+  },
+  "inputs": {
+    "video1_path": {
+      "type": "file",
+      "connections": [],
+      "relays": []
+    },
+    "video2_path": {
+      "type": "file",
+      "connections": [],
+      "relays": []
+    }
+  },
+  "outputs": {
+    "output_path": {
+      "type": "file",
+      "connections": [],
+      "relays": []
+    }
+  },
+  "action": {
+    "container": {
+      "image": "merge-videos",
+      "version": "latest",
+      "command_line": [
+        "python",
+        "entrypoint.py"
+      ]
+    }
+  },
+  "views": {
+    "node": {
+      "behavior": "modal",
+      "active": "True or False",
+      "title_bar": {},
+      "preview": {},
+      "html": "",
+      "pos_x": "1806.1818181818182",
+      "pos_y": "503",
+      "pos_z": "999"
+    }
+  },
+  "events": {}
+}

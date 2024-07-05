@@ -1,0 +1,65 @@
+{
+  "information": {
+    "id": "view-videos",
+    "name": "View Videos",
+    "description": "Generates an HTML file with a unique name and returns the file name.\n\nInputs:\n    media_paths_view (str or list): A path or a list of media paths (videos) to display in the gallery.\n\nOutputs:\n    dict: A dictionary with the key 'html' and the value being the name of the generated HTML file.",
+    "system_versions": [
+      "0.1"
+    ],
+    "block_version": "block version number",
+    "block_source": "core/blocks/view-videos",
+    "block_type": "view"
+  },
+  "inputs": {
+    "media_paths_view": {
+      "type": "Any",
+      "connections": [
+        {
+          "block": "images-to-video-d3ctdctemkj5",
+          "variable": "video_path"
+        }
+      ]
+    }
+  },
+  "outputs": {
+    "html": {
+      "type": "Any",
+      "connections": []
+    }
+  },
+  "action": {
+    "container": {
+      "image": "view-videos",
+      "version": "view-videos-56aeg14tzl3g",
+      "command_line": [
+        "python",
+        "entrypoint.py"
+      ]
+    }
+  },
+  "views": {
+    "node": {
+      "active": "True",
+      "title_bar": {
+        "background_color": "#D55908"
+      },
+      "preview": {
+        "active": "true"
+      },
+      "html": "",
+      "pos_x": "2045",
+      "pos_y": "578",
+      "pos_z": "999, this is the z-index for 2D canvas",
+      "order": {
+        "input": [
+          "media_paths_view"
+        ],
+        "output": [
+          "html"
+        ]
+      }
+    },
+    "mode": "modal"
+  },
+  "events": {}
+}

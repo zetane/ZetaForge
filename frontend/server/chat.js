@@ -1,7 +1,7 @@
 import fs from "fs/promises";
 import path from "path";
 import { fileExists, readJsonToObject } from "./fileSystem";
-import z from "zod"
+import z from "zod";
 
 const CHAT_HISTORY_FILE_NAME = "chatHistory.json";
 const COMPUTATIONS_FILE_NAME = "computations.py";
@@ -14,40 +14,39 @@ const schema = z.object({
       timestamp: z.number(),
       prompt: z.string(),
       response: z.string(),
-    })
-  )
-})
+    }),
+  ),
+});
 
 const legacySchema = z.array(
   z.object({
     timestamp: z.number(),
     prompt: z.string(),
     response: z.string(),
-  })
-)
-
+  }),
+);
 
 export async function getHistory(blockPath) {
   const chat = await getChat(blockPath);
-  return chat.history
+  return chat.history;
 }
 
 export async function updateHistory(blockPath, newHistory) {
   const chatPath = path.join(blockPath, CHAT_HISTORY_FILE_NAME);
   const chat = await getChat(blockPath);
-  chat.history = newHistory
+  chat.history = newHistory;
   await fs.writeFile(chatPath, JSON.stringify(chat, null, 2));
 }
 
 export async function getIndex(blockPath) {
   const chat = await getChat(blockPath);
-  return chat.index
+  return chat.index;
 }
 
 export async function updateIndex(blockPath, newIndex) {
   const chatPath = path.join(blockPath, CHAT_HISTORY_FILE_NAME);
   const chat = await getChat(blockPath);
-  chat.index = newIndex
+  chat.index = newIndex;
   await fs.writeFile(chatPath, JSON.stringify(chat, null, 2));
 }
 
@@ -57,35 +56,35 @@ async function getChat(blockPath) {
   if (!(await fileExists(chatPath))) {
     const chat = await createDefaultChat(blockPath);
     await fs.writeFile(chatPath, JSON.stringify(chat, null, 2));
-    return chat
+    return chat;
   }
-  
+
   let fileContent;
   try {
     fileContent = await readJsonToObject(chatPath);
   } catch {
     const chat = await createDefaultChat(blockPath);
     await fs.writeFile(chatPath, JSON.stringify(chat, null, 2));
-    return chat
+    return chat;
   }
 
-  const result = schema.safeParse(fileContent)
-  if(!result.success) {
+  const result = schema.safeParse(fileContent);
+  if (!result.success) {
     const chat = await handleInvalidSchema(fileContent, blockPath);
     await fs.writeFile(chatPath, JSON.stringify(chat, null, 2));
     return chat;
   }
 
-  return result.data
+  return result.data;
 }
 
 async function handleInvalidSchema(fileContent, blockPath) {
-  const result = legacySchema.safeParse(fileContent)
+  const result = legacySchema.safeParse(fileContent);
   if (result.success) {
-    return await upgradeChatHistory(fileContent, blockPath)
-  } 
-  
-  return await createDefaultChat(blockPath)
+    return await upgradeChatHistory(fileContent, blockPath);
+  }
+
+  return await createDefaultChat(blockPath);
 }
 
 async function createDefaultChat(blockPath) {
@@ -93,22 +92,25 @@ async function createDefaultChat(blockPath) {
   const codeTemplate = await fs.readFile(codeTemplatePath, "utf8");
   const chatHistory = {
     index: 0,
-    history: [{
-      timestamp: Date.now(),
-      prompt: START_PROMPT,
-      response: codeTemplate,
-  }]};
-  return chatHistory; 
+    history: [
+      {
+        timestamp: Date.now(),
+        prompt: START_PROMPT,
+        response: codeTemplate,
+      },
+    ],
+  };
+  return chatHistory;
 }
 
 async function upgradeChatHistory(history, blockPath) {
   const codeTemplatePath = path.join(blockPath, COMPUTATIONS_FILE_NAME);
   const currentCode = await fs.readFile(codeTemplatePath, "utf8");
 
-  let codeIndex = -1
+  let codeIndex = -1;
   for (let [index, value] of history.entries()) {
     if (value.response == currentCode) {
-      codeIndex = index
+      codeIndex = index;
     }
   }
 
@@ -119,16 +121,14 @@ async function upgradeChatHistory(history, blockPath) {
         timestamp: Date.now(),
         prompt: START_PROMPT,
         response: currentCode,
-      }
-    ]
-    codeIndex = history.length - 1
+      },
+    ];
+    codeIndex = history.length - 1;
   }
-
 
   const chatHistory = {
     index: codeIndex,
-    history: history 
+    history: history,
   };
-  return chatHistory; 
+  return chatHistory;
 }
-

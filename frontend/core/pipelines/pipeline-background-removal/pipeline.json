@@ -1,0 +1,267 @@
+{
+  "pipeline": {
+    "view-images-u0hlfyfh3had": {
+      "information": {
+        "id": "view-images",
+        "name": "View Images",
+        "description": "Generates an HTML file with a unique name and returns the file name.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks/view-images",
+        "block_type": "view"
+      },
+      "inputs": {
+        "image_paths_view": {
+          "type": "List[file]",
+          "connections": [
+            {
+              "block": "background-removal-wzqnnexvgx8m",
+              "variable": "output_path"
+            }
+          ]
+        }
+      },
+      "outputs": {
+        "html": {
+          "type": "file",
+          "connections": []
+        }
+      },
+      "action": {
+        "container": {
+          "image": "view-images",
+          "version": "view-images-u0hlfyfh3had",
+          "command_line": [
+            "python",
+            "entrypoint.py"
+          ]
+        }
+      },
+      "views": {
+        "node": {
+          "active": "True or False",
+          "title_bar": {
+            "background_color": "#D55908"
+          },
+          "preview": {
+            "active": "true"
+          },
+          "html": "",
+          "pos_x": "1438",
+          "pos_y": "211",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "input": [
+              "image_paths_view"
+            ],
+            "output": [
+              "html"
+            ]
+          }
+        },
+        "mode": "modal"
+      },
+      "events": {}
+    },
+    "file-wxbck81be764": {
+      "information": {
+        "id": "file",
+        "name": "File",
+        "description": "File parameter input.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks",
+        "block_type": "compute"
+      },
+      "inputs": {},
+      "outputs": {
+        "path": {
+          "type": "file",
+          "connections": [
+            {
+              "block": "background-removal-wzqnnexvgx8m",
+              "variable": "input_image_path"
+            },
+            {
+              "block": "view-images-7szi9ayg49zv",
+              "variable": "image_paths_view"
+            }
+          ]
+        }
+      },
+      "action": {
+        "container": {
+          "image": "",
+          "version": "",
+          "command_line": []
+        },
+        "parameters": {
+          "path": {
+            "value": "pipeline-l5jo9m0zf57r/01907459-757a-7a47-9b89-cb68f4cac189/1618777237282.jfif",
+            "type": "blob"
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "True or False",
+          "title_bar": {
+            "background_color": "#909090"
+          },
+          "preview": {},
+          "html": "<input type='file' name='fileInput' parameters-file/>",
+          "pos_x": "366",
+          "pos_y": "257",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "input": [],
+            "output": [
+              "path"
+            ]
+          }
+        }
+      },
+      "events": {}
+    },
+    "background-removal-wzqnnexvgx8m": {
+      "information": {
+        "id": "background-removal",
+        "name": "Image Background Removal",
+        "description": "This function takes the path to an image file, removes its background, and saves the resulting image to a new file.\nThe function returns the path to the output image.\n\nParameters:\n- input_image_path (str): Path to the input image file.\n\nReturns:\n- dict: A dictionary containing the path to the output image with the key 'output_path'.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks/background-removal",
+        "block_type": "compute"
+      },
+      "inputs": {
+        "input_image_path": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "file-wxbck81be764",
+              "variable": "path"
+            }
+          ]
+        }
+      },
+      "outputs": {
+        "output_path": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "view-images-u0hlfyfh3had",
+              "variable": "image_paths_view"
+            }
+          ]
+        }
+      },
+      "action": {
+        "container": {
+          "image": "background-removal",
+          "version": "background-removal-wzqnnexvgx8m",
+          "command_line": [
+            "python",
+            "entrypoint.py"
+          ]
+        }
+      },
+      "views": {
+        "node": {
+          "active": "True or False",
+          "title_bar": {},
+          "preview": {},
+          "html": "",
+          "pos_x": "883",
+          "pos_y": "257",
+          "pos_z": "999",
+          "behavior": "modal",
+          "order": {
+            "input": [
+              "input_image_path"
+            ],
+            "output": [
+              "output_path"
+            ]
+          }
+        }
+      },
+      "events": {}
+    },
+    "view-images-7szi9ayg49zv": {
+      "information": {
+        "id": "view-images",
+        "name": "View Images",
+        "description": "Generates an HTML file with a unique name and returns the file name.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks/view-images",
+        "block_type": "view"
+      },
+      "inputs": {
+        "image_paths_view": {
+          "type": "List[file]",
+          "connections": [
+            {
+              "block": "file-wxbck81be764",
+              "variable": "path"
+            }
+          ]
+        }
+      },
+      "outputs": {
+        "html": {
+          "type": "file",
+          "connections": []
+        }
+      },
+      "action": {
+        "container": {
+          "image": "view-images",
+          "version": "view-images-7szi9ayg49zv",
+          "command_line": [
+            "python",
+            "entrypoint.py"
+          ]
+        }
+      },
+      "views": {
+        "node": {
+          "active": "True or False",
+          "title_bar": {
+            "background_color": "#D55908"
+          },
+          "preview": {
+            "active": "true"
+          },
+          "html": "",
+          "pos_x": "839",
+          "pos_y": "76",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "input": [
+              "image_paths_view"
+            ],
+            "output": [
+              "html"
+            ]
+          }
+        },
+        "mode": "modal"
+      },
+      "events": {}
+    }
+  },
+  "sink": "",
+  "build": "",
+  "name": "Image Background Removal Demo",
+  "id": "pipeline-l5jo9m0zf57r",
+  "description": "Removes the background of an image."
+}

@@ -1,0 +1,58 @@
+{
+  "information": {
+    "id": "file",
+    "name": "File",
+    "description": "File parameter input.",
+    "system_versions": [
+      "0.1"
+    ],
+    "block_version": "block version number",
+    "block_source": "core/blocks",
+    "block_type": "compute"
+  },
+  "inputs": {},
+  "outputs": {
+    "path": {
+      "type": "file",
+      "connections": [
+        {
+          "block": "canny-edge-do6x3zn52vcq",
+          "variable": "image_path"
+        }
+      ]
+    }
+  },
+  "action": {
+    "container": {
+      "image": "",
+      "version": "",
+      "command_line": []
+    },
+    "parameters": {
+      "path": {
+        "value": "pipeline-3auastmgeard/01907514-9bbf-7a23-8d9e-08a1a4537ce0/red_cat.png",
+        "type": "blob"
+      }
+    }
+  },
+  "views": {
+    "node": {
+      "active": "True or False",
+      "title_bar": {
+        "background_color": "#909090"
+      },
+      "preview": {},
+      "html": "<input type='file' name='fileInput' parameters-file/>",
+      "pos_x": "650",
+      "pos_y": "512",
+      "pos_z": "999, this is the z-index for 2D canvas",
+      "order": {
+        "input": [],
+        "output": [
+          "path"
+        ]
+      }
+    }
+  },
+  "events": {}
+}

@@ -1,9 +1,6 @@
-import {
-  QueryClient,
-  QueryClientProvider,
-} from '@tanstack/react-query'
-import { ipcLink } from 'electron-trpc/renderer';
-import { trpc } from '@/utils/trpc';
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ipcLink } from "electron-trpc/renderer";
+import { trpc } from "@/utils/trpc";
 
 export const trpcClient = trpc.createClient({
   links: [ipcLink()],
@@ -12,20 +9,18 @@ export const trpcClient = trpc.createClient({
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      networkMode: 'offlineFirst'
+      networkMode: "offlineFirst",
     },
     mutations: {
-      networkMode: 'offlineFirst'
-    }
-  }
-})
+      networkMode: "offlineFirst",
+    },
+  },
+});
 
 export default function ProviderInjector({ children }) {
   return (
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
-      <QueryClientProvider client={queryClient}>
-        {children}
-      </QueryClientProvider>
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     </trpc.Provider>
-  )
+  );
 }

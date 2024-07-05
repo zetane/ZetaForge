@@ -1,0 +1,90 @@
+{
+  "information": {
+    "id": "post-maker",
+    "name": "Post Maker",
+    "description": "Generates a post based on requested content, a theme of the week and message tone.",
+    "system_versions": [
+      "0.1"
+    ],
+    "block_version": "block version number",
+    "block_source": "core/blocks/post-maker",
+    "block_type": "compute"
+  },
+  "inputs": {
+    "content": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    },
+    "theme": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    },
+    "tone": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    },
+    "api_key": {
+      "type": "Any",
+      "connections": [
+        {
+          "variable": "password",
+          "block": "password-xazcy6rakjjl"
+        }
+      ],
+      "relays": []
+    }
+  },
+  "outputs": {
+    "LinkedIn": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    },
+    "Instagram": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    },
+    "Facebook": {
+      "type": "Any",
+      "connections": [
+        {
+          "variable": "data_view",
+          "block": "text-as-html-60kexk1x7hyf"
+        }
+      ],
+      "relays": []
+    },
+    "X": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    }
+  },
+  "action": {
+    "container": {
+      "image": "post-maker",
+      "version": "post-maker-m718275ddyldd62d31",
+      "command_line": [
+        "python",
+        "entrypoint.py"
+      ]
+    }
+  },
+  "views": {
+    "node": {
+      "behavior": "modal",
+      "active": "True or False",
+      "title_bar": {},
+      "preview": {},
+      "html": "",
+      "pos_x": "1372",
+      "pos_y": "372",
+      "pos_z": "999"
+    }
+  },
+  "events": {}
+}

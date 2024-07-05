@@ -1,0 +1,536 @@
+{
+  "pipeline": {
+    "canny-edge-do6x3zn52vcq": {
+      "information": {
+        "id": "canny-edge",
+        "name": "Canny Edge",
+        "description": "Computes the Canny edge detection on an image at various thresholds and saves the results.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks/canny-edge",
+        "block_type": "compute"
+      },
+      "inputs": {
+        "image_path": {
+          "type": "file",
+          "connections": [
+            {
+              "block": "file-k51ncbw9yjnk",
+              "variable": "path"
+            }
+          ]
+        },
+        "range_min": {
+          "type": "int",
+          "connections": [
+            {
+              "block": "parameter-z5nn3t7mqu0j",
+              "variable": "parameter"
+            }
+          ]
+        },
+        "range_max": {
+          "type": "int",
+          "connections": [
+            {
+              "block": "parameter-au7ew863l9p3",
+              "variable": "parameter"
+            }
+          ]
+        },
+        "step": {
+          "type": "int",
+          "connections": [
+            {
+              "block": "parameter-6o049m2yrnes",
+              "variable": "parameter"
+            }
+          ]
+        }
+      },
+      "outputs": {
+        "image_paths": {
+          "type": "List[file]",
+          "connections": [
+            {
+              "block": "images-to-video-d3ctdctemkj5",
+              "variable": "images"
+            },
+            {
+              "block": "view-images-2un5b0vvd3ur",
+              "variable": "image_paths_view"
+            }
+          ]
+        }
+      },
+      "action": {
+        "container": {
+          "image": "canny-edge",
+          "version": "canny-edge-do6x3zn52vcq",
+          "command_line": [
+            "python",
+            "entrypoint.py"
+          ]
+        }
+      },
+      "views": {
+        "node": {
+          "active": "True or False",
+          "title_bar": {},
+          "preview": {},
+          "html": "",
+          "pos_x": "1143",
+          "pos_y": "588",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "output": [
+              "image_paths"
+            ],
+            "input": [
+              "image_path",
+              "range_min",
+              "range_max",
+              "step"
+            ]
+          }
+        }
+      },
+      "events": {}
+    },
+    "file-k51ncbw9yjnk": {
+      "information": {
+        "id": "file",
+        "name": "File",
+        "description": "File parameter input.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks",
+        "block_type": "compute"
+      },
+      "inputs": {},
+      "outputs": {
+        "path": {
+          "type": "file",
+          "connections": [
+            {
+              "block": "canny-edge-do6x3zn52vcq",
+              "variable": "image_path"
+            }
+          ]
+        }
+      },
+      "action": {
+        "container": {
+          "image": "",
+          "version": "",
+          "command_line": []
+        },
+        "parameters": {
+          "path": {
+            "value": "pipeline-3auastmgeard/01907514-9bbf-7a23-8d9e-08a1a4537ce0/red_cat.png",
+            "type": "blob"
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "True or False",
+          "title_bar": {
+            "background_color": "#909090"
+          },
+          "preview": {},
+          "html": "<input type='file' name='fileInput' parameters-file/>",
+          "pos_x": "650",
+          "pos_y": "512",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "input": [],
+            "output": [
+              "path"
+            ]
+          }
+        }
+      },
+      "events": {}
+    },
+    "parameter-z5nn3t7mqu0j": {
+      "information": {
+        "id": "parameter",
+        "name": "Parameter",
+        "description": "Parameter input.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks",
+        "block_type": "compute"
+      },
+      "inputs": {},
+      "outputs": {
+        "parameter": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "canny-edge-do6x3zn52vcq",
+              "variable": "range_min"
+            }
+          ]
+        }
+      },
+      "action": {
+        "container": {
+          "image": "",
+          "version": "",
+          "command_line": []
+        },
+        "parameters": {
+          "parameter": {
+            "value": "0",
+            "type": "Any"
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "true",
+          "title_bar": {
+            "background_color": "#909090"
+          },
+          "preview": {},
+          "html": "<input type='text' value='abcd' parameters-parameter/>",
+          "pos_x": "721",
+          "pos_y": "699",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "input": [],
+            "output": [
+              "parameter"
+            ]
+          }
+        }
+      },
+      "events": {}
+    },
+    "parameter-au7ew863l9p3": {
+      "information": {
+        "id": "parameter",
+        "name": "Parameter",
+        "description": "Parameter input.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks",
+        "block_type": "compute"
+      },
+      "inputs": {},
+      "outputs": {
+        "parameter": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "canny-edge-do6x3zn52vcq",
+              "variable": "range_max"
+            }
+          ]
+        }
+      },
+      "action": {
+        "container": {
+          "image": "",
+          "version": "",
+          "command_line": []
+        },
+        "parameters": {
+          "parameter": {
+            "value": "800",
+            "type": "Any"
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "true",
+          "title_bar": {
+            "background_color": "#909090"
+          },
+          "preview": {},
+          "html": "<input type='text' value='abcd' parameters-parameter/>",
+          "pos_x": "726",
+          "pos_y": "846",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "input": [],
+            "output": [
+              "parameter"
+            ]
+          }
+        }
+      },
+      "events": {}
+    },
+    "parameter-6o049m2yrnes": {
+      "information": {
+        "id": "parameter",
+        "name": "Parameter",
+        "description": "Parameter input.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks",
+        "block_type": "compute"
+      },
+      "inputs": {},
+      "outputs": {
+        "parameter": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "canny-edge-do6x3zn52vcq",
+              "variable": "step"
+            }
+          ]
+        }
+      },
+      "action": {
+        "container": {
+          "image": "",
+          "version": "",
+          "command_line": []
+        },
+        "parameters": {
+          "parameter": {
+            "value": "20",
+            "type": "Any"
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "true",
+          "title_bar": {
+            "background_color": "#909090"
+          },
+          "preview": {},
+          "html": "<input type='text' value='abcd' parameters-parameter/>",
+          "pos_x": "726",
+          "pos_y": "1000",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "input": [],
+            "output": [
+              "parameter"
+            ]
+          }
+        }
+      },
+      "events": {}
+    },
+    "view-videos-56aeg14tzl3g": {
+      "information": {
+        "id": "view-videos",
+        "name": "View Videos",
+        "description": "Generates an HTML file with a unique name and returns the file name.\n\nInputs:\n    media_paths_view (str or list): A path or a list of media paths (videos) to display in the gallery.\n\nOutputs:\n    dict: A dictionary with the key 'html' and the value being the name of the generated HTML file.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks/view-videos",
+        "block_type": "view"
+      },
+      "inputs": {
+        "media_paths_view": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "images-to-video-d3ctdctemkj5",
+              "variable": "video_path"
+            }
+          ]
+        }
+      },
+      "outputs": {
+        "html": {
+          "type": "Any",
+          "connections": []
+        }
+      },
+      "action": {
+        "container": {
+          "image": "view-videos",
+          "version": "view-videos-56aeg14tzl3g",
+          "command_line": [
+            "python",
+            "entrypoint.py"
+          ]
+        }
+      },
+      "views": {
+        "node": {
+          "active": "True",
+          "title_bar": {
+            "background_color": "#D55908"
+          },
+          "preview": {
+            "active": "true"
+          },
+          "html": "",
+          "pos_x": "2045",
+          "pos_y": "578",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "input": [
+              "media_paths_view"
+            ],
+            "output": [
+              "html"
+            ]
+          }
+        },
+        "mode": "modal"
+      },
+      "events": {}
+    },
+    "images-to-video-d3ctdctemkj5": {
+      "information": {
+        "id": "images-to-video",
+        "name": "Images to Video",
+        "description": "This function takes a list of image filepaths and compiles them into a video file.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks/images-to-video",
+        "block_type": "compute"
+      },
+      "inputs": {
+        "images": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "canny-edge-do6x3zn52vcq",
+              "variable": "image_paths"
+            }
+          ]
+        }
+      },
+      "outputs": {
+        "video_path": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "view-videos-56aeg14tzl3g",
+              "variable": "media_paths_view"
+            }
+          ]
+        }
+      },
+      "action": {
+        "container": {
+          "image": "images-to-video",
+          "version": "images-to-video-d3ctdctemkj51",
+          "command_line": [
+            "python",
+            "entrypoint.py"
+          ]
+        }
+      },
+      "views": {
+        "node": {
+          "active": "True or False",
+          "title_bar": {},
+          "preview": {},
+          "html": "",
+          "pos_x": "1588",
+          "pos_y": "609",
+          "pos_z": "999",
+          "behavior": "modal",
+          "order": {
+            "input": [
+              "images"
+            ],
+            "output": [
+              "video_path"
+            ]
+          }
+        }
+      },
+      "events": {}
+    },
+    "view-images-2un5b0vvd3ur": {
+      "information": {
+        "id": "view-images",
+        "name": "View Images",
+        "description": "Generates an HTML file with a unique name and returns the file name.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks/view-images",
+        "block_type": "view"
+      },
+      "inputs": {
+        "image_paths_view": {
+          "type": "List[file]",
+          "connections": [
+            {
+              "block": "canny-edge-do6x3zn52vcq",
+              "variable": "image_paths"
+            }
+          ]
+        }
+      },
+      "outputs": {
+        "html": {
+          "type": "file",
+          "connections": []
+        }
+      },
+      "action": {
+        "container": {
+          "image": "view-images",
+          "version": "view-images-2un5b0vvd3ur",
+          "command_line": [
+            "python",
+            "entrypoint.py"
+          ]
+        }
+      },
+      "views": {
+        "node": {
+          "active": "True or False",
+          "title_bar": {
+            "background_color": "#D55908"
+          },
+          "preview": {
+            "active": "true"
+          },
+          "html": "",
+          "pos_x": "1515",
+          "pos_y": "403",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "input": [
+              "image_paths_view"
+            ],
+            "output": [
+              "html"
+            ]
+          }
+        },
+        "mode": "modal"
+      },
+      "events": {}
+    }
+  },
+  "sink": "",
+  "build": "",
+  "name": "Images to Videos Demo",
+  "id": "pipeline-3auastmgeard",
+  "description": "Assembles a list of images into a video."
+}

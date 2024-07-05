@@ -1,0 +1,54 @@
+{
+  "information": {
+    "id": "view-two-columns",
+    "name": " View Two Columns",
+    "description": "Generates an HTML file displaying image and text pairs in columns.",
+    "block_version": "block version number",
+    "block_source": "core/blocks/view-two-columns",
+    "block_type": "",
+    "system_versions": [
+      "0.1"
+    ]
+  },
+  "inputs": {
+    "array_of_pairs": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    }
+  },
+  "outputs": {
+    "html": {
+      "type": "file",
+      "connections": [],
+      "relays": []
+    }
+  },
+  "action": {
+    "container": {
+      "image": "view-two-columns",
+      "version": "latest",
+      "command_line": [
+        "python",
+        "entrypoint.py"
+      ]
+    }
+  },
+  "views": {
+    "node": {
+      "behavior": "new_tab",
+      "active": "True or False",
+      "title_bar": {
+        "background_color": "#D55908"
+      },
+      "preview": {
+        "active": "true"
+      },
+      "html": "",
+      "pos_x": "300",
+      "pos_y": "200",
+      "pos_z": "999, this is the z-index for 2D canvas"
+    }
+  },
+  "events": {}
+}

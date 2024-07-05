@@ -3,7 +3,7 @@
   --bePromptInputText: #000000;
   --bePromptBackground: #c6c6c6;
   --bePromptInputBackground: #f9f9f9;
-  --beCodeViewerBackground: #F8F8F8;
+  --beCodeViewerBackground: #f8f8f8;
   --beCodeEditorBackground: #ffffff;
   --bePromptPlaceholderText: #bebebe;
 }
@@ -27,7 +27,7 @@
 }
 
 .block-editor-header {
-  @apply flex flex-row items-center justify-between shrink-0;
+  @apply flex shrink-0 flex-row items-center justify-between;
   background-color: var(--beHeader);
 }
 
@@ -39,24 +39,24 @@
 .block-editor-prompt-input {
   @apply min-h-20 w-full rounded-lg border-gray-300 p-2 text-base placeholder-[var(--bePromptPlaceholderText)];
   background-color: var(--bePromptInputBackground);
-  color: var(--bePromptInputText)
+  color: var(--bePromptInputText);
 }
 
 .cm-theme .cm-content {
-	font-size: 16px;
-	font-family: 'Menlo', 'Consolas', 'Courier New', monospace;
+  font-size: 16px;
+  font-family: "Menlo", "Consolas", "Courier New", monospace;
 }
 
 .prompt-spinner {
   position: relative;
-  bottom: -22px; 
+  bottom: -22px;
   right: -22px;
   transform: scale(0.35);
   transform-origin: center;
   color: rgba(105, 23, 176, 1);
   display: flex;
-    align-items: center;
-    justify-content: center;
+  align-items: center;
+  justify-content: center;
 }
 
 .icon-button {

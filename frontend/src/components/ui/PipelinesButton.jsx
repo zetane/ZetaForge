@@ -20,31 +20,37 @@ export default function PipelinesButton() {
 
   const closeModal = () => {
     setModalContent({
-      show: false
-    })
-  }
+      show: false,
+    });
+  };
 
   const styles = {
-    margin: '5px',
+    margin: "5px",
   };
 
   useEffect(() => {
-    const runs = getPipelines(workspace)
-    setExecutions(runs)
-  }, [workspace?.pipelines])
+    const runs = getPipelines(workspace);
+    setExecutions(runs);
+  }, [workspace?.pipelines]);
 
   let count = 0;
   if (executions) {
-    count = executions.length
+    count = executions.length;
   }
 
-  let grid = (<ExecutionDataGrid executions={executions} closeModal={closeModal} />);
+  let grid = (
+    <ExecutionDataGrid executions={executions} closeModal={closeModal} />
+  );
 
-  const svgOverride = { position: 'absolute', right: '15px', top: '5px'}
+  const svgOverride = { position: "absolute", right: "15px", top: "5px" };
   return (
-    <Button style={styles} size="sm" kind="secondary"
-      onClick={ () => modalPopper(grid) }>
+    <Button
+      style={styles}
+      size="sm"
+      kind="secondary"
+      onClick={() => modalPopper(grid)}
+    >
       Pipelines ({count})
     </Button>
-  )
+  );
 }

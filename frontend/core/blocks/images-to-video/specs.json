@@ -1,0 +1,50 @@
+{
+  "information": {
+    "id": "images-to-video",
+    "name": "Images to Video",
+    "description": "This function takes a list of image filepaths and compiles them into a video file.",
+    "system_versions": [
+      "0.1"
+    ],
+    "block_version": "block version number",
+    "block_source": "core/blocks/images-to-video",
+    "block_type": "compute"
+  },
+  "inputs": {
+    "images": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    }
+  },
+  "outputs": {
+    "video_path": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    }
+  },
+  "action": {
+    "container": {
+      "image": "images-to-video",
+      "version": "latest",
+      "command_line": [
+        "python",
+        "entrypoint.py"
+      ]
+    }
+  },
+  "views": {
+    "node": {
+      "behavior": "modal",
+      "active": "True or False",
+      "title_bar": {},
+      "preview": {},
+      "html": "",
+      "pos_x": "1638",
+      "pos_y": "493",
+      "pos_z": "999"
+    }
+  },
+  "events": {}
+}

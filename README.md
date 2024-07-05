@@ -37,6 +37,8 @@ ZetaForge is an AI platform designed to accelerate the development and deploymen
 ## 📰 Breaking News
 We've launched the first release of ZetaForge! Start building AI pipelines with our core features. 
 
+New blocks and pipelines have been added to the core library.
+
 Expect regular updates with new enhancements.
 
 
@@ -98,6 +100,24 @@ zetaforge teardown
 
 To experience ZetaForge in action, start by dragging and dropping a core pipeline, such as the "Canny Edge Pipeline," from the Core Pipelines Library into your workspace. Once the pipeline is loaded, click the "Run" button to see the magic happen!
 
+## Core Blocks and Pipelines
+
+You can drag and drop these blocks and pipelines from the side library.
+
+#### Compute Blocks
+
+Social Posts Maker, OpenAI agent, Stable Diffusion, Background Removal, Images to Video, Canny Edge, QR Code Maker and [many more](./frontend/core/blocks).
+
+#### View Blocks
+
+View 3D Numpy, Images, Videos, Text and [many more](./frontend/core/blocks).
+
+#### Demo Pipelines
+
+-[Social Media Post Maker with Image Content](./frontend/core/pipelines/pipeline-post-maker)
+-[Invader Game](./frontend/core/pipelines/pipeline-invader-game)
+-[Image Background Removal](./frontend/core/pipelines/pipeline-background-removal)
+-[Images to Video](./frontend/core/pipelines/pipeline-images-to-video)
 
 ## Documentation
 
