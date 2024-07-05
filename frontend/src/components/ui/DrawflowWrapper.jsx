@@ -1,21 +1,35 @@
-import { drawflowEditorAtom } from '@/atoms/drawflowAtom';
-import { blockEditorRootAtom, isBlockEditorOpenAtom } from '@/atoms/editorAtom';
+import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
+import { blockEditorRootAtom, isBlockEditorOpenAtom } from "@/atoms/editorAtom";
 import { pipelineAtom, workspaceAtom } from "@/atoms/pipelineAtom";
 import { pipelineConnectionsAtom } from "@/atoms/pipelineConnectionsAtom";
-import Drawflow from '@/components/ZetaneDrawflowEditor';
-import BlockGenerator from '@/components/ui/blockGenerator/BlockGenerator';
-import { generateId, replaceIds } from '@/utils/blockUtils';
+import Drawflow from "@/components/ZetaneDrawflowEditor";
+import BlockGenerator from "@/components/ui/blockGenerator/BlockGenerator";
+import { generateId, replaceIds } from "@/utils/blockUtils";
 import { trpc } from "@/utils/trpc";
-import '@fortawesome/fontawesome-free/css/all.min.css';
-import { useAtom, useSetAtom } from 'jotai';
-import { useImmerAtom } from 'jotai-immer';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useLoadPipeline } from "./useLoadPipeline";
-import { createConnections } from '@/utils/createConnections';
+import "@fortawesome/fontawesome-free/css/all.min.css";
+import { useAtom, useSetAtom } from "jotai";
+import { useImmerAtom } from "jotai-immer";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useLoadPipeline } from "@/hooks/useLoadPipeline";
+import { createConnections } from "@/utils/createConnections";
 
-const launchDrawflow = (parentDomRef, canvasDomRef, pipeline, setPipeline, connection_list, setConnectionList) => {
+const launchDrawflow = (
+  parentDomRef,
+  canvasDomRef,
+  pipeline,
+  setPipeline,
+  connection_list,
+  setConnectionList,
+) => {
   if (parentDomRef.className != "parent-drawflow") {
-    const editor = new Drawflow(parentDomRef, pipeline, setPipeline, canvasDomRef, connection_list, setConnectionList);
+    const editor = new Drawflow(
+      parentDomRef,
+      pipeline,
+      setPipeline,
+      canvasDomRef,
+      connection_list,
+      setConnectionList,
+    );
 
     editor.reroute = true;
     editor.reroute_fix_curvature = true;
@@ -29,89 +43,109 @@ const launchDrawflow = (parentDomRef, canvasDomRef, pipeline, setPipeline, conne
 };
 
 const dragOverHandler = (event) => {
-  event.preventDefault()
+  event.preventDefault();
 };
 
 export default function DrawflowWrapper() {
   const [editor, setEditor] = useAtom(drawflowEditorAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
-  const [pipelineConnections, setPipelineConnections] = useImmerAtom(pipelineConnectionsAtom);
+  const [pipelineConnections, setPipelineConnections] = useImmerAtom(
+    pipelineConnectionsAtom,
+  );
   const setBlockEditorRoot = useSetAtom(blockEditorRootAtom);
   const setEditorOpen = useSetAtom(isBlockEditorOpenAtom);
-  const [renderNodes, setRenderNodes] = useState([])
+  const [renderNodes, setRenderNodes] = useState([]);
   const drawflowCanvas = useRef(null);
   const pipelineRef = useRef(null);
   const nodeRefs = useRef({});
 
   const addNodeRefs = (nodeList) => {
     nodeRefs.current = { ...nodeRefs.current, ...nodeList };
-  }
+  };
 
   const removeNodeRefs = (blockId) => {
     const newRefs = { ...nodeRefs.current };
-    Object.keys(newRefs).forEach(key => {
+    Object.keys(newRefs).forEach((key) => {
       if (key.startsWith(blockId)) {
         delete newRefs[key];
       }
     });
     nodeRefs.current = newRefs;
-  }
+  };
 
-  pipelineRef.current = pipeline
+  pipelineRef.current = pipeline;
 
   const savePipeline = trpc.savePipeline.useMutation();
   const getBlockPath = trpc.getBlockPath.useMutation();
 
   const handleDrawflow = useCallback((node) => {
-    if (!node) { return }
-    const constructedEditor = launchDrawflow(node, drawflowCanvas.current, pipeline, setPipeline, pipelineConnections, setPipelineConnections);
+    if (!node) {
+      return;
+    }
+    const constructedEditor = launchDrawflow(
+      node,
+      drawflowCanvas.current,
+      pipeline,
+      setPipeline,
+      pipelineConnections,
+      setPipelineConnections,
+    );
     if (constructedEditor) {
       setEditor(constructedEditor);
     }
   }, []);
 
   useEffect(() => {
-    const blocks = pipeline?.data || {}
+    const blocks = pipeline?.data || {};
     const nodes = Object.entries(blocks).map(([key, block]) => {
-      const uniqueKey = pipeline.history + "/" + key
-      return (<BlockGenerator key={uniqueKey}
-                block={block}
-                openView={openView}
-                id={key}
-                history={pipeline.history}
-                addNodeRefs={addNodeRefs}
-                removeNodeRefs={removeNodeRefs}
-                nodeRefs={nodeRefs}
-                />)
-    })
+      const uniqueKey = pipeline.history + "/" + key;
+      return (
+        <BlockGenerator
+          key={uniqueKey}
+          block={block}
+          openView={openView}
+          id={key}
+          history={pipeline.history}
+          addNodeRefs={addNodeRefs}
+          removeNodeRefs={removeNodeRefs}
+          nodeRefs={nodeRefs}
+        />
+      );
+    });
 
-    setRenderNodes(nodes)
-  }, [pipeline?.data])
+    setRenderNodes(nodes);
+  }, [pipeline?.data]);
 
   useEffect(() => {
     if (editor) {
       editor.pipeline = pipeline;
-      editor.connection_list = pipelineConnections
+      editor.connection_list = pipelineConnections;
       editor.nodeRefs = nodeRefs.current;
-      editor.addConnection()
-      editor.updateAllConnections()
+      editor.addConnection();
+      editor.updateAllConnections();
     }
-  }, [pipelineConnections])
+  }, [pipelineConnections]);
 
   useEffect(() => {
-    const newConnections = createConnections(pipeline?.data, pipelineConnections)
+    const newConnections = createConnections(
+      pipeline?.data,
+      pipelineConnections,
+    );
     if (editor) {
-      editor.syncConnections(newConnections)
+      editor.syncConnections(newConnections);
     }
-    setPipelineConnections(draft => draft = newConnections)
+    setPipelineConnections((draft) => (draft = newConnections));
 
     const syncData = async () => {
       try {
         if (Object.getOwnPropertyNames(pipeline?.data).length !== 0) {
-          const pipelineSpecs = editor.convert_drawflow_to_block(pipeline.name, pipeline.data);
+          const pipelineSpecs = editor.convert_drawflow_to_block(
+            pipeline.name,
+            pipeline.data,
+          );
           // note that we are writing to the buffer, not the load path
-          pipelineSpecs['sink'] = pipeline.buffer;
-          pipelineSpecs['build'] = pipeline.buffer;
+          pipelineSpecs["sink"] = pipeline.buffer;
+          pipelineSpecs["build"] = pipeline.buffer;
 
           const saveData = {
             specs: pipelineSpecs,
@@ -128,29 +162,29 @@ export default function DrawflowWrapper() {
     };
 
     syncData();
-  }, [renderNodes])
+  }, [renderNodes]);
 
   const addBlockToPipeline = (block) => {
     const id = generateId(block);
     block = replaceIds(block, id);
     setPipeline((draft) => {
       draft.data[id] = block;
-    })
+    });
     return id;
-  }
+  };
 
   const dropHandler = async (event, editor) => {
     // Loads block to graph
-    event.preventDefault()
+    event.preventDefault();
 
-    if (editor?.ele_selected?.classList[0] === 'input-element') {
+    if (editor?.ele_selected?.classList[0] === "input-element") {
       return;
     }
 
     const jsonData = event.dataTransfer.getData("block");
-    const spec = JSON.parse(jsonData)
-    const block = setBlockPos(editor, spec, event.clientX, event.clientY)
-    addBlockToPipeline(block)
+    const spec = JSON.parse(jsonData);
+    const block = setBlockPos(editor, spec, event.clientX, event.clientY);
+    addBlockToPipeline(block);
   };
 
   const setBlockPos = (editor, block, posX, posY) => {
@@ -172,17 +206,16 @@ export default function DrawflowWrapper() {
         (editor.precanvas.clientHeight /
           (editor.precanvas.clientHeight * editor.zoom));
 
-    return block
-  }
+    return block;
+  };
   const openView = async (id) => {
     const root = await getBlockPath.mutateAsync({
       blockId: id,
-      pipelinePath: pipeline.buffer
+      pipelinePath: pipeline.buffer,
     });
     setBlockEditorRoot(root);
     setEditorOpen(true);
   };
-
 
   const loadPipeline = useLoadPipeline();
 
@@ -191,7 +224,7 @@ export default function DrawflowWrapper() {
     const file = event.target.files[0];
     if (file) {
       await loadPipeline(file);
-      event.target.value = ''; // Reset the file input
+      event.target.value = ""; // Reset the file input
     }
   };
 
@@ -208,24 +241,27 @@ export default function DrawflowWrapper() {
           dropHandler(ev, editor);
         } else if (pipelineData) {
           const pipelineJson = JSON.parse(pipelineData);
-          const file = new File([JSON.stringify(pipelineJson)], pipelineJson.name, {
-            type: "application/json",
-          });
+          const file = new File(
+            [JSON.stringify(pipelineJson)],
+            pipelineJson.name,
+            {
+              type: "application/json",
+            },
+          );
           loadPipeline(file);
         }
       }}
-      onDragOver={(ev) => { dragOverHandler(ev) }}
+      onDragOver={(ev) => {
+        dragOverHandler(ev);
+      }}
     >
-      <div ref={drawflowCanvas} >
-        {renderNodes}
-      </div>
+      <div ref={drawflowCanvas}>{renderNodes}</div>
       <input
         type="file"
         ref={fileInput}
         onChange={(event) => handleFileChange(event, editor)}
-        style={{ display: 'none' }}
+        style={{ display: "none" }}
       />
-
     </div>
   );
 }

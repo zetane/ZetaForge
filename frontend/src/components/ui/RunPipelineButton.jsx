@@ -2,7 +2,7 @@ import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { useQueryClient } from "@tanstack/react-query";
 import { mixpanelAtom } from "@/atoms/mixpanelAtom";
-import generateSchema from '@/utils/schemaValidation';
+import generateSchema from "@/utils/schemaValidation";
 import { trpc } from "@/utils/trpc";
 import { Button } from "@carbon/react";
 import { useAtom } from "jotai";
@@ -12,15 +12,15 @@ import { uuidv7 } from "uuidv7";
 import ClosableModal from "./modal/ClosableModal";
 import { workspaceAtom } from "@/atoms/pipelineAtom";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
-import { useLoadServerPipeline } from "./useLoadPipeline";
+import { useLoadServerPipeline } from "@/hooks/useLoadPipeline";
 
 export default function RunPipelineButton({ children, action }) {
   const [editor] = useAtom(drawflowEditorAtom);
-  const [pipeline,] = useImmerAtom(pipelineAtom);
-  const [,setWorkspace] = useImmerAtom(workspaceAtom);
+  const [pipeline] = useImmerAtom(pipelineAtom);
+  const [, setWorkspace] = useImmerAtom(workspaceAtom);
   const [validationErrorMsg, setValidationErrorMsg] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
-  const [mixpanelService] = useAtom(mixpanelAtom)
+  const [mixpanelService] = useAtom(mixpanelAtom);
   const [configuration] = useAtom(activeConfigurationAtom);
   const executePipeline = trpc.executePipeline.useMutation();
   const queryClient = useQueryClient();
@@ -31,23 +31,26 @@ export default function RunPipelineButton({ children, action }) {
 
     setValidationErrorMsg([]);
 
-    const pipelineSpecs = editor.convert_drawflow_to_block(pipeline.name, pipeline.data);
+    const pipelineSpecs = editor.convert_drawflow_to_block(
+      pipeline.name,
+      pipeline.data,
+    );
     const executionId = uuidv7();
 
     if (!(await validateAnvilOnline())) return;
     if (!validateSchema()) return;
     const newExecution = await execute(pipelineSpecs, executionId);
-    if(!newExecution) {
+    if (!newExecution) {
       return;
     }
-    
-    queryClient.setQueryData(['pipelines'], (oldExecutions) => {
+
+    queryClient.setQueryData(["pipelines"], (oldExecutions) => {
       let updatedPipelines = [];
 
       if (oldExecutions && Array.isArray(oldExecutions)) {
         // Check if the new execution already exists in the array
         const existingIndex = oldExecutions.findIndex(
-          (execution) => execution.Execution === newExecution.Execution
+          (execution) => execution.Execution === newExecution.Execution,
         );
 
         if (existingIndex !== -1) {
@@ -65,54 +68,57 @@ export default function RunPipelineButton({ children, action }) {
         // If oldExecutions is not an array, return a new array with the new execution
         updatedPipelines = [newExecution];
       }
-      return updatedPipelines
+      return updatedPipelines;
     });
 
     setWorkspace((draft) => {
-      const currentTab = draft.active
-      const newKey = newExecution.Uuid + "." + newExecution.Execution
-      const pipeline = draft.pipelines[newKey]
+      const currentTab = draft.active;
+      const newKey = newExecution.Uuid + "." + newExecution.Execution;
+      const pipeline = draft.pipelines[newKey];
       if (!pipeline) {
         // key hasn't updated yet
-        const loaded = loadServerPipeline(newExecution, configuration)
-        draft.pipelines[newKey] = loaded
-        draft.executions[loaded.record.Execution] = loaded
+        const loaded = loadServerPipeline(newExecution, configuration);
+        draft.pipelines[newKey] = loaded;
+        draft.executions[loaded.record.Execution] = loaded;
       }
-      draft.tabs[newKey] = {}
-      draft.active = newKey
-      delete draft.tabs[currentTab]
-    })
+      draft.tabs[newKey] = {};
+      draft.active = newKey;
+      delete draft.tabs[currentTab];
+    });
 
     trackMixpanelRunCreated();
   };
-  
 
   const validatePipelineExists = async () => {
-    return pipeline.data && Object.keys(pipeline.data).length
-  }
+    return pipeline.data && Object.keys(pipeline.data).length;
+  };
 
-  const validateAnvilOnline =  async () => {
-    if (await pingAnvil()){
-      return true
+  const validateAnvilOnline = async () => {
+    if (await pingAnvil()) {
+      return true;
     } else {
-      setValidationErrorMsg(["Seaweed ping did not return ok. Please wait a few seconds and retry."])
-      setIsOpen(true)
+      setValidationErrorMsg([
+        "Seaweed ping did not return ok. Please wait a few seconds and retry.",
+      ]);
+      setIsOpen(true);
       return false;
     }
-  }
+  };
 
   const pingAnvil = async () => {
     try {
-      const response = await fetch(`http://${configuration.anvil.host}:${configuration.anvil.port}/ping`);
+      const response = await fetch(
+        `http://${configuration.anvil.host}:${configuration.anvil.port}/ping`,
+      );
       return response.ok;
     } catch {
-      return false
+      return false;
     }
-  }
+  };
 
   const execute = async (pipelineSpecs, executionId) => {
     try {
-      const rebuild = (action == "Rebuild")
+      const rebuild = action == "Rebuild";
       const newExecution = await executePipeline.mutateAsync({
         id: pipeline.id,
         executionId: executionId,
@@ -123,13 +129,13 @@ export default function RunPipelineButton({ children, action }) {
         rebuild: rebuild,
         anvilConfiguration: configuration,
       });
-      return newExecution; 
+      return newExecution;
     } catch (error) {
-      setValidationErrorMsg([error?.message])
-      setIsOpen(true)
-      return false
+      setValidationErrorMsg([error?.message]);
+      setIsOpen(true);
+      return false;
     }
-  }
+  };
 
   const validateSchema = () => {
     const schema = generateSchema(pipeline.data);
@@ -139,25 +145,26 @@ export default function RunPipelineButton({ children, action }) {
       return true;
     } else {
       setValidationErrorMsg(() => {
-        return results.error.issues.map(block => `${block.path[0]}: ${block.message}`)
-      })
-      setIsOpen(true)
+        return results.error.issues.map(
+          (block) => `${block.path[0]}: ${block.message}`,
+        );
+      });
+      setIsOpen(true);
       return false;
     }
-  }
-
-  const trackMixpanelRunCreated = () => {
-      try {
-        mixpanelService.trackEvent('Run Created')
-      } catch (err) {
-        console.error("Mixpanel run tracking failed");
-      }
-  }
-
-  const styles = {
-    margin: '5px',
   };
 
+  const trackMixpanelRunCreated = () => {
+    try {
+      mixpanelService.trackEvent("Run Created");
+    } catch (err) {
+      console.error("Mixpanel run tracking failed");
+    }
+  };
+
+  const styles = {
+    margin: "5px",
+  };
 
   return (
     <>
@@ -174,9 +181,7 @@ export default function RunPipelineButton({ children, action }) {
       >
         <div className="flex flex-col gap-4 p-3">
           {validationErrorMsg.map((error, i) => {
-            return (
-              <p key={"error-msg-" + i}>{error}</p>
-            )
+            return <p key={"error-msg-" + i}>{error}</p>;
           })}
         </div>
       </ClosableModal>

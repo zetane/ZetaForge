@@ -3,7 +3,7 @@ package zjson
 type BlockInformation struct {
 	Id             string   `json:"id"`
 	Name           string   `json:"name"`
-	Description    string   `json:"description"`
+	Description    string   `json:"description,omitempty"`
 	SystemVersions []string `json:"system_versions"`
 	BlockVersion   string   `json:"block_version"`
 	BlockSource    string   `json:"block_source"`

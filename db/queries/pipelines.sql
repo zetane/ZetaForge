@@ -17,14 +17,14 @@ ORDER BY e.created DESC;
 -- name: FilterPipelines :many
 SELECT p.*, e.* FROM Pipelines p
 INNER JOIN Executions e on e.pipeline = p.id
-WHERE e.status != 'pending' AND e.workflow is not null and p.deleted = FALSE
+WHERE p.deleted = FALSE
 ORDER BY e.created DESC
 LIMIT ? OFFSET ?;
 
 -- name: AllFilterPipelines :many
 SELECT p.*, e.* FROM Pipelines p
 INNER JOIN Executions e on e.pipeline = p.id
-WHERE e.status != 'pending' AND e.workflow is not null and p.deleted = FALSE
+WHERE p.deleted = FALSE
 ORDER BY e.created DESC;
 
 -- name: GetPipeline :one
