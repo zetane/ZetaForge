@@ -1,5 +1,5 @@
-import { atom } from 'jotai'
+import { atom } from "jotai";
 
-const drawflowEditorAtom = atom(null)
+const drawflowEditorAtom = atom(null);
 
-export { drawflowEditorAtom }
+export { drawflowEditorAtom };

@@ -21,8 +21,8 @@ const LogsViewer = ({ filePath, blockPath, blockKey }) => {
         fetch(`${serverAddress}/api/logs?filePath=${filePath}`)
           .then((response) => response.text())
           .then((data) => {
-            setStickBottom(isAtBottom())
-            setLogs(data)
+            setStickBottom(isAtBottom());
+            setLogs(data);
           })
           .catch((err) => console.error(err));
       }, 1000);
@@ -36,14 +36,23 @@ const LogsViewer = ({ filePath, blockPath, blockKey }) => {
   }, [filePath, isRunButtonPressed]);
 
   const isAtBottom = () => {
-    return logsDiv.current.scrollHeight - logsDiv.current.scrollTop - logsDiv.current.clientHeight < 100;
-  }
+    return (
+      logsDiv.current.scrollHeight -
+        logsDiv.current.scrollTop -
+        logsDiv.current.clientHeight <
+      100
+    );
+  };
 
   const scrollToBottom = () => {
     if (stickBottom) {
-      logsDiv.current.scrollTo({ lef: 0, top: logsDiv.current.scrollHeight, behavior: "smooth" });
+      logsDiv.current.scrollTo({
+        lef: 0,
+        top: logsDiv.current.scrollHeight,
+        behavior: "smooth",
+      });
     }
-  }
+  };
 
   const handleDockerCommands = useCallback(async () => {
     setIsRunButtonPressed(true);
@@ -58,11 +67,11 @@ const LogsViewer = ({ filePath, blockPath, blockKey }) => {
         size="sm"
         onClick={handleDockerCommands}
         title="Run test from this block folder"
-        style={{ marginBottom: '20px' }}
+        style={{ marginBottom: "20px" }}
       >
         Run Test
       </Button>
-      <div ref={logsDiv} className="overflow-y-scroll max-h-full">
+      <div ref={logsDiv} className="max-h-full overflow-y-scroll">
         <LogsCodeMirror code={logs} onUpdate={scrollToBottom} />
       </div>
     </>

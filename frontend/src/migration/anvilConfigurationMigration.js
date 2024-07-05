@@ -1,14 +1,15 @@
 import * as migrator from "localstorage-migrator";
 
-const key = "userAnvilConfigurationsAtom";
+const userConfigurationKey = "userAnvilConfigurationsAtom";
+const indexKey = "anvilConfigurationsIndexAtom";
 const migrations = [
   {
     name: 0,
     up: () => {
       localStorage.setItem(
-        key,
+        userConfigurationKey,
         JSON.stringify(
-          JSON.parse(localStorage?.getItem(key))?.map((e) => ({
+          JSON.parse(localStorage?.getItem(userConfigurationKey))?.map((e) => ({
             name: e.name,
             anvil: {
               host: e.host,
@@ -25,6 +26,12 @@ const migrations = [
           })) ?? [],
         ),
       );
+    },
+  },
+  {
+    name: 1,
+    up: () => {
+      localStorage.setItem(indexKey, JSON.stringify(JSON.parse(0)));
     },
   },
 ];

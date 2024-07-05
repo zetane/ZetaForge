@@ -1,20 +1,20 @@
-@use '@carbon/react/scss/themes';
-@use '@carbon/react/scss/theme';
-@use '@carbon/react/scss/grid';
+@use "@carbon/react/scss/themes";
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/grid";
 
-@use './color-tokens.scss';
-@use './font.scss';
-@use './drawflow-dark-theme.scss';
-@use './drawflow-light-theme.scss';
-@use './block-editor.scss';
-@import '@carbon/styles/css/styles.css';
+@use "./color-tokens.scss";
+@use "./font.scss";
+@use "./drawflow-dark-theme.scss";
+@use "./drawflow-light-theme.scss";
+@use "./block-editor.scss";
+@import "@carbon/styles/css/styles.css";
 
-@import './beautiful.css';
-@import './drawflow.scss';
-@import './drawflows.scss';
-@import './library.scss';
-@import './block-editor.scss';
-@import './tabs.scss';
+@import "./beautiful.css";
+@import "./drawflow.scss";
+@import "./drawflows.scss";
+@import "./library.scss";
+@import "./block-editor.scss";
+@import "./tabs.scss";
 
 @tailwind base;
 @tailwind components;
@@ -23,104 +23,109 @@
 @include grid.flex-grid();
 
 body {
-	background-color: var(--cds-background) !important;
+  background-color: var(--cds-background) !important;
 }
 
 :root {
-	@include theme.theme();
+  @include theme.theme();
 }
 
 main {
-	width: 100vw;
+  width: 100vw;
 }
 
 .bg-util {
-	background-color: var(--cds-background) !important;
+  background-color: var(--cds-background) !important;
 }
 
 .cds--g10 {
-	@include theme.theme(themes.$g10);
-	@include color-tokens.ztn-colors-g10;
-	@include drawflow-light-theme.drawflow-light;
-	@include block-editor.light;
+  @include theme.theme(themes.$g10);
+  @include color-tokens.ztn-colors-g10;
+  @include drawflow-light-theme.drawflow-light;
+  @include block-editor.light;
 }
 
 .cds--g100 {
-	@include theme.theme(themes.$g100);
-	@include color-tokens.ztn-colors-g100;
-	@include drawflow-dark-theme.drawflow-dark;
-	@include block-editor.dark;
+  @include theme.theme(themes.$g100);
+  @include color-tokens.ztn-colors-g100;
+  @include drawflow-dark-theme.drawflow-dark;
+  @include block-editor.dark;
 }
 .cds--header__global {
-	justify-content: center;
+  justify-content: center;
 }
 .cds--header__action.cds--btn--icon-only {
-	background: none;
-	border: none;
+  background: none;
+  border: none;
 }
 
 .cds--btn.cds--btn--icon-only.cds--header__action.cds--btn--disabled svg {
-	fill: var(--cds-icon-on-color-disabled) !important;
+  fill: var(--cds-icon-on-color-disabled) !important;
 }
 
 .cds--side-nav {
-	max-inline-size: 30rem !important;
-	overflow: visible !important;
-	margin-top: 2rem;
+  max-inline-size: 30rem !important;
+  overflow: visible !important;
+  margin-top: 2rem;
 }
 
 .cds--side-nav--expanded {
-	inline-size: 30rem !important;
+  inline-size: 30rem !important;
 }
 
 .cds--side-nav__items {
-	padding: 0px !important;
-	overflow: visible !important;
+  padding: 0px !important;
+  overflow: visible !important;
 }
 
 .cds--header__global {
-	align-items: center;
+  align-items: center;
 }
 
 .cds--btn--primary:focus {
-	border-color: var(--cds-button-primary) !important;
-	box-shadow: none;
-	background-color: var(--cds-button-primary-hover) !important;
+  border-color: var(--cds-button-primary) !important;
+  box-shadow: none;
+  background-color: var(--cds-button-primary-hover) !important;
 }
 
 .cds--btn--tertiary:focus {
-	border-color: var(--cds-button-tertiary) !important;
-	box-shadow: none;
-	background-color: var(--cds-button-primary-hover) !important;
+  border-color: var(--cds-button-tertiary) !important;
+  box-shadow: none;
+  background-color: var(--cds-button-primary-hover) !important;
 }
 
-[data-carbon-theme='g10'] {
-	@include theme.theme(themes.$g10);
+[data-carbon-theme="g10"] {
+  @include theme.theme(themes.$g10);
 }
 
-[data-carbon-theme='g100'] {
-	@include theme.theme(themes.$g100);
+[data-carbon-theme="g100"] {
+  @include theme.theme(themes.$g100);
 }
 
 .theme-mode-transition * {
-	transition: all 200ms cubic-bezier(0.2, 0.2, 0.38, 0.9);
+  transition: all 200ms cubic-bezier(0.2, 0.2, 0.38, 0.9);
 }
 
 .tooltip {
-	max-width: 18rem;
-	padding: 0.5rem;
-	border-radius: 2px;
-	color: var(--tooltip-color);
-	background-color: var(--tooltip-background-color);
+  max-width: 18rem;
+  padding: 0.5rem;
+  border-radius: 2px;
+  color: var(--tooltip-color);
+  background-color: var(--tooltip-background-color);
 }
 
 .tooltip::after {
-	content: "";
-	position: absolute;
-	bottom: 100%;
-	left: 10px;
-	margin-left: -5px;
-	border-width: 5px;
-	border-style: solid;
-	border-color: transparent transparent var(--tooltip-background-color) transparent;
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 10px;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent transparent var(--tooltip-background-color)
+    transparent;
+}
+
+.cm-editor {
+    content-visibility: auto;
 }

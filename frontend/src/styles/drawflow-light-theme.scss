@@ -1,103 +1,99 @@
 @mixin drawflow-light {
-    --dfBackgroundColor: rgba(235, 235, 235, 1);
-    --dfBackgroundSize: 0px;
-    --dfBackgroundImage: none;
-  
-    --dfNodeType: flex;
-    --dfNodeTypeFloat: none;
-    --dfNodeBackgroundColor: #ffffff;
-    --dfNodeTextColor: #000000;
-    --dfNodeBorderSize: 1px;
-    --dfNodeBorderColor: rgba(139, 139, 139, 1);
-    --dfNodeBorderRadius: 4px;
-    --dfNodeMinHeight: 40px;
-    --dfNodeMinWidth: 270px;
-    --dfNodePaddingTop: 15px;
-    --dfNodePaddingBottom: 15px;
-    --dfNodeBoxShadowHL: 0px;
-    --dfNodeBoxShadowVL: 2px;
-    --dfNodeBoxShadowBR: 15px;
-    --dfNodeBoxShadowS: 2px;
-    --dfNodeBoxShadowColor: rgba(139, 139, 139, 1);
-  
-    --dfNodeHoverBackgroundColor: #ffffff;
-    --dfNodeHoverTextColor: #000000;
-    --dfNodeHoverBorderSize: 1px;
-    --dfNodeHoverBorderColor: rgba(105, 23, 176, 1);
-    --dfNodeHoverBorderRadius: 4px;
-  
-    --dfNodeHoverBoxShadowHL: 0px;
-    --dfNodeHoverBoxShadowVL: 2px;
-    --dfNodeHoverBoxShadowBR: 15px;
-    --dfNodeHoverBoxShadowS: 5px;
-    --dfNodeHoverBoxShadowColor: rgba(139, 139, 139, 1);
-  
-    --dfNodeSelectedBackgroundColor: rgba(255, 255, 255, 1);
-    --dfNodeSelectedTextColor: rgba(0, 0, 0, 1);
-    --dfNodeSelectedBorderSize: 1px;
-    --dfNodeSelectedBorderColor: rgba(105, 23, 176, 1);
-    --dfNodeSelectedBorderRadius: 4px;
-  
-    --dfNodeSelectedBoxShadowHL: 0px;
-    --dfNodeSelectedBoxShadowVL: 2px;
-    --dfNodeSelectedBoxShadowBR: 15px;
-    --dfNodeSelectedBoxShadowS: 2px;
-    --dfNodeSelectedBoxShadowColor: rgba(105, 23, 176, 1);
-  
-    --dfInputBackgroundColor: #ffffff;
-    --dfInputBorderSize: 1px;
-    --dfInputBorderColor: rgba(139, 139, 139, 1);
-    --dfInputBorderRadius: 50px;
-    --dfInputLeft: -27px;
-    --dfInputHeight: 20px;
-    --dfInputWidth: 20px;
-  
-    --dfInputHoverBackgroundColor: rgba(105, 23, 176, 1);
-    --dfInputHoverBorderSize: 1px;
-    --dfInputHoverBorderColor: rgba(139, 139, 139, 1);
-    --dfInputHoverBorderRadius: 50px;
-  
-    --dfOutputBackgroundColor: #ffffff;
-    --dfOutputBorderSize: 1px;
-    --dfOutputBorderColor: rgba(139, 139, 139, 1);
-    --dfOutputBorderRadius: 50px;
-    --dfOutputRight: -3px;
-    --dfOutputHeight: 20px;
-    --dfOutputWidth: 20px;
-  
-    --dfOutputHoverBackgroundColor: rgba(105, 23, 176, 1);
-    --dfOutputHoverBorderSize: 1px;
-    --dfOutputHoverBorderColor: rgba(139, 139, 139, 1);
-    --dfOutputHoverBorderRadius: 50px;
-  
-    --dfLineWidth: 5px;
-    --dfLineColor: rgba(107, 43, 224, 1);
-    --dfLineHoverColor: rgba(105, 23, 176, 1);
-    --dfLineSelectedColor: rgba(105, 23, 176, 1);
-  
-    --dfRerouteBorderWidth: 2px;
-    --dfRerouteBorderColor: rgba(139, 139, 139, 1);
-    --dfRerouteBackgroundColor: rgba(255, 255, 255, 1);
-  
-    --dfRerouteHoverBorderWidth: 4px;
-    --dfRerouteHoverBorderColor: rgba(105, 23, 176, 1);
-    --dfRerouteHoverBackgroundColor: #ffffff;
-  
-    --dfDeleteDisplay: block;
-    --dfDeleteColor: #ffffff;
-    --dfDeleteBackgroundColor: rgba(105, 23, 176, 1);
-    --dfDeleteBorderSize: 2px;
-    --dfDeleteBorderColor: #ffffff;
-    --dfDeleteBorderRadius: 50px;
-    --dfDeleteTop: -15px;
-  
-    --dfDeleteHoverColor: rgba(255, 255, 255, 1);
-    --dfDeleteHoverBackgroundColor: rgba(255, 0, 0, 1);
-    --dfDeleteHoverBorderSize: 2px;
-    --dfDeleteHoverBorderColor: rgba(255, 255, 255, 1);
-    --dfDeleteHoverBorderRadius: 50px;
-  
-  }
-  
-  
-  
+  --dfBackgroundColor: rgba(235, 235, 235, 1);
+  --dfBackgroundSize: 0px;
+  --dfBackgroundImage: none;
+
+  --dfNodeType: flex;
+  --dfNodeTypeFloat: none;
+  --dfNodeBackgroundColor: #ffffff;
+  --dfNodeTextColor: #000000;
+  --dfNodeBorderSize: 1px;
+  --dfNodeBorderColor: rgba(139, 139, 139, 1);
+  --dfNodeBorderRadius: 4px;
+  --dfNodeMinHeight: 40px;
+  --dfNodeMinWidth: 270px;
+  --dfNodePaddingTop: 15px;
+  --dfNodePaddingBottom: 15px;
+  --dfNodeBoxShadowHL: 0px;
+  --dfNodeBoxShadowVL: 2px;
+  --dfNodeBoxShadowBR: 15px;
+  --dfNodeBoxShadowS: 2px;
+  --dfNodeBoxShadowColor: rgba(139, 139, 139, 1);
+
+  --dfNodeHoverBackgroundColor: #ffffff;
+  --dfNodeHoverTextColor: #000000;
+  --dfNodeHoverBorderSize: 1px;
+  --dfNodeHoverBorderColor: rgba(105, 23, 176, 1);
+  --dfNodeHoverBorderRadius: 4px;
+
+  --dfNodeHoverBoxShadowHL: 0px;
+  --dfNodeHoverBoxShadowVL: 2px;
+  --dfNodeHoverBoxShadowBR: 15px;
+  --dfNodeHoverBoxShadowS: 5px;
+  --dfNodeHoverBoxShadowColor: rgba(139, 139, 139, 1);
+
+  --dfNodeSelectedBackgroundColor: rgba(255, 255, 255, 1);
+  --dfNodeSelectedTextColor: rgba(0, 0, 0, 1);
+  --dfNodeSelectedBorderSize: 1px;
+  --dfNodeSelectedBorderColor: rgba(105, 23, 176, 1);
+  --dfNodeSelectedBorderRadius: 4px;
+
+  --dfNodeSelectedBoxShadowHL: 0px;
+  --dfNodeSelectedBoxShadowVL: 2px;
+  --dfNodeSelectedBoxShadowBR: 15px;
+  --dfNodeSelectedBoxShadowS: 2px;
+  --dfNodeSelectedBoxShadowColor: rgba(105, 23, 176, 1);
+
+  --dfInputBackgroundColor: #ffffff;
+  --dfInputBorderSize: 1px;
+  --dfInputBorderColor: rgba(139, 139, 139, 1);
+  --dfInputBorderRadius: 50px;
+  --dfInputLeft: -27px;
+  --dfInputHeight: 20px;
+  --dfInputWidth: 20px;
+
+  --dfInputHoverBackgroundColor: rgba(105, 23, 176, 1);
+  --dfInputHoverBorderSize: 1px;
+  --dfInputHoverBorderColor: rgba(139, 139, 139, 1);
+  --dfInputHoverBorderRadius: 50px;
+
+  --dfOutputBackgroundColor: #ffffff;
+  --dfOutputBorderSize: 1px;
+  --dfOutputBorderColor: rgba(139, 139, 139, 1);
+  --dfOutputBorderRadius: 50px;
+  --dfOutputRight: -3px;
+  --dfOutputHeight: 20px;
+  --dfOutputWidth: 20px;
+
+  --dfOutputHoverBackgroundColor: rgba(105, 23, 176, 1);
+  --dfOutputHoverBorderSize: 1px;
+  --dfOutputHoverBorderColor: rgba(139, 139, 139, 1);
+  --dfOutputHoverBorderRadius: 50px;
+
+  --dfLineWidth: 5px;
+  --dfLineColor: rgba(107, 43, 224, 1);
+  --dfLineHoverColor: rgba(105, 23, 176, 1);
+  --dfLineSelectedColor: rgba(105, 23, 176, 1);
+
+  --dfRerouteBorderWidth: 2px;
+  --dfRerouteBorderColor: rgba(139, 139, 139, 1);
+  --dfRerouteBackgroundColor: rgba(255, 255, 255, 1);
+
+  --dfRerouteHoverBorderWidth: 4px;
+  --dfRerouteHoverBorderColor: rgba(105, 23, 176, 1);
+  --dfRerouteHoverBackgroundColor: #ffffff;
+
+  --dfDeleteDisplay: block;
+  --dfDeleteColor: #ffffff;
+  --dfDeleteBackgroundColor: rgba(105, 23, 176, 1);
+  --dfDeleteBorderSize: 2px;
+  --dfDeleteBorderColor: #ffffff;
+  --dfDeleteBorderRadius: 50px;
+  --dfDeleteTop: -15px;
+
+  --dfDeleteHoverColor: rgba(255, 255, 255, 1);
+  --dfDeleteHoverBackgroundColor: rgba(255, 0, 0, 1);
+  --dfDeleteHoverBorderSize: 2px;
+  --dfDeleteHoverBorderColor: rgba(255, 255, 255, 1);
+  --dfDeleteHoverBorderRadius: 50px;
+}

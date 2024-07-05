@@ -2,7 +2,7 @@ import { LogsCodeMirror } from "@/components/ui/blockEditor/CodeMirrorComponents
 import ClosableModal from "./modal/ClosableModal";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { useAtom, useAtomValue } from "jotai";
-import ScrollToBottom from 'react-scroll-to-bottom';
+import ScrollToBottom from "react-scroll-to-bottom";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -12,20 +12,20 @@ import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { parseLog } from "@/components/ui/useLoadPipeline";
 
 export const PipelineLogs = () => {
-  const [configuration, _] = useAtom(activeConfigurationAtom)
+  const [configuration, _] = useAtom(activeConfigurationAtom);
   const pipeline = useAtomValue(pipelineAtom);
-  const socket = pipeline?.socketUrl || null
+  const socket = pipeline?.socketUrl || null;
 
   const { pending, error, data } = useQuery({
-    queryKey: ['logs', pipeline?.history],
+    queryKey: ["logs", pipeline?.history],
     queryFn: async () => {
-      return await getFileData(pipeline?.record?.LogPath, configuration)
+      return await getFileData(pipeline?.record?.LogPath, configuration);
     },
-    enabled: (pipeline?.record?.LogPath != null)
-  })
-  let log = pipeline.log
+    enabled: pipeline?.record?.LogPath != null,
+  });
+  let log = pipeline.log;
   if (data) {
-    log = parseLog(data.split("\n"))
+    log = parseLog(data.split("\n"));
   }
 
   /*
