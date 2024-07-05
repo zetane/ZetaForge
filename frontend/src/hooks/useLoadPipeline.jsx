@@ -14,11 +14,8 @@ export const useLoadPipeline = () => {
   const loadPipeline = async (file) => {
     console.log("***********Loading pipeline from file:", file);
 
-    const FILE_EXTENSION_REGEX = /\.[^/.]+$/;
     let relPath = file.webkitRelativePath;
     relPath = relPath.replaceAll("\\", "/");
-    const folder = relPath.split("/")[0];
-    const pipelineName = file.name.replace(FILE_EXTENSION_REGEX, "");
 
     const data = JSON.parse(await new Blob([file]).text());
     const folderPath = getDirectoryPath(file.path);
@@ -146,3 +143,41 @@ export const useLoadServerPipeline = () => {
 
   return loadPipeline;
 };
+
+export const useLoadCorePipeline = () => {
+  const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
+  const savePipelineMutation = trpc.savePipeline.useMutation();
+
+  const loadPipeline = async (specs, path) => {
+    const bufferPath = `${window.cache.local}${specs.id}`;
+
+    const cacheData = {
+      specs: specs,
+      name: specs.name,
+      buffer: path,
+      writePath: bufferPath,
+    };
+    await savePipelineMutation.mutateAsync(cacheData);
+
+    const loadedPipeline = {
+      name: specs.name,
+      path: path,
+      saveTime: Date.now(),
+      buffer: bufferPath,
+      data: specs.pipeline,
+      id: specs.id,
+    };
+
+    const newPipeline = pipelineFactory(window.cache.local, loadedPipeline);
+    const key = pipelineKey(newPipeline.id, null);
+
+    console.log(newPipeline, workspace);
+    setWorkspace((draft) => {
+      draft.tabs[key] = {};
+      draft.pipelines[key] = newPipeline;
+      draft.active = key;
+    });
+  }
+
+  return loadPipeline;
+}

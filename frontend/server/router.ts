@@ -1,4 +1,4 @@
-import { app, dialog } from "electron";
+import { app, dialog } from "electron";router
 import fs from "fs/promises";
 import path from "path";
 import { z } from "zod";
@@ -70,6 +70,7 @@ export const appRouter = router({
 
     try {
       const pipelines = await readPipelines(corePipelines);
+      logger.debug(pipelines);
       return pipelines;
     } catch (error) {
       logger.error(error);
@@ -94,7 +95,7 @@ export const appRouter = router({
 
       try {
         const pipelines = await readPipelines(pipelinesPath);
-        const pipeline = pipelines.find((p) => p.id === pipelineId);
+        const pipeline = pipelines.find((p) => p.specs.id === pipelineId);
         if (!pipeline) {
           throw new Error(`Pipeline with ID ${pipelineId} not found`);
         }

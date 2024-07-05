@@ -1,0 +1,340 @@
+{
+  "pipeline": {
+    "canny-edge-k2o7j05im846": {
+      "information": {
+        "id": "canny-edge",
+        "name": "Canny Edge 2",
+        "description": "Computes the Canny edge detection on an image at various thresholds and saves the results.",
+        "block_version": "block version number",
+        "block_source": "core/blocks/canny-edge",
+        "block_type": "compute",
+        "system_versions": [
+          "0.1"
+        ]
+      },
+      "inputs": {
+        "image_path": {
+          "type": "Any",
+          "connections": [
+            {
+              "variable": "path",
+              "block": "file-6wt21sinahw9"
+            }
+          ],
+          "relays": []
+        },
+        "range_min": {
+          "type": "Any",
+          "connections": [
+            {
+              "variable": "integer",
+              "block": "integer-k8ofck2f0526"
+            }
+          ],
+          "relays": []
+        },
+        "range_max": {
+          "type": "Any",
+          "connections": [
+            {
+              "variable": "integer",
+              "block": "integer-ysz270fifd7a"
+            }
+          ],
+          "relays": []
+        },
+        "step": {
+          "type": "Any",
+          "connections": [
+            {
+              "variable": "integer",
+              "block": "integer-stxxg34rdp8v"
+            }
+          ],
+          "relays": []
+        }
+      },
+      "outputs": {
+        "image_paths": {
+          "type": "Any",
+          "connections": [
+            {
+              "variable": "image_paths_view",
+              "block": "view-images-hfmt87k102op"
+            }
+          ],
+          "relays": []
+        }
+      },
+      "action": {
+        "container": {
+          "image": "canny-edge",
+          "version": "latest",
+          "command_line": [
+            "python",
+            "entrypoint.py"
+          ]
+        }
+      },
+      "views": {
+        "node": {
+          "active": "True or False",
+          "title_bar": {},
+          "preview": {},
+          "html": "",
+          "pos_x": "1281",
+          "pos_y": "432",
+          "pos_z": "999, this is the z-index for 2D canvas"
+        }
+      },
+      "events": {}
+    },
+    "file-6wt21sinahw9": {
+      "information": {
+        "id": "file",
+        "name": "File",
+        "description": "File parameter input.",
+        "block_version": "block version number",
+        "block_source": "core/blocks",
+        "block_type": "compute",
+        "system_versions": [
+          "0.1"
+        ]
+      },
+      "inputs": {},
+      "outputs": {
+        "path": {
+          "type": "file",
+          "connections": [
+            {
+              "variable": "image_path",
+              "block": "canny-edge-k2o7j05im846"
+            }
+          ],
+          "relays": []
+        }
+      },
+      "action": {
+        "parameters": {
+          "path": {
+            "type": "file",
+            "value": ""
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "True or False",
+          "title_bar": {},
+          "preview": {},
+          "html": "<input type='file' name='fileInput' parameters-file/>",
+          "pos_x": "796",
+          "pos_y": "224.27586206896552",
+          "pos_z": "999, this is the z-index for 2D canvas"
+        }
+      },
+      "events": {}
+    },
+    "integer-k8ofck2f0526": {
+      "information": {
+        "id": "integer",
+        "name": "Integer",
+        "description": "Integer parameter input.",
+        "block_version": "block version number",
+        "block_source": "core/blocks",
+        "block_type": "compute",
+        "system_versions": [
+          "0.1"
+        ]
+      },
+      "inputs": {},
+      "outputs": {
+        "integer": {
+          "type": "int",
+          "connections": [
+            {
+              "variable": "range_min",
+              "block": "canny-edge-k2o7j05im846"
+            }
+          ],
+          "relays": []
+        }
+      },
+      "action": {
+        "parameters": {
+          "integer": {
+            "type": "int",
+            "value": "4"
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "True or False",
+          "title_bar": {},
+          "preview": {},
+          "html": "<input type='number' id='integerInput' value='44419' name='integerInput' step='1' parameters-integer/>",
+          "pos_x": "793.8235294117648",
+          "pos_y": "437",
+          "pos_z": "999, this is the z-index for 2D canvas"
+        }
+      },
+      "events": {}
+    },
+    "integer-ysz270fifd7a": {
+      "information": {
+        "id": "integer",
+        "name": "Integer",
+        "description": "Integer parameter input.",
+        "block_version": "block version number",
+        "block_source": "core/blocks",
+        "block_type": "compute",
+        "system_versions": [
+          "0.1"
+        ]
+      },
+      "inputs": {},
+      "outputs": {
+        "integer": {
+          "type": "Any",
+          "connections": [
+            {
+              "variable": "range_max",
+              "block": "canny-edge-k2o7j05im846"
+            }
+          ],
+          "relays": []
+        }
+      },
+      "action": {
+        "parameters": {
+          "integer": {
+            "type": "Any",
+            "value": "500"
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "True or False",
+          "title_bar": {},
+          "preview": {},
+          "html": "<input type='number' id='integerInput' value='44419' name='integerInput' step='1' parameters-integer/>",
+          "pos_x": "798.1764705882352",
+          "pos_y": "593",
+          "pos_z": "999, this is the z-index for 2D canvas"
+        }
+      },
+      "events": {}
+    },
+    "integer-stxxg34rdp8v": {
+      "information": {
+        "id": "integer",
+        "name": "Integer",
+        "description": "Integer parameter input.",
+        "block_version": "block version number",
+        "block_source": "core/blocks",
+        "block_type": "compute",
+        "system_versions": [
+          "0.1"
+        ]
+      },
+      "inputs": {},
+      "outputs": {
+        "integer": {
+          "type": "Any",
+          "connections": [
+            {
+              "variable": "step",
+              "block": "canny-edge-k2o7j05im846"
+            }
+          ],
+          "relays": []
+        }
+      },
+      "action": {
+        "parameters": {
+          "integer": {
+            "type": "Any",
+            "value": "20"
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "True or False",
+          "title_bar": {},
+          "preview": {},
+          "html": "<input type='number' id='integerInput' value='44419' name='integerInput' step='1' parameters-integer/>",
+          "pos_x": "798",
+          "pos_y": "748",
+          "pos_z": "999, this is the z-index for 2D canvas"
+        }
+      },
+      "events": {}
+    },
+    "view-images-hfmt87k102op": {
+      "information": {
+        "id": "view-images",
+        "name": "View Images",
+        "description": "Generates an HTML file with a unique name and returns the file name.",
+        "block_version": "block version number",
+        "block_source": "core/blocks/view-images",
+        "block_type": "view",
+        "system_versions": [
+          "0.1"
+        ]
+      },
+      "inputs": {
+        "image_paths_view": {
+          "type": "List[file]",
+          "connections": [
+            {
+              "variable": "image_paths",
+              "block": "canny-edge-k2o7j05im846"
+            }
+          ],
+          "relays": []
+        }
+      },
+      "outputs": {
+        "html": {
+          "type": "file",
+          "connections": [],
+          "relays": []
+        }
+      },
+      "action": {
+        "container": {
+          "image": "view-images",
+          "version": "latest",
+          "command_line": [
+            "python",
+            "entrypoint.py"
+          ]
+        }
+      },
+      "views": {
+        "mode": "modal",
+        "node": {
+          "active": "True or False",
+          "title_bar": {
+            "background_color": "#D55908"
+          },
+          "preview": {
+            "active": "true"
+          },
+          "html": "",
+          "pos_x": "1781",
+          "pos_y": "471.1764705882353",
+          "pos_z": "999, this is the z-index for 2D canvas"
+        }
+      },
+      "events": {}
+    }
+  },
+  "sink": "",
+  "build": "",
+  "name": "Canny Edge Demo 2",
+  "id": "pipeline-y67j70mliceo"
+}

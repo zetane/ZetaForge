@@ -58,6 +58,7 @@ export default function DrawflowWrapper() {
   const drawflowCanvas = useRef(null);
   const pipelineRef = useRef(null);
   const nodeRefs = useRef({});
+  const loadPipeline = useLoadCorePipeline();
 
   const addNodeRefs = (nodeList) => {
     nodeRefs.current = { ...nodeRefs.current, ...nodeList };
@@ -217,8 +218,6 @@ export default function DrawflowWrapper() {
     setEditorOpen(true);
   };
 
-  const loadPipeline = useLoadPipeline();
-
   // Similar to LoadPipelineButton.jsx
   const handleFileChange = async (event, editor) => {
     const file = event.target.files[0];
@@ -241,14 +240,8 @@ export default function DrawflowWrapper() {
           dropHandler(ev, editor);
         } else if (pipelineData) {
           const pipelineJson = JSON.parse(pipelineData);
-          const file = new File(
-            [JSON.stringify(pipelineJson)],
-            pipelineJson.name,
-            {
-              type: "application/json",
-            },
-          );
-          loadPipeline(file);
+          console.log(pipelineJson);
+          loadPipeline(pipelineJson);
         }
       }}
       onDragOver={(ev) => {
