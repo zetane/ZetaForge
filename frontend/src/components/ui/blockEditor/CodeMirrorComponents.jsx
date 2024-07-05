@@ -71,7 +71,7 @@ export const ViewerCodeMirror = ({ currentIndex, code }) => {
 
 export const EditorCodeMirror = ({ code, onChange }) => {
   const [theme] = useAtom(themeAtom);
-  const extensions = [loadLanguage("python"), viewerBackgroundTheme];
+  const extensions = [loadLanguage("python"), backgroundTheme];
 
   return (
     <CodeMirror
