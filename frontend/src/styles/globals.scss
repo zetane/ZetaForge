@@ -125,3 +125,7 @@ main {
   border-color: transparent transparent var(--tooltip-background-color)
     transparent;
 }
+
+.cm-editor {
+    content-visibility: auto;
+}

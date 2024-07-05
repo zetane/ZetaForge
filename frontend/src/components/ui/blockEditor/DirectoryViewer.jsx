@@ -407,7 +407,7 @@ export default function DirectoryViewer({ blockPath, blockKey }) {
                       tooltipPosition="left"
                       hasIconOnly
                       size="md"
-                      onClick={saveChanges}
+                      onClick={(e) => saveChanges(e)}
                     />
                   </div>
                 </>
