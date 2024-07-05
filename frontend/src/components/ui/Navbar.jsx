@@ -34,6 +34,7 @@ import SavePipelineButton from "./SavePipelineButton";
 import AnvilConfigurationsModal from "./modal/AnvilConfigurationsModal";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { PipelineStopButton } from "./PipelineStopButton";
+import { getAllPipelines } from "@/client/anvil";
 
 export default function Navbar({ children }) {
   const [darkMode, setDarkMode] = useAtom(darkModeAtom);
@@ -46,10 +47,7 @@ export default function Navbar({ children }) {
   const { pending, error, data } = useQuery({
     queryKey: ["pipelines"],
     queryFn: async () => {
-      const res = await axios.get(
-        `http://${configuration.anvil.host}:${configuration.anvil.port}/pipeline/filter?limit=100000&offset=0`,
-      );
-      return res.data;
+      return await getAllPipelines(configuration);
     },
     refetchInterval: workspace.fetchInterval,
   });

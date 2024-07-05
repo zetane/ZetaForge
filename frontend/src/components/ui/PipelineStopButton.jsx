@@ -1,16 +1,14 @@
 import { useMutation } from "@tanstack/react-query";
 import { Stop } from "@carbon/icons-react";
 import { Button } from "@carbon/react";
-import axios from "axios";
 import { useState } from "react";
+import { terminateExecution } from "@/client/anvil";
 
 export const PipelineStopButton = ({ executionId, configuration }) => {
   const [isTerminating, setIsTerminating] = useState(false);
   const terminate = useMutation({
     mutationFn: async () => {
-      const url = `http://${configuration.anvil.host}:${configuration.anvil.port}/execution/${executionId}/terminate`;
-      const res = axios.post(url);
-      return res.data;
+      return await terminateExecution(configuration, executionId);
     },
     onSuccess: (res) => {
       // Hasta la vista, baby
