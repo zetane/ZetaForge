@@ -336,6 +336,10 @@ func main() {
 		setup(ctx, config, db)
 	} else {
 		router.Use(func(ctx *gin.Context) {
+			if ctx.Request.Method == "OPTIONS" {
+				ctx.AbortWithStatus(http.StatusOK)
+				return
+			}
 			code := validateToken(ctx, certsPath)
 			if code != http.StatusOK {
 				ctx.AbortWithStatus(code)
