@@ -94,7 +94,7 @@ export const appRouter = router({
 
       try {
         const pipelines = await readPipelines(pipelinesPath);
-        const pipeline = pipelines.find((p) => p.specs.id === pipelineId);
+        const pipeline = pipelines.find((p) => p.specs.id === pipelineId)?.specs;
         if (!pipeline) {
           throw new Error(`Pipeline with ID ${pipelineId} not found`);
         }
