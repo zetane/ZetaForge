@@ -11,7 +11,7 @@ export async function terminateExecution(configuration, executionId) {
       `execution/${executionId}/terminate`,
     ),
     HttpMethod.POST,
-    configuration.anvil.certificate,
+    configuration.anvil.token,
     {},
   );
 
@@ -29,7 +29,7 @@ export async function getAllPipelines(configuration) {
       "pipeline/filter?limit=100000&offset=0",
     ),
     HttpMethod.GET,
-    configuration.anvil.certificate,
+    configuration.anvil.token,
     {},
   );
 
@@ -47,7 +47,7 @@ export async function ping(configuration) {
       "ping",
     ),
     HttpMethod.GET,
-    configuration.anvil.certificate,
+    configuration.anvil.token,
     {},
   );
 

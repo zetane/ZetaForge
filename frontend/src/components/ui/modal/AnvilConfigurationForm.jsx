@@ -24,7 +24,7 @@ export default function AnvilConfigurationForm({
           name: initialConfiguration.name,
           anvilHost: initialConfiguration.anvil.host,
           anvilPort: initialConfiguration.anvil.port,
-          anvilCertificate: initialConfiguration.anvil.certificate,
+          anvilToken: initialConfiguration.anvil.token,
           s3Host: initialConfiguration.s3.host,
           s3Port: initialConfiguration.s3.port,
           s3Region: initialConfiguration.s3.region,
@@ -36,7 +36,7 @@ export default function AnvilConfigurationForm({
           name: "",
           anvilHost: "",
           anvilPort: "",
-          anvilCertificate: "",
+          anvilToken: "",
           s3Host: "",
           s3Port: "",
           s3Region: "",
@@ -60,7 +60,7 @@ export default function AnvilConfigurationForm({
       anvil: {
         host: configForm.anvilHost,
         port: configForm.anvilPort,
-        certificate: configForm.anvilCertificate,
+        token: configForm.anvilToken,
       },
       s3: {
         host: configForm.s3Host,
@@ -109,10 +109,10 @@ export default function AnvilConfigurationForm({
             onChange={handleInputChange}
           />
           <PasswordInput
-            labelText="Certificate"
-            placeholder={""}
-            name="anvilCertificate"
-            value={configForm.anvilCertificate}
+            labelText="Token"
+            placeholder={"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJtZXNzYWdlIjoieW91ciBDVEYgaXMgaW4gYW5vdGhlciBjYXN0bGUifQ.nnx_N7kOjI7lZthjjQ0lY7kXYQkluEdSBnCjI7ASsCE"}
+            name="anvilToken"
+            value={configForm.anvilToken}
             onChange={handleInputChange}
           />
         </Stack>
