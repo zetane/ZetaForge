@@ -127,7 +127,8 @@ async function getBlockIndex(blockDirectories) {
       }
     } catch (error) {
       if (error.code === "ENOENT") {
-        logger.error("Directory or file does not exist:", error.path);
+        const message = `Directory or file does not exist: ${error.path}`
+        logger.error(error, message);
       } else {
         // Handle other types of errors or rethrow the error
         throw error;

@@ -174,7 +174,17 @@ export default function DrawflowWrapper() {
     return id;
   };
 
-  const dropHandler = async (event, editor) => {
+  const handleDrop = async (ev) => {
+    const blockData = ev.dataTransfer.getData("block");
+    const pipelineData = ev.dataTransfer.getData("pipeline");
+    if (blockData) {
+      dropBlock(ev, blockData, editor);
+    } else if (pipelineData) {
+      dropPipeline(pipelineData);
+    }
+  };
+
+  const dropBlock = async (event, blockData, editor) => {
     // Loads block to graph
     event.preventDefault();
 
@@ -182,10 +192,15 @@ export default function DrawflowWrapper() {
       return;
     }
 
-    const jsonData = event.dataTransfer.getData("block");
-    const spec = JSON.parse(jsonData);
+    const spec = JSON.parse(blockData);
     const block = setBlockPos(editor, spec, event.clientX, event.clientY);
     addBlockToPipeline(block);
+  };
+
+  const dropPipeline = (pipelineData) => {
+    const pipelineJson = JSON.parse(pipelineData);
+    const {specs, path} = pipelineJson;
+    loadPipeline(specs, path);
   };
 
   const setBlockPos = (editor, block, posX, posY) => {
@@ -209,6 +224,7 @@ export default function DrawflowWrapper() {
 
     return block;
   };
+
   const openView = async (id) => {
     const root = await getBlockPath.mutateAsync({
       blockId: id,
@@ -218,43 +234,16 @@ export default function DrawflowWrapper() {
     setEditorOpen(true);
   };
 
-  // Similar to LoadPipelineButton.jsx
-  const handleFileChange = async (event, editor) => {
-    const file = event.target.files[0];
-    if (file) {
-      await loadPipeline(file);
-      event.target.value = ""; // Reset the file input
-    }
-  };
-
-  const fileInput = useRef();
-
   return (
     <div
       id="drawflow"
       ref={handleDrawflow}
-      onDrop={(ev) => {
-        const blockData = ev.dataTransfer.getData("block");
-        const pipelineData = ev.dataTransfer.getData("pipeline");
-        if (blockData) {
-          dropHandler(ev, editor);
-        } else if (pipelineData) {
-          const pipelineJson = JSON.parse(pipelineData);
-          console.log(pipelineJson);
-          loadPipeline(pipelineJson);
-        }
-      }}
+      onDrop={handleDrop}
       onDragOver={(ev) => {
         dragOverHandler(ev);
       }}
     >
       <div ref={drawflowCanvas}>{renderNodes}</div>
-      <input
-        type="file"
-        ref={fileInput}
-        onChange={(event) => handleFileChange(event, editor)}
-        style={{ display: "none" }}
-      />
     </div>
   );
 }

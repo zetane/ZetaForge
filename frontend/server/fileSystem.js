@@ -27,8 +27,8 @@ const pipelineSpecBuilder = async (items, dir) => {
           const pipelineData = await fs.readFile(pipelineSpecFile, "utf8");
           const parsedPipelineData = JSON.parse(pipelineData);
           parsedPipelineData.folderName = item; // Add the folder name to the pipeline data
-          pipelinesData.push({ 
-            path: item,
+          pipelinesData.push({
+            path: itemPath,
             specs: parsedPipelineData
           });
         } catch (error) {

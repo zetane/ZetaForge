@@ -109,6 +109,7 @@ export const useLoadServerPipeline = () => {
     if (!pipeline) {
       return;
     }
+
     let pipelineData = JSON.parse(pipeline.PipelineJson);
     if (pipeline.Results != "") {
       pipelineData = JSON.parse(pipeline.Results);
@@ -161,7 +162,6 @@ export const useLoadCorePipeline = () => {
 
     const loadedPipeline = {
       name: specs.name,
-      path: path,
       saveTime: Date.now(),
       buffer: bufferPath,
       data: specs.pipeline,
@@ -170,8 +170,7 @@ export const useLoadCorePipeline = () => {
 
     const newPipeline = pipelineFactory(window.cache.local, loadedPipeline);
     const key = pipelineKey(newPipeline.id, null);
-
-    console.log(newPipeline, workspace);
+    console.log(newPipeline);
     setWorkspace((draft) => {
       draft.tabs[key] = {};
       draft.pipelines[key] = newPipeline;
