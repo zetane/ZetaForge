@@ -162,8 +162,8 @@ func createRepository(ctx context.Context, image string, cfg Config) error {
 	return nil
 }
 
-func blockTemplate(block *zjson.Block, blockKey string, key string, cfg Config) *wfv1.Template {
-	image := getImage(block)
+func blockTemplate(block *zjson.Block, blockKey string, key string, organization string, cfg Config) *wfv1.Template {
+	image := getImage(block, organization)
 	if cfg.IsLocal {
 		image = "zetaforge/" + image
 	} else if cfg.Cloud.Provider == "Debug" {
@@ -215,7 +215,7 @@ func kanikoTemplate(block *zjson.Block, organization string, cfg Config) *wfv1.T
 		return nil
 	} else if cfg.Cloud.Provider == "Debug" {
 		name := getKanikoTemplateName(block, organization)
-		tag := getImage(block)
+		tag := getImage(block, organization)
 		image := fmt.Sprintf("registry:%d/zetaforge/%s", cfg.Cloud.Debug.RegistryPort, tag)
 		cmd := []string{
 			"/kaniko/executor",
@@ -366,18 +366,18 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 	templates := make(map[string]*wfv1.Template)
 	for id, block := range pipeline.Pipeline {
 		blockKey := id
-		template := blockTemplate(&block, blockKey, key, cfg)
+		template := blockTemplate(&block, blockKey, key, organization, cfg)
 		task := wfv1.DAGTask{Name: template.Name, Template: template.Name}
 
 		if len(block.Action.Container.Image) > 0 {
 			kaniko := kanikoTemplate(&block, organization, cfg)
-			built, repo, err := checkImage(ctx, getImage(&block), cfg)
+			built, repo, err := checkImage(ctx, getImage(&block, organization), cfg)
 			if err != nil {
 				return &workflow, blocks, err
 			}
 
 			if repo {
-				err = createRepository(ctx, getImage(&block), cfg)
+				err = createRepository(ctx, getImage(&block, organization), cfg)
 				if err != nil {
 					return &workflow, blocks, err
 				}
@@ -513,12 +513,12 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 	return &workflow, blocks, nil
 }
 
-func getImage(block *zjson.Block) string {
-	return block.Action.Container.Image + ":" + block.Action.Container.Version
+func getImage(block *zjson.Block, organization string) string {
+	return organization + "/" + block.Action.Container.Image + ":" + block.Action.Container.Version
 }
 
 func getKanikoTemplateName(block *zjson.Block, organization string) string {
-	return organization + "-" + block.Action.Container.Image + "-" + block.Action.Container.Version
+	return organization + "/" + block.Action.Container.Image + "-" + block.Action.Container.Version
 }
 
 func getKanikoBuildContextS3Key(block *zjson.Block, organization string) string {

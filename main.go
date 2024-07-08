@@ -335,16 +335,14 @@ func main() {
 		setup(ctx, config, db)
 	} else {
 		router.Use(func(ctx *gin.Context) {
-			if ctx.Request.Method == "OPTIONS" {
-				ctx.AbortWithStatus(http.StatusOK)
-				return
+			if ctx.Request.Method != "OPTIONS" {
+				code, prefix := validateToken(ctx, certsPath)
+				if code != http.StatusOK {
+					ctx.AbortWithStatus(code)
+					return
+				}
+				ctx.Set("prefix", prefix)
 			}
-			code, prefix := validateToken(ctx, certsPath)
-			if code != http.StatusOK {
-				ctx.AbortWithStatus(code)
-				return
-			}
-			ctx.Set("prefix", prefix)
 			ctx.Next()
 		})
 	}
@@ -358,6 +356,11 @@ func main() {
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, PATCH, DELETE")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 
+		// Handle OPTIONS requests for CORS preflight
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(http.StatusOK)
+			return
+		}
 		c.Next()
 	})
 
@@ -365,6 +368,10 @@ func main() {
 		ctx.String(http.StatusOK, "pong")
 	})
 	router.POST("/execute", func(ctx *gin.Context) {
+		prefix := ctx.Param("prefix")
+		if prefix == "" {
+			prefix = "org"
+		}
 		execution, err := validateJson[zjson.Execution](ctx.Request.Body)
 		if err != nil {
 			log.Printf("invalid json request; err=%v", err)
@@ -372,7 +379,7 @@ func main() {
 			return
 		}
 
-		res, err := createPipeline(ctx.Request.Context(), db, "org", execution.Pipeline)
+		res, err := createPipeline(ctx.Request.Context(), db, prefix, execution.Pipeline)
 		if err != nil {
 			log.Printf("failed to create pipeline; err=%v", err)
 			ctx.String(err.Status(), err.Error())
@@ -385,11 +392,8 @@ func main() {
 			ctx.String(err.Status(), err.Error())
 			return
 		}
-		if config.IsLocal || config.Cloud.Provider == "Debug" {
-			go localExecute(&execution.Pipeline, newExecution.ID, execution.Id, execution.Build, config, db, hub)
-		} else {
-			go cloudExecute(&execution.Pipeline, newExecution.ID, execution.Id, execution.Build, config, db, hub)
-		}
+
+		go cloudExecute(&execution.Pipeline, newExecution.ID, execution.Id, prefix, execution.Build, config, db, hub)
 
 		retData, err := filterPipeline(ctx, db, execution.Id)
 		if err != nil {
@@ -434,6 +438,10 @@ func main() {
 		}
 	})
 	router.POST("/build-context-status", func(ctx *gin.Context) {
+		prefix := ctx.Param("prefix")
+		if prefix == "" {
+			prefix = "org"
+		}
 		pipeline, err := validateJson[zjson.Pipeline](ctx.Request.Body)
 		if err != nil {
 			log.Printf("invalid json request; err=%v", err)
@@ -441,7 +449,7 @@ func main() {
 			return
 		}
 
-		buildContextStatus := getBuildContextStatus(&pipeline, config)
+		buildContextStatus := getBuildContextStatus(&pipeline, prefix, config)
 
 		ctx.JSON(http.StatusOK, buildContextStatus)
 	})
@@ -503,6 +511,10 @@ func main() {
 
 	pipeline := router.Group("/pipeline")
 	pipeline.POST("", func(ctx *gin.Context) {
+		prefix := ctx.Param("prefix")
+		if prefix == "" {
+			prefix = "org"
+		}
 		pipeline, err := validateJson[zjson.Pipeline](ctx.Request.Body)
 		if err != nil {
 			log.Printf("Invalid json request; err=%v", err)
@@ -510,7 +522,7 @@ func main() {
 			return
 		}
 
-		res, err := createPipeline(ctx.Request.Context(), db, "org", pipeline)
+		res, err := createPipeline(ctx.Request.Context(), db, prefix, pipeline)
 		if err != nil {
 			log.Printf("failed to create pipeline; err=%v", err)
 			ctx.String(err.Status(), err.Error())
@@ -526,7 +538,11 @@ func main() {
 		ctx.JSON(http.StatusCreated, response)
 	})
 	pipeline.GET("/list", func(ctx *gin.Context) {
-		res, err := listAllPipelines(ctx.Request.Context(), db, "org")
+		prefix := ctx.Param("prefix")
+		if prefix == "" {
+			prefix = "org"
+		}
+		res, err := listAllPipelines(ctx.Request.Context(), db, prefix)
 
 		if err != nil {
 			log.Printf("Failed to list pipelines; err=%v", err)
@@ -603,29 +619,41 @@ func main() {
 		ctx.JSON(http.StatusOK, response)
 	})
 	pipeline.DELETE("/:uuid/:hash", func(ctx *gin.Context) {
+		prefix := ctx.Param("prefix")
+		if prefix == "" {
+			prefix = "org"
+		}
 		uuid := ctx.Param("uuid")
 		hash := ctx.Param("hash")
 
-		if err := softDeletePipeline(ctx.Request.Context(), db, "org", uuid, hash); err != nil {
+		if err := softDeletePipeline(ctx.Request.Context(), db, prefix, uuid, hash); err != nil {
 			log.Printf("failed to delete pipeline; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
 	})
 	pipeline.PATCH("/:uuid/:hash/deploy", func(ctx *gin.Context) {
+		prefix := ctx.Param("prefix")
+		if prefix == "" {
+			prefix = "org"
+		}
 		uuid := ctx.Param("uuid")
 		hash := ctx.Param("hash")
 
-		if err := deployPipeline(ctx.Request.Context(), db, "org", uuid, hash); err != nil {
+		if err := deployPipeline(ctx.Request.Context(), db, prefix, uuid, hash); err != nil {
 			log.Printf("failed to deploy pipeline; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
 	})
 	pipeline.GET("/:uuid/list", func(ctx *gin.Context) {
+		prefix := ctx.Param("prefix")
+		if prefix == "" {
+			prefix = "org"
+		}
 		uuid := ctx.Param("uuid")
 
-		res, err := listAllExecutions(ctx.Request.Context(), db, "org", uuid)
+		res, err := listAllExecutions(ctx.Request.Context(), db, prefix, uuid)
 
 		if err != nil {
 			log.Printf("failed to list executions; err=%v", err)
@@ -641,6 +669,10 @@ func main() {
 		ctx.JSON(http.StatusOK, response)
 	})
 	pipeline.GET("/:uuid/:hash/:index", func(ctx *gin.Context) {
+		prefix := ctx.Param("prefix")
+		if prefix == "" {
+			prefix = "org"
+		}
 		uuid := ctx.Param("uuid")
 		hash := ctx.Param("hash")
 		index, err := strconv.Atoi(ctx.Param("index"))
@@ -649,7 +681,7 @@ func main() {
 			return
 		}
 
-		res, httpErr := getExecution(ctx.Request.Context(), db, "org", uuid, hash, index)
+		res, httpErr := getExecution(ctx.Request.Context(), db, prefix, uuid, hash, index)
 		if httpErr != nil {
 			log.Printf("failed to delete execution; err=%v", err)
 			ctx.String(httpErr.Status(), httpErr.Error())
@@ -659,10 +691,14 @@ func main() {
 		ctx.JSON(http.StatusOK, newResponseExecution(res, hash))
 	})
 	pipeline.GET("/:uuid/:hash/list", func(ctx *gin.Context) {
+		prefix := ctx.Param("prefix")
+		if prefix == "" {
+			prefix = "org"
+		}
 		uuid := ctx.Param("uuid")
 		hash := ctx.Param("hash")
 
-		res, err := listExecutions(ctx.Request.Context(), db, "org", uuid, hash)
+		res, err := listExecutions(ctx.Request.Context(), db, prefix, uuid, hash)
 
 		if err != nil {
 			log.Printf("failed to list executions; err=%v", err)
@@ -678,9 +714,13 @@ func main() {
 		ctx.JSON(http.StatusOK, response)
 	})
 	pipeline.POST("/:uuid/:hash/stop", func(ctx *gin.Context) {
+		prefix := ctx.Param("prefix")
+		if prefix == "" {
+			prefix = "org"
+		}
 		paramUuid := ctx.Param("uuid")
 		hash := ctx.Param("hash")
-		res, err := getPipeline(ctx.Request.Context(), db, "org", paramUuid, hash)
+		res, err := getPipeline(ctx.Request.Context(), db, prefix, paramUuid, hash)
 		if err != nil {
 			log.Printf("failed to get pipeline; err=%v", err)
 			ctx.String(err.Status(), err.Error())
@@ -694,9 +734,13 @@ func main() {
 		ctx.Status(http.StatusOK)
 	})
 	pipeline.POST("/:uuid/:hash/execute", func(ctx *gin.Context) {
+		prefix := ctx.Param("prefix")
+		if prefix == "" {
+			prefix = "org"
+		}
 		paramUuid := ctx.Param("uuid")
 		hash := ctx.Param("hash")
-		res, err := getPipeline(ctx.Request.Context(), db, "org", paramUuid, hash)
+		res, err := getPipeline(ctx.Request.Context(), db, prefix, paramUuid, hash)
 		if err != nil {
 			log.Printf("failed to get pipeline; err=%v", err)
 			ctx.String(err.Status(), err.Error())
@@ -725,9 +769,9 @@ func main() {
 		}
 
 		if config.IsLocal || config.Cloud.Provider == "Debug" {
-			go localExecute(&pipeline, res.ID, executionId.String(), false, config, db, hub)
+			go localExecute(&pipeline, res.ID, executionId.String(), prefix, false, config, db, hub)
 		} else {
-			go cloudExecute(&pipeline, newExecution.ID, executionId.String(), false, config, db, hub)
+			go cloudExecute(&pipeline, newExecution.ID, executionId.String(), prefix, false, config, db, hub)
 		}
 
 		newRes := make(map[string]any)
@@ -737,6 +781,10 @@ func main() {
 	})
 
 	pipeline.DELETE("/:uuid/:hash/:index", func(ctx *gin.Context) {
+		prefix := ctx.Param("prefix")
+		if prefix == "" {
+			prefix = "org"
+		}
 		uuid := ctx.Param("uuid")
 		hash := ctx.Param("hash")
 		index, err := strconv.Atoi(ctx.Param("index"))
@@ -745,7 +793,7 @@ func main() {
 			return
 		}
 
-		if err := softDeleteExecution(ctx.Request.Context(), db, "org", uuid, hash, index); err != nil {
+		if err := softDeleteExecution(ctx.Request.Context(), db, prefix, uuid, hash, index); err != nil {
 			log.Printf("failed to delete execution; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return

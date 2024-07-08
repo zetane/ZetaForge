@@ -671,7 +671,7 @@ func buildImage(ctx context.Context, source string, tag string, cfg Config) erro
 	}
 }
 
-func localExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid string, build bool, cfg Config, db *sql.DB, hub *Hub) {
+func localExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid string, organization string, build bool, cfg Config, db *sql.DB, hub *Hub) {
 	ctx := context.Background()
 	defer log.Printf("Completed")
 
@@ -758,7 +758,7 @@ func localExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 		return
 	}
 
-	workflow, blocks, err := translate(ctx, pipeline, "org", s3Key, build, cfg)
+	workflow, blocks, err := translate(ctx, pipeline, organization, s3Key, build, cfg)
 	if err != nil {
 		log.Printf("failed to translate the pipeline; err=%v", err)
 		return
@@ -836,7 +836,7 @@ func cleanupRun(ctx context.Context, db *sql.DB, executionId int64, executionUui
 	}
 }
 
-func cloudExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid string, build bool, cfg Config, db *sql.DB, hub *Hub) {
+func cloudExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid string, organization string, build bool, cfg Config, db *sql.DB, hub *Hub) {
 	ctx := context.Background()
 	defer log.Printf("Completed")
 
@@ -848,9 +848,9 @@ func cloudExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 	}
 	defer hub.CloseRoom(pipeline.Id)
 
-	s3key := pipeline.Id + "/" + executionUuid
+	s3key := organization + "/" + pipeline.Id + "/" + executionUuid
 
-	workflow, _, err := translate(ctx, pipeline, "org", s3key, build, cfg)
+	workflow, _, err := translate(ctx, pipeline, organization, s3key, build, cfg)
 	if err != nil {
 		log.Printf("failed to translate the pipeline; err=%v", err)
 		return
@@ -871,14 +871,14 @@ func cloudExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 	}
 }
 
-func getBuildContextStatus(pipeline *zjson.Pipeline, cfg Config) []zjson.BuildContextStatus {
+func getBuildContextStatus(pipeline *zjson.Pipeline, organization string, cfg Config) []zjson.BuildContextStatus {
 	context := context.Background()
 	var buildContextStatus []zjson.BuildContextStatus
 	for id, block := range pipeline.Pipeline {
 		if len(block.Action.Container.Image) > 0 && !cfg.IsLocal {
-			image := getImage(&block)
+			image := getImage(&block, organization)
 			status, _, err := checkImage(context, image, cfg)
-			s3Key := getKanikoBuildContextS3Key(&block, "org")
+			s3Key := getKanikoBuildContextS3Key(&block, organization)
 
 			if err != nil {
 				log.Printf("failed to get build context status; err=%v", err)
