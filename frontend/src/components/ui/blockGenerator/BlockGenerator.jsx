@@ -252,6 +252,7 @@ const InputField = ({
   const [currentValue, setCurrentValue] = useState(value);
   const inputRef = useRef(null);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const isTextBlock = name === "text";
 
   useEffect(() => { // Do not change without testing effects on textbox with auto quotes
     if (currentValue === "") {
@@ -261,7 +262,7 @@ const InputField = ({
   }, [currentValue])
 
   useEffect(() => {
-    if (inputRef?.current) {
+    if (inputRef?.current && isTextBlock) {
       const { selectionStart, selectionEnd, value } = inputRef?.current;
       if (selectionStart === 3 && selectionEnd === 3 && value?.length === 3) {
         setCursorPosition(2);
@@ -358,8 +359,6 @@ const InputField = ({
       <path d="M5.525 7.646a2.5 2.5 0 0 0 2.829 2.829zm4.95.708-2.829-2.83a2.5 2.5 0 0 1 2.829 2.829zm3.171 6-12-12 .708-.708 12 12z" />
     </svg>
   );
-
-  const isTextBlock = name === "text";
 
   const handleChange = (event) => {
     const displayedValue = !isTextBlock
