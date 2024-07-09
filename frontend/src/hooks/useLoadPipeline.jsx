@@ -170,7 +170,7 @@ export const useLoadCorePipeline = () => {
 
     const newPipeline = pipelineFactory(window.cache.local, loadedPipeline);
     const key = pipelineKey(newPipeline.id, null);
-    console.log(newPipeline);
+
     setWorkspace((draft) => {
       draft.tabs[key] = {};
       draft.pipelines[key] = newPipeline;
