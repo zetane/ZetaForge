@@ -4,12 +4,10 @@ import { HeaderMenuItem } from "@carbon/react";
 import { useAtom } from "jotai";
 import { trpc } from "@/utils/trpc";
 import { useImmerAtom } from "jotai-immer";
-import { mixpanelAtom } from "@/atoms/mixpanelAtom";
 
 export default function SaveAsPipelineButton() {
   const [editor] = useAtom(drawflowEditorAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
-  const [mixpanelService] = useAtom(mixpanelAtom);
 
   const savePipeline = trpc.savePipeline.useMutation();
 
