@@ -719,7 +719,7 @@ func localExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 				var jsonObj map[string]interface{}
 				err := json.Unmarshal([]byte(message), &jsonObj)
 				if err != nil {
-					log.Printf("Failed to log: %s", message)
+					fmt.Printf("Failed to log: %s", message)
 					return
 				}
 
@@ -733,7 +733,7 @@ func localExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 
 			jsonData, err := json.Marshal(content)
 			if err != nil {
-				log.Printf("Failed to log: %s", message)
+				fmt.Printf("Failed to log: %s", message)
 			}
 
 			hub.Broadcast <- Message{

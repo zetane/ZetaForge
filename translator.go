@@ -38,103 +38,103 @@ func checkImage(ctx context.Context, image string, cfg Config) (bool, bool, erro
 			<-minikubeImage.Start()
 			for _, line := range minikubeImage.Status().Stdout {
 				if "docker.io/"+image == line {
-					return true, false, nil
+					return true, true, nil
 				}
 			}
-			return false, false, nil
+			return false, true, nil
 		} else {
 			apiClient, err := client.NewClientWithOpts(
 				client.WithAPIVersionNegotiation(),
 			)
 			if err != nil {
-				return false, false, err
+				return false, true, err
 			}
 			defer apiClient.Close()
 
 			imageList, err := apiClient.ImageList(ctx, types.ImageListOptions{})
 			if err != nil {
-				return false, false, err
+				return false, true, err
 			}
 
 			for _, images := range imageList {
 				for _, tag := range images.RepoTags {
 					if image == tag {
-						return true, false, nil
+						return true, true, nil
 					}
 				}
 
 			}
 
-			return false, false, nil
+			return false, true, nil
 		}
 	} else if cfg.Cloud.Provider == "Debug" {
 		//TODO use the name package instead
 		response, err := http.Get(fmt.Sprintf("http://localhost:%d/v2/_catalog", cfg.Cloud.RegistryPort))
 		if err != nil {
-			return false, false, err
+			return false, true, err
 		}
 
 		defer response.Body.Close()
 
 		body, err := io.ReadAll(response.Body)
 		if err != nil {
-			return false, false, err
+			return false, true, err
 		}
 
 		var catalog Catalog
 		if err := json.Unmarshal(body, &catalog); err != nil {
-			return false, false, err
+			return false, true, err
 		}
 
 		for _, name := range catalog.Repositories {
 			response, err := http.Get(fmt.Sprintf("http://localhost:%d/v2/%s/tags/list", cfg.Cloud.RegistryPort, name))
 			if err != nil {
-				return false, false, err
+				return false, true, err
 			}
 
 			defer response.Body.Close()
 			body, err := io.ReadAll(response.Body)
 			if err != nil {
-				return false, false, err
+				return false, true, err
 			}
 			var tagList TagList
 			if err := json.Unmarshal(body, &tagList); err != nil {
-				return false, false, err
+				return false, true, err
 			}
 			for _, tag := range tagList.Tags {
 				expectedTagName := fmt.Sprintf("localhost:5000/%s:%s", name, tag)
 				if image == expectedTagName {
-					return true, false, nil
+					return true, true, nil
 				}
 			}
 		}
 
-		return false, false, nil
+		return false, true, nil
 	} else {
 		image := strings.Split(image, ":")
 		repo, err := name.NewRepository(registryAddress(cfg) + "/zetaforge/" + image[0])
 		if err != nil {
-			return false, false, err
+			return false, true, err
 		}
 
 		auth, err := registryAuth(ctx, cfg)
 		if err != nil {
-			return false, false, err
+			return false, true, err
 		}
 
 		data, err := remote.List(repo, remote.WithAuth(auth))
 
 		if err != nil {
-			return false, true, nil //We want to trigger a build even if the repo doesn't exists
+			return false, false, nil //We want to trigger a build even if the repo doesn't exists
 		}
 
 		for _, tag := range data {
 			if image[1] == tag {
-				return true, false, nil
+				return true, true, nil
 			}
 		}
 
-		return false, false, nil
+		return false, true, nil
 	}
 }
 
@@ -376,7 +376,7 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 				return &workflow, blocks, err
 			}
 
-			if repo {
+			if !repo {
 				err = createRepository(ctx, getImage(&block), cfg)
 				if err != nil {
 					return &workflow, blocks, err
