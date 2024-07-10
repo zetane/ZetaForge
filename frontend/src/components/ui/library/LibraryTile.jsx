@@ -43,36 +43,38 @@ export const LibraryTile = ({ block, index }) => {
   };
 
   return (
-    <Tile
-      className="library-tile relative"
+    <Tile className="library-tile relative" 
       key={index}
-      draggable={true}
-      onDragStart={(ev) => {
-        dragStartHandler(ev, block);
-      }}
     >
       <div
-        className="library-header"
-        title={blockName}
-        style={{ backgroundColor: backgroundColor }}
+        draggable={true}
+        onDragStart={(ev) => {
+          dragStartHandler(ev, block);
+        }}
       >
-        {blockName}
-      </div>
-      <div className="image-container relative h-[128px] overflow-hidden">
-        {isLoading ? (
-          <div className="flex h-full items-center justify-center"></div>
-        ) : (
-          <img
-            src={coverImagePath}
-            alt={blockName}
-            className="absolute left-0 top-0 h-full w-full object-contain"
-            style={{ zIndex: 0, opacity: 1.0 }}
-            onError={handleImageError}
-          />
-        )}
+        <div
+          className="library-header"
+          title={blockName}
+          style={{ backgroundColor: backgroundColor }}
+        >
+          {blockName}
+        </div>
+        <div className="image-container relative h-[128px] overflow-hidden">
+          {isLoading ? (
+            <div className="flex h-full items-center justify-center"></div>
+          ) : (
+            <img
+              src={coverImagePath}
+              alt={blockName}
+              className="absolute left-0 top-0 h-full w-full object-contain"
+              style={{ zIndex: 0, opacity: 1.0 }}
+              onError={handleImageError}
+            />
+          )}
+        </div>
       </div>
       <div className="absolute bottom-1 left-2 z-10">
-        <Tooltip defaultOpen align="bottom-left" label={blockDescription}>
+        <Tooltip label={blockDescription}>
           <Information size={20} />
         </Tooltip>
       </div>
