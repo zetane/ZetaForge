@@ -1,6 +1,7 @@
 import { trpc } from "@/utils/trpc";
 import { Information } from "@carbon/icons-react";
-import { Tile, Tooltip } from "@carbon/react";
+import { Tile } from "@carbon/react";
+import Tooltip from "@/components/ui/Tooltip";
 
 const usePipelineCoverImagePath = (pipelineId) => {
   const { data, isLoading, error } = trpc.getPipelineCoverImagePath.useQuery({
@@ -33,36 +34,36 @@ export const LibraryPipelineTile = ({ pipeline, index }) => {
   };
 
   return (
-    <Tile
-      className="library-tile relative"
-      key={index}
-      draggable={true}
-      onDragStart={(ev) => {
-        dragStartHandlerPipeline(ev, pipeline);
-      }}
-    >
+    <Tile className="library-tile relative" key={index}>
       <div
-        className="library-header"
-        title={pipelineName}
-        style={{ backgroundColor: backgroundColor }}
+        draggable={true}
+        onDragStart={(ev) => {
+          dragStartHandlerPipeline(ev, pipeline);
+        }}
       >
-        {pipelineName}
-      </div>
-      <div className="image-container relative h-[128px] overflow-hidden">
-        {isLoading ? (
-          <div className="flex h-full items-center justify-center"></div>
-        ) : (
-          <img
-            src={coverImagePath}
-            alt={pipelineName}
-            className="absolute left-0 top-0 h-full w-full object-contain"
-            style={{ zIndex: 0, opacity: 1.0 }}
-            onError={handleImageError}
-          />
-        )}
+        <div
+          className="library-header"
+          title={pipelineName}
+          style={{ backgroundColor: backgroundColor }}
+        >
+          {pipelineName}
+        </div>
+        <div className="image-container relative h-[128px] overflow-hidden">
+          {isLoading ? (
+            <div className="flex h-full items-center justify-center"></div>
+          ) : (
+            <img
+              src={coverImagePath}
+              alt={pipelineName}
+              className="absolute left-0 top-0 h-full w-full object-contain"
+              style={{ zIndex: 0, opacity: 1.0 }}
+              onError={handleImageError}
+            />
+          )}
+        </div>
       </div>
       <div className="absolute bottom-1 left-2 z-10">
-        <Tooltip align="bottom-left" label={pipelineDescription}>
+        <Tooltip label={pipelineDescription}>
           <Information size={20} />
         </Tooltip>
       </div>

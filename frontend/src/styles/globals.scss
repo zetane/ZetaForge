@@ -107,7 +107,9 @@ main {
 }
 
 .tooltip {
-  max-width: 18rem;
+  width: 8rem;
+  max-height: 8rem;
+  overflow: hidden;
   padding: 0.5rem;
   border-radius: 2px;
   color: var(--tooltip-color);
