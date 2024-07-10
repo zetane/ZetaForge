@@ -871,14 +871,12 @@ func cloudExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 	}
 }
 
-func getBuildContextStatus(pipeline *zjson.Pipeline, organization string, cfg Config) []zjson.BuildContextStatus {
-	context := context.Background()
+func getBuildContextStatus(ctx context.Context, pipeline *zjson.Pipeline, organization string, cfg Config) []zjson.BuildContextStatus {
 	var buildContextStatus []zjson.BuildContextStatus
 	for id, block := range pipeline.Pipeline {
 		if len(block.Action.Container.Image) > 0 && !cfg.IsLocal {
-			image := getImage(&block, organization)
-			status, _, err := checkImage(context, image, cfg)
-			s3Key := getKanikoBuildContextS3Key(&block, organization)
+			status, _, err := checkImage(ctx, getImage(&block, organization), cfg)
+			s3Key := getKanikoBuildContextS3Key(&block)
 
 			if err != nil {
 				log.Printf("failed to get build context status; err=%v", err)

@@ -214,9 +214,7 @@ func kanikoTemplate(block *zjson.Block, organization string, cfg Config) *wfv1.T
 	if cfg.IsLocal {
 		return nil
 	} else if cfg.Cloud.Provider == "Debug" {
-		name := getKanikoTemplateName(block, organization)
-		tag := getImage(block, organization)
-		image := fmt.Sprintf("registry:%d/zetaforge/%s", cfg.Cloud.Debug.RegistryPort, tag)
+		image := fmt.Sprintf("registry:%d/zetaforge/%s/%s", cfg.Cloud.Debug.RegistryPort, organization, block.Action.Container.Image)
 		cmd := []string{
 			"/kaniko/executor",
 			"--context",
@@ -233,7 +231,7 @@ func kanikoTemplate(block *zjson.Block, organization string, cfg Config) *wfv1.T
 			Path: "/workspace/context",
 			ArtifactLocation: wfv1.ArtifactLocation{
 				S3: &wfv1.S3Artifact{
-					Key: getKanikoBuildContextS3Key(block, organization),
+					Key: organization + "/" + getKanikoBuildContextS3Key(block),
 				},
 			},
 			Archive: &wfv1.ArchiveStrategy{
@@ -241,7 +239,7 @@ func kanikoTemplate(block *zjson.Block, organization string, cfg Config) *wfv1.T
 			},
 		}
 		return &wfv1.Template{
-			Name: name + "-build",
+			Name: getKanikoTemplateName(block, organization),
 			Container: &corev1.Container{
 				Image:   cfg.KanikoImage,
 				Command: cmd,
@@ -249,8 +247,7 @@ func kanikoTemplate(block *zjson.Block, organization string, cfg Config) *wfv1.T
 			Inputs: wfv1.Inputs{Artifacts: []wfv1.Artifact{artifact}},
 		}
 	} else {
-		name := getKanikoTemplateName(block, organization)
-		image := registryAddress(cfg) + "/zetaforge/" + block.Action.Container.Image
+		image := registryAddress(cfg) + "/zetaforge/" + organization + "/" + block.Action.Container.Image
 		cmd := []string{
 			"/kaniko/executor",
 			"--context",
@@ -320,7 +317,7 @@ func kanikoTemplate(block *zjson.Block, organization string, cfg Config) *wfv1.T
 			Path: "/workspace/context",
 			ArtifactLocation: wfv1.ArtifactLocation{
 				S3: &wfv1.S3Artifact{
-					Key: getKanikoBuildContextS3Key(block, organization),
+					Key: organization + "/" + getKanikoBuildContextS3Key(block),
 				},
 			},
 			Archive: &wfv1.ArchiveStrategy{
@@ -328,7 +325,7 @@ func kanikoTemplate(block *zjson.Block, organization string, cfg Config) *wfv1.T
 			},
 		}
 		return &wfv1.Template{
-			Name: name + "-build",
+			Name: getKanikoTemplateName(block, organization),
 			Container: &corev1.Container{
 				Image:        cfg.KanikoImage,
 				Command:      cmd,
@@ -518,9 +515,9 @@ func getImage(block *zjson.Block, organization string) string {
 }
 
 func getKanikoTemplateName(block *zjson.Block, organization string) string {
-	return organization + "/" + block.Action.Container.Image + "-" + block.Action.Container.Version
+	return organization + "-" + getKanikoBuildContextS3Key(block)
 }
 
-func getKanikoBuildContextS3Key(block *zjson.Block, organization string) string {
-	return getKanikoTemplateName(block, organization) + "-build"
+func getKanikoBuildContextS3Key(block *zjson.Block) string {
+	return block.Action.Container.Image + "-" + block.Action.Container.Version + "-build"
 }

@@ -24,6 +24,11 @@ function getClient(configuration) {
   });
 }
 
+function getFullS3Key(key, configuration) {
+  const data = atob(configuration.anvil.token.split('.')[1]);
+  return JSON.parse(data).sub + "/" + key
+}
+
 export async function checkAndCopy(newKey, copyKey, anvilConfiguration) {
   const oldExists = await fileExists(copyKey, anvilConfiguration);
   if (!oldExists) {
@@ -86,7 +91,7 @@ async function upload(key, filePath, anvilConfiguration) {
     const res = await client.send(
       new PutObjectCommand({
         Bucket: config.s3.bucket,
-        Key: key,
+        Key: getFullS3Key(key, anvilConfiguration),
         Body: fileBody,
       }),
     );
@@ -105,7 +110,7 @@ async function fileExists(key, anvilConfiguration) {
     await client.send(
       new HeadObjectCommand({
         Bucket: config.s3.bucket,
-        Key: key,
+        Key: getFullS3Key(key, anvilConfiguration),
       }),
     );
     return true;
@@ -113,6 +118,7 @@ async function fileExists(key, anvilConfiguration) {
     if (err.name === "NotFound") {
       return false;
     }
+    console.log(err)
     const message = "Error checking file existence in S3";
     logger.error(message, err, err.stack);
     throw new Error(message);
@@ -128,7 +134,7 @@ export async function getFileData(key, anvilConfiguration) {
       const response = await client.send(
         new GetObjectCommand({
           Bucket: config.s3.bucket,
-          Key: key,
+          Key: getFullS3Key(key, anvilConfiguration),
         }),
       );
 
@@ -151,7 +157,7 @@ export async function getFile(key, destinationPath, anvilConfiguration) {
     const response = await client.send(
       new GetObjectCommand({
         Bucket: config.s3.bucket,
-        Key: key,
+        Key: getFullS3Key(key, anvilConfiguration),
       }),
     );
 

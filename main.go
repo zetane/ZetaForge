@@ -279,6 +279,15 @@ func setupSentry() {
 	defer sentry.Flush(2 * time.Second)
 }
 
+func getPrefix(ctx *gin.Context) string {
+	prefix, ok := ctx.Get("prefix")
+	if ok {
+		return prefix.(string)
+	} else {
+		return "org"
+	}
+}
+
 func main() {
 	ctx := context.Background()
 	configPath := os.Getenv("ZETAFORGE_CONFIG")
@@ -368,10 +377,7 @@ func main() {
 		ctx.String(http.StatusOK, "pong")
 	})
 	router.POST("/execute", func(ctx *gin.Context) {
-		prefix := ctx.Param("prefix")
-		if prefix == "" {
-			prefix = "org"
-		}
+		prefix := getPrefix(ctx)
 		execution, err := validateJson[zjson.Execution](ctx.Request.Body)
 		if err != nil {
 			log.Printf("invalid json request; err=%v", err)
@@ -438,10 +444,7 @@ func main() {
 		}
 	})
 	router.POST("/build-context-status", func(ctx *gin.Context) {
-		prefix := ctx.Param("prefix")
-		if prefix == "" {
-			prefix = "org"
-		}
+		prefix := getPrefix(ctx)
 		pipeline, err := validateJson[zjson.Pipeline](ctx.Request.Body)
 		if err != nil {
 			log.Printf("invalid json request; err=%v", err)
@@ -449,7 +452,7 @@ func main() {
 			return
 		}
 
-		buildContextStatus := getBuildContextStatus(&pipeline, prefix, config)
+		buildContextStatus := getBuildContextStatus(ctx.Request.Context(), &pipeline, prefix, config)
 
 		ctx.JSON(http.StatusOK, buildContextStatus)
 	})
@@ -511,10 +514,7 @@ func main() {
 
 	pipeline := router.Group("/pipeline")
 	pipeline.POST("", func(ctx *gin.Context) {
-		prefix := ctx.Param("prefix")
-		if prefix == "" {
-			prefix = "org"
-		}
+		prefix := getPrefix(ctx)
 		pipeline, err := validateJson[zjson.Pipeline](ctx.Request.Body)
 		if err != nil {
 			log.Printf("Invalid json request; err=%v", err)
@@ -538,10 +538,7 @@ func main() {
 		ctx.JSON(http.StatusCreated, response)
 	})
 	pipeline.GET("/list", func(ctx *gin.Context) {
-		prefix := ctx.Param("prefix")
-		if prefix == "" {
-			prefix = "org"
-		}
+		prefix := getPrefix(ctx)
 		res, err := listAllPipelines(ctx.Request.Context(), db, prefix)
 
 		if err != nil {
@@ -619,10 +616,7 @@ func main() {
 		ctx.JSON(http.StatusOK, response)
 	})
 	pipeline.DELETE("/:uuid/:hash", func(ctx *gin.Context) {
-		prefix := ctx.Param("prefix")
-		if prefix == "" {
-			prefix = "org"
-		}
+		prefix := getPrefix(ctx)
 		uuid := ctx.Param("uuid")
 		hash := ctx.Param("hash")
 
@@ -633,10 +627,7 @@ func main() {
 		}
 	})
 	pipeline.PATCH("/:uuid/:hash/deploy", func(ctx *gin.Context) {
-		prefix := ctx.Param("prefix")
-		if prefix == "" {
-			prefix = "org"
-		}
+		prefix := getPrefix(ctx)
 		uuid := ctx.Param("uuid")
 		hash := ctx.Param("hash")
 
@@ -647,10 +638,7 @@ func main() {
 		}
 	})
 	pipeline.GET("/:uuid/list", func(ctx *gin.Context) {
-		prefix := ctx.Param("prefix")
-		if prefix == "" {
-			prefix = "org"
-		}
+		prefix := getPrefix(ctx)
 		uuid := ctx.Param("uuid")
 
 		res, err := listAllExecutions(ctx.Request.Context(), db, prefix, uuid)
@@ -669,10 +657,7 @@ func main() {
 		ctx.JSON(http.StatusOK, response)
 	})
 	pipeline.GET("/:uuid/:hash/:index", func(ctx *gin.Context) {
-		prefix := ctx.Param("prefix")
-		if prefix == "" {
-			prefix = "org"
-		}
+		prefix := getPrefix(ctx)
 		uuid := ctx.Param("uuid")
 		hash := ctx.Param("hash")
 		index, err := strconv.Atoi(ctx.Param("index"))
@@ -691,10 +676,7 @@ func main() {
 		ctx.JSON(http.StatusOK, newResponseExecution(res, hash))
 	})
 	pipeline.GET("/:uuid/:hash/list", func(ctx *gin.Context) {
-		prefix := ctx.Param("prefix")
-		if prefix == "" {
-			prefix = "org"
-		}
+		prefix := getPrefix(ctx)
 		uuid := ctx.Param("uuid")
 		hash := ctx.Param("hash")
 
@@ -714,10 +696,7 @@ func main() {
 		ctx.JSON(http.StatusOK, response)
 	})
 	pipeline.POST("/:uuid/:hash/stop", func(ctx *gin.Context) {
-		prefix := ctx.Param("prefix")
-		if prefix == "" {
-			prefix = "org"
-		}
+		prefix := getPrefix(ctx)
 		paramUuid := ctx.Param("uuid")
 		hash := ctx.Param("hash")
 		res, err := getPipeline(ctx.Request.Context(), db, prefix, paramUuid, hash)
@@ -734,10 +713,7 @@ func main() {
 		ctx.Status(http.StatusOK)
 	})
 	pipeline.POST("/:uuid/:hash/execute", func(ctx *gin.Context) {
-		prefix := ctx.Param("prefix")
-		if prefix == "" {
-			prefix = "org"
-		}
+		prefix := getPrefix(ctx)
 		paramUuid := ctx.Param("uuid")
 		hash := ctx.Param("hash")
 		res, err := getPipeline(ctx.Request.Context(), db, prefix, paramUuid, hash)
@@ -781,10 +757,7 @@ func main() {
 	})
 
 	pipeline.DELETE("/:uuid/:hash/:index", func(ctx *gin.Context) {
-		prefix := ctx.Param("prefix")
-		if prefix == "" {
-			prefix = "org"
-		}
+		prefix := getPrefix(ctx)
 		uuid := ctx.Param("uuid")
 		hash := ctx.Param("hash")
 		index, err := strconv.Atoi(ctx.Param("index"))
