@@ -1,23 +1,35 @@
 import { atom } from "jotai";
 
-export interface ParsedLogEntry {
-  executionId: string;
-  blockId?: string;
-  message: string;
-  tag?: string;
-  data?: any;
-  time: string;
-  [key: string]: any;
-}
-
-function stripAnsiCodes(str: string) {
+function stripAnsiCodes(str) {
   return str.replace(/\u001b\[[0-9;]*[mGK]/g, "");
 }
 
-export function parseLogLine(line: string): ParsedLogEntry | null {
+export function parseLogLine(line) {
+  const logRegex =
+    /time="(?<time>[^"]+)"\s+(?:(?:level=(?<level>\w+)|error="(?<error>[^"]+)"|argo=(?<argo>[^\s]+)|\s+)\s*){0,3}msg="(?<msg>[^"]+)"(.*)$/;
+
   const { executionId, time, message, blockId, ...otherFields } =
     JSON.parse(line);
   const strippedMessage = stripAnsiCodes(message);
+
+  const regexMatch = strippedMessage.match(logRegex);
+  let argo = {};
+  if (regexMatch) {
+    const {
+      time: argoTime,
+      level,
+      error,
+      argo: argoId,
+      msg,
+    } = regexMatch.groups;
+    argo = {
+      time: argoTime,
+      level,
+      error,
+      argoId,
+      msg,
+    };
+  }
 
   // Split the message on |||
   const [tag, dataString] = strippedMessage.split("|||").map((s) => s.trim());
@@ -32,13 +44,14 @@ export function parseLogLine(line: string): ParsedLogEntry | null {
       data = { rawData: dataString };
     }
   }
+  const event = { tag: tag, data: data };
   return {
     executionId,
     blockId,
     message,
-    tag,
-    data,
+    event,
     time,
+    argo,
     ...otherFields,
   };
 }

@@ -23,8 +23,6 @@ export default function WorkspaceFetcher() {
     refetchInterval: workspace.fetchInterval,
   });
 
-  console.log(":(");
-
   useEffect(() => {
     const pipelines = data ?? [];
     for (const serverPipeline of pipelines) {

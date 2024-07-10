@@ -12,7 +12,6 @@ const WebSocketCloseCodes = {
 };
 
 export const useStableWebSocket = (url: string | null) => {
-  console.log("being called: ", url);
   const [wsError, setWsError] = useState(null);
   const reconnectCount = useRef(0);
 
