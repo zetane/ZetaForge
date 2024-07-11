@@ -58,17 +58,40 @@ func (endpoint *LocalEndpoint) ResolveEndpoint(ctx context.Context, params s3.En
 	return endpoints.Endpoint{URI: *uri}, err
 }
 
+type CloudEndpoint struct {
+	Address string
+	Bucket  string
+}
+
+func (endpoint *CloudEndpoint) ResolveEndpoint(ctx context.Context, params s3.EndpointParameters) (endpoints.Endpoint, error) {
+	uri, err := url.Parse(fmt.Sprintf("https://%s/%s", endpoint.Address, endpoint.Bucket))
+	return endpoints.Endpoint{URI: *uri}, err
+}
+
 func s3Client(ctx context.Context, cfg Config) (*s3.Client, error) {
-	awsAccessKey := "AKIAIOSFODNN7EXAMPLE"
-	awsSecretKey := "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+	var awsAccessKey string
+	var awsSecretKey string
+	var endpoint s3.EndpointResolverV2
+
+	if cfg.IsLocal {
+		awsAccessKey = "AKIAIOSFODNN7EXAMPLE"
+		awsSecretKey = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+		endpoint = &LocalEndpoint{Bucket: BUCKET, S3Port: cfg.Local.BucketPort}
+	} else {
+		awsAccessKey = cfg.Cloud.AWS.AccessKey
+		awsSecretKey = cfg.Cloud.AWS.SecretKey
+		endpoint = &CloudEndpoint{Address: "s3-us-east-2.amazonaws.com", Bucket: BUCKET}
+	}
+
 	creds := credentials.NewStaticCredentialsProvider(awsAccessKey, awsSecretKey, "")
-	region := config.WithRegion("us-east-2")
+	region := config.WithRegion("us-east-2") // TODO handle regions
 	awsConfig, err := config.LoadDefaultConfig(ctx, region, config.WithCredentialsProvider(creds))
 	if err != nil {
 		return &s3.Client{}, err
 	}
+
 	client := s3.NewFromConfig(awsConfig, func(o *s3.Options) {
-		o.EndpointResolverV2 = &LocalEndpoint{Bucket: BUCKET, S3Port: cfg.Local.BucketPort}
+		o.EndpointResolverV2 = endpoint
 	})
 
 	return client, nil

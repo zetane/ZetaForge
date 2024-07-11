@@ -44,19 +44,20 @@ export async function checkAndCopy(newKey, copyKey, anvilConfiguration) {
 
 async function copy(newKey, copyKey, anvilConfiguration) {
   const client = getClient(anvilConfiguration);
-  const source = encodeURI(`/${config.s3.bucket}/${copyKey}`);
+  const source = encodeURI(`/${config.s3.bucket}/${getFullS3Key(copyKey, anvilConfiguration)}`);
   try {
     const res = await client.send(
       new CopyObjectCommand({
         Bucket: config.s3.bucket,
         CopySource: source,
-        Key: newKey,
+        Key: getFullS3Key(newKey, anvilConfiguration),
       }),
     );
 
     return res;
   } catch (err) {
-    const message = `Could not copy file in S3 from ${source} to ${newKey}`;
+    const message = `Could not copy file in S3 from ${source} to ${getFullS3Key(newKey, anvilConfiguration)}`;
+    logger.error(err, message);
     logger.error(message, err, err?.stack);
     throw new Error(message);
   }

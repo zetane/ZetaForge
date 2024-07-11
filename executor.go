@@ -764,7 +764,7 @@ func localExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 		return
 	}
 
-	defer cleanupRun(ctx, db, executionId, executionUuid, *pipeline, *workflow, cfg)
+	defer cleanupRun(ctx, db, executionId, executionUuid, tempLog, s3Key, *pipeline, *workflow, cfg)
 
 	jsonWorkflow, err := json.MarshalIndent(&workflow, "", "  ")
 	if err != nil {
@@ -818,10 +818,7 @@ func localExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 	}
 }
 
-func cleanupRun(ctx context.Context, db *sql.DB, executionId int64, executionUuid string, pipeline zjson.Pipeline, workflow wfv1.Workflow, cfg Config) {
-	tempLog := filepath.Join(os.TempDir(), executionUuid+".log")
-	s3Key := pipeline.Id + "/" + executionUuid
-
+func cleanupRun(ctx context.Context, db *sql.DB, executionId int64, executionUuid string, tempLog string, s3Key string, pipeline zjson.Pipeline, workflow wfv1.Workflow, cfg Config) {
 	if err := upload(ctx, tempLog, s3Key+"/"+executionUuid+".log", cfg); err != nil {
 		log.Printf("failed to upload log: err=%v", err)
 	}
@@ -830,9 +827,11 @@ func cleanupRun(ctx context.Context, db *sql.DB, executionId int64, executionUui
 		log.Printf("failed to save results; err=%v", err)
 	}
 
-	sink := filepath.Join(pipeline.Sink, "history", executionUuid)
-	if err := downloadFiles(ctx, sink, s3Key, cfg); err != nil {
-		log.Printf("failed to download files; err=%v", err)
+	if cfg.IsLocal {
+		sink := filepath.Join(pipeline.Sink, "history", executionUuid)
+		if err := downloadFiles(ctx, sink, s3Key, cfg); err != nil {
+			log.Printf("failed to download files; err=%v", err)
+		}
 	}
 }
 
@@ -849,12 +848,72 @@ func cloudExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 	defer hub.CloseRoom(pipeline.Id)
 
 	s3key := organization + "/" + pipeline.Id + "/" + executionUuid
+	tempLog := filepath.Join(os.Getenv("ZETAFORGE_LOGS"), executionUuid+".log")
+
+	file, err := os.OpenFile(tempLog, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Printf("error creating pipeline log: %v", err)
+	}
+
+	pipelineLogger := createLogger(executionUuid, func(message string, executionUuid string) {
+		if executionUuid != "" {
+			// log printf produces a timestamp by default
+			// remove it here
+			parts := strings.SplitN(message, " ", 3)
+			timestamp := ""
+			if len(parts) == 3 {
+				timestamp = parts[0] + " " + parts[1]
+				message = parts[2]
+			}
+
+			content := map[string]interface{}{
+				"executionId": executionUuid,
+				"time":        timestamp,
+			}
+
+			if strings.HasPrefix(message, "{") && strings.HasSuffix(message, "}\n") {
+				message = strings.TrimSuffix(message, "\n")
+
+				// Parse the JSON string into a map
+				var jsonObj map[string]interface{}
+				err := json.Unmarshal([]byte(message), &jsonObj)
+				if err != nil {
+					log.Printf("Failed to log: %s", message)
+					return
+				}
+
+				// Merge the JSON object with the provided object
+				for key, value := range jsonObj {
+					content[key] = value
+				}
+			} else {
+				content["message"] = strings.TrimSuffix(message, "\n")
+			}
+
+			jsonData, err := json.Marshal(content)
+			if err != nil {
+				log.Printf("Failed to log: %s", message)
+			}
+
+			hub.Broadcast <- Message{
+				Room:    executionUuid,
+				Content: fmt.Sprintf("%s", jsonData),
+			}
+
+			file.WriteString(fmt.Sprintf("%s\n", jsonData))
+		}
+	})
+	log.SetOutput(pipelineLogger)
+
+	defer file.Close()
 
 	workflow, _, err := translate(ctx, pipeline, organization, s3key, build, cfg)
 	if err != nil {
 		log.Printf("failed to translate the pipeline; err=%v", err)
 		return
 	}
+
+	defer cleanupRun(ctx, db, executionId, executionUuid, tempLog, s3key, *pipeline, *workflow, cfg)
 
 	if err := updateExecutionJson(ctx, db, executionId, workflow); err != nil {
 		log.Printf("failed to write workflow to database; err=%v", err)
@@ -868,6 +927,10 @@ func cloudExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 	if err != nil {
 		log.Printf("error during pipeline execution; err=%v", err)
 		return
+	}
+
+	if err := results(ctx, db, executionId, *pipeline, *workflow); err != nil {
+		log.Printf("failed to save results; err=%v", err)
 	}
 }
 
