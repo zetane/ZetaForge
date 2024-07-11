@@ -5,29 +5,23 @@ function stripAnsiCodes(str) {
 }
 
 export function parseLogLine(line) {
-  const logRegex =
-    /time="(?<time>[^"]+)"\s+(?:(?:level=(?<level>\w+)|error="(?<error>[^"]+)"|argo=(?<argo>[^\s]+)|\s+)\s*){0,3}msg="(?<msg>[^"]+)"(.*)$/;
-
   const { executionId, time, message, blockId, ...otherFields } =
     JSON.parse(line);
   const strippedMessage = stripAnsiCodes(message);
 
+  const logRegex =
+    /time="(?<time>[^"]+)"\s+level=(?<level>\w+)\s+msg="(?<msg>[^"]+)"(?:\s+argo=(?<argo>[^\s]+))?(?:\s+error="(?<error>[^"]+)")?/;
   const regexMatch = strippedMessage.match(logRegex);
-  let argo = {};
+
+  let argoLog = {};
   if (regexMatch) {
-    const {
-      time: argoTime,
+    const { time, level, msg, argo, error } = regexMatch.groups;
+    argoLog = {
+      time,
       level,
-      error,
-      argo: argoId,
       msg,
-    } = regexMatch.groups;
-    argo = {
-      time: argoTime,
-      level,
+      argo,
       error,
-      argoId,
-      msg,
     };
   }
 
@@ -36,6 +30,7 @@ export function parseLogLine(line) {
 
   // Parse the data string if it exists and is valid JSON
   let data = {};
+  let event = {};
   if (dataString) {
     try {
       data = JSON.parse(JSON.stringify(dataString));
@@ -43,15 +38,15 @@ export function parseLogLine(line) {
       console.warn("Failed to parse data string:", dataString);
       data = { rawData: dataString };
     }
+    event = { tag: tag, data: data };
   }
-  const event = { tag: tag, data: data };
   return {
     executionId,
     blockId,
     message,
     event,
     time,
-    argo,
+    argoLog,
     ...otherFields,
   };
 }
