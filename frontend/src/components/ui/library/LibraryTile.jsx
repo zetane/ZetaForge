@@ -43,9 +43,7 @@ export const LibraryTile = ({ block, index }) => {
   };
 
   return (
-    <Tile className="library-tile relative" 
-      key={index}
-    >
+    <Tile className="library-tile relative" key={index}>
       <div
         draggable={true}
         onDragStart={(ev) => {

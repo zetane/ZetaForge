@@ -34,7 +34,6 @@ function startExpressServer() {
   app.use(express.static("public"));
   app.use(bodyParser.json());
 
-  
   const upload = multer({ dest: "_temp_import" });
 
   app.get("/distinct-id", async (req, res) => {
