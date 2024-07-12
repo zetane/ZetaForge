@@ -34,6 +34,11 @@ export async function saveBlock(blockKey, blockSpec, fromPath, toPath) {
   return newFolder;
 }
 
+//added a helper function to know if a block is a parameter block
+function isParameterBlock(blockSpec) {
+  return blockSpec && blockSpec.action && blockSpec.action.parameters;
+}
+
 export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
   const bufferPath = path.resolve(process.cwd(), fromDir);
 
@@ -90,7 +95,7 @@ export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
     }
 
     logger.debug(`saving ${key} from ${existingBlockPath} to ${newBlockPath}`);
-    if (existingBlockPath != newBlockPath) {
+    if (existingBlockPath != newBlockPath && !isParameterBlock(blockSpec)) {
       // if it's the same folder, don't try to copy it
       await fs.cp(existingBlockPath, newBlockPath, { recursive: true });
       await fs.writeFile(
