@@ -39,7 +39,7 @@ function startExpressServer() {
   const configuration = new Configuration({
     apiKey: process.env.OPENAI_API_KEY,
   });
-  new OpenAIApi(configuration);
+  
   const upload = multer({ dest: "_temp_import" });
 
   app.get("/distinct-id", async (req, res) => {
