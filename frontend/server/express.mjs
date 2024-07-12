@@ -7,7 +7,6 @@ import { app as electronApp } from "electron";
 import express from "express";
 import fs from "fs";
 import multer from "multer";
-import { Configuration, OpenAIApi } from "openai";
 import path from "path";
 import sha256 from "sha256";
 import getMAC from "getmac";
@@ -35,10 +34,6 @@ function startExpressServer() {
   app.use(express.static("public"));
   app.use(bodyParser.json());
 
-  // OpenAI
-  const configuration = new Configuration({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
   
   const upload = multer({ dest: "_temp_import" });
 
