@@ -51,7 +51,7 @@ export const workspaceAtom = atom({
 
 export const getPipelines = (workspace) => {
   const running = [];
-  for (const [key, pipeline] of Object.entries(workspace.executions)) {
+  for (const [ ,pipeline] of Object.entries(workspace.executions)) {
     running.push(pipeline);
   }
   return running.sort((a, b) =>
