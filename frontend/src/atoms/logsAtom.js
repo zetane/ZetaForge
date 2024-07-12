@@ -5,9 +5,13 @@ function stripAnsiCodes(str) {
 }
 
 export function parseLogLine(line) {
-  const { executionId, time, message, blockId, ...otherFields } =
-    JSON.parse(line);
-  const strippedMessage = stripAnsiCodes(message);
+  let parsedLine = {};
+  try {
+    parsedLine = JSON.parse(line);
+  } catch (err) {
+    return { time: null, message: line };
+  }
+  const strippedMessage = stripAnsiCodes(parsedLine.message);
 
   const logRegex =
     /time="(?<time>[^"]+)"\s+level=(?<level>\w+)\s+msg="(?<msg>[^"]+)"(?:\s+argo=(?<argo>[^\s]+))?(?:\s+error="(?<error>[^"]+)")?/;
@@ -41,13 +45,10 @@ export function parseLogLine(line) {
     event = { tag: tag, data: data };
   }
   return {
-    executionId,
-    blockId,
-    message,
+    ...parsedLine,
+    message: strippedMessage,
     event,
-    time,
     argoLog,
-    ...otherFields,
   };
 }
 

@@ -5,7 +5,7 @@ import { logsAtom } from "@/atoms/logsAtom";
 import { useAtom } from "jotai";
 import { useMemo } from "react";
 
-const isEmpty = (obj) => {
+export const isEmpty = (obj) => {
   for (var i in obj) return false;
   return true;
 };
@@ -15,12 +15,16 @@ export const PipelineLogs = () => {
 
   const sortedLogs = useMemo(() => {
     return Array.from(logs.values()).sort((a, b) =>
-      a.time.localeCompare(b.time),
+      a?.time?.localeCompare(b?.time),
     );
   }, [logs]);
 
   const formattedLogs = [];
   sortedLogs.forEach((log) => {
+    if (!log?.time) {
+      formattedLogs.push(log.message);
+      return;
+    }
     let logString = `[${log.time}]${log.blockId ? `[${log.blockId}]` : ""} ${log.message}`;
     if (!isEmpty(log.argoLog)) {
       return;
