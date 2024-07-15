@@ -3,9 +3,7 @@
     "id": "qr-code-maker",
     "name": "QR Code Maker",
     "description": "Template block for custom computations.",
-    "system_versions": [
-      "0.1"
-    ],
+    "system_versions": ["0.1"],
     "block_version": "block version number",
     "block_source": "core/blocks/qr-code-maker",
     "block_type": "compute"
@@ -28,10 +26,7 @@
     "container": {
       "image": "qr-code-maker",
       "version": "latest",
-      "command_line": [
-        "python",
-        "entrypoint.py"
-      ]
+      "command_line": ["python", "-u", "entrypoint.py"]
     }
   },
   "views": {

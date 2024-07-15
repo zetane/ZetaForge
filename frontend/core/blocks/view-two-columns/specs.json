@@ -6,9 +6,7 @@
     "block_version": "block version number",
     "block_source": "core/blocks/view-two-columns",
     "block_type": "view",
-    "system_versions": [
-      "0.1"
-    ]
+    "system_versions": ["0.1"]
   },
   "inputs": {
     "array_of_pairs": {
@@ -28,10 +26,7 @@
     "container": {
       "image": "view-two-columns",
       "version": "latest",
-      "command_line": [
-        "python",
-        "entrypoint.py"
-      ]
+      "command_line": ["python", "-u", "entrypoint.py"]
     }
   },
   "views": {

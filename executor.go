@@ -307,6 +307,7 @@ func streaming(ctx context.Context, name string, client clientcmd.ClientConfig) 
 			blockId := ""
 			blockId = strings.TrimPrefix(event.PodName, "[")
 			blockId = strings.TrimSuffix(blockId, "]")
+			fmt.Printf("logs: %s", blockId)
 
 			parts := strings.Split(blockId, "-")
 

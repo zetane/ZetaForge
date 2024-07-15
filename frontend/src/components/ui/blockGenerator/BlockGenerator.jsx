@@ -12,7 +12,7 @@ import { trimQuotes } from "@/utils/blockUtils";
 import React from "react";
 import { logsAtom } from "@/atoms/logsAtom";
 import { LogsCodeMirror } from "@/components/ui/blockEditor/CodeMirrorComponents";
-import { isEmpty } from "@/components/ui/PipelineLogs";
+import { isEmpty, PipelineLogs } from "@/components/ui/PipelineLogs";
 
 const isTypeDisabled = (action) => {
   if (!action.parameters) {
@@ -60,14 +60,12 @@ const BlockGenerator = ({
   };
 
   const filteredLogs = useMemo(() => {
-    return Array.from(logs.values())
-      .filter(
-        (entry) =>
-          entry?.blockId &&
-          isEmpty(entry?.argoLog) &&
-          entry?.blockId?.slice(6) == id,
-      )
-      .map((log) => `[${log.time}][${log.blockId}] ${log.message}`);
+    return Array.from(logs.values()).filter(
+      (entry) =>
+        entry?.blockId &&
+        isEmpty(entry?.argoLog) &&
+        entry?.blockId?.slice(6) == id,
+    );
   }, [logs]);
 
   const currentState = useMemo(() => {
@@ -80,7 +78,7 @@ const BlockGenerator = ({
       if (entry?.event?.tag == "inputs") {
         curr = "running";
       }
-      if (entry?.argoLog?.error == "true") {
+      if (entry?.argoLog?.level == "error") {
         curr = "error";
       }
       if (entry?.argoLog?.error == "<nil>") {
@@ -89,13 +87,14 @@ const BlockGenerator = ({
     }
     return curr;
   }, [filteredLogs]);
-  console.log(id, currentState);
 
   let stateClass = null;
   if (currentState == "running") {
     stateClass = "glowing-border";
   } else if (currentState == "error") {
-    stateClass = "error-border";
+    stateClass = "red-shadow";
+  } else if (currentState == "done") {
+    stateClass = "green-shadow";
   }
 
   const runningState = useMemo(() => {
@@ -163,7 +162,7 @@ const BlockGenerator = ({
         id={`node-${id}`}
         style={styles}
       >
-        <div className="drawflow_content_node">
+        <div className={`drawflow_content_node`}>
           {preview && (
             <BlockPreview id={id} src={iframeSrc} history={history} />
           )}
@@ -237,16 +236,6 @@ const BlockTitle = ({
     </ClosableModal>
   );
 
-  const logModal = filteredLogs?.length > 0 && (
-    <ClosableModal modalHeading="Block Log" passiveModal={true}>
-      <div className="flex flex-col gap-4 p-3">
-        <div className="logs-viewer">
-          <LogsCodeMirror code={filteredLogs.join("\n")} />
-        </div>
-      </div>
-    </ClosableModal>
-  );
-
   const handleViewClick = () => {
     if (!src) {
       modalPopper(eventsModal);
@@ -256,7 +245,16 @@ const BlockTitle = ({
   };
 
   const openLog = (id) => {
-    modalPopper(logModal);
+    modalPopper(
+      <PipelineLogs
+        filter={(entry) =>
+          entry?.blockId &&
+          isEmpty(entry?.argoLog) &&
+          entry?.blockId?.slice(6) == id
+        }
+        title="Block Log"
+      />,
+    );
   };
 
   let actionContainer = (

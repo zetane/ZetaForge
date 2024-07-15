@@ -56,6 +56,7 @@
     display: flex;
     flex-direction: column;
     width: 100%;
+    z-index: 1;
 }
 
 .drawflow svg {
@@ -129,9 +130,21 @@
     top: -15px;
 }
 
+/* Green drop shadow class */
+.green-shadow {
+    box-shadow: 0 0 30px rgba(76, 175, 80, 0.9) !important;
+}
+
+/* Red drop shadow class for errors */
+.red-shadow {
+    box-shadow: 0 0 30px rgba(244, 67, 54, 0.9) !important;
+}
+
 .glowing-border {
     position: relative;
+    z-index: 0;
 }
+
 .glowing-border::before {
     content: "";
     position: absolute;
@@ -144,6 +157,17 @@
     filter: blur(5px);
     animation: glowingBorder 2s linear infinite;
 }
+.glowing-border::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: inherit;
+    z-index: 0;
+}
+
 @keyframes glowingBorder {
     0%,
     100% {

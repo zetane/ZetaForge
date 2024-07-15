@@ -3,9 +3,7 @@
     "id": "openai-agent-1",
     "name": "OpenAI Agent",
     "description": "Communicates with the OpenAI API to generate a completion based on the given role and prompt.\n\nArgs:\n    role (str): The role of the system for the chat model (e.g., \"You are a copywriter...\").\n    prompt (str): The prompt to be provided to the user in the chat model.\n    api_key (str): The API key to authenticate with the OpenAI API.\n\nReturns:\n    str: The content of the generated response from the OpenAI API.",
-    "system_versions": [
-      "0.1"
-    ],
+    "system_versions": ["0.1"],
     "block_version": "block version number",
     "block_source": "core/blocks/openai-agent-1",
     "block_type": "compute"
@@ -58,10 +56,7 @@
     "container": {
       "image": "openai-agent-1",
       "version": "openai-agent-1-936zk3xnzllw",
-      "command_line": [
-        "python",
-        "entrypoint.py"
-      ]
+      "command_line": ["python", "-u", "entrypoint.py"]
     }
   },
   "views": {

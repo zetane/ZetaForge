@@ -1,23 +1,28 @@
 import { LogsCodeMirror } from "@/components/ui/blockEditor/CodeMirrorComponents";
 import ClosableModal from "./modal/ClosableModal";
 import ScrollToBottom from "react-scroll-to-bottom";
-import { logsAtom } from "@/atoms/logsAtom";
-import { useAtom } from "jotai";
 import { useMemo } from "react";
+import { useAtom } from "jotai";
+import { logsAtom } from "@/atoms/logsAtom";
 
 export const isEmpty = (obj) => {
   for (var i in obj) return false;
   return true;
 };
 
-export const PipelineLogs = () => {
+export const PipelineLogs = ({ title, filter }) => {
   const [logs, _] = useAtom(logsAtom);
 
   const sortedLogs = useMemo(() => {
-    return Array.from(logs.values()).sort((a, b) =>
+    let result = Array.from(logs?.values()).sort((a, b) =>
       a?.time?.localeCompare(b?.time),
     );
-  }, [logs]);
+    if (typeof filter === "function") {
+      result = result.filter(filter);
+    }
+
+    return result;
+  }, [logs, filter]);
 
   const formattedLogs = [];
   sortedLogs.forEach((log) => {
@@ -29,14 +34,13 @@ export const PipelineLogs = () => {
     if (!isEmpty(log.argoLog)) {
       return;
     }
-    if (!isEmpty(log.event)) {
-    }
     formattedLogs.push(logString);
   });
+  console.log(formattedLogs);
 
   return (
     <ClosableModal
-      modalHeading="Pipeline Logs"
+      modalHeading={title}
       passiveModal={true}
       modalClass="custom-modal-size"
     >

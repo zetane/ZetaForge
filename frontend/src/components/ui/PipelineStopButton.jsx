@@ -22,9 +22,10 @@ export const PipelineStopButton = ({ executionId, configuration }) => {
 
   const svgOverride = { position: "absolute", right: "15px", top: "5px" };
   const buttonStyles = { margin: "5px" };
+  const zIndex = { zIndex: 1 };
 
   let stopButton = (
-    <div>
+    <div style={zIndex}>
       Stop
       <Stop size="20" style={svgOverride} />
     </div>
@@ -32,7 +33,7 @@ export const PipelineStopButton = ({ executionId, configuration }) => {
 
   if (isTerminating) {
     stopButton = (
-      <div>
+      <div style={zIndex}>
         Stopping
         <Stop size="20" style={svgOverride} />
       </div>

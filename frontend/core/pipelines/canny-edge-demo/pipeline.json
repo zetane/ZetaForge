@@ -8,9 +8,7 @@
         "block_version": "block version number",
         "block_source": "core/blocks/canny-edge",
         "block_type": "compute",
-        "system_versions": [
-          "0.1"
-        ]
+        "system_versions": ["0.1"]
       },
       "inputs": {
         "image_path": {
@@ -70,10 +68,7 @@
         "container": {
           "image": "canny-edge",
           "version": "latest",
-          "command_line": [
-            "python",
-            "entrypoint.py"
-          ]
+          "command_line": ["python", "-u", "entrypoint.py"]
         }
       },
       "views": {
@@ -97,9 +92,7 @@
         "block_version": "block version number",
         "block_source": "core/blocks",
         "block_type": "compute",
-        "system_versions": [
-          "0.1"
-        ]
+        "system_versions": ["0.1"]
       },
       "inputs": {},
       "outputs": {
@@ -143,9 +136,7 @@
         "block_version": "block version number",
         "block_source": "core/blocks",
         "block_type": "compute",
-        "system_versions": [
-          "0.1"
-        ]
+        "system_versions": ["0.1"]
       },
       "inputs": {},
       "outputs": {
@@ -189,9 +180,7 @@
         "block_version": "block version number",
         "block_source": "core/blocks",
         "block_type": "compute",
-        "system_versions": [
-          "0.1"
-        ]
+        "system_versions": ["0.1"]
       },
       "inputs": {},
       "outputs": {
@@ -235,9 +224,7 @@
         "block_version": "block version number",
         "block_source": "core/blocks",
         "block_type": "compute",
-        "system_versions": [
-          "0.1"
-        ]
+        "system_versions": ["0.1"]
       },
       "inputs": {},
       "outputs": {
@@ -281,9 +268,7 @@
         "block_version": "block version number",
         "block_source": "core/blocks/view-images",
         "block_type": "view",
-        "system_versions": [
-          "0.1"
-        ]
+        "system_versions": ["0.1"]
       },
       "inputs": {
         "image_paths_view": {
@@ -308,10 +293,7 @@
         "container": {
           "image": "view-images",
           "version": "latest",
-          "command_line": [
-            "python",
-            "entrypoint.py"
-          ]
+          "command_line": ["python", "-u", "entrypoint.py"]
         }
       },
       "views": {
