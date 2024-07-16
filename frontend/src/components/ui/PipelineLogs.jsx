@@ -36,7 +36,6 @@ export const PipelineLogs = ({ title, filter }) => {
     }
     formattedLogs.push(logString);
   });
-  console.log(formattedLogs);
 
   return (
     <ClosableModal

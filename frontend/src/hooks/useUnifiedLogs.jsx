@@ -43,6 +43,8 @@ export const useUnifiedLogs = () => {
   }, [pipeline?.logs, updateLogs]);
 
   // 2. Handle logs that have completed and stored in S3
+
+  const fetchLogPath = !!pipeline?.record && pipeline.record?.LogPath != "";
   const { data: polledData } = useQuery({
     queryKey: ["logs", pipeline?.history],
     queryFn: async () => {
@@ -52,7 +54,7 @@ export const useUnifiedLogs = () => {
       );
       return fileData.split("\n").filter((line) => line.trim() !== "");
     },
-    enabled: pipeline?.record?.LogPath != null,
+    enabled: fetchLogPath,
     onError: (e) => {
       //updateLogs([e]);
     },

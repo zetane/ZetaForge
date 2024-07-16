@@ -18,11 +18,11 @@ export default function SocketFetcher() {
 
   const updateNodes = useCallback((parsedLogEntry) => {
     setPipeline((draft) => {
-      if (draft?.data[parsedLogEntry?.blockId]) {
-        const node = draft.data[parsedLogEntry?.blockId];
+      if (draft?.data[parsedLogEntry?.blockId?.slice(6)]) {
+        const node = draft.data[parsedLogEntry?.blockId?.slice(6)];
         if (
-          parsedLogEntry.event === "outputs" ||
-          parsedLogEntry.event === "inputs"
+          parsedLogEntry?.event?.tag === "outputs" ||
+          parsedLogEntry?.event?.tag === "inputs"
         ) {
           try {
             if (!node.events[parsedLogEntry.event?.tag]) {

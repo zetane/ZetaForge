@@ -1,4 +1,5 @@
 site_name: Documentation
+site_url: https://zetane.com/docs/
 
 use_directory_urls: false
 
@@ -19,7 +20,7 @@ theme:
     - content.action.edit
     - navigation.expand
     # - navigation.sections # To make into non-collapsible sections
-  palette: 
+  palette:
     # Palette toggle for dark mode
     - scheme: slate
       toggle:
@@ -30,7 +31,7 @@ theme:
       toggle:
         icon: material/weather-night
         name: Switch to dark mode
-  
+
     # # Palette toggle for light mode
     # - media: "(prefers-color-scheme: light)"
     #   scheme: default
@@ -49,19 +50,18 @@ repo_url: https://github.com/zetane/zetaforge
 repo_name: zetane/zetaforge
 edit_uri: blob/main/docs/
 
-
 nav:
-  - Get Started: 
-    - Introduction: introduction.md
-    - Installation: installation.md
-    - Run Your First Pipeline: run-your-first-pipeline.md
+  - Get Started:
+      - Introduction: introduction.md
+      - Installation: installation.md
+      - Run Your First Pipeline: run-your-first-pipeline.md
   - Tutorials:
-    - User Interface: user-interface.md
-    - Create Blocks: create-blocks.md
-    - Assemble a Pipeline: assemble-a-pipeline.md
-    - Run a Pipeline: run-a-pipeline.md
-    - Share a Pipeline: share-a-pipeline.md
-    - Deploy a Pipeline: deploy-a-pipeline.md
+      - User Interface: user-interface.md
+      - Create Blocks: create-blocks.md
+      - Assemble a Pipeline: assemble-a-pipeline.md
+      - Run a Pipeline: run-a-pipeline.md
+      - Share a Pipeline: share-a-pipeline.md
+      - Deploy a Pipeline: deploy-a-pipeline.md
     # - GitHub Repo to Block: github-repo-to-block.md
   - Gallery: gallery.md
   - Contribute: contribute.md
@@ -82,7 +82,7 @@ markdown_extensions:
   - pymdownx.superfences
 
 extra_css:
-- custom/custom.css
+  - custom/custom.css
 
 extra_javascript:
   - custom/custom.js
@@ -90,17 +90,16 @@ extra_javascript:
 extra:
   generator: false
   social:
-    - icon: fontawesome/brands/github 
+    - icon: fontawesome/brands/github
       link: https://github.com/zetane/zetaforge
     - icon: fontawesome/brands/discord
       link: https://discord.gg/zetaforge
   # consent:
   #   title: Cookie consent
-  #   description: >- 
+  #   description: >-
   #     We use cookies to recognize your repeated visits and preferences, as well
   #     as to measure the effectiveness of our documentation and whether users
   #     find what they're searching for. With your consent, you're helping us to
   #     make our documentation better.
 
 copyright: Copyright &copy; 2024 Zetane
-

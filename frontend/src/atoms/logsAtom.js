@@ -37,9 +37,9 @@ export function parseLogLine(line) {
   let event = {};
   if (dataString) {
     try {
-      data = JSON.parse(JSON.stringify(dataString));
+      data = JSON.parse(dataString);
     } catch (e) {
-      console.warn("Failed to parse data string:", dataString);
+      //console.warn("Failed to parse data string:", dataString);
       data = { rawData: dataString };
     }
     event = { tag: tag, data: data };

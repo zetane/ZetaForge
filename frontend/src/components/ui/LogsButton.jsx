@@ -1,4 +1,3 @@
-import React from "react";
 import { PipelineLogs } from "./PipelineLogs";
 import { Button } from "@carbon/react";
 import { CloudLogging } from "@carbon/icons-react";
@@ -10,17 +9,11 @@ export default function LogsButton() {
   const [modalContent, setModalContent] = useAtom(modalContentAtom);
   const [logs, _] = useAtom(logsAtom);
 
-  console.log("uh: ", logs);
-
   const modalPopper = (content) => {
     setModalContent({
       ...modalContent,
       show: true,
-      content: (
-        <React.Suspense fallback={<div>Loading...</div>}>
-          <PipelineLogs logs={logs} title="Pipeline Logs" />
-        </React.Suspense>
-      ),
+      content: content,
     });
   };
 

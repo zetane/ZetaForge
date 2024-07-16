@@ -113,7 +113,7 @@ const BlockGenerator = ({
       const fileUrl = `http://${configuration.s3.host}:${configuration.s3.port}/zetaforge/${history}/${html}`;
       checkPath(fileUrl, 0, setIframeSrc);
     }
-  }, [block.events.outputs?.html]);
+  }, [block.events.outputs]);
 
   const disabled = isTypeDisabled(block.action);
   const preview = block.views.node.preview?.active == "true";
