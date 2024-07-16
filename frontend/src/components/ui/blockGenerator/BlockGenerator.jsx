@@ -254,12 +254,13 @@ const InputField = ({
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const isTextBlock = name === "text";
 
-  useEffect(() => { // Do not change without testing effects on textbox with auto quotes
+  useEffect(() => {
+    // Do not change without testing effects on textbox with auto quotes
     if (currentValue === "") {
-      onChange(name, "", parameterName)
-      setCurrentValue("")
+      onChange(name, "", parameterName);
+      setCurrentValue("");
     }
-  }, [currentValue])
+  }, [currentValue]);
 
   useEffect(() => {
     if (inputRef?.current && isTextBlock) {
@@ -268,7 +269,7 @@ const InputField = ({
         setCursorPosition(2);
       }
     }
-  }, [value])
+  }, [value]);
 
   useEffect(() => {
     if (!editor) return;
@@ -311,7 +312,7 @@ const InputField = ({
         !isRangedSelection) ||
       (key === "ArrowLeft" && atEnd) ||
       (key === "ArrowRight" && atBeginning) ||
-      (key === "Enter");
+      key === "Enter";
 
     if (boundaries) event.preventDefault();
 
