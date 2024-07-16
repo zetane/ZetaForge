@@ -46,8 +46,6 @@ type Debug struct {
 	RegistryPort int
 }
 
-const BUCKET = "zetaforge"
-
 type LocalEndpoint struct {
 	Bucket string
 	S3Port int
@@ -76,11 +74,11 @@ func s3Client(ctx context.Context, cfg Config) (*s3.Client, error) {
 	if cfg.IsLocal {
 		awsAccessKey = "AKIAIOSFODNN7EXAMPLE"
 		awsSecretKey = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
-		endpoint = &LocalEndpoint{Bucket: BUCKET, S3Port: cfg.Local.BucketPort}
+		endpoint = &LocalEndpoint{Bucket: cfg.BucketName, S3Port: cfg.Local.BucketPort}
 	} else {
 		awsAccessKey = cfg.Cloud.AWS.AccessKey
 		awsSecretKey = cfg.Cloud.AWS.SecretKey
-		endpoint = &CloudEndpoint{Address: "s3-us-east-2.amazonaws.com", Bucket: BUCKET}
+		endpoint = &CloudEndpoint{Address: "s3-us-east-2.amazonaws.com", Bucket: cfg.BucketName}
 	}
 
 	creds := credentials.NewStaticCredentialsProvider(awsAccessKey, awsSecretKey, "")

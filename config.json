@@ -9,6 +9,7 @@
 	"EntrypointFile":"entrypoint.py",
 	"ServiceAccount":"executor",
 	"Bucket":"forge-bucket",
+	"BucketName":"zetaforge",
 	"Database":"./zetaforge.db",
 	"SetupVersion":"1",
 

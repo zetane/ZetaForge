@@ -44,11 +44,11 @@ export async function checkAndCopy(newKey, copyKey, anvilConfiguration) {
 
 async function copy(newKey, copyKey, anvilConfiguration) {
   const client = getClient(anvilConfiguration);
-  const source = encodeURI(`/${config.s3.bucket}/${getFullS3Key(copyKey, anvilConfiguration)}`);
+  const source = encodeURI(`/${anvilConfiguration.s3.bucket}/${getFullS3Key(copyKey, anvilConfiguration)}`);
   try {
     const res = await client.send(
       new CopyObjectCommand({
-        Bucket: config.s3.bucket,
+        Bucket: anvilConfiguration.s3.bucket,
         CopySource: source,
         Key: getFullS3Key(newKey, anvilConfiguration),
       }),
@@ -91,7 +91,7 @@ async function upload(key, filePath, anvilConfiguration) {
     const fileBody = await fs.readFile(filePath);
     const res = await client.send(
       new PutObjectCommand({
-        Bucket: config.s3.bucket,
+        Bucket: anvilConfiguration.s3.bucket,
         Key: getFullS3Key(key, anvilConfiguration),
         Body: fileBody,
       }),
@@ -110,7 +110,7 @@ async function fileExists(key, anvilConfiguration) {
   try {
     await client.send(
       new HeadObjectCommand({
-        Bucket: config.s3.bucket,
+        Bucket: anvilConfiguration.s3.bucket,
         Key: getFullS3Key(key, anvilConfiguration),
       }),
     );
@@ -121,7 +121,7 @@ async function fileExists(key, anvilConfiguration) {
     }
     console.log(err)
     const message = "Error checking file existence in S3";
-    logger.error(message, err, err.stack);
+    logger.error(err, message);
     throw new Error(message);
   }
 }
@@ -134,7 +134,7 @@ export async function getFileData(key, anvilConfiguration) {
     try {
       const response = await client.send(
         new GetObjectCommand({
-          Bucket: config.s3.bucket,
+          Bucket: anvilConfiguration.s3.bucket,
           Key: getFullS3Key(key, anvilConfiguration),
         }),
       );
@@ -157,7 +157,7 @@ export async function getFile(key, destinationPath, anvilConfiguration) {
   try {
     const response = await client.send(
       new GetObjectCommand({
-        Bucket: config.s3.bucket,
+        Bucket: anvilConfiguration.s3.bucket,
         Key: getFullS3Key(key, anvilConfiguration),
       }),
     );

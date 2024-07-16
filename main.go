@@ -44,6 +44,7 @@ type Config struct {
 	EntrypointFile  string
 	ServiceAccount  string
 	Bucket          string
+	BucketName      string
 	Database        string
 	SetupVersion    string
 	Local           Local `json:"Local,omitempty"`

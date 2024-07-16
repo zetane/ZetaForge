@@ -40,7 +40,7 @@ func uploadData(ctx context.Context, data string, key string, cfg Config) error 
 	}
 
 	params := &s3.PutObjectInput{
-		Bucket: aws.String(BUCKET),
+		Bucket: aws.String(cfg.BucketName),
 		Key:    aws.String(key),
 		Body:   body,
 	}
@@ -61,7 +61,7 @@ func upload(ctx context.Context, source string, key string, cfg Config) error {
 	}
 
 	params := &s3.PutObjectInput{
-		Bucket: aws.String(BUCKET),
+		Bucket: aws.String(cfg.BucketName),
 		Key:    aws.String(key),
 		Body:   file,
 	}
@@ -77,7 +77,7 @@ func downloadFile(ctx context.Context, key string, filename string, cfg Config) 
 	}
 
 	result, err := client.GetObject(ctx, &s3.GetObjectInput{
-		Bucket: aws.String(BUCKET),
+		Bucket: aws.String(cfg.BucketName),
 		Key:    &key,
 	})
 
@@ -108,7 +108,7 @@ func downloadFiles(ctx context.Context, sink string, prefix string, cfg Config) 
 	}
 
 	res, err := client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
-		Bucket: aws.String(BUCKET),
+		Bucket: aws.String(cfg.BucketName),
 		Prefix: aws.String(prefix),
 	})
 
@@ -126,7 +126,7 @@ func downloadFiles(ctx context.Context, sink string, prefix string, cfg Config) 
 			return err
 		}
 		result, err := client.GetObject(ctx, &s3.GetObjectInput{
-			Bucket: aws.String(BUCKET),
+			Bucket: aws.String(cfg.BucketName),
 			Key:    content.Key,
 		})
 
@@ -159,14 +159,14 @@ func deleteFiles(ctx context.Context, prefix string, extraFiles []string, cfg Co
 	}
 
 	params := &s3.DeleteObjectsInput{
-		Bucket: aws.String(BUCKET),
+		Bucket: aws.String(cfg.BucketName),
 		Delete: &s3types.Delete{
 			Objects: []s3types.ObjectIdentifier{},
 		},
 	}
 
 	res, err := client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
-		Bucket: aws.String(BUCKET),
+		Bucket: aws.String(cfg.BucketName),
 		Prefix: aws.String(prefix),
 	})
 	if err != nil {
