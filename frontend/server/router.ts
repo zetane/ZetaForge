@@ -39,7 +39,8 @@ export const appRouter = router({
         blockId: z.string(),
       }),
     )
-    .query(async (opts) => {router
+    .query(async (opts) => {
+      router;
       const { input } = opts;
       const { blockId } = input;
       const resources = process.resourcesPath;

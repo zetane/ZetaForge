@@ -38,10 +38,8 @@ describe("specs", () => {
       io.description = expectedDescription;
 
       const results = await updateSpecs(blockId, io, pipelineSpecs, editorMock);
-  
-      expect(results.information.description).toEqual(
-        expectedDescription,
-      );
+
+      expect(results.information.description).toEqual(expectedDescription);
     });
 
     test("add input when a new parameter is added", async () => {
@@ -79,9 +77,7 @@ describe("specs", () => {
       const results = await updateSpecs(blockId, io, pipelineSpecs, editorMock);
 
       expect(results.outputs).toHaveProperty(expectedOutputName);
-      expect(results.outputs[expectedOutputName]).toEqual(
-        expectedOutput,
-      );
+      expect(results.outputs[expectedOutputName]).toEqual(expectedOutput);
     });
 
     test("remove input when a paramater is removed", async () => {
@@ -97,7 +93,7 @@ describe("specs", () => {
 
       const results = await updateSpecs(blockId, io, pipelineSpecs, editorMock);
 
-      expect(results.inputs).not.toHaveProperty("in1")
+      expect(results.inputs).not.toHaveProperty("in1");
     });
 
     test("remove output when an output is removed", async () => {
@@ -113,11 +109,11 @@ describe("specs", () => {
 
       const results = await updateSpecs(blockId, io, pipelineSpecs, editorMock);
 
-      expect(results.inputs).not.toHaveProperty("out1")
+      expect(results.inputs).not.toHaveProperty("out1");
     });
 
     test("dont change existing input connections", async () => {
-      const expectedConnection = connectionFixture.getConnection()
+      const expectedConnection = connectionFixture.getConnection();
       const pipelineSpecs = pipelineFixture.getSpecs().pipeline;
       const blockId = blockFixture.getId();
       const io = blockFixture.getCompilationIO();
@@ -126,7 +122,7 @@ describe("specs", () => {
       io.outputs.out1.type = pipelineSpecs[blockId].outputs.out1.type;
       io.outputs.out2.type = pipelineSpecs[blockId].outputs.out2.type;
       io.description = pipelineSpecs[blockId].information.description;
-      pipelineSpecs[blockId].inputs.in1.connections.push(expectedConnection)
+      pipelineSpecs[blockId].inputs.in1.connections.push(expectedConnection);
 
       const results = await updateSpecs(blockId, io, pipelineSpecs, editorMock);
 
@@ -134,7 +130,7 @@ describe("specs", () => {
     });
 
     test("dont change existing output connections", async () => {
-      const expectedConnection = connectionFixture.getConnection()
+      const expectedConnection = connectionFixture.getConnection();
       const pipelineSpecs = pipelineFixture.getSpecs().pipeline;
       const blockId = blockFixture.getId();
       const io = blockFixture.getCompilationIO();
@@ -143,7 +139,7 @@ describe("specs", () => {
       io.outputs.out1.type = pipelineSpecs[blockId].outputs.out1.type;
       io.outputs.out2.type = pipelineSpecs[blockId].outputs.out2.type;
       io.description = pipelineSpecs[blockId].information.description;
-      pipelineSpecs[blockId].outputs.out1.connections.push(expectedConnection)
+      pipelineSpecs[blockId].outputs.out1.connections.push(expectedConnection);
 
       const results = await updateSpecs(blockId, io, pipelineSpecs, editorMock);
 
@@ -151,7 +147,7 @@ describe("specs", () => {
     });
 
     test("dont change existing input relays", async () => {
-      const expectedRelays = "I don't know what goes in here"
+      const expectedRelays = "I don't know what goes in here";
       const pipelineSpecs = pipelineFixture.getSpecs().pipeline;
       const blockId = blockFixture.getId();
       const io = blockFixture.getCompilationIO();
@@ -160,16 +156,15 @@ describe("specs", () => {
       io.outputs.out1.type = pipelineSpecs[blockId].outputs.out1.type;
       io.outputs.out2.type = pipelineSpecs[blockId].outputs.out2.type;
       io.description = pipelineSpecs[blockId].information.description;
-      pipelineSpecs[blockId].inputs.in1.relays.push(expectedRelays)
+      pipelineSpecs[blockId].inputs.in1.relays.push(expectedRelays);
 
       const results = await updateSpecs(blockId, io, pipelineSpecs, editorMock);
 
       expect(results.inputs.in1.relays).toEqual([expectedRelays]);
     });
 
-
     test("dont change existing ouput relays", async () => {
-      const expectedRelays = "I don't know what goes in here"
+      const expectedRelays = "I don't know what goes in here";
       const pipelineSpecs = pipelineFixture.getSpecs().pipeline;
       const blockId = blockFixture.getId();
       const io = blockFixture.getCompilationIO();
@@ -178,7 +173,7 @@ describe("specs", () => {
       io.outputs.out1.type = pipelineSpecs[blockId].outputs.out1.type;
       io.outputs.out2.type = pipelineSpecs[blockId].outputs.out2.type;
       io.description = pipelineSpecs[blockId].information.description;
-      pipelineSpecs[blockId].outputs.out1.relays.push(expectedRelays)
+      pipelineSpecs[blockId].outputs.out1.relays.push(expectedRelays);
 
       const results = await updateSpecs(blockId, io, pipelineSpecs, editorMock);
 
@@ -212,7 +207,9 @@ describe("specs", () => {
 
       const results = await updateSpecs(blockId, io, pipelineSpecs, editorMock);
 
-      expect(results.outputs.out1.type).toEqual(pipelineSpecs[blockId].outputs.out1.type);
+      expect(results.outputs.out1.type).toEqual(
+        pipelineSpecs[blockId].outputs.out1.type,
+      );
     });
   });
 });

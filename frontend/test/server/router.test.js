@@ -1,5 +1,5 @@
 import { describe, test, vi, expect, beforeAll } from "vitest";
-import { initTRPC } from "@trpc/server"
+import { initTRPC } from "@trpc/server";
 import { compileComputation } from "../../server/blockSerialization";
 import { appRouter } from "../../server/router";
 
@@ -13,10 +13,9 @@ describe("router", () => {
   beforeAll(() => {
     const t = initTRPC.create();
     const createCaller = t.createCallerFactory(appRouter);
-    caller = createCaller()
-  })
-  
-  
+    caller = createCaller();
+  });
+
   describe("compileComputation", () => {
     test("returns compilation object", async () => {
       const expectedSpecs = {
@@ -34,7 +33,7 @@ describe("router", () => {
 
       compileComputation.mockResolvedValueOnce(expectedSpecs);
 
-      const result = await caller.compileComputation({blockPath: ""});
+      const result = await caller.compileComputation({ blockPath: "" });
 
       expect(result).toEqual(expectedSpecs);
     });
@@ -42,7 +41,9 @@ describe("router", () => {
     test("throws BAD_REQUEST on failure", async () => {
       compileComputation.mockRejectedValueOnce(new Error("failure"));
 
-      expect(caller.compileComputation({blockPath: ""})).rejects.toThrowError("An unexpected error occured, please try again later.");
+      expect(caller.compileComputation({ blockPath: "" })).rejects.toThrowError(
+        "An unexpected error occured, please try again later.",
+      );
     });
   });
 });

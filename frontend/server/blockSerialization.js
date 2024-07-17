@@ -15,7 +15,10 @@ export async function compileComputation(blockPath) {
     ? path.join(process.resourcesPath, "resources", "compileComputation.py")
     : path.join("resources", "compileComputation.py");
   if (!(await fileExists(scriptPath))) {
-    throw new ServerError(`Could not find script for compilation: ${scriptPath}`, HttpStatus.INTERNAL_SERVER_ERROR);
+    throw new ServerError(
+      `Could not find script for compilation: ${scriptPath}`,
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 
   const { stdout } = spawnSync("python", [scriptPath], {

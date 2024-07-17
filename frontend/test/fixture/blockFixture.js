@@ -1,5 +1,5 @@
 export function getId() {
-  return "new-python-123"
+  return "new-python-123";
 }
 
 export function getSpecs() {
@@ -60,7 +60,8 @@ export function getSpecs() {
   };
 }
 
-export function getCompuationsSourceCode() { return `def compute(in1, in2):
+export function getCompuationsSourceCode() {
+  return `def compute(in1, in2):
     """A textual description of the compute function.
 
     Inputs:
@@ -94,4 +95,3 @@ export function getCompilationIO() {
     },
   };
 }
-
