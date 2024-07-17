@@ -198,9 +198,6 @@ export const appRouter = router({
       const { blockId, pipelinePath } = input;
       return await getBlockPath(blockId, pipelinePath);
     }),
-  getCachePath: publicProcedure.use(errorHandling).query(async () => {
-    return path.join(process.cwd(), ".cache") + path.sep;
-  }),
   removeBlock: publicProcedure
     .use(errorHandling)
     .input(

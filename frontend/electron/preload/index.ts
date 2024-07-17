@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron';
+import { app, contextBridge, ipcRenderer } from 'electron';
 import { exposeElectronTRPC } from 'electron-trpc/main';
 import path from "path";
 import * as Sentry from "@sentry/electron";
@@ -7,10 +7,7 @@ Sentry.init({ dsn: "https://7fb18e8e487455a950298625457264f3@o1096443.ingest.us.
 
 // --------- Expose API to the Renderer process ---------
 contextBridge.exposeInMainWorld('cache', {
-  local: path.join(process.cwd(), ".cache") + path.sep,
-  app: () => ipcRenderer.send('get-path', 'appData'),
-  user: () => ipcRenderer.send('get-path', "userData"),
-  session: () => ipcRenderer.send('get-path', "sessionData")
+  local: async () => path.join(await ipcRenderer.invoke('get-path', 'appData'), 'zetaforge', '.cache') + path.sep,
 })
 
 // --------- Preload scripts loading ---------
