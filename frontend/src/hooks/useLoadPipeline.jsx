@@ -46,7 +46,10 @@ export const useLoadPipeline = () => {
       id: data.id,
     };
 
-    const newPipeline = pipelineFactory(await window.cache.local(), loadedPipeline);
+    const newPipeline = pipelineFactory(
+      await window.cache.local(),
+      loadedPipeline,
+    );
     const key = pipelineKey(newPipeline.id, null);
 
     setWorkspace((draft) => {
