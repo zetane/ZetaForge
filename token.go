@@ -61,7 +61,7 @@ func validateToken(ctx *gin.Context, folder string) (int, string) {
 		}
 
 		return key, nil
-	})
+	}, jwt.WithValidMethods([]string{"EdDSA"}))
 
 	if err != nil {
 		log.Printf(err.Error())
