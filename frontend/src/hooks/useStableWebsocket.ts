@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef } from "react";
-import useWebSocket, { ReadyState } from "react-use-websocket";
+import { useState, useRef } from "react";
+import useWebSocket from "react-use-websocket";
 
 const WebSocketCloseCodes = {
   1000: "Normal Closure",
