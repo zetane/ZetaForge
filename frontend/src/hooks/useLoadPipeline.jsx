@@ -1,6 +1,4 @@
 import { useImmerAtom } from "jotai-immer";
-import { pipelineAtom } from "@/atoms/pipelineAtom";
-import { pipelineConnectionsAtom } from "@/atoms/pipelineConnectionsAtom";
 import { trpc } from "@/utils/trpc";
 import { getDirectoryPath } from "@/../utils/fileUtils";
 import {
@@ -8,16 +6,9 @@ import {
   pipelineFactory,
   pipelineKey,
 } from "@/atoms/pipelineAtom";
-import { createConnections } from "@/utils/createConnections";
-import { useAtom } from "jotai";
-import { getFileData } from "@/utils/s3";
 
 export const useLoadPipeline = () => {
-  const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
-  const [pipelineConnections, setPipelineConnections] = useAtom(
-    pipelineConnectionsAtom,
-  );
   const savePipelineMutation = trpc.savePipeline.useMutation();
 
   const loadPipeline = async (file) => {
@@ -67,53 +58,6 @@ export const useLoadPipeline = () => {
 
   return loadPipeline;
 };
-
-function parseLogLine(line) {
-  if (line.trim() === "") {
-    return null;
-  }
-  let tag,
-    data = null;
-
-  const { executionId, blockId, message, time, ...jsonObj } = JSON.parse(line);
-  const tagAndObject = message.split("|||");
-  if (tagAndObject.length > 1) {
-    tag = tagAndObject[0].trim();
-    //data = tagAndObject[1] ? JSON.parse(tagAndObject[1]) : null;
-  }
-
-  return {
-    executionId,
-    blockId,
-    message,
-    tag,
-    data,
-    time,
-    jsonObj,
-  };
-}
-
-export function parseLog(log) {
-  const parsedLog = [];
-  log = log ?? [];
-  for (const line of log) {
-    const parsedLine = parseLogLine(line);
-    if (parsedLine) {
-      const { executionId, blockId, message, tag, data, time, jsonObj } =
-        parsedLine;
-      let shouldLog = true;
-
-      if (shouldLog) {
-        let logString = `[${time}] ${message}`;
-        if (blockId) {
-          logString = `[${time}][${blockId}] ${message}`;
-        }
-        parsedLog.push(logString);
-      }
-    }
-  }
-  return parsedLog;
-}
 
 function sortSpecsKeys(pipeline) {
   const updatedPipeline = {};
@@ -169,9 +113,12 @@ export const useLoadServerPipeline = () => {
     if (pipeline.Results != "") {
       pipelineData = JSON.parse(pipeline.Results);
     }
-    let logs = pipeline?.Log;
     const bufferPath = `${window.cache.local}${pipelineData.id}`;
     const executionId = pipeline.Execution;
+    let socketUrl = null;
+    if (pipeline.Status == "Pending" || pipeline.Status == "Running") {
+      socketUrl = `ws://${configuration.anvil.host}:${configuration.anvil.port}/ws/${executionId}`;
+    }
 
     const loadedPipeline = {
       name: pipelineData.name ? pipelineData.name : pipelineData.id,
@@ -182,19 +129,11 @@ export const useLoadServerPipeline = () => {
       id: pipelineData.id,
       history: pipelineData.id + "/" + executionId,
       record: pipeline,
-      socketUrl: `ws://${configuration.anvil.host}:${configuration.anvil.port}/ws/${executionId}`,
-      logs: logs,
+      socketUrl: socketUrl,
+      logs: pipeline?.Log,
     };
 
     let newPipeline = pipelineFactory(window.cache.local, loadedPipeline);
-    if (newPipeline?.logs != null && newPipeline.logs.length) {
-      try {
-        const parsedLog = parseLog(newPipeline?.logs);
-        newPipeline.log = parsedLog;
-      } catch (e) {
-        //console.log("Failed to parse server logs: ", e)
-      }
-    }
     // sort keys
     newPipeline = sortSpecsKeys(newPipeline);
     return newPipeline;

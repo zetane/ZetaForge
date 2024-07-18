@@ -6,9 +6,7 @@
     "block_version": "block version number",
     "block_source": "core/blocks/invader-game",
     "block_type": "view",
-    "system_versions": [
-      "0.1"
-    ]
+    "system_versions": ["0.1"]
   },
   "inputs": {
     "player_image_path": {
@@ -33,10 +31,7 @@
     "container": {
       "image": "invader-game",
       "version": "latest",
-      "command_line": [
-        "python",
-        "entrypoint.py"
-      ]
+      "command_line": ["python", "-u", "entrypoint.py"]
     }
   },
   "views": {

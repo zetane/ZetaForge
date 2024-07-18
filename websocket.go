@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"time"
 
@@ -11,6 +12,10 @@ import (
 const writeWait = 10 * time.Second
 const pongWait = 60 * time.Second
 const pingPeriod = (pongWait * 9) / 10
+
+const (
+	CloseRoomNotFound = 4004 // Custom close code for room not found
+)
 
 type Client struct {
 	Room   string
@@ -156,6 +161,9 @@ func (h *Hub) CloseRoom(room string) {
 
 func serveSocket(conn *websocket.Conn, room string, h *Hub) HTTPError {
 	if _, ok := h.Clients[room]; !ok { // if does not exist
+		closeMsg := websocket.FormatCloseMessage(CloseRoomNotFound, fmt.Sprintf("Room %s does not exist", room))
+		conn.WriteMessage(websocket.CloseMessage, closeMsg)
+		conn.Close()
 		return BadRequest{"room " + room + " does not exist"}
 	}
 

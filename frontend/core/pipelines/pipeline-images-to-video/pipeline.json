@@ -5,9 +5,7 @@
         "id": "canny-edge",
         "name": "Canny Edge",
         "description": "Computes the Canny edge detection on an image at various thresholds and saves the results.",
-        "system_versions": [
-          "0.1"
-        ],
+        "system_versions": ["0.1"],
         "block_version": "block version number",
         "block_source": "core/blocks/canny-edge",
         "block_type": "compute"
@@ -69,10 +67,7 @@
         "container": {
           "image": "canny-edge",
           "version": "canny-edge-do6x3zn52vcq",
-          "command_line": [
-            "python",
-            "entrypoint.py"
-          ]
+          "command_line": ["python", "-u", "entrypoint.py"]
         }
       },
       "views": {
@@ -85,15 +80,8 @@
           "pos_y": "588",
           "pos_z": "999, this is the z-index for 2D canvas",
           "order": {
-            "output": [
-              "image_paths"
-            ],
-            "input": [
-              "image_path",
-              "range_min",
-              "range_max",
-              "step"
-            ]
+            "output": ["image_paths"],
+            "input": ["image_path", "range_min", "range_max", "step"]
           }
         }
       },
@@ -104,9 +92,7 @@
         "id": "file",
         "name": "File",
         "description": "File parameter input.",
-        "system_versions": [
-          "0.1"
-        ],
+        "system_versions": ["0.1"],
         "block_version": "block version number",
         "block_source": "core/blocks",
         "block_type": "compute"
@@ -149,9 +135,7 @@
           "pos_z": "999, this is the z-index for 2D canvas",
           "order": {
             "input": [],
-            "output": [
-              "path"
-            ]
+            "output": ["path"]
           }
         }
       },
@@ -162,9 +146,7 @@
         "id": "parameter",
         "name": "Parameter",
         "description": "Parameter input.",
-        "system_versions": [
-          "0.1"
-        ],
+        "system_versions": ["0.1"],
         "block_version": "block version number",
         "block_source": "core/blocks",
         "block_type": "compute"
@@ -207,9 +189,7 @@
           "pos_z": "999, this is the z-index for 2D canvas",
           "order": {
             "input": [],
-            "output": [
-              "parameter"
-            ]
+            "output": ["parameter"]
           }
         }
       },
@@ -220,9 +200,7 @@
         "id": "parameter",
         "name": "Parameter",
         "description": "Parameter input.",
-        "system_versions": [
-          "0.1"
-        ],
+        "system_versions": ["0.1"],
         "block_version": "block version number",
         "block_source": "core/blocks",
         "block_type": "compute"
@@ -265,9 +243,7 @@
           "pos_z": "999, this is the z-index for 2D canvas",
           "order": {
             "input": [],
-            "output": [
-              "parameter"
-            ]
+            "output": ["parameter"]
           }
         }
       },
@@ -278,9 +254,7 @@
         "id": "parameter",
         "name": "Parameter",
         "description": "Parameter input.",
-        "system_versions": [
-          "0.1"
-        ],
+        "system_versions": ["0.1"],
         "block_version": "block version number",
         "block_source": "core/blocks",
         "block_type": "compute"
@@ -323,9 +297,7 @@
           "pos_z": "999, this is the z-index for 2D canvas",
           "order": {
             "input": [],
-            "output": [
-              "parameter"
-            ]
+            "output": ["parameter"]
           }
         }
       },
@@ -336,9 +308,7 @@
         "id": "view-videos",
         "name": "View Videos",
         "description": "Generates an HTML file with a unique name and returns the file name.\n\nInputs:\n    media_paths_view (str or list): A path or a list of media paths (videos) to display in the gallery.\n\nOutputs:\n    dict: A dictionary with the key 'html' and the value being the name of the generated HTML file.",
-        "system_versions": [
-          "0.1"
-        ],
+        "system_versions": ["0.1"],
         "block_version": "block version number",
         "block_source": "core/blocks/view-videos",
         "block_type": "view"
@@ -364,10 +334,7 @@
         "container": {
           "image": "view-videos",
           "version": "view-videos-56aeg14tzl3g",
-          "command_line": [
-            "python",
-            "entrypoint.py"
-          ]
+          "command_line": ["python", "-u", "entrypoint.py"]
         }
       },
       "views": {
@@ -384,12 +351,8 @@
           "pos_y": "578",
           "pos_z": "999, this is the z-index for 2D canvas",
           "order": {
-            "input": [
-              "media_paths_view"
-            ],
-            "output": [
-              "html"
-            ]
+            "input": ["media_paths_view"],
+            "output": ["html"]
           }
         },
         "mode": "modal"
@@ -401,9 +364,7 @@
         "id": "images-to-video",
         "name": "Images to Video",
         "description": "This function takes a list of image filepaths and compiles them into a video file.",
-        "system_versions": [
-          "0.1"
-        ],
+        "system_versions": ["0.1"],
         "block_version": "block version number",
         "block_source": "core/blocks/images-to-video",
         "block_type": "compute"
@@ -434,10 +395,7 @@
         "container": {
           "image": "images-to-video",
           "version": "images-to-video-d3ctdctemkj51",
-          "command_line": [
-            "python",
-            "entrypoint.py"
-          ]
+          "command_line": ["python", "-u", "entrypoint.py"]
         }
       },
       "views": {
@@ -451,12 +409,8 @@
           "pos_z": "999",
           "behavior": "modal",
           "order": {
-            "input": [
-              "images"
-            ],
-            "output": [
-              "video_path"
-            ]
+            "input": ["images"],
+            "output": ["video_path"]
           }
         }
       },
@@ -467,9 +421,7 @@
         "id": "view-images",
         "name": "View Images",
         "description": "Generates an HTML file with a unique name and returns the file name.",
-        "system_versions": [
-          "0.1"
-        ],
+        "system_versions": ["0.1"],
         "block_version": "block version number",
         "block_source": "core/blocks/view-images",
         "block_type": "view"
@@ -495,10 +447,7 @@
         "container": {
           "image": "view-images",
           "version": "view-images-2un5b0vvd3ur",
-          "command_line": [
-            "python",
-            "entrypoint.py"
-          ]
+          "command_line": ["python", "-u", "entrypoint.py"]
         }
       },
       "views": {
@@ -515,12 +464,8 @@
           "pos_y": "403",
           "pos_z": "999, this is the z-index for 2D canvas",
           "order": {
-            "input": [
-              "image_paths_view"
-            ],
-            "output": [
-              "html"
-            ]
+            "input": ["image_paths_view"],
+            "output": ["html"]
           }
         },
         "mode": "modal"

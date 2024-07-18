@@ -1,10 +1,6 @@
 import { modalContentAtom } from "@/atoms/modalAtom";
 import { darkModeAtom } from "@/atoms/themeAtom";
-import {
-  pipelineAtom,
-  pipelineFactory,
-  workspaceAtom,
-} from "@/atoms/pipelineAtom";
+import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { Play, Password, Renew } from "@carbon/icons-react";
 import {
   Header,
@@ -15,64 +11,26 @@ import {
   HeaderNavigation,
   SkipToContent,
 } from "@carbon/react";
-import { useAtom, useSetAtom } from "jotai";
+import { useAtom } from "jotai";
 import LoadBlockButton from "./LoadBlockButton";
 import LoadPipelineButton from "./LoadPipelineButton";
 import LogsButton from "./LogsButton";
 import NewButton from "./NewButton";
 import ApiKeysModal from "./modal/ApiKeysModal";
 import PipelinesButton from "./PipelinesButton";
-import WorkspaceTabs from "./WorkspaceTabs";
-import { useEffect } from "react";
 import { useImmerAtom } from "jotai-immer";
-import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
-import { useLoadServerPipeline } from "./useLoadPipeline";
 import RunPipelineButton from "./RunPipelineButton";
 import SaveAsPipelineButton from "./SaveAsPipelineButton";
 import SavePipelineButton from "./SavePipelineButton";
 import AnvilConfigurationsModal from "./modal/AnvilConfigurationsModal";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { PipelineStopButton } from "./PipelineStopButton";
-import { getAllPipelines } from "@/client/anvil";
 
 export default function Navbar({ children }) {
   const [darkMode, setDarkMode] = useAtom(darkModeAtom);
   const [modalContent, setModalContent] = useAtom(modalContentAtom);
-  const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const [configuration] = useAtom(activeConfigurationAtom);
-  const loadPipeline = useLoadServerPipeline();
-
-  const { pending, error, data } = useQuery({
-    queryKey: ["pipelines"],
-    queryFn: async () => {
-      return await getAllPipelines(configuration);
-    },
-    refetchInterval: workspace.fetchInterval,
-  });
-
-  useEffect(() => {
-    const pipelines = data ?? [];
-    setWorkspace((draft) => {
-      for (const serverPipeline of pipelines) {
-        const key = serverPipeline.Uuid + "." + serverPipeline.Execution;
-        const current = workspace.pipelines[key];
-        const status = current?.record?.Status;
-        if (
-          current?.record?.Results ||
-          status == "Failed" ||
-          status == "Succeeded" ||
-          status == "Error"
-        ) {
-          continue;
-        }
-        const loaded = loadPipeline(serverPipeline, configuration);
-        draft.pipelines[key] = loaded;
-        draft.executions[loaded.record.Execution] = loaded;
-      }
-    });
-  }, [data]);
 
   const modalPopper = (content) => {
     setModalContent({
@@ -156,7 +114,6 @@ export default function Navbar({ children }) {
         <LogsButton />
         <PipelinesButton />
       </HeaderGlobalBar>
-      <WorkspaceTabs />
       {children}
     </Header>
   );

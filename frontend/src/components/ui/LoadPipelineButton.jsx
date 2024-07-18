@@ -3,7 +3,7 @@ import { PIPELINE_SPECS_FILE_NAME } from "@/utils/constants";
 import { HeaderMenuItem } from "@carbon/react";
 import { useAtom } from "jotai";
 import { useRef } from "react";
-import { useLoadPipeline } from "./useLoadPipeline";
+import { useLoadPipeline } from "@/hooks/useLoadPipeline";
 
 const FILE_EXTENSION_REGEX = /\.[^/.]+$/;
 

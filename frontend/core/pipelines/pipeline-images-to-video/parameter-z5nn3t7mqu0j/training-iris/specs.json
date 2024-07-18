@@ -3,9 +3,7 @@
     "id": "training-iris",
     "name": "Train Iris",
     "description": "Trains and evaluates a neural network on the iris dataset.",
-    "system_versions": [
-      "0.1"
-    ],
+    "system_versions": ["0.1"],
     "block_version": "block version number",
     "block_source": "core/blocks/training-iris",
     "block_type": "compute"
@@ -28,10 +26,7 @@
     "container": {
       "image": "training-iris",
       "version": "latest",
-      "command_line": [
-        "python",
-        "entrypoint.py"
-      ]
+      "command_line": ["python", "-u", "entrypoint.py"]
     }
   },
   "views": {

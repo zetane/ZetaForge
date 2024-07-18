@@ -12,7 +12,7 @@ import { uuidv7 } from "uuidv7";
 import ClosableModal from "./modal/ClosableModal";
 import { workspaceAtom } from "@/atoms/pipelineAtom";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
-import { useLoadServerPipeline } from "./useLoadPipeline";
+import { useLoadServerPipeline } from "@/hooks/useLoadPipeline";
 import { ping } from "@/client/anvil";
 
 export default function RunPipelineButton({ children, action }) {

@@ -24,7 +24,7 @@ export const pipelineFactory = (cachePath, pipeline = null) => {
     buffer: buffer,
     path: undefined,
     data: {},
-    log: [],
+    logs: [],
     history: null,
     socketUrl: null,
     record: null,

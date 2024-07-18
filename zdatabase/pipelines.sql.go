@@ -13,7 +13,7 @@ import (
 const allFilterPipelines = `-- name: AllFilterPipelines :many
 SELECT p.id, p.organization, p.created, p.uuid, p.hash, p.json, p.deployed, p.deleted, e.id, e.pipeline, e.status, e.created, e.completed, e.json, e.deleted, e.executionid, e.workflow, e.results FROM Pipelines p
 INNER JOIN Executions e on e.pipeline = p.id
-WHERE e.status != 'pending' AND e.workflow is not null and p.deleted = FALSE
+WHERE p.deleted = FALSE
 ORDER BY e.created DESC
 `
 
@@ -203,7 +203,7 @@ func (q *Queries) FilterPipeline(ctx context.Context, executionid string) (Filte
 const filterPipelines = `-- name: FilterPipelines :many
 SELECT p.id, p.organization, p.created, p.uuid, p.hash, p.json, p.deployed, p.deleted, e.id, e.pipeline, e.status, e.created, e.completed, e.json, e.deleted, e.executionid, e.workflow, e.results FROM Pipelines p
 INNER JOIN Executions e on e.pipeline = p.id
-WHERE e.status != 'pending' AND e.workflow is not null and p.deleted = FALSE
+WHERE p.deleted = FALSE
 ORDER BY e.created DESC
 LIMIT ? OFFSET ?
 `

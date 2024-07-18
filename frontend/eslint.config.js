@@ -8,7 +8,11 @@ export default [
   pluginJs.configs.recommended,
   ...tseslint.configs.recommended,
   pluginReactConfig,
-
+  {
+    rules: {
+      "no-control-regex": 0,
+    },
+  },
   {
     ignores: [
       ".cache/*",

@@ -1,8 +1,8 @@
 import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
-import { Code, View } from "@carbon/icons-react";
+import { Code, View, CloudLogging } from "@carbon/icons-react";
 import { useImmerAtom } from "jotai-immer";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { FileBlock } from "./FileBlock";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { modalContentAtom } from "@/atoms/modalAtom";
@@ -10,6 +10,9 @@ import { useAtom } from "jotai";
 import ClosableModal from "@/components/ui/modal/ClosableModal";
 import { trimQuotes } from "@/utils/blockUtils";
 import React from "react";
+import { logsAtom } from "@/atoms/logsAtom";
+import { LogsCodeMirror } from "@/components/ui/blockEditor/CodeMirrorComponents";
+import { isEmpty, PipelineLogs } from "@/components/ui/PipelineLogs";
 
 const isTypeDisabled = (action) => {
   if (!action.parameters) {
@@ -49,11 +52,41 @@ const BlockGenerator = ({
   const [pipeline, setFocusAction] = useImmerAtom(pipelineAtom);
   const [editor, _s] = useAtom(drawflowEditorAtom);
   const [configuration] = useAtom(activeConfigurationAtom);
+  const [logs, _] = useAtom(logsAtom);
 
-  const styles = {
+  let styles = {
     top: `${block.views.node.pos_y}px`,
     left: `${block.views.node.pos_x}px`,
   };
+
+  const filteredLogs = useMemo(() => {
+    return Array.from(logs.values()).filter(
+      (entry) =>
+        entry?.blockId &&
+        isEmpty(entry?.argoLog) &&
+        entry?.blockId?.slice(6) == id,
+    );
+  }, [logs]);
+
+  const stateClass = useMemo(() => {
+    const logA = Array.from(logs.values());
+    let curr = null;
+    for (const entry of logA) {
+      if (!entry?.blockId || entry?.blockId?.slice(6) != id) {
+        continue;
+      }
+      if (entry?.event?.tag == "inputs") {
+        curr = "glowing-border";
+      }
+      if (entry?.argoLog?.level == "error") {
+        curr = "red-shadow";
+      }
+      if (entry?.argoLog?.error == "<nil>") {
+        curr = "green-shadow";
+      }
+    }
+    return curr;
+  }, [filteredLogs]);
 
   const [iframeSrc, setIframeSrc] = useState("");
   useEffect(() => {
@@ -63,7 +96,7 @@ const BlockGenerator = ({
       const fileUrl = `http://${configuration.s3.host}:${configuration.s3.port}/zetaforge/${history}/${html}`;
       checkPath(fileUrl, 0, setIframeSrc);
     }
-  }, [block.events.outputs?.html]);
+  }, [block.events.outputs]);
 
   const disabled = isTypeDisabled(block.action);
   const preview = block.views.node.preview?.active == "true";
@@ -85,7 +118,12 @@ const BlockGenerator = ({
     />
   );
   const type = block?.action?.parameters?.path?.type;
-  if (type == "file" || type == "blob" || type == "fileLoad") {
+  if (
+    type == "folder" ||
+    type == "file" ||
+    type == "blob" ||
+    type == "fileLoad"
+  ) {
     content = (
       <FileBlock
         blockId={id}
@@ -102,8 +140,12 @@ const BlockGenerator = ({
 
   return (
     <div className="parent-node">
-      <div className="drawflow-node" id={`node-${id}`} style={styles}>
-        <div className="drawflow_content_node">
+      <div
+        className={`drawflow-node ${stateClass}`}
+        id={`node-${id}`}
+        style={styles}
+      >
+        <div className={`drawflow_content_node`}>
           {preview && (
             <BlockPreview id={id} src={iframeSrc} history={history} />
           )}
@@ -117,6 +159,7 @@ const BlockGenerator = ({
             src={iframeSrc}
             blockEvents={block.events}
             history={history}
+            filteredLogs={filteredLogs}
           />
           <div className="block-body">
             <div className="block-io">
@@ -163,9 +206,9 @@ const BlockTitle = ({
   actions,
   src,
   blockEvents,
+  filteredLogs,
   history,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
   const [modalContent, setModalContent] = useAtom(modalContentAtom);
 
   const eventsModal = (
@@ -184,8 +227,28 @@ const BlockTitle = ({
     }
   };
 
+  const openLog = (id) => {
+    modalPopper(
+      <PipelineLogs
+        filter={(entry) =>
+          entry?.blockId &&
+          isEmpty(entry?.argoLog) &&
+          entry?.blockId?.slice(6) == id
+        }
+        title="Block Log"
+      />,
+    );
+  };
+
   let actionContainer = (
     <div className="action-container">
+      <button
+        id="btn_open_log"
+        className="view-btn"
+        onClick={() => openLog(id)}
+      >
+        <CloudLogging size={20} />
+      </button>
       <button
         id="btn_open_code"
         className="view-btn"

@@ -42,8 +42,6 @@ function isParameterBlock(blockSpec) {
 export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
   const bufferPath = path.resolve(process.cwd(), fromDir);
 
-  logger.debug(`supposed to be writing from ${fromDir} to ${toDir}`);
-
   // Takes existing pipeline + spec
   const writePipelineDirectory = toDir;
   const pipelineSpecsPath = path.join(
@@ -94,7 +92,6 @@ export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
       }
     }
 
-    logger.debug(`saving ${key} from ${existingBlockPath} to ${newBlockPath}`);
     if (existingBlockPath != newBlockPath && !isParameterBlock(blockSpec)) {
       // if it's the same folder, don't try to copy it
       await fs.cp(existingBlockPath, newBlockPath, { recursive: true });

@@ -3,9 +3,7 @@
     "id": "images-to-video",
     "name": "Images to Video",
     "description": "This function takes a list of image filepaths and compiles them into a video file.",
-    "system_versions": [
-      "0.1"
-    ],
+    "system_versions": ["0.1"],
     "block_version": "block version number",
     "block_source": "core/blocks/images-to-video",
     "block_type": "compute"
@@ -36,10 +34,7 @@
     "container": {
       "image": "images-to-video",
       "version": "images-to-video-d3ctdctemkj51",
-      "command_line": [
-        "python",
-        "entrypoint.py"
-      ]
+      "command_line": ["python", "-u", "entrypoint.py"]
     }
   },
   "views": {
@@ -53,12 +48,8 @@
       "pos_z": "999",
       "behavior": "modal",
       "order": {
-        "input": [
-          "images"
-        ],
-        "output": [
-          "video_path"
-        ]
+        "input": ["images"],
+        "output": ["video_path"]
       }
     }
   },

@@ -3,9 +3,7 @@
     "id": "post-maker",
     "name": "Post Maker",
     "description": "Generates a post based on requested content, a theme of the week and message tone.",
-    "system_versions": [
-      "0.1"
-    ],
+    "system_versions": ["0.1"],
     "block_version": "block version number",
     "block_source": "core/blocks/post-maker",
     "block_type": "compute"
@@ -68,10 +66,7 @@
     "container": {
       "image": "post-maker",
       "version": "post-maker-m718275ddyldd62d31",
-      "command_line": [
-        "python",
-        "entrypoint.py"
-      ]
+      "command_line": ["python", "-u", "entrypoint.py"]
     }
   },
   "views": {

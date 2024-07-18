@@ -3,9 +3,7 @@
     "id": "canny-edge",
     "name": "Canny Edge",
     "description": "Computes the Canny edge detection on an image at various thresholds and saves the results.",
-    "system_versions": [
-      "0.1"
-    ],
+    "system_versions": ["0.1"],
     "block_version": "block version number",
     "block_source": "core/blocks/canny-edge",
     "block_type": "compute"
@@ -67,10 +65,7 @@
     "container": {
       "image": "canny-edge",
       "version": "canny-edge-do6x3zn52vcq",
-      "command_line": [
-        "python",
-        "entrypoint.py"
-      ]
+      "command_line": ["python", "-u", "entrypoint.py"]
     }
   },
   "views": {
@@ -83,15 +78,8 @@
       "pos_y": "588",
       "pos_z": "999, this is the z-index for 2D canvas",
       "order": {
-        "output": [
-          "image_paths"
-        ],
-        "input": [
-          "image_path",
-          "range_min",
-          "range_max",
-          "step"
-        ]
+        "output": ["image_paths"],
+        "input": ["image_path", "range_min", "range_max", "step"]
       }
     }
   },
