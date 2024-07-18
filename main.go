@@ -400,7 +400,11 @@ func main() {
 			return
 		}
 
-		go cloudExecute(&execution.Pipeline, newExecution.ID, execution.Id, prefix, execution.Build, config, db, hub)
+		if config.IsLocal || config.Cloud.Provider == "Debug" {
+			go localExecute(&execution.Pipeline, newExecution.ID, execution.Id, prefix, execution.Build, config, db, hub)
+		} else {
+			go cloudExecute(&execution.Pipeline, newExecution.ID, execution.Id, prefix, execution.Build, config, db, hub)
+		}
 
 		retData, err := filterPipeline(ctx, db, execution.Id)
 		if err != nil {

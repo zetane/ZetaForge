@@ -37,7 +37,7 @@ func checkImage(ctx context.Context, image string, cfg Config) (bool, bool, erro
 			minikubeImage := cmd.NewCmd("minikube", "-p", "zetaforge", "image", "ls")
 			<-minikubeImage.Start()
 			for _, line := range minikubeImage.Status().Stdout {
-				if "docker.io/"+image == line {
+				if "docker.io/zetaforge/"+image == line {
 					return true, false, nil
 				}
 			}
@@ -384,7 +384,7 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 			blocks[blockPath] = ""
 			if build || !built {
 				if cfg.IsLocal {
-					blocks[blockPath] = "zetaforge/" + block.Action.Container.Image + ":" + block.Action.Container.Version
+					blocks[blockPath] = "zetaforge/" + organization + "/" + block.Action.Container.Image + ":" + block.Action.Container.Version
 				} else {
 					blocks[blockPath] = block.Action.Container.Image + "-" + block.Action.Container.Version
 					templates[kaniko.Name] = kaniko

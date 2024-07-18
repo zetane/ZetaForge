@@ -8,8 +8,12 @@ import {
 import config from "../../config";
 
 function getFullS3Key(key, configuration) {
-  const data = atob(configuration.anvil.token.split('.')[1]);
-  return JSON.parse(data).sub + "/" + key
+  if (configuration.anvil.token) {
+    const data = atob(configuration.anvil.token.split('.')[1]);
+    return JSON.parse(data).sub + "/" + key
+  } else {
+    return key
+  }
 }
 
 function getClient(configuration) {
