@@ -40,6 +40,7 @@ export const appRouter = router({
       }),
     )
     .query(async (opts) => {
+      router;
       const { input } = opts;
       const { blockId } = input;
       const resources = process.resourcesPath;
