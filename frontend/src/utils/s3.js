@@ -1,8 +1,6 @@
 import {
   HeadObjectCommand,
-  PutObjectCommand,
   GetObjectCommand,
-  CopyObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
 import config from "../../config";
@@ -64,6 +62,5 @@ export async function getFileData(key, anvilConfiguration) {
   } else {
     const message = `File with key ${key} does not exist in S3`;
     throw new Error(message);
-    return null;
   }
 }

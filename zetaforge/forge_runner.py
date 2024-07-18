@@ -234,7 +234,7 @@ def run_forge(server_version=None, client_version=None, server_path=None, client
             server = subprocess.Popen([server_executable],stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.dirname(server_path))
         except:
             mixpanel_client.track_event("Launch Failure - Anvil Launch Failed")
-            raise Exception(f"Error occured while launching the server executable: {server_executable}")
+            raise Exception(f"Error occurred while launching the server executable: {server_executable}")
 
         mixpanel_client.track_event('Launch - Anvil Launched')
 
@@ -258,7 +258,7 @@ def run_forge(server_version=None, client_version=None, server_path=None, client
             client = subprocess.Popen(client_executable, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.dirname(client_path))
         except:
             mixpanel_client.track_event("Launch Failure - Client Launch Failed")
-            raise Exception(f"Error occured while launching the client executable: {client_executable}")
+            raise Exception(f"Error occurred while launching the client executable: {client_executable}")
 
         mixpanel_client.track_event('Launch - Client Launched')
 
@@ -324,7 +324,7 @@ def uninstall(server_version=None, server_path=None):
     try:
         server = subprocess.Popen([server_executable, "--uninstall"],stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.path.dirname(server_path))
     except:
-        raise Exception(f"Error occured while uninstalling")
+        raise Exception(f"Error occurred while uninstalling")
 
     server_stdout_thread = threading.Thread(target=read_output, args=(server, '[server]'))
     server_stderr_thread = threading.Thread(target=read_error, args=(server, '[server]'))
