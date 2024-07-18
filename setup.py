@@ -1,8 +1,6 @@
 import json
 import os
-
 from setuptools import find_packages, setup
-
 
 def get_package_version():
     # Specify the path to the package.json file

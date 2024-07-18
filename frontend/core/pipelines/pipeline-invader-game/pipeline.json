@@ -159,7 +159,7 @@
   },
   "sink": "",
   "build": "",
-  "name": "Ivader Game Demo",
+  "name": "Invader Game Demo",
   "id": "pipeline-14hqgq7kfod4",
   "description": "Three.js space invader game based on image inputs."
 }
