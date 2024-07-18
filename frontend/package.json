@@ -1,6 +1,6 @@
 {
   "name": "zetaforge",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "main": "dist-electron/main/index.js",
   "description": "ZetaForge",
   "author": "Zetane <info@zetane.com>",
