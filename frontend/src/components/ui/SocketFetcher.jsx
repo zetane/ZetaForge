@@ -14,20 +14,17 @@ export default function SocketFetcher() {
     pipeline?.socketUrl,
   );
 
-  const { logs, updateLogs } = useUnifiedLogs();
+  const { updateLogs } = useUnifiedLogs();
 
   const updateNodes = useCallback((parsedLogEntry) => {
     setPipeline((draft) => {
-      if (draft?.data[parsedLogEntry?.blockId?.slice(6)]) {
-        const node = draft.data[parsedLogEntry?.blockId?.slice(6)];
+      if (draft?.data[parsedLogEntry?.blockId.slice(6)]) {
+        const node = draft.data[parsedLogEntry?.blockId.slice(6)];
         if (
           parsedLogEntry?.event?.tag === "outputs" ||
           parsedLogEntry?.event?.tag === "inputs"
         ) {
           try {
-            if (!node.events[parsedLogEntry.event?.tag]) {
-              node.events[parsedLogEntry.event?.tag] = {};
-            }
             node.events[parsedLogEntry.event?.tag] = parsedLogEntry.event?.data;
           } catch (err) {
             console.error(`Failed to parse ${parsedLogEntry.event?.tag}:`, err);

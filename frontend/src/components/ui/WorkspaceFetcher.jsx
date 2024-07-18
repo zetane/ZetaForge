@@ -6,6 +6,7 @@ import { workspaceAtom } from "@/atoms/pipelineAtom";
 import { useImmerAtom } from "jotai-immer";
 import { useAtom } from "jotai";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
+import { getAllPipelines } from "@/client/anvil";
 
 export default function WorkspaceFetcher() {
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
@@ -15,10 +16,7 @@ export default function WorkspaceFetcher() {
   const { pending, error, data } = useQuery({
     queryKey: ["pipelines"],
     queryFn: async () => {
-      const res = await axios.get(
-        `http://${configuration.anvil.host}:${configuration.anvil.port}/pipeline/filter?limit=100000&offset=0`,
-      );
-      return res.data;
+      return await getAllPipelines(configuration);
     },
     refetchInterval: workspace.fetchInterval,
   });

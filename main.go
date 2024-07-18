@@ -457,6 +457,7 @@ func main() {
 
 		conn, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
 		if err != nil {
+			// If the upgrade fails, then Upgrade replies to the client with an HTTP error response.
 			log.Printf("Failed to upgrade connection: %v", err)
 			return
 		}

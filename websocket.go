@@ -14,10 +14,7 @@ const pongWait = 60 * time.Second
 const pingPeriod = (pongWait * 9) / 10
 
 const (
-	CloseNormalClosure   = 1000
-	ClosePolicyViolation = 1008
-	CloseInternalError   = 1011
-	CloseRoomNotFound    = 4004 // Custom close code for room not found
+	CloseRoomNotFound = 4004 // Custom close code for room not found
 )
 
 type Client struct {

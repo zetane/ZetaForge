@@ -68,7 +68,7 @@ const BlockGenerator = ({
     );
   }, [logs]);
 
-  const currentState = useMemo(() => {
+  const stateClass = useMemo(() => {
     const logA = Array.from(logs.values());
     let curr = null;
     for (const entry of logA) {
@@ -76,34 +76,17 @@ const BlockGenerator = ({
         continue;
       }
       if (entry?.event?.tag == "inputs") {
-        curr = "running";
+        curr = "glowing-border";
       }
       if (entry?.argoLog?.level == "error") {
-        curr = "error";
+        curr = "red-shadow";
       }
       if (entry?.argoLog?.error == "<nil>") {
-        curr = "done";
+        curr = "green-shadow";
       }
     }
     return curr;
   }, [filteredLogs]);
-
-  let stateClass = null;
-  if (currentState == "running") {
-    stateClass = "glowing-border";
-  } else if (currentState == "error") {
-    stateClass = "red-shadow";
-  } else if (currentState == "done") {
-    stateClass = "green-shadow";
-  }
-
-  const runningState = useMemo(() => {
-    const logA = Array.from(logs.values());
-    let running = false;
-    for (const entry of logA) {
-    }
-    return running;
-  });
 
   const [iframeSrc, setIframeSrc] = useState("");
   useEffect(() => {

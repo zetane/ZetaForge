@@ -37,8 +37,6 @@ export async function saveBlock(blockKey, blockSpec, fromPath, toPath) {
 export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
   const bufferPath = path.resolve(process.cwd(), fromDir);
 
-  //logger.debug(`supposed to be writing from ${fromDir} to ${toDir}`);
-
   // Takes existing pipeline + spec
   const writePipelineDirectory = toDir;
   const pipelineSpecsPath = path.join(
@@ -88,8 +86,6 @@ export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
         existingBlockPath = path.join(process.resourcesPath, existingBlockPath);
       }
     }
-
-    //logger.debug(`saving ${key} from ${existingBlockPath} to ${newBlockPath}`);
 
     if (existingBlockPath != newBlockPath) {
       // if it's the same folder, don't try to copy it

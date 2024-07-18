@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useAtom, useAtomValue } from "jotai";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
@@ -12,7 +12,6 @@ export const useUnifiedLogs = () => {
   const configuration = useAtomValue(activeConfigurationAtom);
   const [logs, setLogs] = useImmerAtom(logsAtom);
 
-  // Function to update logs
   const updateLogs = useCallback((newEntries) => {
     newEntries.forEach((newEntry) => {
       const entry = parseLogLine(newEntry);
@@ -30,7 +29,6 @@ export const useUnifiedLogs = () => {
     setLogs((draft) => draft.clear());
   }, [pipeline?.history]);
 
-  // 1. Handle logs in progress, comes from Anvil
   useEffect(() => {
     if (pipeline?.logs) {
       const serverLogs = Array.isArray(pipeline.logs)
@@ -41,8 +39,6 @@ export const useUnifiedLogs = () => {
       updateLogs(filteredLogs);
     }
   }, [pipeline?.logs, updateLogs]);
-
-  // 2. Handle logs that have completed and stored in S3
 
   const fetchLogPath = !!pipeline?.record && pipeline.record?.LogPath != "";
   const { data: polledData } = useQuery({
@@ -55,9 +51,6 @@ export const useUnifiedLogs = () => {
       return fileData.split("\n").filter((line) => line.trim() !== "");
     },
     enabled: fetchLogPath,
-    onError: (e) => {
-      //updateLogs([e]);
-    },
   });
 
   useEffect(() => {
@@ -66,15 +59,7 @@ export const useUnifiedLogs = () => {
     }
   }, [polledData, updateLogs]);
 
-  // Sort logs by time
-  const sortedLogs = useMemo(() => {
-    return Array.from(logs.values()).sort((a, b) =>
-      a?.time?.localeCompare(b?.time),
-    );
-  }, [logs]);
-
   return {
-    logs: sortedLogs,
     updateLogs: updateLogs,
   };
 };
