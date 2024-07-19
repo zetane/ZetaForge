@@ -10,6 +10,7 @@ import config from "../config";
 import { getDirectoryFilesRecursive } from "./fileSystem";
 import path from "path";
 import { logger } from "./logger";
+import { S3SyncClient } from "s3-sync-client"
 
 function getClient(configuration) {
   const endpoint = `http://${configuration.s3.host}:${configuration.s3.port}`;
@@ -182,4 +183,12 @@ export async function getFile(key, destinationPath, anvilConfiguration) {
     logger.error(message, err);
     throw new Error(message);
   }
+}
+
+export async function syncExecutionResults(s3Key, localPath, anvilConfiguration) {
+  const client = getClient(anvilConfiguration);
+  const { sync } = new S3SyncClient({ client: client });
+
+  const diff = await sync(`s3://${anvilConfiguration.s3.bucket}/${s3Key}`, localPath, { dryRun: true });
+  logger.debug(diff);
 }

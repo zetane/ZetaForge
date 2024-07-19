@@ -20,6 +20,9 @@ import {
 import { publicProcedure, router } from "./trpc";
 import { errorHandling } from "./middleware";
 import { logger } from "./logger.js";
+import { syncExecutionResults } from "./s3.js";
+import { anvilConfigurationSchema } from "./schema";
+
 
 export const appRouter = router({
   getBlocks: publicProcedure.use(errorHandling).query(async () => {
@@ -224,22 +227,7 @@ export const appRouter = router({
         buffer: z.string(),
         name: z.string(),
         rebuild: z.boolean(),
-        anvilConfiguration: z.object({
-          name: z.string(),
-          anvil: z.object({
-            host: z.string(),
-            port: z.string(),
-            token: z.string(),
-          }),
-          s3: z.object({
-            host: z.string(),
-            port: z.string(),
-            region: z.string(),
-            bucket: z.string(),
-            accessKeyId: z.string(),
-            secretAccessKey: z.string(),
-          }),
-        }),
+        anvilConfiguration: anvilConfigurationSchema,
       }),
     )
     .mutation(async (opts) => {
@@ -292,6 +280,21 @@ export const appRouter = router({
       const { blockPath, blockSpecs } = input;
 
       return await saveBlockSpecs(blockPath, blockSpecs);
+    }),
+  dowloadResults: publicProcedure
+    .use(errorHandling)
+    .input(
+      z.object({
+        s3Key: z.string(),
+        bufferPath: z.string(),
+        anvilConfiguration: anvilConfigurationSchema,
+      }),
+    )
+    .mutation(async (opts) => {
+      const { input } = opts;
+      const { s3Key, bufferPath, anvilConfiguration } = input;
+
+      await syncExecutionResults(s3Key, bufferPath, anvilConfiguration);
     }),
   runTest: publicProcedure
     .use(errorHandling)
