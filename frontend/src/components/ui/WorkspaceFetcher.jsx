@@ -28,17 +28,20 @@ export default function WorkspaceFetcher() {
       const existing = workspace.pipelines[key];
 
       const existingStatus = existing?.record?.Status;
-      const shouldUpdate = serverPipeline.Status != existingStatus || !existing;
+      const shouldUpdate =
+        serverPipeline?.Status != existingStatus || !existing;
 
       if (shouldUpdate) {
-        const loaded = loadPipeline(serverPipeline, configuration);
-        console.log(
-          `updating status ${existingStatus} to ${serverPipeline.Status} for ${key}`,
-        );
-        setWorkspace((draft) => {
-          draft.pipelines[key] = loaded;
-          draft.executions[loaded.record.Execution] = loaded;
-        });
+        try {
+          const loaded = loadPipeline(serverPipeline, configuration);
+          setWorkspace((draft) => {
+            draft.pipelines[key] = loaded;
+            draft.executions[loaded?.record?.Execution] = loaded;
+          });
+        } catch (e) {
+          console.log("Failed to load ", e);
+          return;
+        }
       }
 
       const isLogging =

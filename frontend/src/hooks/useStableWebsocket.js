@@ -11,7 +11,7 @@ const WebSocketCloseCodes = {
   4004: "Room Not Found",
 };
 
-export const useStableWebSocket = (url: string | null) => {
+export const useStableWebSocket = (url) => {
   const [wsError, setWsError] = useState(null);
   const reconnectCount = useRef(0);
 
