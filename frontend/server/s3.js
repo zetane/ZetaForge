@@ -185,10 +185,11 @@ export async function getFile(key, destinationPath, anvilConfiguration) {
   }
 }
 
-export async function syncExecutionResults(s3Key, localPath, anvilConfiguration) {
+export async function syncS3ToLocalDirectory(s3Prefix, localPath, anvilConfiguration) {
   const client = getClient(anvilConfiguration);
   const { sync } = new S3SyncClient({ client: client });
 
-  const diff = await sync(`s3://${anvilConfiguration.s3.bucket}/${s3Key}`, localPath, { dryRun: true });
+  const s3Path = `s3://${anvilConfiguration.s3.bucket}/${s3Prefix}`
+  const diff = await sync(s3Path, localPath, { dryRun: true });
   logger.debug(diff);
 }
