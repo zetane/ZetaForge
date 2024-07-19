@@ -102,56 +102,6 @@ func downloadFile(ctx context.Context, key string, filename string, cfg Config) 
 	return nil
 }
 
-func downloadFiles(ctx context.Context, sink string, prefix string, cfg Config) error {
-	client, err := s3Client(ctx, cfg)
-	if err != nil {
-		return err
-	}
-
-	res, err := client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
-		Bucket: aws.String(cfg.BucketName),
-		Prefix: aws.String(prefix),
-	})
-
-	if err != nil {
-		return err
-	}
-
-	for _, content := range res.Contents {
-		pathWithoutPrefix := strings.TrimPrefix(*content.Key, prefix)
-		dirPath, filename := filepath.Split(pathWithoutPrefix)
-
-		// note this is temporary, as this code will be moved to the frontend
-		location := filepath.Join(sink, "files", dirPath)
-		if err := os.MkdirAll(location, 0755); err != nil {
-			return err
-		}
-		result, err := client.GetObject(ctx, &s3.GetObjectInput{
-			Bucket: aws.String(cfg.BucketName),
-			Key:    content.Key,
-		})
-
-		if err != nil {
-			return err
-		}
-
-		file, err := os.OpenFile(filepath.Join(location, filename), os.O_CREATE|os.O_RDWR, 0644)
-		if err != nil {
-			result.Body.Close()
-			return err
-		}
-
-		if _, err := io.Copy(file, result.Body); err != nil {
-			result.Body.Close()
-			return err
-		}
-
-		result.Body.Close()
-	}
-
-	return nil
-}
-
 func deleteFiles(ctx context.Context, prefix string, extraFiles []string, cfg Config) {
 	client, err := s3Client(ctx, cfg)
 	if err != nil {
@@ -833,13 +783,6 @@ func cleanupRun(ctx context.Context, db *sql.DB, executionId int64, executionUui
 
 	if err := results(ctx, db, executionId, pipeline, workflow); err != nil {
 		log.Printf("failed to save results; err=%v", err)
-	}
-
-	if cfg.IsLocal {
-		sink := filepath.Join(pipeline.Sink, "history", executionUuid)
-		if err := downloadFiles(ctx, sink, s3Key, cfg); err != nil {
-			log.Printf("failed to download files; err=%v", err)
-		}
 	}
 }
 
