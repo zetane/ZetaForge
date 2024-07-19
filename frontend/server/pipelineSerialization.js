@@ -35,8 +35,12 @@ export async function saveBlock(blockKey, blockSpec, fromPath, toPath) {
 }
 
 //added a helper function to know if a block is a parameter block
-function isParameterBlock(blockSpec) {
+function hasParameter(blockSpec) {
   return blockSpec && blockSpec.action && blockSpec.action.parameters;
+}
+
+function hasContainer(blockSpec) {
+  return blockSpec.action.container || blockSpec.action.pipeline;
 }
 
 export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
@@ -92,7 +96,7 @@ export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
       }
     }
 
-    if (existingBlockPath != newBlockPath && !isParameterBlock(blockSpec)) {
+    if (existingBlockPath != newBlockPath) {
       // if it's the same folder, don't try to copy it
       await fs.cp(existingBlockPath, newBlockPath, { recursive: true });
       await fs.writeFile(
@@ -137,7 +141,7 @@ function getPipelineBlocks(pipelineSpecs) {
   const blocks = new Set();
   const pipeline = pipelineSpecs.pipeline;
   for (const [key, block] of Object.entries(pipeline)) {
-    if (block.action.container || block.action.pipeline) {
+    if (hasContainer(block) && !hasParameter(block)) {
       blocks.add(key);
     }
   }
