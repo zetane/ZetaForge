@@ -1,17 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { useLoadServerPipeline } from "@/hooks/useLoadPipeline";
-import { useEffect } from "react";
+import { act, useEffect } from "react";
 import { workspaceAtom } from "@/atoms/pipelineAtom";
 import { useImmerAtom } from "jotai-immer";
 import { useAtom } from "jotai";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { getAllPipelines } from "@/client/anvil";
+import { trpc } from "@/utils/trpc";
 
 export default function WorkspaceFetcher() {
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
   const loadPipeline = useLoadServerPipeline();
   const [configuration] = useAtom(activeConfigurationAtom);
+  const downloadExecutionResults = trpc.dowloadExecutionResults.useMutation();
 
   const { pending, error, data } = useQuery({
     queryKey: ["pipelines"],

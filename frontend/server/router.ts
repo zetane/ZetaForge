@@ -21,8 +21,7 @@ import { publicProcedure, router } from "./trpc";
 import { errorHandling } from "./middleware";
 import { logger } from "./logger.js";
 import { anvilConfigurationSchema } from "./schema";
-import { syncExecutionResults } from "./execution"
-
+import { syncExecutionResults } from "./execution";
 
 export const appRouter = router({
   getBlocks: publicProcedure.use(errorHandling).query(async () => {
@@ -285,17 +284,22 @@ export const appRouter = router({
     .use(errorHandling)
     .input(
       z.object({
-        s3ResultPrefix: z.string(),
-        sink: z.string(),
+        buffer: z.string(),
+        pipelineUuid: z.string(),
         executionUuid: z.string(),
         anvilConfiguration: anvilConfigurationSchema,
       }),
     )
     .mutation(async (opts) => {
       const { input } = opts;
-      const { s3ResultPrefix, sink, executionUuid, anvilConfiguration } = input;
+      const { buffer, pipelineUuid, executionUuid, anvilConfiguration } = input;
 
-      await syncExecutionResults(s3ResultPrefix, sink, executionUuid, anvilConfiguration);
+      await syncExecutionResults(
+        buffer,
+        pipelineUuid,
+        executionUuid,
+        anvilConfiguration,
+      );
     }),
   runTest: publicProcedure
     .use(errorHandling)

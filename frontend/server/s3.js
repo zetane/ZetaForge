@@ -10,7 +10,7 @@ import config from "../config";
 import { getDirectoryFilesRecursive } from "./fileSystem";
 import path from "path";
 import { logger } from "./logger";
-import { S3SyncClient, TransferMonitor } from "s3-sync-client"
+import { S3SyncClient, TransferMonitor } from "s3-sync-client";
 
 function getClient(configuration) {
   const endpoint = `http://${configuration.s3.host}:${configuration.s3.port}`;
@@ -185,12 +185,14 @@ export async function getFile(key, destinationPath, anvilConfiguration) {
   }
 }
 
-export async function syncS3ToLocalDirectory(s3Prefix, localPath, anvilConfiguration) {
+export async function syncS3ToLocalDirectory(
+  s3Prefix,
+  localPath,
+  anvilConfiguration,
+) {
   const client = getClient(anvilConfiguration);
   const { sync } = new S3SyncClient({ client: client });
-  
-  const monitor = new TransferMonitor();
-  monitor.on('progress', (progress) => logger.debug(progress));
-  const s3Path = `s3://${anvilConfiguration.s3.bucket}/${s3Prefix}`
-  await sync(s3Path, localPath, { del: true, monitor: monitor});
+
+  const s3Path = `s3://${anvilConfiguration.s3.bucket}/${s3Prefix}`;
+  await sync(s3Path, localPath, { del: true });
 }
