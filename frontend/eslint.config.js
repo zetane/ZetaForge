@@ -9,6 +9,11 @@ export default [
   ...tseslint.configs.recommended,
   pluginReactConfig,
   {
+    rules: {
+      "no-control-regex": 0,
+    },
+  },
+  {
     ignores: [
       ".cache/*",
       "core/*",
@@ -16,6 +21,7 @@ export default [
       "dist-electron/*",
       "electron/*",
       "release/*",
+      "utils/schema/*",
     ],
   },
 ];

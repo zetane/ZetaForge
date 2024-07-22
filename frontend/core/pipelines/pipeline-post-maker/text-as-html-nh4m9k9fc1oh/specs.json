@@ -3,9 +3,7 @@
     "id": "text-as-html",
     "name": "Text as HTML",
     "description": "Generates an HTML file that displays the provided data and returns the file name.\n\nThis function takes a string, dictionary, or list of dictionaries and generates\nan HTML file to visually present the data. The generated HTML file is saved with\na unique name to avoid conflicts. The HTML content includes styling and scripts\nto format the data for better readability.\n\nParameters:\ndata_view (str, dict, or list): The data to be displayed in the gallery. It can be:\n    - A single string\n    - A single dictionary\n    - A list of strings or dictionaries\n\nReturns:\ndict: A dictionary containing the key 'html' with the value being the name of the\ngenerated HTML file.",
-    "system_versions": [
-      "0.1"
-    ],
+    "system_versions": ["0.1"],
     "block_version": "block version number",
     "block_source": "core/blocks/text-as-html",
     "block_type": "view"
@@ -31,10 +29,7 @@
     "container": {
       "image": "text-as-html",
       "version": "text-as-html-nh4m9k9fc1oh",
-      "command_line": [
-        "python",
-        "entrypoint.py"
-      ]
+      "command_line": ["python", "-u", "entrypoint.py"]
     }
   },
   "views": {
@@ -51,12 +46,8 @@
       "pos_y": "-200",
       "pos_z": "999, this is the z-index for 2D canvas",
       "order": {
-        "input": [
-          "data_view"
-        ],
-        "output": [
-          "html"
-        ]
+        "input": ["data_view"],
+        "output": ["html"]
       }
     },
     "mode": "modal"

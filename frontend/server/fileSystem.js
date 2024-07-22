@@ -1,4 +1,3 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import fs from "fs/promises";
 import { tmpdir } from "os";
 import path from "path";
@@ -7,7 +6,6 @@ import {
   PIPELINE_SPECS_FILE_NAME,
 } from "../src/utils/constants";
 import { logger } from "./logger";
-import { ServerError, HttpStatus } from "./serverError";
 
 export const readPipelines = async (dir) => {
   const items = await fs.readdir(dir);
@@ -92,8 +90,8 @@ export async function filterDirectories(filePaths) {
   const stats = await Promise.all(filePaths.map((p) => fs.stat(p)));
   return filePaths
     .map((p, i) => [p, stats[i]])
-    .filter(([p, s]) => s.isDirectory())
-    .map(([p, s]) => p);
+    .filter(([, s]) => s.isDirectory())
+    .map(([p]) => p);
 }
 
 export async function withFileSystemRollback(restorablePaths, workFunction) {

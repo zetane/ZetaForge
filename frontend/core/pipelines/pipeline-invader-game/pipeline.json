@@ -8,9 +8,7 @@
         "block_version": "block version number",
         "block_source": "core/blocks/invader-game",
         "block_type": "view",
-        "system_versions": [
-          "0.1"
-        ]
+        "system_versions": ["0.1"]
       },
       "inputs": {
         "player_image_path": {
@@ -45,10 +43,7 @@
         "container": {
           "image": "invader-game",
           "version": "invader-game-3507nhc90zoa",
-          "command_line": [
-            "python",
-            "entrypoint.py"
-          ]
+          "command_line": ["python", "-u", "entrypoint.py"]
         }
       },
       "views": {
@@ -77,9 +72,7 @@
         "block_version": "block version number",
         "block_source": "core/blocks",
         "block_type": "compute",
-        "system_versions": [
-          "0.1"
-        ]
+        "system_versions": ["0.1"]
       },
       "inputs": {},
       "outputs": {
@@ -125,9 +118,7 @@
         "block_version": "block version number",
         "block_source": "core/blocks",
         "block_type": "compute",
-        "system_versions": [
-          "0.1"
-        ]
+        "system_versions": ["0.1"]
       },
       "inputs": {},
       "outputs": {
@@ -168,7 +159,7 @@
   },
   "sink": "",
   "build": "",
-  "name": "Ivader Game Demo",
+  "name": "Invader Game Demo",
   "id": "pipeline-14hqgq7kfod4",
   "description": "Three.js space invader game based on image inputs."
 }

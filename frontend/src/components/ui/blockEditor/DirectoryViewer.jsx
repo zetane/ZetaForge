@@ -244,7 +244,7 @@ export default function DirectoryViewer({ blockPath, blockKey }) {
       body: JSON.stringify(saveData),
     })
       .then((response) => response.json())
-      .then(async (data) => {
+      .then(async () => {
         setUnsavedChanges(false);
         if (isComputation(currentFile.path)) {
           try {

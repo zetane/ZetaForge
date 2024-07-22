@@ -1,121 +1,51 @@
 import { LogsCodeMirror } from "@/components/ui/blockEditor/CodeMirrorComponents";
 import ClosableModal from "./modal/ClosableModal";
-import { pipelineAtom } from "@/atoms/pipelineAtom";
-import { useAtom, useAtomValue } from "jotai";
 import ScrollToBottom from "react-scroll-to-bottom";
-import useWebSocket, { ReadyState } from "react-use-websocket";
-import { useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
-import { getFileData } from "@/utils/s3";
-import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
-import { parseLog } from "@/components/ui/useLoadPipeline";
+import { useMemo } from "react";
+import { useAtom } from "jotai";
+import { logsAtom } from "@/atoms/logsAtom";
 
-export const PipelineLogs = () => {
-  const [configuration, _] = useAtom(activeConfigurationAtom);
-  const pipeline = useAtomValue(pipelineAtom);
-  const socket = pipeline?.socketUrl || null;
+export const isEmpty = (obj) => {
+  for (var i in obj) return false;
+  return true;
+};
 
-  const { pending, error, data } = useQuery({
-    queryKey: ["logs", pipeline?.history],
-    queryFn: async () => {
-      return await getFileData(pipeline?.record?.LogPath, configuration);
-    },
-    enabled: pipeline?.record?.LogPath != null,
+export const PipelineLogs = ({ title, filter }) => {
+  const [logs, _] = useAtom(logsAtom);
+
+  const sortedLogs = useMemo(() => {
+    let result = Array.from(logs?.values()).sort((a, b) =>
+      a?.time?.localeCompare(b?.time),
+    );
+    if (typeof filter === "function") {
+      result = result.filter(filter);
+    }
+
+    return result;
+  }, [logs, filter]);
+
+  const formattedLogs = [];
+  sortedLogs.forEach((log) => {
+    if (!log?.time) {
+      formattedLogs.push(log.message);
+      return;
+    }
+    let logString = `[${log.time}]${log.blockId ? `[${log.blockId}]` : ""} ${log.message}`;
+    if (!isEmpty(log.argoLog)) {
+      return;
+    }
+    formattedLogs.push(logString);
   });
-  let log = pipeline.log;
-  if (data) {
-    log = parseLog(data.split("\n"));
-  }
-
-  /*
-  const { sendMessage, lastMessage, readyState } = useWebSocket(
-    socket,
-    {
-      share: true,
-      shouldReconnect: () => false,
-    }
-  );
-
-  useEffect(() => {
-    if (readyState === ReadyState.OPEN) {
-      if (pipeline.socketUrl) {
-      }
-    } else if (readyState === ReadyState.CLOSED) {
-    }
-  }, [readyState]);
-
-  useEffect(() => {
-    if (lastMessage !== null) {
-      const content = JSON.parse(lastMessage.data).content
-      const {executionId, blockId, message, time, ...jsonObj} = JSON.parse(content)
-
-      setPipeline((draft) => {
-        let shouldLog = true
-
-        if (draft.data[blockId]) {
-          const node = draft.data[blockId]
-          const tagAndObject = message.split("|||")
-          const tag = tagAndObject[0].trim()
-
-          if (tag == "debug") {
-            shouldLog = false
-          }
-          if (tag == "outputs") {
-            try {
-              const outs = JSON.parse(tagAndObject[1]);
-              if (outs && typeof outs === 'object') { // Ensure outs is an object
-                for (const [key, value] of Object.entries(outs)) {
-                  if (!node.events.outputs) {
-                    node.events["outputs"] = {};
-                  }
-                  node.events.outputs[key] = value;
-                }
-              }
-            } catch (err) {
-              console.error('Failed to parse outputs:', err);
-            }
-          }
-          if (tag == "inputs") {
-            try {
-              const outs = JSON.parse(tagAndObject[1]);
-              if (outs && typeof outs === 'object') { // Ensure outs is an object
-                for (const [key, value] of Object.entries(outs)) {
-                  if (!node.events.inputs) {
-                    node.events["inputs"] = {};
-                  }
-                  node.events["inputs"][key] = value;
-                }
-              }
-            } catch (err) {
-              console.error('Failed to parse inputs:', err);
-            }
-          }
-
-        }
-
-        if (shouldLog) {
-          let logString = `[${time}][${executionId}] ${message}`
-          if (blockId) {
-            logString = `[${time}][${executionId}][${blockId}] ${message}`
-          }
-          //draft.log.push(logString)
-        }
-      })
-    }
-  }, [lastMessage]);
-
-  */
 
   return (
     <ClosableModal
-      modalHeading="Pipeline Logs"
+      modalHeading={title}
       passiveModal={true}
       modalClass="custom-modal-size"
     >
       <ScrollToBottom className="viewer-container">
         <div className="logs-viewer">
-          <LogsCodeMirror code={log.join("\n")} />
+          <LogsCodeMirror code={formattedLogs.join("\n")} />
         </div>
       </ScrollToBottom>
     </ClosableModal>

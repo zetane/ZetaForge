@@ -3,9 +3,7 @@
     "id": "view-images",
     "name": "View Images",
     "description": "Generates an HTML file with a unique name and returns the file name.",
-    "system_versions": [
-      "0.1"
-    ],
+    "system_versions": ["0.1"],
     "block_version": "block version number",
     "block_source": "core/blocks/view-images",
     "block_type": "view"
@@ -31,10 +29,7 @@
     "container": {
       "image": "view-images",
       "version": "view-images-2un5b0vvd3ur",
-      "command_line": [
-        "python",
-        "entrypoint.py"
-      ]
+      "command_line": ["python", "-u", "entrypoint.py"]
     }
   },
   "views": {
@@ -51,12 +46,8 @@
       "pos_y": "403",
       "pos_z": "999, this is the z-index for 2D canvas",
       "order": {
-        "input": [
-          "image_paths_view"
-        ],
-        "output": [
-          "html"
-        ]
+        "input": ["image_paths_view"],
+        "output": ["html"]
       }
     },
     "mode": "modal"

@@ -10,7 +10,7 @@ import "@fortawesome/fontawesome-free/css/all.min.css";
 import { useAtom, useSetAtom } from "jotai";
 import { useImmerAtom } from "jotai-immer";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useLoadPipeline } from "./useLoadPipeline";
+import { useLoadPipeline } from "@/hooks/useLoadPipeline";
 import { createConnections } from "@/utils/createConnections";
 
 const launchDrawflow = (

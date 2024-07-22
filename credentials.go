@@ -46,6 +46,8 @@ type Debug struct {
 	RegistryPort int
 }
 
+const BUCKET = "zetaforge"
+
 type LocalEndpoint struct {
 	Bucket string
 	S3Port int
@@ -87,9 +89,8 @@ func s3Client(ctx context.Context, cfg Config) (*s3.Client, error) {
 	if err != nil {
 		return &s3.Client{}, err
 	}
-
 	client := s3.NewFromConfig(awsConfig, func(o *s3.Options) {
-		o.EndpointResolverV2 = endpoint
+		o.EndpointResolverV2 = &LocalEndpoint{Bucket: BUCKET, S3Port: cfg.Local.BucketPort}
 	})
 
 	return client, nil

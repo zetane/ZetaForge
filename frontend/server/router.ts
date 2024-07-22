@@ -40,6 +40,7 @@ export const appRouter = router({
       }),
     )
     .query(async (opts) => {
+      router;
       const { input } = opts;
       const { blockId } = input;
       const resources = process.resourcesPath;
@@ -121,7 +122,8 @@ export const appRouter = router({
     )
     .mutation(async (opts) => {
       const { input } = opts;
-      let { specs, name, buffer, writePath } = input;
+      let { name, writePath } = input;
+      const { buffer, specs } = input;
       if (!writePath) {
         const savePath = await dialog.showSaveDialog({
           properties: ["createDirectory"],

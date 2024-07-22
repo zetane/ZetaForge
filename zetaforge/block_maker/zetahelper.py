@@ -31,10 +31,10 @@ STANDARD_LIBRARIES = set(sys.builtin_module_names)
 def get_function_name(func_str):
     """
     Extracts the name of the function from a string representation of a function definition.
-    
+
     Args:
         func_str (str): A string representing a Python function definition.
-    
+
     Returns:
         str: The name of the function, or None if no valid function name is found.
     """
@@ -55,17 +55,17 @@ def exec_get_source(code, func_name, inspector):
         else:
             return getlines(filename, module_globals)
     linecache.getlines = monkey_patch
-    
+
     try:
         exec(code, globals())
         function = globals()[func_name]
         #you can now use inspect.getsource() on the result of exec() here
         result = inspector(function)
-        
+
     finally:
         linecache.getlines = getlines
         return result
-    
+
 def sanitize(name, max_length=63):
     name = name.lower()
     # Replace any character a lowercase letter, digit, or hyphen with a hyphen
@@ -149,7 +149,7 @@ def convert_to_specs(source, name, description):
             "container": {
                 "image": sanitize(name),
                 "version": "latest",
-                "command_line": ["python", "entrypoint.py"]
+                "command_line": ["python", "-u", "entrypoint.py"]
             }
         },
         "views": {
@@ -331,7 +331,7 @@ def make_specs(compute_code, name, description, block_folder):
         json.dump(specs, file, indent=4)
 
 def block_maker(func, package_names='', name=None, description='Block generated from a Python function'):
-    
+
     if name is None:
         if(isinstance(func, str)):
             name = get_function_name(func)
@@ -352,7 +352,7 @@ def block_maker(func, package_names='', name=None, description='Block generated 
     print(f"Successfully created the ZetaForge block '{block_folder}'")
     print(f"You can now load this block in ZetaForge using the Load Block button in the File menu.")
     print(f"""
-Tips: 
+Tips:
 - You can also pass Python package names directly using the package_names argument.
 - The function you are passing to the block_maker should contain all function definitions and import statements needed to run your code.
 - You can also customize your block name and description.

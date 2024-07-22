@@ -3,9 +3,7 @@
     "id": "background-removal",
     "name": "Image Background Removal",
     "description": "This function takes the path to an image file, removes its background, and saves the resulting image to a new file.\nThe function returns the path to the output image.\n\nParameters:\n- input_image_path (str): Path to the input image file.\n\nReturns:\n- dict: A dictionary containing the path to the output image with the key 'output_path'.",
-    "system_versions": [
-      "0.1"
-    ],
+    "system_versions": ["0.1"],
     "block_version": "block version number",
     "block_source": "",
     "block_type": "compute"
@@ -36,10 +34,7 @@
     "container": {
       "image": "background-removal",
       "version": "background-removal-wzqnnexvgx8m",
-      "command_line": [
-        "python",
-        "entrypoint.py"
-      ]
+      "command_line": ["python", "-u", "entrypoint.py"]
     }
   },
   "views": {
@@ -53,12 +48,8 @@
       "pos_z": "999",
       "behavior": "modal",
       "order": {
-        "input": [
-          "input_image_path"
-        ],
-        "output": [
-          "output_path"
-        ]
+        "input": ["input_image_path"],
+        "output": ["output_path"]
       }
     }
   },

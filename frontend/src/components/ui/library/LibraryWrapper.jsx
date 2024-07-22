@@ -30,14 +30,14 @@ export default function LibraryWrapper({ specs, pipelines }) {
   };
 
   const sortBlocks = (a, b) => {
-    const order = ['entry', 'compute', 'view'];
+    const order = ["entry", "compute", "view"];
     const typeA = a.information.block_type;
     const typeB = b.information.block_type;
 
     if (typeA === typeB) {
-      if (typeA === 'compute') {
-        if (a.information.id === 'new-python') return -1;
-        if (b.information.id === 'new-python') return 1;
+      if (typeA === "compute") {
+        if (a.information.id === "new-python") return -1;
+        if (b.information.id === "new-python") return 1;
       }
       return 0;
     }
@@ -47,7 +47,9 @@ export default function LibraryWrapper({ specs, pipelines }) {
   useEffect(() => {
     const blockResults = specs
       .filter((spec) =>
-        spec?.information?.name.toLowerCase().includes(searchTerm.toLowerCase())
+        spec?.information?.name
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()),
       )
       .sort(sortBlocks);
 

@@ -2,9 +2,11 @@ package main
 
 import (
 	"archive/tar"
+	"bufio"
 	"bytes"
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -279,6 +281,7 @@ func streaming(ctx context.Context, name string, cfg Config) {
 			blockId := ""
 			blockId = strings.TrimPrefix(event.PodName, "[")
 			blockId = strings.TrimSuffix(blockId, "]")
+			fmt.Printf("logs: %s", blockId)
 
 			parts := strings.Split(blockId, "-")
 
@@ -530,7 +533,8 @@ func terminateArgo(ctx context.Context, cfg Config, db *sql.DB, name string, id 
 		updateErr := updateExecutionStatus(ctx, db, id, "Failed")
 
 		if updateErr != nil {
-			log.Printf("failed to update execution status for workflow %s; err=%v", name, err)
+			log.Printf("failed to update execution status for workflow %s; err=%v", name, updateErr)
+			return updateErr
 		}
 
 		return err
@@ -657,18 +661,22 @@ func buildImage(ctx context.Context, source string, tag string, cfg Config) erro
 		}
 		defer resp.Body.Close()
 
-		stream := make([]byte, 100)
-
-		for {
-			n, err := resp.Body.Read(stream)
-			if err == io.EOF {
-				return nil
-			} else if err != nil {
+		scanner := bufio.NewScanner(resp.Body)
+		for scanner.Scan() {
+			var message map[string]interface{}
+			if err := json.Unmarshal(scanner.Bytes(), &message); err != nil {
 				return err
 			}
-			log.Println(string(stream[:n]))
+
+			if stream, ok := message["stream"].(string); ok {
+				log.Printf("%s", stream)
+			} else if errorDetail, ok := message["errorDetail"].(map[string]interface{}); ok {
+				log.Printf("Docker build error: %v", errorDetail["message"])
+			}
 		}
 	}
+
+	return nil
 }
 
 func localExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid string, organization string, build bool, cfg Config, db *sql.DB, hub *Hub) {
@@ -690,6 +698,7 @@ func localExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 
 	tempLog := filepath.Join(os.TempDir(), executionUuid+".log")
 	s3Key := pipeline.Id + "/" + executionUuid
+	log.Printf("Writing to %s", tempLog)
 
 	file, err := os.OpenFile(tempLog, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
@@ -733,7 +742,7 @@ func localExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 
 			jsonData, err := json.Marshal(content)
 			if err != nil {
-				log.Printf("Failed to log: %s", message)
+				fmt.Printf("Failed to log: %s", message)
 			}
 
 			hub.Broadcast <- Message{

@@ -5,9 +5,7 @@
         "id": "view-images",
         "name": "View Images",
         "description": "Generates an HTML file with a unique name and returns the file name.",
-        "system_versions": [
-          "0.1"
-        ],
+        "system_versions": ["0.1"],
         "block_version": "block version number",
         "block_source": "core/blocks/view-images",
         "block_type": "view"
@@ -33,10 +31,7 @@
         "container": {
           "image": "view-images",
           "version": "view-images-u0hlfyfh3had",
-          "command_line": [
-            "python",
-            "entrypoint.py"
-          ]
+          "command_line": ["python", "-u", "entrypoint.py"]
         }
       },
       "views": {
@@ -53,12 +48,8 @@
           "pos_y": "211",
           "pos_z": "999, this is the z-index for 2D canvas",
           "order": {
-            "input": [
-              "image_paths_view"
-            ],
-            "output": [
-              "html"
-            ]
+            "input": ["image_paths_view"],
+            "output": ["html"]
           }
         },
         "mode": "modal"
@@ -70,9 +61,7 @@
         "id": "file",
         "name": "File",
         "description": "File parameter input.",
-        "system_versions": [
-          "0.1"
-        ],
+        "system_versions": ["0.1"],
         "block_version": "block version number",
         "block_source": "core/blocks",
         "block_type": "compute"
@@ -119,9 +108,7 @@
           "pos_z": "999, this is the z-index for 2D canvas",
           "order": {
             "input": [],
-            "output": [
-              "path"
-            ]
+            "output": ["path"]
           }
         }
       },
@@ -132,9 +119,7 @@
         "id": "background-removal",
         "name": "Image Background Removal",
         "description": "This function takes the path to an image file, removes its background, and saves the resulting image to a new file.\nThe function returns the path to the output image.\n\nParameters:\n- input_image_path (str): Path to the input image file.\n\nReturns:\n- dict: A dictionary containing the path to the output image with the key 'output_path'.",
-        "system_versions": [
-          "0.1"
-        ],
+        "system_versions": ["0.1"],
         "block_version": "block version number",
         "block_source": "core/blocks/background-removal",
         "block_type": "compute"
@@ -165,10 +150,7 @@
         "container": {
           "image": "background-removal",
           "version": "background-removal-wzqnnexvgx8m",
-          "command_line": [
-            "python",
-            "entrypoint.py"
-          ]
+          "command_line": ["python", "-u", "entrypoint.py"]
         }
       },
       "views": {
@@ -182,12 +164,8 @@
           "pos_z": "999",
           "behavior": "modal",
           "order": {
-            "input": [
-              "input_image_path"
-            ],
-            "output": [
-              "output_path"
-            ]
+            "input": ["input_image_path"],
+            "output": ["output_path"]
           }
         }
       },
@@ -198,9 +176,7 @@
         "id": "view-images",
         "name": "View Images",
         "description": "Generates an HTML file with a unique name and returns the file name.",
-        "system_versions": [
-          "0.1"
-        ],
+        "system_versions": ["0.1"],
         "block_version": "block version number",
         "block_source": "core/blocks/view-images",
         "block_type": "view"
@@ -226,10 +202,7 @@
         "container": {
           "image": "view-images",
           "version": "view-images-7szi9ayg49zv",
-          "command_line": [
-            "python",
-            "entrypoint.py"
-          ]
+          "command_line": ["python", "-u", "entrypoint.py"]
         }
       },
       "views": {
@@ -246,12 +219,8 @@
           "pos_y": "76",
           "pos_z": "999, this is the z-index for 2D canvas",
           "order": {
-            "input": [
-              "image_paths_view"
-            ],
-            "output": [
-              "html"
-            ]
+            "input": ["image_paths_view"],
+            "output": ["html"]
           }
         },
         "mode": "modal"

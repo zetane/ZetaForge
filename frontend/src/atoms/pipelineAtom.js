@@ -24,7 +24,7 @@ export const pipelineFactory = (cachePath, pipeline = null) => {
     buffer: buffer,
     path: undefined,
     data: {},
-    log: [],
+    logs: [],
     history: null,
     socketUrl: null,
     record: null,
@@ -51,7 +51,7 @@ export const workspaceAtom = atom({
 
 export const getPipelines = (workspace) => {
   const running = [];
-  for (const [key, pipeline] of Object.entries(workspace.executions)) {
+  for (const [, pipeline] of Object.entries(workspace.executions)) {
     running.push(pipeline);
   }
   return running.sort((a, b) =>

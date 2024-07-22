@@ -399,7 +399,6 @@ func main() {
 			ctx.String(err.Status(), err.Error())
 			return
 		}
-
 		if config.IsLocal || config.Cloud.Provider == "Debug" {
 			go localExecute(&execution.Pipeline, newExecution.ID, execution.Id, prefix, execution.Build, config, db, hub)
 		} else {
@@ -428,24 +427,26 @@ func main() {
 		room := ctx.Param("room")
 		upgrader := websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
-				// Allow specific origin
 				origin := r.Header.Get("Origin")
-				return strings.HasPrefix(origin, "http://localhost") || strings.HasPrefix(origin, "http://127.0.0.1") || strings.HasPrefix(origin, "file://")
+				return strings.HasPrefix(origin, "http://localhost") ||
+					strings.HasPrefix(origin, "http://127.0.0.1") ||
+					strings.HasPrefix(origin, "file://")
 			},
-
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,
 		}
 
 		conn, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
 		if err != nil {
-			ctx.String(http.StatusInternalServerError, err.Error())
+			// If the upgrade fails, then Upgrade replies to the client with an HTTP error response.
+			log.Printf("Failed to upgrade connection: %v", err)
 			return
 		}
 
 		if err := serveSocket(conn, room, hub); err != nil {
 			log.Printf("Websocket error; err=%v", err)
 			ctx.String(err.Status(), err.Error())
+			return
 		}
 	})
 	router.POST("/build-context-status", func(ctx *gin.Context) {
@@ -595,12 +596,12 @@ func main() {
 			logOutput := []string{}
 			tempLog := filepath.Join(os.TempDir(), execution.Executionid+".log")
 			var s3key string
-			if execution.Status == "Running" {
+			if execution.Status == "Running" || execution.Status == "Pending" {
 				logOutput, err = readTempLog(tempLog)
 				if err != nil {
 					fmt.Printf("failed to retrieve writing log; err=%v", err)
 				}
-			} else if execution.Status != "Pending" {
+			} else {
 				s3key = execution.Uuid + "/" + execution.Executionid + "/" + execution.Executionid + ".log"
 				// in certain cases the pipeline has succeeded or failed but
 				// has not yet uploaded to s3, so still attempt to send the tempLog

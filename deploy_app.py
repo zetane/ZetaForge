@@ -77,7 +77,6 @@ def main():
     parser.add_argument("--platform", nargs="+", default=['darwin', 'linux', 'windows'], help="Specify platform.  If not specified, it builts for every platform (options: darwin, linux, windows)")
     args = parser.parse_args()
 
-
     os_list = args.platform
     version = get_package_version()
     frontend = os.path.join("frontend", "server2")
@@ -90,9 +89,6 @@ def main():
             if goarch == 'arm64' and (os_ == 'windows'):
                 continue
             compile_app(version, os_, goarch)
-            upload_file = get_download_file(version, os_, goarch)
-            upload_to_s3(os.path.join('frontend', 'release', version, upload_file), upload_file)
-
 
 def compile_app(version, goos, goarch):
     print(f"Compiling {goarch}..")
