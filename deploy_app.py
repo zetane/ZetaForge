@@ -100,7 +100,6 @@ def compile_app(version, goos, goarch):
     try:
         arch = goarch
         if goos == 'windows':
-            arch = 'amd64'
             cc = 'zig cc -target x86_64-windows-gnu'
             s = subprocess.run(["env", f"GOOS={goos}", f"GOARCH={arch}", "CGO_ENABLED=1", f"CC={cc}", "go", "build"], capture_output=True, text=True)
             if s.returncode != 0:
