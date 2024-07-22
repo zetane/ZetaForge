@@ -32,6 +32,20 @@ export const ExecutionDataGrid = ({ executions, closeModal }) => {
     });
     await syncResults(key);
 
+    if (
+      workspace.pipelines[key].record.Status == "Succeeded" ||
+      workspace.pipelines[key].record.Status == "Failed"
+    ) {
+      const pipeline = workspace.pipelines[key];
+      await dowloadExecutionResults.mutateAsync({
+
+        buffer: pipeline.buffer,
+        pipelineUuid: pipeline.record.Uuid,
+        executionUuid: pipeline.record.Execution,
+        anvilConfiguration: configuration,
+      });
+    }
+
     closeModal();
   };
 
