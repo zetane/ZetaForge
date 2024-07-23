@@ -95,7 +95,7 @@ const BlockGenerator = ({
     if (block.events.outputs?.html) {
       // these outputs are a special case
       const html = trimQuotes(block.events.outputs.html);
-      const fileUrl = `http://localhost:3330/execution/${pipelineId}/history/${executionId}/files/${html}`;
+      const fileUrl = `http://localhost:3330/result/${pipelineId}/history/${executionId}/files/${html}`;
       checkPath(fileUrl, 0, setIframeSrc);
     }
   }, [block.events.outputs]);

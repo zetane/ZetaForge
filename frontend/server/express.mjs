@@ -32,7 +32,7 @@ function startExpressServer() {
   // more aggressive with this caching.
   app.use(express.json());
   console.log(path.join(process.cwd(), ".cache"))
-  app.use("/execution", express.static(path.join(process.cwd(), ".cache")));
+  app.use("/result", express.static(path.join(process.cwd(), ".cache")));
   app.use(bodyParser.json());
 
   const upload = multer({ dest: "_temp_import" });
