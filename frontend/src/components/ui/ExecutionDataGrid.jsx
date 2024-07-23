@@ -30,21 +30,7 @@ export const ExecutionDataGrid = ({ executions, closeModal }) => {
       draft.tabs[key] = {};
       draft.active = key;
     });
-    await syncResults(key);
-
-    if (
-      workspace.pipelines[key].record.Status == "Succeeded" ||
-      workspace.pipelines[key].record.Status == "Failed"
-    ) {
-      const pipeline = workspace.pipelines[key];
-      await dowloadExecutionResults.mutateAsync({
-
-        buffer: pipeline.buffer,
-        pipelineUuid: pipeline.record.Uuid,
-        executionUuid: pipeline.record.Execution,
-        anvilConfiguration: configuration,
-      });
-    }
+    syncResults(key, pipeline.record.Status);
 
     closeModal();
   };
