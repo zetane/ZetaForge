@@ -280,7 +280,7 @@ export const appRouter = router({
 
       return await saveBlockSpecs(blockPath, blockSpecs);
     }),
-  dowloadExecutionResults: publicProcedure
+  downloadExecutionResults: publicProcedure
     .use(errorHandling)
     .input(
       z.object({

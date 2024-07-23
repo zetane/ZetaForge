@@ -7,13 +7,13 @@ import { useImmerAtom } from "jotai-immer";
 import { useAtom } from "jotai";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { getAllPipelines } from "@/client/anvil";
-import { trpc } from "@/utils/trpc";
+import { useSyncExecutionResults } from "@/hooks/useExecutionResults";
 
 export default function WorkspaceFetcher() {
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
   const loadPipeline = useLoadServerPipeline();
   const [configuration] = useAtom(activeConfigurationAtom);
-  const downloadExecutionResults = trpc.dowloadExecutionResults.useMutation();
+  const syncResults = useSyncExecutionResults();
 
   const { pending, error, data } = useQuery({
     queryKey: ["pipelines"],

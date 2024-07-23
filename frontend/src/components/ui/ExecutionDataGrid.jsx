@@ -15,13 +15,13 @@ import {
 import { PipelineStopButton } from "./PipelineStopButton";
 import { useState, useEffect } from "react";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
-import { trpc } from "@/utils/trpc";
+import { useSyncExecutionResults } from "@/hooks/useExecutionResults";
 
 export const ExecutionDataGrid = ({ executions, closeModal }) => {
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
   const [pipelineList, setPipelineList] = useState([]);
   const [configuration] = useAtom(activeConfigurationAtom);
-  const dowloadExecutionResults = trpc.dowloadExecutionResults.useMutation();
+  const syncResults = useSyncExecutionResults();
 
   const selectPipeline = async (pipeline) => {
     const key = pipeline.id + "." + pipeline.record.Execution;
@@ -30,20 +30,7 @@ export const ExecutionDataGrid = ({ executions, closeModal }) => {
       draft.tabs[key] = {};
       draft.active = key;
     });
-
-    if (
-      workspace.pipelines[key].record.Status == "Succeeded" ||
-      workspace.pipelines[key].record.Status == "Failed"
-    ) {
-      const pipeline = workspace.pipelines[key];
-      await dowloadExecutionResults.mutateAsync({
-
-        buffer: pipeline.buffer,
-        pipelineUuid: pipeline.record.Uuid,
-        executionUuid: pipeline.record.Execution,
-        anvilConfiguration: configuration,
-      });
-    }
+    syncResults(key, pipeline.record.Status);
 
     closeModal();
   };
