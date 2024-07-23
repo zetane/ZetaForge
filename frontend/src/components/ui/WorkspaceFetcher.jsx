@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { useLoadServerPipeline } from "@/hooks/useLoadPipeline";
-import { act, useEffect } from "react";
+import { useEffect } from "react";
 import { workspaceAtom } from "@/atoms/pipelineAtom";
 import { useImmerAtom } from "jotai-immer";
 import { useAtom } from "jotai";
@@ -41,6 +41,9 @@ export default function WorkspaceFetcher() {
               draft.pipelines[key] = loaded;
               draft.executions[loaded?.record?.Execution] = loaded;
             });
+            if (workspace.tabs[key]) {
+              await syncResults(key, serverPipeline.Status);
+            }
           } catch (e) {
             console.log("Failed to load ", e);
             return;
