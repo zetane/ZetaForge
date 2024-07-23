@@ -40,6 +40,7 @@ export default function RunPipelineButton({ children, action }) {
 
     if (!(await validateAnvilOnline())) return;
     if (!validateSchema()) return;
+    console.log(pipelineSpecs);
     const newExecution = await execute(pipelineSpecs, executionId);
     if (!newExecution) {
       return;

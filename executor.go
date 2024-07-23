@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -857,7 +856,11 @@ func cloudExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 	defer hub.CloseRoom(pipeline.Id)
 
 	s3key := organization + "/" + pipeline.Id + "/" + executionUuid
-	tempLog := filepath.Join(os.Getenv("ZETAFORGE_LOGS"), executionUuid+".log")
+	logDir, exists := os.LookupEnv("ZETAFORGE_LOGS")
+	if !exists {
+		logDir = os.TempDir()
+	}
+	tempLog := filepath.Join(logDir, executionUuid+".log")
 
 	file, err := os.OpenFile(tempLog, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {

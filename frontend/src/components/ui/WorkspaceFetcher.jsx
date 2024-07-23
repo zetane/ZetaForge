@@ -39,6 +39,7 @@ export default function WorkspaceFetcher() {
             draft.executions[loaded?.record?.Execution] = loaded;
           });
         } catch (e) {
+          console.log(serverPipeline);
           console.log("Failed to load ", e);
           return;
         }

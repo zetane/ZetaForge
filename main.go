@@ -428,9 +428,17 @@ func main() {
 		upgrader := websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
 				origin := r.Header.Get("Origin")
-				return strings.HasPrefix(origin, "http://localhost") ||
-					strings.HasPrefix(origin, "http://127.0.0.1") ||
-					strings.HasPrefix(origin, "file://")
+				allowedOrigins := []string{
+					"http://localhost", "https://localhost",
+					"http://127.0.0.1", "https://127.0.0.1",
+					"file://",
+				}
+				for _, allowed := range allowedOrigins {
+					if strings.HasPrefix(origin, allowed) {
+						return true
+					}
+				}
+				return false
 			},
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,
@@ -594,7 +602,12 @@ func main() {
 		var response []ResponsePipelineExecution
 		for _, execution := range res {
 			logOutput := []string{}
-			tempLog := filepath.Join(os.TempDir(), execution.Executionid+".log")
+			logDir, exists := os.LookupEnv("ZETAFORGE_LOGS")
+			if !exists {
+				logDir = os.TempDir()
+			}
+			tempLog := filepath.Join(logDir, execution.Executionid+".log")
+
 			var s3key string
 			if execution.Status == "Running" || execution.Status == "Pending" {
 				logOutput, err = readTempLog(tempLog)

@@ -90,7 +90,7 @@ func s3Client(ctx context.Context, cfg Config) (*s3.Client, error) {
 		return &s3.Client{}, err
 	}
 	client := s3.NewFromConfig(awsConfig, func(o *s3.Options) {
-		o.EndpointResolverV2 = &LocalEndpoint{Bucket: BUCKET, S3Port: cfg.Local.BucketPort}
+		o.EndpointResolverV2 = endpoint
 	})
 
 	return client, nil

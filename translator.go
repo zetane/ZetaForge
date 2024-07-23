@@ -214,7 +214,8 @@ func kanikoTemplate(block *zjson.Block, organization string, cfg Config) *wfv1.T
 	if cfg.IsLocal {
 		return nil
 	} else if cfg.Cloud.Provider == "Debug" {
-		image := fmt.Sprintf("registry:%d/zetaforge/%s/%s", cfg.Cloud.Debug.RegistryPort, organization, block.Action.Container.Image)
+		imageName := block.Action.Container.Image + ":" + block.Action.Container.Version
+		image := fmt.Sprintf("registry:%d/zetaforge/%s/%s", cfg.Cloud.Debug.RegistryPort, organization, imageName)
 		cmd := []string{
 			"/kaniko/executor",
 			"--context",
@@ -247,7 +248,8 @@ func kanikoTemplate(block *zjson.Block, organization string, cfg Config) *wfv1.T
 			Inputs: wfv1.Inputs{Artifacts: []wfv1.Artifact{artifact}},
 		}
 	} else {
-		image := registryAddress(cfg) + "/zetaforge/" + organization + "/" + block.Action.Container.Image
+		imageName := block.Action.Container.Image + ":" + block.Action.Container.Version
+		image := registryAddress(cfg) + "/zetaforge/" + organization + "/" + imageName
 		cmd := []string{
 			"/kaniko/executor",
 			"--context",
@@ -386,7 +388,7 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 				if cfg.IsLocal {
 					blocks[blockPath] = "zetaforge/" + organization + "/" + block.Action.Container.Image + ":" + block.Action.Container.Version
 				} else {
-					blocks[blockPath] = block.Action.Container.Image + "-" + block.Action.Container.Version
+					blocks[blockPath] = block.Action.Container.Image + ":" + block.Action.Container.Version
 					templates[kaniko.Name] = kaniko
 					tasks[kaniko.Name] = &wfv1.DAGTask{Name: kaniko.Name, Template: kaniko.Name}
 					task.Dependencies = append(task.Dependencies, kaniko.Name)

@@ -62,12 +62,16 @@ function getScheme(host) {
   return LOCAL_DOMAINS.includes(host) ? "http" : "https";
 }
 
+function getWsScheme(host) {
+  return LOCAL_DOMAINS.includes(host) ? "ws" : "wss";
+}
+
 async function handleRequest(url, method, token, headers, body = null) {
   if (token) {
     headers = {
       ...headers,
-      "Authorization": `Bearer ${token}`
-    }
+      Authorization: `Bearer ${token}`,
+    };
   }
 
   try {

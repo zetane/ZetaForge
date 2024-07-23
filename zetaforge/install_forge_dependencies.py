@@ -34,7 +34,7 @@ def install_kubectl():
         stable_release = None
         kubectl_url = None
         if response.status_code == 200:
-                    
+
             stable_release = response.text.strip()
 
         if platform.system() == 'Darwin':
@@ -44,23 +44,23 @@ def install_kubectl():
             else:
                 print("Installing for Apple M1 chip")
                 kubectl_url = f"https://dl.k8s.io/release/{stable_release}/bin/darwin/arm64/kubectl"
-            
+
 
             download_content(kubectl_url, os.path.join(EXECUTABLES_PATH, "kubectl") )
             subprocess.run("chmod +x ./kubectl", shell=True, cwd=EXECUTABLES_PATH)
-            
+
 
             result = subprocess.run("./kubectl version --client", shell=True, cwd=EXECUTABLES_PATH)
             if result.returncode != 0:
-                raise Exception("There was an error while downloading kubectl. Please try again") 
-            
+                raise Exception("There was an error while downloading kubectl. Please try again")
+
         elif platform.system() == 'Windows':
             # subprocess.run("curl.exe -LO \"https://dl.k8s.io/release/v1.28.3/bin/windows/amd64/kubectl.exe\"", shell=True)
             kubectl_url = f"https://dl.k8s.io/release/{stable_release}/bin/windows/amd64/kubectl.exe"
 
             download_content(kubectl_url, os.path.join(EXECUTABLES_PATH, "kubectl.exe"))
 
-            
+
             result = subprocess.run("kubectl.exe version --client", shell=True, cwd=EXECUTABLES_PATH)
             if result.returncode != 0:
                 raise Exception("There was an error while downloading kubectl. Please try again")
@@ -72,8 +72,8 @@ def install_kubectl():
                 kubectl_url = f"https://dl.k8s.io/release/{stable_release}/bin/linux/arm64/kubectl"
 
             download_content(kubectl_url, os.path.join(EXECUTABLES_PATH, "kubectl"))
-            
-            
+
+
             subprocess.run("chmod +x kubectl", shell=True, cwd=EXECUTABLES_PATH)
 
             result = subprocess.run("./kubectl version --client", shell=True, cwd=EXECUTABLES_PATH)
@@ -100,7 +100,7 @@ def extract_zip(zip_file, target_dir):
             for file_info in f.infolist():
                 file_path = os.path.join(target_dir, file_info.filename)
                 print(".", end="")
-            
+
                 if file_info.is_dir():
                     os.makedirs(file_path, exist_ok=True)
                 elif file_info.filename.endswith('/'):
@@ -126,7 +126,7 @@ def extract_tar(tar_file, target_dir):
     with tarfile.open(tar_file, 'r') as tar:
         print(f"Extracting {tar_file} to {target_dir}")
         tar.extractall(target_dir)
-        
+
     print(f"\nExtraction completed.")
 
 def gunzip_file(in_file, out_file):
@@ -137,13 +137,13 @@ def gunzip_file(in_file, out_file):
 def get_s2_executable(filename):
     chmod_flag = True
     bucket_name = 'forge-executables-test'
-    
+
     if platform.system() == 'Windows':
         chmod_flag = False
     filename = filename.replace("./", "")
     file_dir = os.path.join(EXECUTABLES_PATH, filename)
     try:
-        s3.download_file(bucket_name, filename, file_dir)  
+        s3.download_file(bucket_name, filename, file_dir)
         if chmod_flag:
             subprocess.run(f"chmod +x {filename}", shell=True, cwd=EXECUTABLES_PATH)
         print(f"File '{file_dir}' downloaded successfully.")
@@ -207,7 +207,7 @@ def check_and_clean_files(directory, version):
                 elif os.path.isdir(file_path):
                     shutil.rmtree(file_path)
                     print(f"Removed directory: {filename}")
-        
+
         if filename == 'ZetaForge.app' or filename == 'zetaforge.app':
             _, server_path = get_launch_paths(version, version)
             if os.path.exists(server_path):
@@ -230,8 +230,11 @@ def remove_running_services():
         print("Removing build: ", {build.stdout})
 
 def check_version(server_version, client_version):
-    check_and_clean_files(EXECUTABLES_PATH, client_version)
-    check_and_clean_files(EXECUTABLES_PATH, server_version)
+    try:
+        check_and_clean_files(EXECUTABLES_PATH, client_version)
+        check_and_clean_files(EXECUTABLES_PATH, server_version)
+    except Exception as e:
+        print("Failed to remove previous version! Continuing..", e)
 
 def get_app_dir(client_version):
     if platform.system() == 'Darwin':
@@ -248,7 +251,7 @@ def get_app_dir(client_version):
 def get_launch_paths(server_version, client_version):
     server_name = get_server_executable(server_version) #need to change the function name
     app_dir = get_app_dir(client_version)
-    
+
     if platform.system() == 'Darwin':
         client_path = os.path.join(app_dir, "Contents", "MacOS", "ZetaForge")
         server_dir = os.path.join(app_dir, "Contents" ,"Resources", "server2")
@@ -258,7 +261,7 @@ def get_launch_paths(server_version, client_version):
     else:
         client_path = os.path.join(app_dir, "zetaforge")
         server_dir = os.path.join(app_dir, "resources", "server2")
-    
+
     return client_path, os.path.join(server_dir, server_name)
 
 
@@ -280,7 +283,7 @@ def download_binary(bucket_key, destination):
 
         sys.stdout.write("\r[%s%s] %s/%sMB" % ('=' * done, ' ' * (50-done), download_mb, total_length) )
         sys.stdout.flush()
-    
+
     print(f"Downloading app {bucket_key} to {EXECUTABLES_PATH}")
     s3.download_file(bucket, bucket_key, destination, Callback=progress)
     print("\nCompleted app download..")
@@ -294,7 +297,7 @@ def install_frontend_dependencies(client_version, no_cache=True):
     tar_file = os.path.join(EXECUTABLES_PATH, bucket_key)
     if not os.path.exists(tar_file) or no_cache:
         download_binary(bucket_key, tar_file)
-    
+
     print("Unzipping and installing app..")
 
     if os.path.exists(app_dir):
