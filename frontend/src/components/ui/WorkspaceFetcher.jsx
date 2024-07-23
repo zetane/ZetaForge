@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { useLoadServerPipeline } from "@/hooks/useLoadPipeline";
-import { act, useEffect } from "react";
+import { useEffect } from "react";
 import { workspaceAtom } from "@/atoms/pipelineAtom";
 import { useImmerAtom } from "jotai-immer";
 import { useAtom } from "jotai";

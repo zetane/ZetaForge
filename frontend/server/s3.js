@@ -10,7 +10,7 @@ import config from "../config";
 import { getDirectoryFilesRecursive } from "./fileSystem";
 import path from "path";
 import { logger } from "./logger";
-import { S3SyncClient, TransferMonitor } from "s3-sync-client";
+import { S3SyncClient } from "s3-sync-client";
 
 function getClient(configuration) {
   const endpoint = `http://${configuration.s3.host}:${configuration.s3.port}`;
