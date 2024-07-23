@@ -31,7 +31,8 @@ function startExpressServer() {
   // Everything else (like favicon.ico) is cached for an hour. You may want to be
   // more aggressive with this caching.
   app.use(express.json());
-  app.use(express.static("public"));
+  console.log(path.join(process.cwd(), ".cache"))
+  app.use("/execution", express.static(path.join(process.cwd(), ".cache")));
   app.use(bodyParser.json());
 
   const upload = multer({ dest: "_temp_import" });
