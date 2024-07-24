@@ -135,7 +135,10 @@ export const useLoadServerPipeline = () => {
       socketUrl: socketUrl,
       logs: pipeline?.Log,
     };
-    let newPipeline = pipelineFactory(await window.cache.local(), loadedPipeline);
+    let newPipeline = pipelineFactory(
+      await window.cache.local(),
+      loadedPipeline,
+    );
     // sort keys
     newPipeline = sortSpecsKeys(newPipeline);
     return newPipeline;
