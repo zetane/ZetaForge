@@ -81,6 +81,7 @@ func s3Client(ctx context.Context, cfg Config) (*s3.Client, error) {
 	} else {
 		awsAccessKey = cfg.Cloud.AWS.AccessKey
 		awsSecretKey = cfg.Cloud.AWS.SecretKey
+		endpointResolver = &CloudEndpoint{Address: "s3-us-east-2.amazonaws.com", Bucket: cfg.BucketName}
 	}
 
 	awsConfig, err := config.LoadDefaultConfig(ctx,
@@ -96,9 +97,7 @@ func s3Client(ctx context.Context, cfg Config) (*s3.Client, error) {
 	}
 
 	return s3.NewFromConfig(awsConfig, func(o *s3.Options) {
-		if cfg.IsLocal {
-			o.EndpointResolverV2 = endpointResolver
-		}
+		o.EndpointResolverV2 = endpointResolver
 	}), nil
 }
 
