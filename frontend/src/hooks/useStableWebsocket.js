@@ -17,7 +17,9 @@ export const useStableWebSocket = (url) => {
   const [wsError, setWsError] = useState(null);
   const reconnectCount = useRef(0);
   const [configuration] = useAtom(activeConfigurationAtom);
-  const protocols = url?.startsWith("wss") ? [configuration.anvil.token] : null;
+  const protocols = url?.startsWith("wss")
+    ? ["Bearer", configuration.anvil.token]
+    : null;
 
   const { lastMessage, readyState, sendMessage } = useWebSocket(url, {
     shouldReconnect: (closeEvent) => {
@@ -36,7 +38,6 @@ export const useStableWebSocket = (url) => {
     protocols: protocols,
     reconnectInterval: (attemptNumber) => Math.min(1000 * 2, 30000),
     onOpen: (event) => {
-      console.log("Open: ", event);
       console.log("WebSocket connection established.");
       setWsError(null);
       reconnectCount.current = 0;

@@ -355,25 +355,18 @@ func main() {
 				return
 			}
 
-			// Check if it's a WebSocket upgrade request
+			headerKey := "Authorization"
 			if isWebSocketRequest(ctx.Request) {
-				token := ctx.GetHeader("Sec-WebSocket-Protocol")
-				code, prefix := validateSocketToken(token, certsPath)
-				if code != http.StatusOK {
-					ctx.AbortWithStatus(code)
-					return
-				}
-				ctx.Set("prefix", prefix)
-			} else {
-				// Existing token validation for non-WebSocket requests
-				code, prefix := validateToken(ctx, certsPath)
-				if code != http.StatusOK {
-					ctx.AbortWithStatus(code)
-					return
-				}
-				ctx.Set("prefix", prefix)
+				headerKey = "Sec-WebSocket-Protocol"
 			}
 
+			token := ctx.GetHeader(headerKey)
+			code, prefix := validateToken(token, certsPath)
+			if code != http.StatusOK {
+				ctx.AbortWithStatus(code)
+				return
+			}
+			ctx.Set("prefix", prefix)
 			ctx.Next()
 		})
 	}
@@ -464,6 +457,7 @@ func main() {
 			},
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,
+			Subprotocols:    []string{"Bearer"},
 		}
 
 		if !websocket.IsWebSocketUpgrade(ctx.Request) {

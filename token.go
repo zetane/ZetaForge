@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/gin-gonic/gin"
 	jwt "github.com/golang-jwt/jwt/v5"
 )
 
@@ -39,13 +38,12 @@ func loadCertificates(folder string) (map[string]crypto.PublicKey, error) {
 	return certificates, nil
 }
 
-func validateToken(ctx *gin.Context, folder string) (int, string) {
+func validateToken(bearer string, folder string) (int, string) {
 	certs, err := loadCertificates(folder)
 	if err != nil {
 		log.Printf("Could not load certificates")
 		return http.StatusUnauthorized, ""
 	}
-	bearer := ctx.Request.Header.Get("Authorization")
 	if len(strings.Fields(bearer)) != 2 {
 		log.Printf("Invalid authorization header")
 		return http.StatusUnauthorized, ""
@@ -74,43 +72,5 @@ func validateToken(ctx *gin.Context, folder string) (int, string) {
 	}
 
 	sub, _ := token.Claims.GetSubject()
-	return http.StatusOK, sub
-}
-
-func validateSocketToken(token string, folder string) (int, string) {
-	certs, err := loadCertificates(folder)
-	if err != nil {
-		log.Printf("Could not load certificates")
-		return http.StatusUnauthorized, ""
-	}
-
-	parsedToken, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
-		sub, err := t.Claims.GetSubject()
-		if err != nil {
-			return "", err
-		}
-		key, ok := certs[sub]
-		if !ok {
-			return "", errors.New("Subject certificate missing")
-		}
-		return key, nil
-	}, jwt.WithValidMethods([]string{"EdDSA"}))
-
-	if err != nil {
-		log.Printf("Error parsing WebSocket token: %v", err)
-		return http.StatusUnauthorized, ""
-	}
-
-	if !parsedToken.Valid {
-		log.Printf("Invalid WebSocket token")
-		return http.StatusUnauthorized, ""
-	}
-
-	sub, err := parsedToken.Claims.GetSubject()
-	if err != nil {
-		log.Printf("Error getting subject from WebSocket token: %v", err)
-		return http.StatusUnauthorized, ""
-	}
-
 	return http.StatusOK, sub
 }
