@@ -199,7 +199,7 @@ export default function DrawflowWrapper() {
 
   const dropPipeline = (pipelineData) => {
     const pipelineJson = JSON.parse(pipelineData);
-    const {specs, path} = pipelineJson;
+    const { specs, path } = pipelineJson;
     loadPipeline(specs, path);
   };
 

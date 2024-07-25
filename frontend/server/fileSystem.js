@@ -29,7 +29,7 @@ const pipelineSpecBuilder = async (items, dir) => {
           parsedPipelineData.folderName = item; // Add the folder name to the pipeline data
           pipelinesData.push({
             path: itemPath,
-            specs: parsedPipelineData
+            specs: parsedPipelineData,
           });
         } catch (error) {
           logger.error(error);

@@ -176,7 +176,7 @@ export const useLoadCorePipeline = () => {
       draft.pipelines[key] = newPipeline;
       draft.active = key;
     });
-  }
+  };
 
   return loadPipeline;
-}
+};
