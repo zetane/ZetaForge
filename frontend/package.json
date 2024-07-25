@@ -1,6 +1,6 @@
 {
   "name": "zetaforge",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "main": "dist-electron/main/index.js",
   "description": "ZetaForge",
   "author": "Zetane <info@zetane.com>",
@@ -19,7 +19,7 @@
     "build:darwin-arm64": "tsc && vite build && electron-builder --mac --arm64",
     "build:windows": "tsc && vite build && electron-builder --win --x64",
     "build:linux-amd64": "tsc && vite build && electron-builder --linux --x64",
-    "build:linux-arm64": "tsc && vite build && electron-builder --linux --arm64 --x64",
+    "build:linux-arm64": "tsc && vite build && electron-builder --linux --arm64",
     "preview": "vite preview",
     "pree2e": "vite build --mode=test",
     "lint": "eslint .",

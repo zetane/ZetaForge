@@ -234,7 +234,7 @@ def check_version(server_version, client_version):
         check_and_clean_files(EXECUTABLES_PATH, client_version)
         check_and_clean_files(EXECUTABLES_PATH, server_version)
     except Exception as e:
-        print("Failed to remove previous version! Continuing..", e)
+        print("Error removing previous version: ", e)
 
 def get_app_dir(client_version):
     if platform.system() == 'Darwin':

@@ -357,7 +357,7 @@ func main() {
 
 			// Check if it's a WebSocket upgrade request
 			if isWebSocketRequest(ctx.Request) {
-				token := ctx.Query("token")
+				token := ctx.GetHeader("Sec-WebSocket-Protocol")
 				code, prefix := validateSocketToken(token, certsPath)
 				if code != http.StatusOK {
 					ctx.AbortWithStatus(code)
