@@ -6,6 +6,7 @@ import {
   pipelineFactory,
   pipelineKey,
 } from "@/atoms/pipelineAtom";
+import { getWsConnection } from "@/client/anvil";
 
 export const useLoadPipeline = () => {
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
@@ -141,7 +142,7 @@ export const useLoadServerPipeline = () => {
     const executionId = pipeline.Execution;
     let socketUrl = null;
     if (pipeline.Status == "Pending" || pipeline.Status == "Running") {
-      socketUrl = `wss://${configuration.anvil.host}:${configuration.anvil.port}/ws/${executionId}`;
+      socketUrl = getWsConnection(configuration, `ws/${executionId}`);
     }
     let data = removeNullInputsOutputs(pipelineData?.pipeline);
 

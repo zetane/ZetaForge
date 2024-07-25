@@ -27,12 +27,11 @@ export const useStableWebSocket = (url) => {
       if (!shouldReconnect) {
         setWsError(WebSocketCloseCodes[closeEvent.code] || "WebSocket closed");
       }
-      return false;
+      return shouldReconnect;
     },
-    share: true,
-    reconnectInterval: (attemptNumber) =>
-      Math.min(1000 * 2 ** attemptNumber, 30000),
-    onOpen: () => {
+    reconnectInterval: (attemptNumber) => Math.min(1000 * 2, 30000),
+    onOpen: (event) => {
+      console.log("Open: ", event);
       console.log("WebSocket connection established.");
       setWsError(null);
       reconnectCount.current = 0;

@@ -849,7 +849,7 @@ func cloudExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 
 	defer completeExecution(ctx, db, executionId)
 
-	if err := hub.OpenRoom(pipeline.Id); err != nil {
+	if err := hub.OpenRoom(executionUuid); err != nil {
 		log.Printf("failed to open log room; err=%v", err)
 		return
 	}

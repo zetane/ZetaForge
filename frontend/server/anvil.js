@@ -68,8 +68,8 @@ async function handleRequest(url, method, token, headers, body = null) {
   if (token) {
     headers = {
       ...headers,
-      "Authorization": `Bearer ${token}`
-    }
+      Authorization: `Bearer ${token}`,
+    };
   }
 
   try {

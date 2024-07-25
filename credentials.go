@@ -69,31 +69,37 @@ func (endpoint *CloudEndpoint) ResolveEndpoint(ctx context.Context, params s3.En
 }
 
 func s3Client(ctx context.Context, cfg Config) (*s3.Client, error) {
+	var endpointResolver s3.EndpointResolverV2
 	var awsAccessKey string
 	var awsSecretKey string
-	var endpoint s3.EndpointResolverV2
+	region := "us-east-2"
 
 	if cfg.IsLocal {
 		awsAccessKey = "AKIAIOSFODNN7EXAMPLE"
 		awsSecretKey = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
-		endpoint = &LocalEndpoint{Bucket: cfg.BucketName, S3Port: cfg.Local.BucketPort}
+		endpointResolver = &LocalEndpoint{Bucket: cfg.BucketName, S3Port: cfg.Local.BucketPort}
 	} else {
 		awsAccessKey = cfg.Cloud.AWS.AccessKey
 		awsSecretKey = cfg.Cloud.AWS.SecretKey
-		endpoint = &CloudEndpoint{Address: "s3-us-east-2.amazonaws.com", Bucket: cfg.BucketName}
 	}
 
-	creds := credentials.NewStaticCredentialsProvider(awsAccessKey, awsSecretKey, "")
-	region := config.WithRegion("us-east-2") // TODO handle regions
-	awsConfig, err := config.LoadDefaultConfig(ctx, region, config.WithCredentialsProvider(creds))
+	awsConfig, err := config.LoadDefaultConfig(ctx,
+		config.WithRegion(region),
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
+			awsAccessKey,
+			awsSecretKey,
+			"",
+		)),
+	)
 	if err != nil {
-		return &s3.Client{}, err
+		return nil, err
 	}
-	client := s3.NewFromConfig(awsConfig, func(o *s3.Options) {
-		o.EndpointResolverV2 = endpoint
-	})
 
-	return client, nil
+	return s3.NewFromConfig(awsConfig, func(o *s3.Options) {
+		if cfg.IsLocal {
+			o.EndpointResolverV2 = endpointResolver
+		}
+	}), nil
 }
 
 func awsECRClient(ctx context.Context, cfg Config) (*ecr.Client, error) {

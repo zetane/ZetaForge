@@ -196,14 +196,22 @@ def setup(server_version, client_version, driver, build_flag = True, install_fla
     mixpanel_client.track_event("Setup Successful")
     return config_path
 
+def safe_decode(byte_string, encodings=['utf-8', 'iso-8859-1', 'windows-1252', 'ascii']):
+    # iso-8859-1 is latin-1, windows-1252 is latin-1 extended
+    for encoding in encodings:
+        try:
+            return byte_string.decode(encoding)
+        except UnicodeDecodeError:
+            continue
+    return byte_string.decode('utf-8', errors='replace')
 
 def read_output(process, name):
     for line in process.stdout:
-        print(f"{name}: {line.decode('utf-8')}", end='')
+        print(f"{name}: {safe_decode(line)}", end='')
 
 def read_error(process, name):
     for line in process.stderr:
-        print(f"{name} (stderr): {line.decode('utf-8')}", end='')
+        print(f"{name} (stderr): {safe_decode(line)}", end='')
 
 #dev version is only passed, when a developer wants to pass a local version(for e.g. dev_path=./s2-v2.3.5-amd64)
 def run_forge(server_version=None, client_version=None, server_path=None, client_path=None, is_dev=False, no_sandbox=False):

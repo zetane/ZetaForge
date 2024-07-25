@@ -289,6 +289,11 @@ func getPrefix(ctx *gin.Context) string {
 	}
 }
 
+func isWebSocketRequest(r *http.Request) bool {
+	return r.Header.Get("Upgrade") == "websocket" &&
+		r.Header.Get("Connection") == "Upgrade"
+}
+
 func main() {
 	ctx := context.Background()
 	configPath := os.Getenv("ZETAFORGE_CONFIG")
@@ -345,7 +350,22 @@ func main() {
 		setup(ctx, config, db)
 	} else {
 		router.Use(func(ctx *gin.Context) {
-			if ctx.Request.Method != "OPTIONS" {
+			if ctx.Request.Method == "OPTIONS" {
+				ctx.Next()
+				return
+			}
+
+			// Check if it's a WebSocket upgrade request
+			if isWebSocketRequest(ctx.Request) {
+				token := ctx.Query("token")
+				code, prefix := validateSocketToken(token, certsPath)
+				if code != http.StatusOK {
+					ctx.AbortWithStatus(code)
+					return
+				}
+				ctx.Set("prefix", prefix)
+			} else {
+				// Existing token validation for non-WebSocket requests
 				code, prefix := validateToken(ctx, certsPath)
 				if code != http.StatusOK {
 					ctx.AbortWithStatus(code)
@@ -353,6 +373,7 @@ func main() {
 				}
 				ctx.Set("prefix", prefix)
 			}
+
 			ctx.Next()
 		})
 	}
@@ -425,6 +446,7 @@ func main() {
 	})
 	router.GET("/ws/:room", func(ctx *gin.Context) {
 		room := ctx.Param("room")
+
 		upgrader := websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
 				origin := r.Header.Get("Origin")
@@ -444,6 +466,20 @@ func main() {
 			WriteBufferSize: 1024,
 		}
 
+		if !websocket.IsWebSocketUpgrade(ctx.Request) {
+			ctx.String(http.StatusBadRequest, "Not a WebSocket handshake")
+			return
+		}
+
+		// Check if the room exists before upgrading
+		if _, ok := hub.Clients[room]; !ok {
+			log.Printf("Room %s does not exist", room)
+			ctx.Header("Sec-WebSocket-Version", "13")
+			ctx.Header("Connection", "close")
+			ctx.String(http.StatusBadRequest, "Room does not exist")
+			return
+		}
+
 		conn, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
 		if err != nil {
 			// If the upgrade fails, then Upgrade replies to the client with an HTTP error response.
@@ -453,8 +489,11 @@ func main() {
 
 		if err := serveSocket(conn, room, hub); err != nil {
 			log.Printf("Websocket error; err=%v", err)
-			ctx.String(err.Status(), err.Error())
-			return
+			// The connection is already upgraded, so we can't use ctx.String here
+			// Instead, send a close message through the WebSocket
+			closeMsg := websocket.FormatCloseMessage(websocket.CloseInternalServerErr, err.Error())
+			conn.WriteMessage(websocket.CloseMessage, closeMsg)
+			conn.Close()
 		}
 	})
 	router.POST("/build-context-status", func(ctx *gin.Context) {

@@ -2,6 +2,21 @@ import { HttpMethod } from "../../utils/HttpMethod";
 import { buildUrl } from "../../utils/urlBuilder";
 import { LOCAL_DOMAINS } from "../../utils/constants";
 
+export function getWsConnection(configuration, wsPath) {
+  const scheme = getWsScheme(configuration.anvil.host);
+  const wsUrl = buildUrl(
+    scheme,
+    configuration.anvil.host,
+    configuration.anvil.port,
+    wsPath,
+  );
+  if (scheme == "wss") {
+    return `${wsUrl}?token=${configuration.anvil.token}`;
+  } else {
+    return wsUrl;
+  }
+}
+
 export async function terminateExecution(configuration, executionId) {
   const response = await handleRequest(
     buildUrl(
