@@ -4,12 +4,13 @@ import { LOCAL_DOMAINS } from "../../utils/constants";
 
 export function getWsConnection(configuration, wsPath) {
   const scheme = getWsScheme(configuration.anvil.host);
-  return buildUrl(
+  const wsUrl = buildUrl(
     scheme,
     configuration.anvil.host,
     configuration.anvil.port,
     wsPath,
   );
+  return wsUrl?.toString();
 }
 
 export async function terminateExecution(configuration, executionId) {
