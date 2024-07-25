@@ -15,7 +15,6 @@ export default [
   },
   {
     ignores: [
-      ".cache/*",
       "core/*",
       "dist/*",
       "dist-electron/*",

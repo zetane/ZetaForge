@@ -72,13 +72,13 @@ export default function RunPipelineButton({ children, action }) {
       return updatedPipelines;
     });
 
+    const loaded = await loadServerPipeline(newExecution, configuration);
     setWorkspace((draft) => {
       const currentTab = draft.active;
       const newKey = newExecution.Uuid + "." + newExecution.Execution;
       const pipeline = draft.pipelines[newKey];
       if (!pipeline) {
         // key hasn't updated yet
-        const loaded = loadServerPipeline(newExecution, configuration);
         draft.pipelines[newKey] = loaded;
         draft.executions[loaded.record.Execution] = loaded;
       }

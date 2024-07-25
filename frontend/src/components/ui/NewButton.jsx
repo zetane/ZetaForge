@@ -14,7 +14,7 @@ export default function NewButton() {
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
 
   const handleClick = async (editor, pipeline) => {
-    const newPipeline = pipelineFactory(window.cache.local);
+    const newPipeline = pipelineFactory(await window.cache.local());
     const key = pipelineKey(newPipeline.id, null);
     setWorkspace((draft) => {
       draft.tabs[key] = {};
