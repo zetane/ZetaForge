@@ -22,41 +22,44 @@ export default function WorkspaceFetcher() {
   });
 
   useEffect(() => {
-    const pipelines = data ?? [];
-    for (const serverPipeline of pipelines) {
-      const key = serverPipeline.Uuid + "." + serverPipeline.Execution;
-      const existing = workspace.pipelines[key];
+    const updatePipelines = async () => {
+      const pipelines = data ?? [];
+      for (const serverPipeline of pipelines) {
+        const key = serverPipeline.Uuid + "." + serverPipeline.Execution;
+        const existing = workspace.pipelines[key];
 
-      const existingStatus = existing?.record?.Status;
-      const shouldUpdate =
-        serverPipeline?.Status != existingStatus || !existing;
+        const existingStatus = existing?.record?.Status;
+        const shouldUpdate =
+          serverPipeline?.Status != existingStatus || !existing;
 
-      if (shouldUpdate) {
-        try {
-          const loaded = loadPipeline(serverPipeline, configuration);
+        if (shouldUpdate) {
+          try {
+            const loaded = await loadPipeline(serverPipeline, configuration);
+            setWorkspace((draft) => {
+              draft.pipelines[key] = loaded;
+              draft.executions[loaded?.record?.Execution] = loaded;
+            });
+          } catch (e) {
+            console.log("Failed to load ", e);
+            return;
+          }
+        }
+
+        const isLogging =
+          serverPipeline.Status == "Pending" ||
+          serverPipeline.Status == "Running";
+
+        if (existing && isLogging) {
           setWorkspace((draft) => {
-            draft.pipelines[key] = loaded;
-            draft.executions[loaded?.record?.Execution] = loaded;
+            draft.pipelines[key].logs = serverPipeline?.Log;
+            draft.executions[serverPipeline?.Execution].logs =
+              serverPipeline?.Log;
           });
-        } catch (e) {
-          console.log(serverPipeline);
-          console.log("Failed to load ", e);
-          return;
         }
       }
+    };
 
-      const isLogging =
-        serverPipeline.Status == "Pending" ||
-        serverPipeline.Status == "Running";
-
-      if (existing && isLogging) {
-        setWorkspace((draft) => {
-          draft.pipelines[key].logs = serverPipeline?.Log;
-          draft.executions[serverPipeline?.Execution].logs =
-            serverPipeline?.Log;
-        });
-      }
-    }
+    updatePipelines();
   }, [data]);
 
   return null;

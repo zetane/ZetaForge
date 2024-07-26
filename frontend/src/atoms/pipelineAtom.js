@@ -35,7 +35,7 @@ export const pipelineFactory = (cachePath, pipeline = null) => {
   return defaultPipeline;
 };
 
-const initPipeline = pipelineFactory(window.cache.local);
+const initPipeline = pipelineFactory(await window.cache.local());
 const emptyKey = `${initPipeline.id}.`;
 const tabMap = {
   [emptyKey]: {},

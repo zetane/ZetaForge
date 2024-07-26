@@ -196,14 +196,14 @@ def setup(server_version, client_version, driver, build_flag = True, install_fla
     mixpanel_client.track_event("Setup Successful")
     return config_path
 
-def safe_decode(byte_string, encodings=['utf-8', 'iso-8859-1', 'windows-1252', 'ascii']):
-    # iso-8859-1 is latin-1, windows-1252 is latin-1 extended
+def safe_decode(byte_string, encodings=['utf-8', 'windows-1252']):
     for encoding in encodings:
         try:
             return byte_string.decode(encoding)
         except UnicodeDecodeError:
             continue
-    return byte_string.decode('utf-8', errors='replace')
+    # If all specified encodings fail, fall back to ISO-8859-1 (latin-1)
+    return byte_string.decode('iso-8859-1', errors='replace')
 
 def read_output(process, name):
     for line in process.stdout:

@@ -25,7 +25,7 @@ export const useLoadPipeline = () => {
     const folderPath = getDirectoryPath(file.path);
 
     // Clear the pipeline object first to avoid key collisions
-    const bufferPath = `${window.cache.local}${data.id}`;
+    const bufferPath = `${await window.cache.local()}${data.id}`;
 
     data["sink"] = folderPath;
     data["build"] = bufferPath;
@@ -47,7 +47,10 @@ export const useLoadPipeline = () => {
       id: data.id,
     };
 
-    const newPipeline = pipelineFactory(window.cache.local, loadedPipeline);
+    const newPipeline = pipelineFactory(
+      await window.cache.local(),
+      loadedPipeline,
+    );
     const key = pipelineKey(newPipeline.id, null);
 
     setWorkspace((draft) => {
@@ -130,7 +133,7 @@ function sortSpecsKeys(pipeline) {
 }
 
 export const useLoadServerPipeline = () => {
-  const loadPipeline = (pipeline, configuration) => {
+  const loadPipeline = async (pipeline, configuration) => {
     if (!pipeline) {
       return;
     }
@@ -138,7 +141,7 @@ export const useLoadServerPipeline = () => {
     if (pipeline.Results != "") {
       pipelineData = JSON.parse(pipeline.Results);
     }
-    const bufferPath = `${window.cache.local}${pipelineData.id}`;
+    const bufferPath = `${await window.cache.local()}${pipelineData.id}`;
     const executionId = pipeline.Execution;
     let socketUrl = null;
     if (pipeline.Status == "Pending" || pipeline.Status == "Running") {
@@ -158,8 +161,10 @@ export const useLoadServerPipeline = () => {
       socketUrl: socketUrl,
       logs: pipeline?.Log,
     };
-
-    let newPipeline = pipelineFactory(window.cache.local, loadedPipeline);
+    let newPipeline = pipelineFactory(
+      await window.cache.local(),
+      loadedPipeline,
+    );
     // sort keys
     newPipeline = sortSpecsKeys(newPipeline);
     return newPipeline;
