@@ -36,8 +36,9 @@ export const useStableWebSocket = (url) => {
       return shouldReconnect;
     },
     protocols: protocols,
-    reconnectInterval: (attemptNumber) => Math.min(1000 * 2, 30000),
-    onOpen: (event) => {
+    reconnectInterval: (attemptNumber) =>
+      Math.min(1000 * 2 ** attemptNumber, 30000),
+    onOpen: () => {
       console.log("WebSocket connection established.");
       setWsError(null);
       reconnectCount.current = 0;
