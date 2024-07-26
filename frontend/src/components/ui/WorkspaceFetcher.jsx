@@ -13,7 +13,6 @@ export default function WorkspaceFetcher() {
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
   const loadPipeline = useLoadServerPipeline();
   const [configuration] = useAtom(activeConfigurationAtom);
-  const syncResults = useSyncExecutionResults();
 
   const { pending, error, data } = useQuery({
     queryKey: ["pipelines"],

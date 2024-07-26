@@ -9,7 +9,7 @@ export const useSyncExecutionResults = () => {
   const downloadExecutionResults = trpc.downloadExecutionResults.useMutation();
 
   const syncExecutionResults = async (key, status) => {
-    if (finishedExecuting(status)) {
+    if (runningOrFinished(status)) {
       const pipeline = workspace.pipelines[key];
       await downloadExecutionResults.mutateAsync({
         buffer: pipeline.buffer,
@@ -23,6 +23,6 @@ export const useSyncExecutionResults = () => {
   return syncExecutionResults;
 };
 
-function finishedExecuting(status) {
-  return status == "Succeeded" || status == "Failed";
+function runningOrFinished(status) {
+  return status == "Running" || status == "Succeeded" || status == "Failed";
 }

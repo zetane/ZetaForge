@@ -1,10 +1,11 @@
-import { useAtom } from "jotai";
+import { parseLogLine } from "@/atoms/logsAtom";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
-import { useEffect, useCallback } from "react";
+import { useSyncExecutionResults } from "@/hooks/useExecutionResults";
 import { useStableWebSocket } from "@/hooks/useStableWebsocket";
 import { useUnifiedLogs } from "@/hooks/useUnifiedLogs";
-import { parseLogLine } from "@/atoms/logsAtom";
 import { enableMapSet } from "immer";
+import { useAtom } from "jotai";
+import { useCallback, useEffect } from "react";
 
 enableMapSet();
 
@@ -13,6 +14,7 @@ export default function SocketFetcher() {
   const { lastMessage, readyState, wsError } = useStableWebSocket(
     pipeline?.socketUrl,
   );
+  const syncResults = useSyncExecutionResults();
 
   const { updateLogs } = useUnifiedLogs();
 
@@ -32,6 +34,11 @@ export default function SocketFetcher() {
         }
       }
     });
+
+    if (parsedLogEntry?.event?.tag === "outputs") {
+      const key = `${pipeline.record.Uuid}.${pipeline.record.Execution}`
+      syncResults(key, pipeline.record.Status);
+    }
   });
 
   useEffect(() => {
