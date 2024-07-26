@@ -45,16 +45,18 @@ export const workspaceAtom = atom({
   tabs: tabMap,
   pipelines: { [emptyKey]: initPipeline },
   executions: {},
+  lineage: new Map(),
   active: emptyKey,
   fetchInterval: 2 * 1000,
 });
 
 export const getPipelines = (workspace) => {
-  const running = [];
-  for (const [, pipeline] of Object.entries(workspace.executions)) {
-    running.push(pipeline);
-  }
-  return running.sort((a, b) =>
+  const loadable = Object.values(workspace.pipelines).filter((p) => {
+    console.log(p);
+    return p.record != null;
+  });
+  console.log(loadable);
+  return loadable.sort((a, b) =>
     b?.record?.Execution.localeCompare(a?.record?.Execution),
   );
 };

@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
 import { useLoadServerPipeline } from "@/hooks/useLoadPipeline";
 import { useEffect } from "react";
 import { workspaceAtom } from "@/atoms/pipelineAtom";
@@ -24,6 +23,7 @@ export default function WorkspaceFetcher() {
   useEffect(() => {
     const updatePipelines = async () => {
       const pipelines = data ?? [];
+
       for (const serverPipeline of pipelines) {
         const key = serverPipeline.Uuid + "." + serverPipeline.Execution;
         const existing = workspace.pipelines[key];
