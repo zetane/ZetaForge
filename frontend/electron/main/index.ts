@@ -7,10 +7,9 @@ import { release } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import "../../polyfill/crypto";
-import { startExpressServer } from "../../server/express.mjs";
+import {gracefullyStopAnvil, startExpressServer } from "../../server/express.mjs";
 import { update } from './update';
 import sourcemap from 'source-map-support';
-
 Sentry.init({ dsn: "https://7fb18e8e487455a950298625457264f3@o1096443.ingest.us.sentry.io/4507031960223744" });
 
 const __filename = fileURLToPath(import.meta.url)
@@ -19,6 +18,8 @@ const __dirname = dirname(__filename)
 import { appRouter } from "../../server/router";
 
 sourcemap.install()
+
+
 // The built directory structure
 //
 // ├─┬ dist-electron
@@ -44,6 +45,16 @@ if (targetIndex !== -1) {
   process.env.VITE_ZETAFORGE_IS_DEV = 'False'
 }
 
+const isPip = '--is_pip'
+
+const targetPipIndex = process.argv.indexOf(isPip)
+
+if(targetPipIndex !== -1) {
+  process.env.VITE_IS_PIP = 'True'
+} else {
+  process.env.VITE_IS_PIP = 'False'
+}
+
 // Disable GPU Acceleration for Windows 7
 if (release().startsWith('6.1')) app.disableHardwareAcceleration()
 
@@ -65,6 +76,7 @@ let win: BrowserWindow | null = null
 const preload = join(__dirname, '../preload/index.mjs')
 const url = process.env.VITE_DEV_SERVER_URL
 const indexHtml = join(process.env.DIST, 'index.html')
+
 
 const isMac = process.platform === 'darwin'
 const menuTemplate: Electron.MenuItemConstructorOptions[] = [
@@ -161,8 +173,14 @@ async function createWindow() {
 app.whenReady().then(createWindow)
 
 app.on('window-all-closed', () => {
+  console.log("WINDOW ALL CLOSED!!!!")
   win = null
   if (process.platform !== 'darwin') app.quit()
+})
+
+app.on('will-quit', () => {
+  console.log("QUITTING ANVIL...")
+  gracefullyStopAnvil()
 })
 
 app.on('second-instance', () => {
@@ -177,8 +195,10 @@ app.on('activate', () => {
   const allWindows = BrowserWindow.getAllWindows()
   if (allWindows.length) {
     allWindows[0].focus()
+    allWindows[0].webContents.send('missing-config')
   } else {
     createWindow()
+    win?.webContents.send('missing-config')
   }
 })
 

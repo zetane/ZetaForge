@@ -25,12 +25,32 @@ import SavePipelineButton from "./SavePipelineButton";
 import AnvilConfigurationsModal from "./modal/AnvilConfigurationsModal";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { PipelineStopButton } from "./PipelineStopButton";
-
+import { getAllPipelines } from "@/client/anvil";
+import { ping } from "@/client/anvil";
 export default function Navbar({ children }) {
   const [darkMode, setDarkMode] = useAtom(darkModeAtom);
   const [modalContent, setModalContent] = useAtom(modalContentAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const [configuration] = useAtom(activeConfigurationAtom);
+  const [disable, setDisable] = useState(false)
+
+  
+
+  const { pingPending, pingError, pingData} = useQuery({
+    queryKey: ["ping"],
+    queryFn: async () => {
+      const res = await ping(configuration)
+      console.log(res)
+      setDisable(res !== true)
+      return res
+      
+    }  ,
+    refetchInterval: workspace.fetchInterval
+  })
+
+  
+
+  
 
   const modalPopper = (content) => {
     setModalContent({
@@ -43,7 +63,7 @@ export default function Navbar({ children }) {
   const svgOverride = { position: "absolute", right: "15px", top: "5px" };
 
   let runButton = (
-    <RunPipelineButton modalPopper={modalPopper} action="Run">
+    <RunPipelineButton modalPopper={modalPopper} action="Run" disabled={disable}>
       <Play size={20} style={svgOverride} />
     </RunPipelineButton>
   );
@@ -108,7 +128,7 @@ export default function Navbar({ children }) {
       </HeaderNavigation>
       <HeaderGlobalBar>
         {runButton}
-        <RunPipelineButton modalPopper={modalPopper} action="Rebuild">
+        <RunPipelineButton modalPopper={modalPopper} action="Rebuild" disabled={disable}>
           <Renew size={20} style={svgOverride} />
         </RunPipelineButton>
         <LogsButton />

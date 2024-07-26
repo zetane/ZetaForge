@@ -1,13 +1,13 @@
 import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { mixpanelAtom } from "@/atoms/mixpanelAtom";
 import generateSchema from "@/utils/schemaValidation";
 import { trpc } from "@/utils/trpc";
 import { Button } from "@carbon/react";
 import { useAtom } from "jotai";
 import { useImmerAtom } from "jotai-immer";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { uuidv7 } from "uuidv7";
 import ClosableModal from "./modal/ClosableModal";
 import { workspaceAtom } from "@/atoms/pipelineAtom";
@@ -15,21 +15,29 @@ import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { useLoadServerPipeline } from "@/hooks/useLoadPipeline";
 import { ping } from "@/client/anvil";
 
-export default function RunPipelineButton({ children, action }) {
+
+export default function RunPipelineButton({ children, action, disabled }) {
   const [editor] = useAtom(drawflowEditorAtom);
   const [pipeline] = useImmerAtom(pipelineAtom);
-  const [, setWorkspace] = useImmerAtom(workspaceAtom);
+  const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
   const [validationErrorMsg, setValidationErrorMsg] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [mixpanelService] = useAtom(mixpanelAtom);
   const [configuration] = useAtom(activeConfigurationAtom);
+  const [disable, setDisable] = useState(false)
+
   const executePipeline = trpc.executePipeline.useMutation();
   const queryClient = useQueryClient();
   const loadServerPipeline = useLoadServerPipeline();
+  
+
+
+  
+
+
 
   const runPipeline = async () => {
     if (!validatePipelineExists()) return;
-
     setValidationErrorMsg([]);
 
     const pipelineSpecs = editor.convert_drawflow_to_block(
@@ -44,6 +52,8 @@ export default function RunPipelineButton({ children, action }) {
     if (!newExecution) {
       return;
     }
+
+    
 
     queryClient.setQueryData(["pipelines"], (oldExecutions) => {
       let updatedPipelines = [];
@@ -156,9 +166,10 @@ export default function RunPipelineButton({ children, action }) {
     margin: "5px",
   };
 
+  
   return (
     <>
-      <Button style={styles} size="sm" onClick={() => runPipeline()}>
+      <Button style={styles} disabled={disabled} size="sm" onClick={() => runPipeline()}>
         <span>{action}</span>
         {children}
       </Button>

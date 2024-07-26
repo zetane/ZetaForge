@@ -85,10 +85,17 @@ export default defineConfig(({ command }) => {
       sourcemap: true,
       rollupOptions: {
         output: {
-          globals: { crypto: "crypto" },
+          globals: { crypto: "crypto" , express: "express"},
         },
-        external: ["crypto"],
+        external: ["crypto", "express"],
       },
+      resolve:{
+        alias: {
+          "@server": path.resolve(__dirname, './server')
+        }
+
+      }
+      
     },
   };
 });
