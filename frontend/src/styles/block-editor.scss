@@ -21,9 +21,27 @@
 .editor-block {
   position: relative;
   background-color: var(--cds-background) !important;
-  height: calc(100vh - 55px);
   border: 1px solid var(--cds-border-subtle);
-  top: 50px !important;
+  right: 0;
+}
+
+.editor-block.maximized {
+  top: 47px;
+  height: calc(100vh - 47px);
+  width: 100%;
+}
+
+.editor-block.minimized {
+  top: 50px;
+  height: calc(100vh - 55px);
+  width: 50%
+}
+
+.editor-block {
+  position: relative;
+  background-color: var(--cds-background) !important;
+  border: 1px solid var(--cds-border-subtle);
+  right: 0;
 }
 
 .block-editor-header {

@@ -1,4 +1,4 @@
-import { blockEditorRootAtom, isBlockEditorOpenAtom } from "@/atoms/editorAtom";
+import { isBlockEditorOpenAtom } from "@/atoms/editorAtom";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { Close, Maximize, Minimize } from "@carbon/icons-react";
 import {
@@ -16,13 +16,13 @@ import SpecsInterface from "./SpecsInterface";
 import TestLogs from "./TestLogs";
 
 export default function Editor({ blockKey, blockPath }) {
-  const minizedStyles = "inset-y-16 right-0 w-1/2";
-  const maximizedStyles = "inset-y-11 right-0 w-full";
   const [pipeline] = useAtom(pipelineAtom);
   const blockName = pipeline.data[blockKey].information.name;
   const blockLogs = `${blockPath}/logs.txt`;
   const setBlockEditorOpen = useSetAtom(isBlockEditorOpenAtom);
-  const [isMaximized, setMaximized] = useState(false);
+  const [isMaximized, setMaximized] = useState(true);
+
+  const sizeStyle =  isMaximized ? "maximized" : "minimized";
 
   const handleClose = () => {
     setBlockEditorOpen(false);
@@ -35,8 +35,7 @@ export default function Editor({ blockKey, blockPath }) {
   return (
     <div
       className={
-        "editor-block absolute z-[8000] flex flex-col " +
-        (isMaximized ? maximizedStyles : minizedStyles)
+        `editor-block absolute z-[8000] flex flex-col ${sizeStyle}`
       }
     >
       <div className="block-editor-header">
