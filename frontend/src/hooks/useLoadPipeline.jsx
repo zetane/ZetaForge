@@ -150,7 +150,7 @@ export const useLoadCorePipeline = () => {
   const savePipelineMutation = trpc.savePipeline.useMutation();
 
   const loadPipeline = async (specs, path) => {
-    const bufferPath = `${window.cache.local}${specs.id}`;
+    const bufferPath = `${await window.cache.local()}${specs.id}`;
 
     const cacheData = {
       specs: specs,
@@ -168,7 +168,7 @@ export const useLoadCorePipeline = () => {
       id: specs.id,
     };
 
-    const newPipeline = pipelineFactory(window.cache.local, loadedPipeline);
+    const newPipeline = pipelineFactory(await window.cache.local(), loadedPipeline);
     const key = pipelineKey(newPipeline.id, null);
 
     setWorkspace((draft) => {
