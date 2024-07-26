@@ -11,6 +11,7 @@ export default {
   anvil: {
     host: import.meta.env.VITE_ANVIL_HOST,
     port: import.meta.env.VITE_ANVIL_PORT,
+    token: "",
   },
   logger: {
     level: import.meta.env.VITE_LOG_LEVEL,

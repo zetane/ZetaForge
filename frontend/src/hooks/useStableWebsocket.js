@@ -1,5 +1,7 @@
+import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { useState, useRef } from "react";
 import useWebSocket from "react-use-websocket";
+import { useAtom } from "jotai";
 
 const WebSocketCloseCodes = {
   1000: "Normal Closure",
@@ -14,6 +16,10 @@ const WebSocketCloseCodes = {
 export const useStableWebSocket = (url) => {
   const [wsError, setWsError] = useState(null);
   const reconnectCount = useRef(0);
+  const [configuration] = useAtom(activeConfigurationAtom);
+  const protocols = url?.startsWith("wss")
+    ? ["Bearer", configuration.anvil.token]
+    : null;
 
   const { lastMessage, readyState, sendMessage } = useWebSocket(url, {
     shouldReconnect: (closeEvent) => {
@@ -27,9 +33,9 @@ export const useStableWebSocket = (url) => {
       if (!shouldReconnect) {
         setWsError(WebSocketCloseCodes[closeEvent.code] || "WebSocket closed");
       }
-      return false;
+      return shouldReconnect;
     },
-    share: true,
+    protocols: protocols,
     reconnectInterval: (attemptNumber) =>
       Math.min(1000 * 2 ** attemptNumber, 30000),
     onOpen: () => {

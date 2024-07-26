@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"time"
 
@@ -159,21 +158,13 @@ func (h *Hub) CloseRoom(room string) {
 	}
 }
 
-func serveSocket(conn *websocket.Conn, room string, h *Hub) HTTPError {
-	if _, ok := h.Clients[room]; !ok { // if does not exist
-		closeMsg := websocket.FormatCloseMessage(CloseRoomNotFound, fmt.Sprintf("Room %s does not exist", room))
-		conn.WriteMessage(websocket.CloseMessage, closeMsg)
-		conn.Close()
-		return BadRequest{"room " + room + " does not exist"}
-	}
-
+func serveSocket(conn *websocket.Conn, room string, h *Hub) error {
 	client := &Client{
 		Room:   room,
 		Conn:   conn,
 		ToSend: make(chan Message, 1024),
 		Hub:    h,
 	}
-
 	h.Register <- client
 	go client.Receive()
 	go client.Send()

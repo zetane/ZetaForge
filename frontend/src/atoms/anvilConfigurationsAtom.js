@@ -10,6 +10,7 @@ export const defaultAnvilConfigurationAtom = atom(() => ({
   anvil: {
     host: config.anvil.host,
     port: config.anvil.port,
+    token: config.anvil.token,
   },
   s3: {
     host: config.s3.host,

@@ -47,7 +47,7 @@ export const workspaceAtom = atom({
   executions: {},
   lineage: new Map(),
   active: emptyKey,
-  fetchInterval: 2 * 1000,
+  fetchInterval: 10 * 1000,
 });
 
 export const getPipelines = (workspace) => {

@@ -41,7 +41,7 @@ func uploadData(ctx context.Context, data string, key string, cfg Config) error 
 	}
 
 	params := &s3.PutObjectInput{
-		Bucket: aws.String(BUCKET),
+		Bucket: aws.String(cfg.BucketName),
 		Key:    aws.String(key),
 		Body:   body,
 	}
@@ -62,7 +62,7 @@ func upload(ctx context.Context, source string, key string, cfg Config) error {
 	}
 
 	params := &s3.PutObjectInput{
-		Bucket: aws.String(BUCKET),
+		Bucket: aws.String(cfg.BucketName),
 		Key:    aws.String(key),
 		Body:   file,
 	}
@@ -78,7 +78,7 @@ func downloadFile(ctx context.Context, key string, filename string, cfg Config) 
 	}
 
 	result, err := client.GetObject(ctx, &s3.GetObjectInput{
-		Bucket: aws.String(BUCKET),
+		Bucket: aws.String(cfg.BucketName),
 		Key:    &key,
 	})
 
@@ -109,7 +109,7 @@ func downloadFiles(ctx context.Context, sink string, prefix string, cfg Config) 
 	}
 
 	res, err := client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
-		Bucket: aws.String(BUCKET),
+		Bucket: aws.String(cfg.BucketName),
 		Prefix: aws.String(prefix),
 	})
 
@@ -127,7 +127,7 @@ func downloadFiles(ctx context.Context, sink string, prefix string, cfg Config) 
 			return err
 		}
 		result, err := client.GetObject(ctx, &s3.GetObjectInput{
-			Bucket: aws.String(BUCKET),
+			Bucket: aws.String(cfg.BucketName),
 			Key:    content.Key,
 		})
 
@@ -160,14 +160,14 @@ func deleteFiles(ctx context.Context, prefix string, extraFiles []string, cfg Co
 	}
 
 	params := &s3.DeleteObjectsInput{
-		Bucket: aws.String(BUCKET),
+		Bucket: aws.String(cfg.BucketName),
 		Delete: &s3types.Delete{
 			Objects: []s3types.ObjectIdentifier{},
 		},
 	}
 
 	res, err := client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
-		Bucket: aws.String(BUCKET),
+		Bucket: aws.String(cfg.BucketName),
 		Prefix: aws.String(prefix),
 	})
 	if err != nil {
@@ -678,7 +678,7 @@ func buildImage(ctx context.Context, source string, tag string, cfg Config) erro
 	return nil
 }
 
-func localExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid string, build bool, cfg Config, db *sql.DB, hub *Hub) {
+func localExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid string, organization string, build bool, cfg Config, db *sql.DB, hub *Hub) {
 	ctx := context.Background()
 	defer log.Printf("Completed")
 
@@ -704,7 +704,7 @@ func localExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 		log.Printf("error creating pipeline log: %v", err)
 	}
 
-	pipelineLogger := createLogger(executionUuid, file, func(message string, executionUuid string) {
+	pipelineLogger := createLogger(executionUuid, func(message string, executionUuid string) {
 		if executionUuid != "" {
 			// log printf produces a timestamp by default
 			// remove it here
@@ -727,7 +727,7 @@ func localExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 				var jsonObj map[string]interface{}
 				err := json.Unmarshal([]byte(message), &jsonObj)
 				if err != nil {
-					fmt.Printf("Failed to log: %s", message)
+					log.Printf("Failed to log: %s", message)
 					return
 				}
 
@@ -766,13 +766,13 @@ func localExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 		return
 	}
 
-	workflow, blocks, err := translate(ctx, pipeline, "org", s3Key, build, cfg)
+	workflow, blocks, err := translate(ctx, pipeline, organization, s3Key, build, cfg)
 	if err != nil {
 		log.Printf("failed to translate the pipeline; err=%v", err)
 		return
 	}
 
-	defer cleanupRun(ctx, db, executionId, executionUuid, *pipeline, *workflow, cfg)
+	defer cleanupRun(ctx, db, executionId, executionUuid, tempLog, s3Key, *pipeline, *workflow, cfg)
 
 	jsonWorkflow, err := json.MarshalIndent(&workflow, "", "  ")
 	if err != nil {
@@ -826,10 +826,7 @@ func localExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 	}
 }
 
-func cleanupRun(ctx context.Context, db *sql.DB, executionId int64, executionUuid string, pipeline zjson.Pipeline, workflow wfv1.Workflow, cfg Config) {
-	tempLog := filepath.Join(os.TempDir(), executionUuid+".log")
-	s3Key := pipeline.Id + "/" + executionUuid
-
+func cleanupRun(ctx context.Context, db *sql.DB, executionId int64, executionUuid string, tempLog string, s3Key string, pipeline zjson.Pipeline, workflow wfv1.Workflow, cfg Config) {
 	if err := upload(ctx, tempLog, s3Key+"/"+executionUuid+".log", cfg); err != nil {
 		log.Printf("failed to upload log: err=%v", err)
 	}
@@ -838,31 +835,97 @@ func cleanupRun(ctx context.Context, db *sql.DB, executionId int64, executionUui
 		log.Printf("failed to save results; err=%v", err)
 	}
 
-	sink := filepath.Join(pipeline.Sink, "history", executionUuid)
-	if err := downloadFiles(ctx, sink, s3Key, cfg); err != nil {
-		log.Printf("failed to download files; err=%v", err)
+	if cfg.IsLocal {
+		sink := filepath.Join(pipeline.Sink, "history", executionUuid)
+		if err := downloadFiles(ctx, sink, s3Key, cfg); err != nil {
+			log.Printf("failed to download files; err=%v", err)
+		}
 	}
 }
 
-func cloudExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid string, build bool, cfg Config, db *sql.DB, hub *Hub) {
+func cloudExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid string, organization string, build bool, cfg Config, db *sql.DB, hub *Hub) {
 	ctx := context.Background()
 	defer log.Printf("Completed")
 
 	defer completeExecution(ctx, db, executionId)
 
-	if err := hub.OpenRoom(pipeline.Id); err != nil {
+	if err := hub.OpenRoom(executionUuid); err != nil {
 		log.Printf("failed to open log room; err=%v", err)
 		return
 	}
 	defer hub.CloseRoom(pipeline.Id)
 
-	s3key := pipeline.Id + "/" + executionUuid
+	s3key := organization + "/" + pipeline.Id + "/" + executionUuid
+	logDir, exists := os.LookupEnv("ZETAFORGE_LOGS")
+	if !exists {
+		logDir = os.TempDir()
+	}
+	tempLog := filepath.Join(logDir, executionUuid+".log")
 
-	workflow, _, err := translate(ctx, pipeline, "org", s3key, build, cfg)
+	file, err := os.OpenFile(tempLog, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Printf("error creating pipeline log: %v", err)
+	}
+
+	pipelineLogger := createLogger(executionUuid, func(message string, executionUuid string) {
+		if executionUuid != "" {
+			// log printf produces a timestamp by default
+			// remove it here
+			parts := strings.SplitN(message, " ", 3)
+			timestamp := ""
+			if len(parts) == 3 {
+				timestamp = parts[0] + " " + parts[1]
+				message = parts[2]
+			}
+
+			content := map[string]interface{}{
+				"executionId": executionUuid,
+				"time":        timestamp,
+			}
+
+			if strings.HasPrefix(message, "{") && strings.HasSuffix(message, "}\n") {
+				message = strings.TrimSuffix(message, "\n")
+
+				// Parse the JSON string into a map
+				var jsonObj map[string]interface{}
+				err := json.Unmarshal([]byte(message), &jsonObj)
+				if err != nil {
+					log.Printf("Failed to log: %s", message)
+					return
+				}
+
+				// Merge the JSON object with the provided object
+				for key, value := range jsonObj {
+					content[key] = value
+				}
+			} else {
+				content["message"] = strings.TrimSuffix(message, "\n")
+			}
+
+			jsonData, err := json.Marshal(content)
+			if err != nil {
+				log.Printf("Failed to log: %s", message)
+			}
+
+			hub.Broadcast <- Message{
+				Room:    executionUuid,
+				Content: fmt.Sprintf("%s", jsonData),
+			}
+
+			file.WriteString(fmt.Sprintf("%s\n", jsonData))
+		}
+	})
+	log.SetOutput(pipelineLogger)
+
+	defer file.Close()
+
+	workflow, _, err := translate(ctx, pipeline, organization, s3key, build, cfg)
 	if err != nil {
 		log.Printf("failed to translate the pipeline; err=%v", err)
 		return
 	}
+
+	defer cleanupRun(ctx, db, executionId, executionUuid, tempLog, s3key, *pipeline, *workflow, cfg)
 
 	if err := updateExecutionJson(ctx, db, executionId, workflow); err != nil {
 		log.Printf("failed to write workflow to database; err=%v", err)
@@ -877,16 +940,18 @@ func cloudExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 		log.Printf("error during pipeline execution; err=%v", err)
 		return
 	}
+
+	if err := results(ctx, db, executionId, *pipeline, *workflow); err != nil {
+		log.Printf("failed to save results; err=%v", err)
+	}
 }
 
-func getBuildContextStatus(pipeline *zjson.Pipeline, cfg Config) []zjson.BuildContextStatus {
-	context := context.Background()
+func getBuildContextStatus(ctx context.Context, pipeline *zjson.Pipeline, organization string, cfg Config) []zjson.BuildContextStatus {
 	var buildContextStatus []zjson.BuildContextStatus
 	for id, block := range pipeline.Pipeline {
 		if len(block.Action.Container.Image) > 0 && !cfg.IsLocal {
-			image := getImage(&block)
-			status, _, err := checkImage(context, image, cfg)
-			s3Key := getKanikoBuildContextS3Key(&block, "org")
+			status, _, err := checkImage(ctx, getImage(&block, organization), cfg)
+			s3Key := getKanikoBuildContextS3Key(&block)
 
 			if err != nil {
 				log.Printf("failed to get build context status; err=%v", err)

@@ -20,7 +20,6 @@ import (
 	"server/zjson"
 
 	"github.com/getsentry/sentry-go"
-	sentrygin "github.com/getsentry/sentry-go/gin"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -45,6 +44,7 @@ type Config struct {
 	EntrypointFile  string
 	ServiceAccount  string
 	Bucket          string
+	BucketName      string
 	Database        string
 	SetupVersion    string
 	Local           Local `json:"Local,omitempty"`
@@ -76,7 +76,7 @@ func (w *WebSocketWriter) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-func createLogger(id string, file io.Writer, messageFunc func(string, string)) io.Writer {
+func createLogger(id string, messageFunc func(string, string)) io.Writer {
 	wsWriter := &WebSocketWriter{
 		Id:          id,
 		MessageFunc: messageFunc,
@@ -280,11 +280,30 @@ func setupSentry() {
 	defer sentry.Flush(2 * time.Second)
 }
 
+func getPrefix(ctx *gin.Context) string {
+	prefix, ok := ctx.Get("prefix")
+	if ok {
+		return prefix.(string)
+	} else {
+		return "org"
+	}
+}
+
+func isWebSocketRequest(r *http.Request) bool {
+	return r.Header.Get("Upgrade") == "websocket" &&
+		r.Header.Get("Connection") == "Upgrade"
+}
+
 func main() {
 	ctx := context.Background()
 	configPath := os.Getenv("ZETAFORGE_CONFIG")
 	if configPath == "" {
 		configPath = "config.json"
+	}
+
+	certsPath := os.Getenv("ZETAFORGE_CERTS")
+	if certsPath == "" {
+		certsPath = "certs"
 	}
 
 	file, err := os.ReadFile(configPath)
@@ -317,6 +336,8 @@ func main() {
 		log.Fatalf("failed to migrate database; err=%v", err)
 	}
 
+	router := gin.Default()
+
 	if config.IsLocal || config.Cloud.Provider == "Debug" {
 		// Switching to Cobra if we need more arguments
 		if len(os.Args) > 1 {
@@ -327,15 +348,35 @@ func main() {
 			os.Exit(1)
 		}
 		setup(ctx, config, db)
+	} else {
+		router.Use(func(ctx *gin.Context) {
+			if ctx.Request.Method == "OPTIONS" {
+				ctx.Next()
+				return
+			}
+
+			headerKey := "Authorization"
+			if isWebSocketRequest(ctx.Request) {
+				headerKey = "Sec-WebSocket-Protocol"
+			}
+
+			token := ctx.GetHeader(headerKey)
+			code, prefix := validateToken(token, certsPath)
+			if code != http.StatusOK {
+				ctx.AbortWithStatus(code)
+				return
+			}
+			ctx.Set("prefix", prefix)
+			ctx.Next()
+		})
 	}
 
 	hub := newHub()
 	go hub.Run()
 
-	router := gin.Default()
-	// CORS middleware
 	router.Use(func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		origin := c.Request.Header.Get("Origin")
+		c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, PATCH, DELETE")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 
@@ -344,16 +385,14 @@ func main() {
 			c.AbortWithStatus(http.StatusOK)
 			return
 		}
-
 		c.Next()
 	})
-
-	router.Use(sentrygin.New(sentrygin.Options{}))
 
 	router.GET("/ping", func(ctx *gin.Context) {
 		ctx.String(http.StatusOK, "pong")
 	})
 	router.POST("/execute", func(ctx *gin.Context) {
+		prefix := getPrefix(ctx)
 		execution, err := validateJson[zjson.Execution](ctx.Request.Body)
 		if err != nil {
 			log.Printf("invalid json request; err=%v", err)
@@ -361,7 +400,7 @@ func main() {
 			return
 		}
 
-		res, err := createPipeline(ctx.Request.Context(), db, "org", execution.Pipeline)
+		res, err := createPipeline(ctx.Request.Context(), db, prefix, execution.Pipeline)
 		if err != nil {
 			log.Printf("failed to create pipeline; err=%v", err)
 			ctx.String(err.Status(), err.Error())
@@ -375,9 +414,9 @@ func main() {
 			return
 		}
 		if config.IsLocal || config.Cloud.Provider == "Debug" {
-			go localExecute(&execution.Pipeline, newExecution.ID, execution.Id, execution.Build, config, db, hub)
+			go localExecute(&execution.Pipeline, newExecution.ID, execution.Id, prefix, execution.Build, config, db, hub)
 		} else {
-			go cloudExecute(&execution.Pipeline, newExecution.ID, execution.Id, execution.Build, config, db, hub)
+			go cloudExecute(&execution.Pipeline, newExecution.ID, execution.Id, prefix, execution.Build, config, db, hub)
 		}
 
 		retData, err := filterPipeline(ctx, db, execution.Id)
@@ -400,15 +439,39 @@ func main() {
 	})
 	router.GET("/ws/:room", func(ctx *gin.Context) {
 		room := ctx.Param("room")
+
 		upgrader := websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
 				origin := r.Header.Get("Origin")
-				return strings.HasPrefix(origin, "http://localhost") ||
-					strings.HasPrefix(origin, "http://127.0.0.1") ||
-					strings.HasPrefix(origin, "file://")
+				allowedOrigins := []string{
+					"http://localhost", "https://localhost",
+					"http://127.0.0.1", "https://127.0.0.1",
+					"file://",
+				}
+				for _, allowed := range allowedOrigins {
+					if strings.HasPrefix(origin, allowed) {
+						return true
+					}
+				}
+				return false
 			},
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,
+			Subprotocols:    []string{"Bearer"},
+		}
+
+		if !websocket.IsWebSocketUpgrade(ctx.Request) {
+			ctx.String(http.StatusBadRequest, "Not a WebSocket handshake")
+			return
+		}
+
+		// Check if the room exists before upgrading
+		if _, ok := hub.Clients[room]; !ok {
+			log.Printf("Room %s does not exist", room)
+			ctx.Header("Sec-WebSocket-Version", "13")
+			ctx.Header("Connection", "close")
+			ctx.String(http.StatusBadRequest, "Room does not exist")
+			return
 		}
 
 		conn, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
@@ -420,11 +483,15 @@ func main() {
 
 		if err := serveSocket(conn, room, hub); err != nil {
 			log.Printf("Websocket error; err=%v", err)
-			ctx.String(err.Status(), err.Error())
-			return
+			// The connection is already upgraded, so we can't use ctx.String here
+			// Instead, send a close message through the WebSocket
+			closeMsg := websocket.FormatCloseMessage(websocket.CloseInternalServerErr, err.Error())
+			conn.WriteMessage(websocket.CloseMessage, closeMsg)
+			conn.Close()
 		}
 	})
 	router.POST("/build-context-status", func(ctx *gin.Context) {
+		prefix := getPrefix(ctx)
 		pipeline, err := validateJson[zjson.Pipeline](ctx.Request.Body)
 		if err != nil {
 			log.Printf("invalid json request; err=%v", err)
@@ -432,7 +499,7 @@ func main() {
 			return
 		}
 
-		buildContextStatus := getBuildContextStatus(&pipeline, config)
+		buildContextStatus := getBuildContextStatus(ctx.Request.Context(), &pipeline, prefix, config)
 
 		ctx.JSON(http.StatusOK, buildContextStatus)
 	})
@@ -494,6 +561,7 @@ func main() {
 
 	pipeline := router.Group("/pipeline")
 	pipeline.POST("", func(ctx *gin.Context) {
+		prefix := getPrefix(ctx)
 		pipeline, err := validateJson[zjson.Pipeline](ctx.Request.Body)
 		if err != nil {
 			log.Printf("Invalid json request; err=%v", err)
@@ -501,7 +569,7 @@ func main() {
 			return
 		}
 
-		res, err := createPipeline(ctx.Request.Context(), db, "org", pipeline)
+		res, err := createPipeline(ctx.Request.Context(), db, prefix, pipeline)
 		if err != nil {
 			log.Printf("failed to create pipeline; err=%v", err)
 			ctx.String(err.Status(), err.Error())
@@ -517,7 +585,8 @@ func main() {
 		ctx.JSON(http.StatusCreated, response)
 	})
 	pipeline.GET("/list", func(ctx *gin.Context) {
-		res, err := listAllPipelines(ctx.Request.Context(), db, "org")
+		prefix := getPrefix(ctx)
+		res, err := listAllPipelines(ctx.Request.Context(), db, prefix)
 
 		if err != nil {
 			log.Printf("Failed to list pipelines; err=%v", err)
@@ -566,7 +635,12 @@ func main() {
 		var response []ResponsePipelineExecution
 		for _, execution := range res {
 			logOutput := []string{}
-			tempLog := filepath.Join(os.TempDir(), execution.Executionid+".log")
+			logDir, exists := os.LookupEnv("ZETAFORGE_LOGS")
+			if !exists {
+				logDir = os.TempDir()
+			}
+			tempLog := filepath.Join(logDir, execution.Executionid+".log")
+
 			var s3key string
 			if execution.Status == "Running" || execution.Status == "Pending" {
 				logOutput, err = readTempLog(tempLog)
@@ -594,29 +668,32 @@ func main() {
 		ctx.JSON(http.StatusOK, response)
 	})
 	pipeline.DELETE("/:uuid/:hash", func(ctx *gin.Context) {
+		prefix := getPrefix(ctx)
 		uuid := ctx.Param("uuid")
 		hash := ctx.Param("hash")
 
-		if err := softDeletePipeline(ctx.Request.Context(), db, "org", uuid, hash); err != nil {
+		if err := softDeletePipeline(ctx.Request.Context(), db, prefix, uuid, hash); err != nil {
 			log.Printf("failed to delete pipeline; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
 	})
 	pipeline.PATCH("/:uuid/:hash/deploy", func(ctx *gin.Context) {
+		prefix := getPrefix(ctx)
 		uuid := ctx.Param("uuid")
 		hash := ctx.Param("hash")
 
-		if err := deployPipeline(ctx.Request.Context(), db, "org", uuid, hash); err != nil {
+		if err := deployPipeline(ctx.Request.Context(), db, prefix, uuid, hash); err != nil {
 			log.Printf("failed to deploy pipeline; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
 	})
 	pipeline.GET("/:uuid/list", func(ctx *gin.Context) {
+		prefix := getPrefix(ctx)
 		uuid := ctx.Param("uuid")
 
-		res, err := listAllExecutions(ctx.Request.Context(), db, "org", uuid)
+		res, err := listAllExecutions(ctx.Request.Context(), db, prefix, uuid)
 
 		if err != nil {
 			log.Printf("failed to list executions; err=%v", err)
@@ -632,6 +709,7 @@ func main() {
 		ctx.JSON(http.StatusOK, response)
 	})
 	pipeline.GET("/:uuid/:hash/:index", func(ctx *gin.Context) {
+		prefix := getPrefix(ctx)
 		uuid := ctx.Param("uuid")
 		hash := ctx.Param("hash")
 		index, err := strconv.Atoi(ctx.Param("index"))
@@ -640,7 +718,7 @@ func main() {
 			return
 		}
 
-		res, httpErr := getExecution(ctx.Request.Context(), db, "org", uuid, hash, index)
+		res, httpErr := getExecution(ctx.Request.Context(), db, prefix, uuid, hash, index)
 		if httpErr != nil {
 			log.Printf("failed to delete execution; err=%v", err)
 			ctx.String(httpErr.Status(), httpErr.Error())
@@ -650,10 +728,11 @@ func main() {
 		ctx.JSON(http.StatusOK, newResponseExecution(res, hash))
 	})
 	pipeline.GET("/:uuid/:hash/list", func(ctx *gin.Context) {
+		prefix := getPrefix(ctx)
 		uuid := ctx.Param("uuid")
 		hash := ctx.Param("hash")
 
-		res, err := listExecutions(ctx.Request.Context(), db, "org", uuid, hash)
+		res, err := listExecutions(ctx.Request.Context(), db, prefix, uuid, hash)
 
 		if err != nil {
 			log.Printf("failed to list executions; err=%v", err)
@@ -669,9 +748,10 @@ func main() {
 		ctx.JSON(http.StatusOK, response)
 	})
 	pipeline.POST("/:uuid/:hash/stop", func(ctx *gin.Context) {
+		prefix := getPrefix(ctx)
 		paramUuid := ctx.Param("uuid")
 		hash := ctx.Param("hash")
-		res, err := getPipeline(ctx.Request.Context(), db, "org", paramUuid, hash)
+		res, err := getPipeline(ctx.Request.Context(), db, prefix, paramUuid, hash)
 		if err != nil {
 			log.Printf("failed to get pipeline; err=%v", err)
 			ctx.String(err.Status(), err.Error())
@@ -685,9 +765,10 @@ func main() {
 		ctx.Status(http.StatusOK)
 	})
 	pipeline.POST("/:uuid/:hash/execute", func(ctx *gin.Context) {
+		prefix := getPrefix(ctx)
 		paramUuid := ctx.Param("uuid")
 		hash := ctx.Param("hash")
-		res, err := getPipeline(ctx.Request.Context(), db, "org", paramUuid, hash)
+		res, err := getPipeline(ctx.Request.Context(), db, prefix, paramUuid, hash)
 		if err != nil {
 			log.Printf("failed to get pipeline; err=%v", err)
 			ctx.String(err.Status(), err.Error())
@@ -716,9 +797,9 @@ func main() {
 		}
 
 		if config.IsLocal || config.Cloud.Provider == "Debug" {
-			go localExecute(&pipeline, res.ID, executionId.String(), false, config, db, hub)
+			go localExecute(&pipeline, res.ID, executionId.String(), prefix, false, config, db, hub)
 		} else {
-			go cloudExecute(&pipeline, newExecution.ID, executionId.String(), false, config, db, hub)
+			go cloudExecute(&pipeline, newExecution.ID, executionId.String(), prefix, false, config, db, hub)
 		}
 
 		newRes := make(map[string]any)
@@ -728,6 +809,7 @@ func main() {
 	})
 
 	pipeline.DELETE("/:uuid/:hash/:index", func(ctx *gin.Context) {
+		prefix := getPrefix(ctx)
 		uuid := ctx.Param("uuid")
 		hash := ctx.Param("hash")
 		index, err := strconv.Atoi(ctx.Param("index"))
@@ -736,12 +818,26 @@ func main() {
 			return
 		}
 
-		if err := softDeleteExecution(ctx.Request.Context(), db, "org", uuid, hash, index); err != nil {
+		if err := softDeleteExecution(ctx.Request.Context(), db, prefix, uuid, hash, index); err != nil {
 			log.Printf("failed to delete execution; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
 	})
 
-	router.Run(fmt.Sprintf(":%d", config.ServerPort))
+	if config.IsLocal || config.Cloud.Provider == "Debug" {
+		router.Run(fmt.Sprintf(":%d", config.ServerPort))
+	} else {
+		tlsCertPath := os.Getenv("TLS_CERT_PATH")
+		tlsKeyPath := os.Getenv("TLS_KEY_PATH")
+
+		err := router.SetTrustedProxies(nil)
+		if err != nil {
+			log.Fatalf("trusted proxies incorrectly set; err=%v", err)
+		}
+		err = router.RunTLS(fmt.Sprintf(":%d", config.ServerPort), tlsCertPath, tlsKeyPath)
+		if err != nil {
+			log.Fatalf("failed to start server; err=%v", err)
+		}
+	}
 }

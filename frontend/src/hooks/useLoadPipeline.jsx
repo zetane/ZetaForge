@@ -6,6 +6,7 @@ import {
   pipelineFactory,
   pipelineKey,
 } from "@/atoms/pipelineAtom";
+import { getWsConnection } from "@/client/anvil";
 
 export const useLoadPipeline = () => {
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
@@ -61,6 +62,30 @@ export const useLoadPipeline = () => {
 
   return loadPipeline;
 };
+
+function removeNullInputsOutputs(obj) {
+  // Create an array to store keys to be removed
+  const keysToRemove = [];
+
+  // Iterate through all keys in the object
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      const value = obj[key];
+
+      // Check if both inputs and outputs are null
+      if (value.inputs === null && value.outputs === null) {
+        keysToRemove.push(key);
+      }
+    }
+  }
+
+  // Remove the identified keys from the object
+  keysToRemove.forEach((key) => {
+    delete obj[key];
+  });
+
+  return obj;
+}
 
 function sortSpecsKeys(pipeline) {
   const updatedPipeline = {};
@@ -120,15 +145,16 @@ export const useLoadServerPipeline = () => {
     const executionId = pipeline.Execution;
     let socketUrl = null;
     if (pipeline.Status == "Pending" || pipeline.Status == "Running") {
-      socketUrl = `ws://${configuration.anvil.host}:${configuration.anvil.port}/ws/${executionId}`;
+      socketUrl = getWsConnection(configuration, `ws/${executionId}`);
     }
+    let data = removeNullInputsOutputs(pipelineData?.pipeline);
 
     const loadedPipeline = {
       name: pipelineData.name ? pipelineData.name : pipelineData.id,
       path: pipelineData.sink ? pipelineData.sink : null,
       saveTime: Date.now(),
       buffer: bufferPath,
-      data: pipelineData.pipeline,
+      data: data,
       id: pipelineData.id,
       history: pipelineData.id + "/" + executionId,
       record: pipeline,
