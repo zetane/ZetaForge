@@ -110,7 +110,9 @@ export default function AnvilConfigurationForm({
           />
           <PasswordInput
             labelText="Token"
-            placeholder={"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJtZXNzYWdlIjoieW91ciBDVEYgaXMgaW4gYW5vdGhlciBjYXN0bGUifQ.nnx_N7kOjI7lZthjjQ0lY7kXYQkluEdSBnCjI7ASsCE"}
+            placeholder={
+              "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJtZXNzYWdlIjoieW91ciBDVEYgaXMgaW4gYW5vdGhlciBjYXN0bGUifQ.nnx_N7kOjI7lZthjjQ0lY7kXYQkluEdSBnCjI7ASsCE"
+            }
             name="anvilToken"
             value={configForm.anvilToken}
             onChange={handleInputChange}

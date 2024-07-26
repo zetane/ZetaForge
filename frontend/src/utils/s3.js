@@ -7,10 +7,10 @@ import config from "../../config";
 
 function getFullS3Key(key, configuration) {
   if (configuration.anvil.token) {
-    const data = atob(configuration.anvil.token.split('.')[1]);
-    return JSON.parse(data).sub + "/" + key
+    const data = atob(configuration.anvil.token.split(".")[1]);
+    return JSON.parse(data).sub + "/" + key;
   } else {
-    return key
+    return key;
   }
 }
 
