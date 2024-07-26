@@ -2,6 +2,17 @@ import { HttpMethod } from "../../utils/HttpMethod";
 import { buildUrl } from "../../utils/urlBuilder";
 import { LOCAL_DOMAINS } from "../../utils/constants";
 
+export function getWsConnection(configuration, wsPath) {
+  const scheme = getWsScheme(configuration.anvil.host);
+  const wsUrl = buildUrl(
+    scheme,
+    configuration.anvil.host,
+    configuration.anvil.port,
+    wsPath,
+  );
+  return wsUrl?.toString();
+}
+
 export async function terminateExecution(configuration, executionId) {
   const response = await handleRequest(
     buildUrl(
@@ -11,6 +22,7 @@ export async function terminateExecution(configuration, executionId) {
       `execution/${executionId}/terminate`,
     ),
     HttpMethod.POST,
+    configuration.anvil.token,
     {},
   );
 
@@ -28,6 +40,7 @@ export async function getAllPipelines(configuration) {
       "pipeline/filter?limit=100000&offset=0",
     ),
     HttpMethod.GET,
+    configuration.anvil.token,
     {},
   );
 
@@ -45,6 +58,7 @@ export async function ping(configuration) {
       "ping",
     ),
     HttpMethod.GET,
+    configuration.anvil.token,
     {},
   );
 
@@ -59,7 +73,18 @@ function getScheme(host) {
   return LOCAL_DOMAINS.includes(host) ? "http" : "https";
 }
 
-async function handleRequest(url, method, headers, body = null) {
+function getWsScheme(host) {
+  return LOCAL_DOMAINS.includes(host) ? "ws" : "wss";
+}
+
+async function handleRequest(url, method, token, headers, body = null) {
+  if (token) {
+    headers = {
+      ...headers,
+      Authorization: `Bearer ${token}`,
+    };
+  }
+
   try {
     const response = await fetch(url, {
       method: method,

@@ -5,6 +5,15 @@ import {
 } from "@aws-sdk/client-s3";
 import config from "../../config";
 
+function getFullS3Key(key, configuration) {
+  if (configuration.anvil.token) {
+    const data = atob(configuration.anvil.token.split(".")[1]);
+    return JSON.parse(data).sub + "/" + key;
+  } else {
+    return key;
+  }
+}
+
 function getClient(configuration) {
   const endpoint = `http://${configuration.s3.host}:${configuration.s3.port}`;
   return new S3Client({
@@ -25,7 +34,7 @@ async function fileExists(key, anvilConfiguration) {
     await client.send(
       new HeadObjectCommand({
         Bucket: config.s3.bucket,
-        Key: key,
+        Key: getFullS3Key(key, anvilConfiguration),
       }),
     );
     return true;
@@ -48,7 +57,7 @@ export async function getFileData(key, anvilConfiguration) {
       const response = await client.send(
         new GetObjectCommand({
           Bucket: config.s3.bucket,
-          Key: key,
+          Key: getFullS3Key(key, anvilConfiguration),
         }),
       );
 

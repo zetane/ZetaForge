@@ -13,6 +13,7 @@ export async function getBuildContextStatus(configuration, pipelineSpecs) {
       "build-context-status",
     ),
     HttpMethod.POST,
+    configuration.anvil.token,
     {},
     pipelineSpecs,
   );
@@ -37,6 +38,7 @@ export async function createExecution(
       "execute",
     ),
     HttpMethod.POST,
+    configuration.anvil.token,
     {},
     {
       id: executionId,
@@ -62,7 +64,14 @@ function getScheme(host) {
   return LOCAL_DOMAINS.includes(host) ? "http" : "https";
 }
 
-async function handleRequest(url, method, headers, body = null) {
+async function handleRequest(url, method, token, headers, body = null) {
+  if (token) {
+    headers = {
+      ...headers,
+      Authorization: `Bearer ${token}`,
+    };
+  }
+
   try {
     const response = await fetch(url, {
       method: method,

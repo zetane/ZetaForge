@@ -58,20 +58,47 @@ func (endpoint *LocalEndpoint) ResolveEndpoint(ctx context.Context, params s3.En
 	return endpoints.Endpoint{URI: *uri}, err
 }
 
-func s3Client(ctx context.Context, cfg Config) (*s3.Client, error) {
-	awsAccessKey := "AKIAIOSFODNN7EXAMPLE"
-	awsSecretKey := "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
-	creds := credentials.NewStaticCredentialsProvider(awsAccessKey, awsSecretKey, "")
-	region := config.WithRegion("us-east-2")
-	awsConfig, err := config.LoadDefaultConfig(ctx, region, config.WithCredentialsProvider(creds))
-	if err != nil {
-		return &s3.Client{}, err
-	}
-	client := s3.NewFromConfig(awsConfig, func(o *s3.Options) {
-		o.EndpointResolverV2 = &LocalEndpoint{Bucket: BUCKET, S3Port: cfg.Local.BucketPort}
-	})
+type CloudEndpoint struct {
+	Address string
+	Bucket  string
+}
 
-	return client, nil
+func (endpoint *CloudEndpoint) ResolveEndpoint(ctx context.Context, params s3.EndpointParameters) (endpoints.Endpoint, error) {
+	uri, err := url.Parse(fmt.Sprintf("https://%s/%s", endpoint.Address, endpoint.Bucket))
+	return endpoints.Endpoint{URI: *uri}, err
+}
+
+func s3Client(ctx context.Context, cfg Config) (*s3.Client, error) {
+	var endpointResolver s3.EndpointResolverV2
+	var awsAccessKey string
+	var awsSecretKey string
+	region := "us-east-2"
+
+	if cfg.IsLocal {
+		awsAccessKey = "AKIAIOSFODNN7EXAMPLE"
+		awsSecretKey = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+		endpointResolver = &LocalEndpoint{Bucket: cfg.BucketName, S3Port: cfg.Local.BucketPort}
+	} else {
+		awsAccessKey = cfg.Cloud.AWS.AccessKey
+		awsSecretKey = cfg.Cloud.AWS.SecretKey
+		endpointResolver = &CloudEndpoint{Address: "s3-us-east-2.amazonaws.com", Bucket: cfg.BucketName}
+	}
+
+	awsConfig, err := config.LoadDefaultConfig(ctx,
+		config.WithRegion(region),
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
+			awsAccessKey,
+			awsSecretKey,
+			"",
+		)),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return s3.NewFromConfig(awsConfig, func(o *s3.Options) {
+		o.EndpointResolverV2 = endpointResolver
+	}), nil
 }
 
 func awsECRClient(ctx context.Context, cfg Config) (*ecr.Client, error) {
