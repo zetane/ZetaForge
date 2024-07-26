@@ -272,7 +272,7 @@ function startExpressServer() {
         }
       }
       else{
-        const result = await computeAgent(userMessage, 'gpt-4o', conversationHistory, apiKey);
+        const result = await computeViewAgent(userMessage, 'gpt-4o', conversationHistory, apiKey);
   
         console.log("Received from compute function:", result);
         res.send(result);
