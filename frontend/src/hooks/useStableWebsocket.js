@@ -19,7 +19,7 @@ export const useStableWebSocket = (url) => {
   const [configuration] = useAtom(activeConfigurationAtom);
   const protocols = url?.startsWith("wss")
     ? ["Bearer", configuration.anvil.token]
-    : null;
+    : undefined;
 
   const { lastMessage, readyState, sendMessage } = useWebSocket(url, {
     shouldReconnect: (closeEvent) => {
