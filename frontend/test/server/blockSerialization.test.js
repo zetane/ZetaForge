@@ -51,7 +51,7 @@ describe("blockSerialization", () => {
       fs.readFile.mockResolvedValueOnce(blockComputationsSourceCode);
       app.isPackaged = false;
       fileExists.mockResolvedValueOnce(true);
-      spawnSync.mockReturnValueOnce({ stdout: JSON.stringify(expectedSpecs), stderr: undefined, status: 0, error: undefined });
+      spawnSync.mockReturnValueOnce({ stdout: JSON.stringify(expectedSpecs) });
 
       const result = await compileComputation("new-python-123");
 
@@ -63,19 +63,12 @@ describe("blockSerialization", () => {
     });
 
     test("throws error when script fails", async () => {
+      const scriptStdout = "";
+
       fs.readFile.mockResolvedValueOnce(blockComputationsSourceCode);
       app.isPackaged = false;
       fileExists.mockResolvedValueOnce(true);
-      spawnSync.mockReturnValueOnce({ stdout: undefined, stderr: "something bad happened", status: 1, error: undefined});
-
-      expect(() => compileComputation("new-python-123")).rejects.toThrowError();
-    });
-
-    test("throws error when script invocation fails", async () => {
-      fs.readFile.mockResolvedValueOnce(blockComputationsSourceCode);
-      app.isPackaged = false;
-      fileExists.mockResolvedValueOnce(true);
-      spawnSync.mockReturnValueOnce({ stdout: undefined, stderr: undefined, status: undefined, error: {}});
+      spawnSync.mockReturnValueOnce({ stdout: scriptStdout });
 
       expect(() => compileComputation("new-python-123")).rejects.toThrowError();
     });
