@@ -1,6 +1,6 @@
 import { ViewerCodeMirror, EditorCodeMirror } from "./CodeMirrorComponents";
-import { Button, Modal } from "@carbon/react";
-import { Save } from "@carbon/icons-react";
+import { Button, Modal, IconButton } from "@carbon/react";
+import { Save, SendFilled } from "@carbon/icons-react";
 import {
   BLOCK_SPECS_FILE_NAME,
   CHAT_HISTORY_FILE_NAME,
@@ -27,6 +27,7 @@ export default function CodeEditor({
   const [editor] = useAtom(drawflowEditorAtom);
   const compileComputation = trpc.compileComputation.useMutation();
   const saveBlockSpecs = trpc.saveBlockSpecs.useMutation();
+  const [isLoading, setIsLoading] = useState(false);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
 
   const saveChanges = (e) => {
@@ -143,9 +144,47 @@ export default function CodeEditor({
     return path.endsWith("computations.py");
   };
 
+  const handleSubmit = async (e) => {
+    setIsLoading(true);
+    e.preventDefault();
+    const newPrompt = chatTextarea.current.value.trim();
+
+    const toSend = {
+      userMessage: newPrompt,
+      agentName: agentName,
+      conversationHistory: history.data,
+      apiKey: openAIApiKey,
+    };
+
+    if (newPrompt) {
+      try {
+        const response = await fetch(`${serverAddress}/api/call-agent`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(toSend),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          const only_code_response = data.response;
+          recordCode(newPrompt, only_code_response);
+        } else {
+          throw new Error(data.error || "Server error");
+        }
+      } catch (error) {
+        console.error("Error fetching response:", error);
+      }
+
+      chatTextarea.current.value = "";
+    }
+    setIsLoading(false);
+  };
+
   return (
     <>
-      {" "}
       <div className="flex w-full min-w-0 flex-col">
         <span className="text-md text-gray-30 mt-2">
           {currentFile.path ? <span>{currentFile.path}</span> : null}
