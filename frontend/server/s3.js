@@ -194,5 +194,5 @@ export async function syncS3ToLocalDirectory(
   const { sync } = new S3SyncClient({ client: client });
 
   const s3Path = `s3://${anvilConfiguration.s3.bucket}/${s3Prefix}`;
-  await sync(s3Path, localPath, { del: true });
+  await sync(s3Path, localPath);
 }
