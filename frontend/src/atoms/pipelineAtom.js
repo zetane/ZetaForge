@@ -79,9 +79,21 @@ export const getPipelineFormat = (pipeline) => {
 
 export const lineageAtom = atom((get) => {
   const workspace = get(workspaceAtom);
+
+  // Filter out pipelines with empty .record fields
+  const validPipelines = Object.entries(workspace.pipelines).filter(
+    ([, pipeline]) =>
+      pipeline.record && Object.keys(pipeline.record).length > 0,
+  );
+  console.log(validPipelines);
+
+  const sortedPipelines = validPipelines.sort(([, a], [, b]) =>
+    b.record.Execution.localeCompare(a.record.Execution),
+  );
+
   const lineage = new Map();
 
-  Object.values(workspace.pipelines).forEach((pipeline) => {
+  Object.values(sortedPipelines).forEach((pipeline) => {
     const record = pipeline?.record;
     const sha1Hash = record?.Hash;
     if (!record || !sha1Hash) {

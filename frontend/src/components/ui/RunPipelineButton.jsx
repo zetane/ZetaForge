@@ -18,7 +18,7 @@ import { ping } from "@/client/anvil";
 export default function RunPipelineButton({ children, action }) {
   const [editor] = useAtom(drawflowEditorAtom);
   const [pipeline] = useImmerAtom(pipelineAtom);
-  const [, setWorkspace] = useImmerAtom(workspaceAtom);
+  const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
   const [validationErrorMsg, setValidationErrorMsg] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [mixpanelService] = useAtom(mixpanelAtom);
@@ -73,6 +73,7 @@ export default function RunPipelineButton({ children, action }) {
     });
 
     const loaded = await loadServerPipeline(newExecution, configuration);
+    console.log(workspace.pipelines);
     setWorkspace((draft) => {
       const currentTab = draft.active;
       const newKey = newExecution.Uuid + "." + newExecution.Execution;

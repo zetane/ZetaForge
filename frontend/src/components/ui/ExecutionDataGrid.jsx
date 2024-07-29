@@ -21,13 +21,6 @@ import { AppConnectivity } from "@carbon/icons-react";
 import { ExecutionCardGrid } from "./ExecutionCardGrid";
 
 export const PipelineTableRow = ({ row, getRowProps }) => {
-  const customExpandIcon = (isExpanded) => (
-    <div style={{ display: "flex", alignItems: "center" }}>
-      <AppConnectivity size={16} style={{ marginRight: "8px" }} />
-      {isExpanded ? "Hide Executions" : "Show Executions"}
-    </div>
-  );
-
   return (
     <TableExpandRow {...getRowProps({ row })} expandHeader="Executions">
       {row.cells.map((cell) => (
@@ -78,6 +71,8 @@ export const ExecutionDataGrid = ({ closeModal }) => {
       })),
     [lineage],
   );
+
+  console.log(allRows);
 
   const paginatedRows = useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
