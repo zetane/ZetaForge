@@ -27,6 +27,9 @@ import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { PipelineStopButton } from "./PipelineStopButton";
 import { getAllPipelines } from "@/client/anvil";
 import { ping } from "@/client/anvil";
+import {useState} from 'react'
+import { useQuery } from "@tanstack/react-query";
+
 export default function Navbar({ children }) {
   const [darkMode, setDarkMode] = useAtom(darkModeAtom);
   const [modalContent, setModalContent] = useAtom(modalContentAtom);
@@ -45,7 +48,7 @@ export default function Navbar({ children }) {
       return res
       
     }  ,
-    refetchInterval: workspace.fetchInterval
+    refetchInterval: 2 * 1000,
   })
 
   

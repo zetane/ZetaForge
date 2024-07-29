@@ -17,9 +17,9 @@
     "build:all": "tsc && vite build && electron-builder --x64 --arm64 -mwl",
     "build:darwin-amd64": "tsc && vite build && electron-builder --mac --x64",
     "build:darwin-arm64": "tsc && vite build && electron-builder --mac --arm64",
-    "build:windows": "tsc && vite build && electron-builder --win --x64",
-    "build:linux-amd64": "tsc && vite build && electron-builder --linux --x64",
-    "build:linux-arm64": "tsc && vite build && electron-builder --linux --arm64",
+    "build:windows": "tsc && vite build  && electron-builder --win --x64",
+    "build:linux-amd64": "tsc && vite build  && electron-builder --linux --x64",
+    "build:linux-arm64": "tsc && vite build  && electron-builder --linux --arm64",
     "preview": "vite preview",
     "pree2e": "vite build --mode=test",
     "lint": "eslint .",
@@ -46,7 +46,8 @@
     "s3-sync-client": "^4.3.1",
     "source-map-support": "^0.5.21",
     "use-immer": "^0.9.0",
-    "uuidv7": "^0.6.3"
+    "uuidv7": "^0.6.3",
+    "vite-plugin-top-level-await": "^1.4.2"
   },
   "devDependencies": {
     "@aws-sdk/client-s3": "^3.525.0",
