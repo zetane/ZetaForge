@@ -21,9 +21,9 @@ const dragStartHandlerPipeline = (event, pipeline) => {
 };
 
 export const LibraryPipelineTile = ({ pipeline, index }) => {
-  const pipelineId = pipeline.id;
-  const pipelineName = pipeline.name;
-  const pipelineDescription = pipeline.description;
+  const pipelineId = pipeline.specs.id;
+  const pipelineName = pipeline.specs.name;
+  const pipelineDescription = pipeline.specs.description;
   const backgroundColor = "var(--pipeline-background-color)";
 
   // Use the custom hook to fetch the cover image path

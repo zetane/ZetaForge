@@ -56,7 +56,7 @@ export default function LibraryWrapper({ specs, pipelines }) {
     setSearchResults(blockResults);
 
     const pipelineResults = pipelines.filter((pipeline) =>
-      pipeline?.name.toLowerCase().includes(searchTerm.toLowerCase()),
+      pipeline?.specs?.name.toLowerCase().includes(searchTerm.toLowerCase()),
     );
     setFilteredPipelines(pipelineResults);
   }, [searchTerm, specs, pipelines]);
