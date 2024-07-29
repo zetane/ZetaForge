@@ -44,22 +44,9 @@ const tabMap = {
 export const workspaceAtom = atom({
   tabs: tabMap,
   pipelines: { [emptyKey]: initPipeline },
-  executions: {},
-  lineage: new Map(),
   active: emptyKey,
   fetchInterval: 10 * 1000,
 });
-
-export const getPipelines = (workspace) => {
-  const loadable = Object.values(workspace.pipelines).filter((p) => {
-    console.log(p);
-    return p.record != null;
-  });
-  console.log(loadable);
-  return loadable.sort((a, b) =>
-    b?.record?.Execution.localeCompare(a?.record?.Execution),
-  );
-};
 
 const pipelineAtomWithImmer = atom(
   (get) => {
@@ -89,3 +76,47 @@ export const getPipelineFormat = (pipeline) => {
     pipeline: pipeline.data,
   };
 };
+
+export const lineageAtom = atom((get) => {
+  const workspace = get(workspaceAtom);
+  const lineage = new Map();
+
+  Object.values(workspace.pipelines).forEach((pipeline) => {
+    const record = pipeline?.record;
+    const sha1Hash = record?.Hash;
+    if (!record || !sha1Hash) {
+      return;
+    }
+    if (!lineage.has(sha1Hash)) {
+      lineage.set(sha1Hash, {
+        id: pipeline.id,
+        name: pipeline.name,
+        hash: sha1Hash,
+        deployed: record.Deployed,
+        executions: new Map(),
+      });
+    }
+
+    const lineageEntry = lineage.get(sha1Hash);
+    const existingExecution = lineageEntry.executions.get(record.Execution);
+
+    if (!existingExecution) {
+      lineageEntry.executions.set(record.Execution, {
+        id: record.Execution,
+        hash: sha1Hash,
+        pipeline: pipeline.id,
+        created: new Date(record.ExecutionTime * 1000).toLocaleString(),
+        status: record.Status,
+      });
+    } else {
+      Object.assign(existingExecution, {
+        status: pipeline.record.Status,
+        created: new Date(
+          pipeline.record.ExecutionTime * 1000,
+        ).toLocaleString(),
+      });
+    }
+  });
+
+  return lineage;
+});

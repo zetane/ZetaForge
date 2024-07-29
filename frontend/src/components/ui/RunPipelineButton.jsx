@@ -80,7 +80,6 @@ export default function RunPipelineButton({ children, action }) {
       if (!pipeline) {
         // key hasn't updated yet
         draft.pipelines[newKey] = loaded;
-        draft.executions[loaded.record.Execution] = loaded;
       }
       draft.tabs[newKey] = {};
       draft.active = newKey;

@@ -37,7 +37,6 @@ export default function WorkspaceFetcher() {
             const loaded = await loadPipeline(serverPipeline, configuration);
             setWorkspace((draft) => {
               draft.pipelines[key] = loaded;
-              draft.executions[loaded?.record?.Execution] = loaded;
             });
           } catch (e) {
             console.log("Failed to load ", e);
@@ -52,8 +51,6 @@ export default function WorkspaceFetcher() {
         if (existing && isLogging) {
           setWorkspace((draft) => {
             draft.pipelines[key].logs = serverPipeline?.Log;
-            draft.executions[serverPipeline?.Execution].logs =
-              serverPipeline?.Log;
           });
         }
       }
