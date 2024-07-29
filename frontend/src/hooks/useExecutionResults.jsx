@@ -8,21 +8,16 @@ export const useSyncExecutionResults = () => {
   const [configuration] = useAtom(activeConfigurationAtom);
   const downloadExecutionResults = trpc.downloadExecutionResults.useMutation();
 
-  const syncExecutionResults = async (key, status) => {
-    if (runningOrFinished(status)) {
-      const pipeline = workspace.pipelines[key];
-      await downloadExecutionResults.mutateAsync({
-        buffer: pipeline.buffer,
-        pipelineUuid: pipeline.record.Uuid,
-        executionUuid: pipeline.record.Execution,
-        anvilConfiguration: configuration,
-      });
-    }
+  const syncExecutionResults = async (key) => {
+    console.log("syncin");
+    const pipeline = workspace.pipelines[key];
+    await downloadExecutionResults.mutateAsync({
+      buffer: pipeline.buffer,
+      pipelineUuid: pipeline.record.Uuid,
+      executionUuid: pipeline.record.Execution,
+      anvilConfiguration: configuration,
+    });
   };
 
   return syncExecutionResults;
 };
-
-function runningOrFinished(status) {
-  return status == "Running" || status == "Succeeded" || status == "Failed";
-}

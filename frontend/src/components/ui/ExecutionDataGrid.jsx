@@ -30,7 +30,7 @@ export const ExecutionDataGrid = ({ executions, closeModal }) => {
       draft.tabs[key] = {};
       draft.active = key;
     });
-    await syncResults(key, pipeline.record.Status);
+    await syncResults(key);
 
     closeModal();
   };

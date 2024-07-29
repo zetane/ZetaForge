@@ -7,7 +7,6 @@ import { useImmerAtom } from "jotai-immer";
 import { useAtom } from "jotai";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { getAllPipelines } from "@/client/anvil";
-import { useSyncExecutionResults } from "@/hooks/useExecutionResults";
 
 export default function WorkspaceFetcher() {
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
