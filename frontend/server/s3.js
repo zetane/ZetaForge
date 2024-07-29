@@ -1,16 +1,16 @@
 import {
+  CopyObjectCommand,
+  GetObjectCommand,
   HeadObjectCommand,
   PutObjectCommand,
-  GetObjectCommand,
-  CopyObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
 import fs from "fs/promises";
+import path from "path";
+import { S3SyncClient } from "s3-sync-client";
 import config from "../config";
 import { getDirectoryFilesRecursive } from "./fileSystem";
-import path from "path";
 import { logger } from "./logger";
-import { S3SyncClient } from "s3-sync-client";
 
 function getClient(configuration) {
   const endpoint = `http://${configuration.s3.host}:${configuration.s3.port}`;

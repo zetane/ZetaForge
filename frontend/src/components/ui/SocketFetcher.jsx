@@ -36,7 +36,7 @@ export default function SocketFetcher() {
     });
 
     if (parsedLogEntry?.event?.tag === "outputs") {
-      const key = `${pipeline.record.Uuid}.${pipeline.record.Execution}`
+      const key = `${pipeline.record.Uuid}.${pipeline.record.Execution}`;
       syncResults(key, pipeline.record.Status);
     }
   });
