@@ -15,19 +15,22 @@ import {
 import { PipelineStopButton } from "./PipelineStopButton";
 import { useState, useEffect } from "react";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
+import { useSyncExecutionResults } from "@/hooks/useExecutionResults";
 
 export const ExecutionDataGrid = ({ executions, closeModal }) => {
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
   const [pipelineList, setPipelineList] = useState([]);
   const [configuration] = useAtom(activeConfigurationAtom);
+  const syncResults = useSyncExecutionResults();
 
-  const selectPipeline = (pipeline) => {
+  const selectPipeline = async (pipeline) => {
     const key = pipeline.id + "." + pipeline.record.Execution;
 
     setWorkspace((draft) => {
       draft.tabs[key] = {};
       draft.active = key;
     });
+    await syncResults(key);
 
     closeModal();
   };

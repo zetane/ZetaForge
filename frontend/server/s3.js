@@ -1,14 +1,15 @@
 import {
+  CopyObjectCommand,
+  GetObjectCommand,
   HeadObjectCommand,
   PutObjectCommand,
-  GetObjectCommand,
-  CopyObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
 import fs from "fs/promises";
+import path from "path";
+import { S3SyncClient } from "s3-sync-client";
 import config from "../config";
 import { getDirectoryFilesRecursive } from "./fileSystem";
-import path from "path";
 import { logger } from "./logger";
 
 function getClient(configuration) {
@@ -182,4 +183,16 @@ export async function getFile(key, destinationPath, anvilConfiguration) {
     logger.error(message, err);
     throw new Error(message);
   }
+}
+
+export async function syncS3ToLocalDirectory(
+  s3Prefix,
+  localPath,
+  anvilConfiguration,
+) {
+  const client = getClient(anvilConfiguration);
+  const { sync } = new S3SyncClient({ client: client });
+
+  const s3Path = `s3://${anvilConfiguration.s3.bucket}/${s3Prefix}`;
+  await sync(s3Path, localPath);
 }
