@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Splitter from "./Splitter";
 import FileExplorer from "./FileExplorer";
 import CodeEditor from "./CodeEditor";
+import PromptList from "./PromptList";
 
 export default function DirectoryViewer({ blockPath, blockKey }) {
   const serverAddress = "http://localhost:3330";
@@ -48,6 +49,7 @@ export default function DirectoryViewer({ blockPath, blockKey }) {
         unsavedChanges={unsavedChanges}
         setCurrentFile={setCurrentFile}
       />
+      <PromptList />
       <Splitter />
       <CodeEditor
         currentFile={currentFile}
