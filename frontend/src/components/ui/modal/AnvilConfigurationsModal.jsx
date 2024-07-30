@@ -75,9 +75,8 @@ export default function AnvilConfigurationsModal(props) {
     setFormOpen(false);
   }
 
-  //~ (configuration.host === 127.0.0.1 || configuration.host === localhost) = con
   const confirmSettings = async () => {
-    console.log("I HAVE TO BE HERE")
+    
     setIsLoading(true)
     if(configuration.anvil.host !== '127.0.0.1' && configuration.anvil.host !== 'localhost'){
       try{
@@ -134,10 +133,13 @@ export default function AnvilConfigurationsModal(props) {
 
   let disabled = false
   if(!appIsPackaged) {
+    console.log("I SHOULD NEVER BE HEREEEEEEEE")
     disabled=true
 
   } else {
+    console.log("BREAK LINE")
     if( (configuration?.anvil?.host === 'localhost' || configuration?.anvil?.host === '127.0.0.1') && (userDriver === '' || currentKubeContext === '')) {
+      console.log("I SHOULD NOT BE HERE A SECOND TIME")
       disabled = true
     }
   }

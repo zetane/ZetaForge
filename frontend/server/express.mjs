@@ -165,7 +165,9 @@ function startExpressServer() {
   });
 
 
-  app.get('/check-kubectl', (req, res) => {
+  
+
+  app.get("/get-kube-contexts", async (req, res) => {
     exec('kubectl version --client', (error, stdout, stderr) => {
       if (error) {
         res.status(500).json({ message: 'kubectl is not installed.', error: error.message });
@@ -177,44 +179,27 @@ function startExpressServer() {
       }
       res.status(200).json({ message: 'kubectl is installed.', stdout: stdout });
     });
-  });
-
-  app.get("/get-kube-contexts", async (req, res) => {
 
     async function getKubectlContexts() {
       return new Promise((resolve, reject) => {
         const kubectl_config = ['config', 'get-contexts', '-o', 'name']
-      //   spawn('kubectl', kubectl_config , {cwd: electronApp.getAppPath()} ,(error, stdout, stderr) => {
-      //     if (error) {
-      //       return reject(new Error(`Error executing kubectl command: ${error.message}`));
-      //     }
-      //     if (stderr) {
-      //       return reject(new Error(`Error in kubectl command output: ${stderr}`));
-      //     }
-      //     // Split the output into an array of contexts
-      //     const contexts = stdout.trim().split('\n');
-      //     resolve(contexts);
-      //   });
       const kubeProcess = spawn('kubectl', kubectl_config, {
         cwd: "/usr/local/bin/"
       })
 
       kubeProcess.stdout.on('data', (data) => {
         console.log(data.toString())
-        axios.post("http://127.0.0.1:5000/postdata", {success: "PING SUCCESS"})
 
         const contexts = data.toString().trim().split("\n")
         resolve(contexts)
       })
       kubeProcess.stderr.on('data', (data) => {
-        axios.post("http://127.0.0.1:5000/postdata", {success: "PING STDERR"})
 
         reject(new Error('kubectl error: ' + data.toString()))
       })
 
       kubeProcess.on('error', (err) => {
         console.log("ERROR HAPPENS HERE")
-        axios.post("http://127.0.0.1:5000/postdata", {success: "PING STDERR"})
 
         console.log(err)
         reject(new Error("kubectl error" + err.toString()))
@@ -226,16 +211,14 @@ function startExpressServer() {
       
       });
     }
-    axios.post("http://127.0.0.1:5000/postdata", {success: "I CAN REACH HERE"})
+    
     try {
       const contexts = await getKubectlContexts()
-      axios.post("http://127.0.0.1:5000/postdata", {success: "I CAN REACH HERE TOO"})
+      
 
       res.status(200).json(contexts)
     } catch(err) {
       console.log(err)
-      axios.post("http://127.0.0.1:5000/postdata", {fail: "FAILURE"})
-      axios.post("http://127.0.0.1:5000/postdata", {error: err.message})
       res.status.send(err.message)
     }
   })
@@ -431,11 +414,13 @@ function startExpressServer() {
     if(!electronApp.isPackaged) {
       res.sendStatus(200)
     }
+
     if(anvilProcess !== null) {
       anvilProcess.kill("SIGINT")
       anvilProcess = null
       console.log("killed the process")
     }
+    
     console.log("CAN I REACH HERE AFTER KILL???")
 
     const anvilDir = path.join(process.resourcesPath, 'server2')
@@ -519,6 +504,10 @@ function startExpressServer() {
 
   app.get("/isPackaged", (req, res) => {
     const isPip = process.env.VITE_IS_PIP === 'True'? true : false
+    
+   
+
+
     return res.status(200).json(electronApp.isPackaged && !isPip)
   })
 
