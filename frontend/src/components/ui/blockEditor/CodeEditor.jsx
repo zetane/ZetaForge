@@ -1,16 +1,18 @@
 import { ViewerCodeMirror, EditorCodeMirror } from "./CodeMirrorComponents";
-import { Button, Modal, IconButton } from "@carbon/react";
-import { Save, SendFilled } from "@carbon/icons-react";
+import { Button, Modal, IconButton, Loading } from "@carbon/react";
+import { Save, SendFilled, Bot } from "@carbon/icons-react";
 import {
   BLOCK_SPECS_FILE_NAME,
   CHAT_HISTORY_FILE_NAME,
 } from "@/utils/constants";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { trpc } from "@/utils/trpc";
 import { useAtom } from "jotai";
 import { useImmerAtom } from "jotai-immer";
 import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
+import { openAIApiKeyAtom } from "@/atoms/apiKeysAtom";
+import { blockEditorRootAtom } from "@/atoms/editorAtom";
 
 const EDIT_ONLY_FILES = [BLOCK_SPECS_FILE_NAME, CHAT_HISTORY_FILE_NAME];
 export default function CodeEditor({
@@ -22,6 +24,7 @@ export default function CodeEditor({
   fetchFileSystem,
 }) {
   const serverAddress = "http://localhost:3330";
+  const [blockPath] = useAtom(blockEditorRootAtom);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [pendingFile, setPendingFile] = useState(null);
   const [editor] = useAtom(drawflowEditorAtom);
@@ -29,6 +32,16 @@ export default function CodeEditor({
   const saveBlockSpecs = trpc.saveBlockSpecs.useMutation();
   const [isLoading, setIsLoading] = useState(false);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
+  const [openAIApiKey] = useAtom(openAIApiKeyAtom);
+  const [agentName, setAgent] = useState("gpt-4_python_compute");
+  const chatTextarea = useRef(null);
+  const history = trpc.chat.history.get.useQuery({ blockPath });
+  const utils = trpc.useUtils();
+  const updateHistory = trpc.chat.history.update.useMutation({
+    onSuccess() {
+      utils.chat.history.get.invalidate({ blockPath });
+    },
+  });
 
   const saveChanges = (e) => {
     if (!currentFile || !currentFile.path) {
@@ -141,7 +154,21 @@ export default function CodeEditor({
   };
 
   const isComputation = (path) => {
-    return path.endsWith("computations.py");
+    return path?.endsWith("computations.py");
+  };
+
+  const recordCode = (promptToRecord, codeToRecord) => {
+    updateHistory.mutateAsync({
+      blockPath: blockPath,
+      history: [
+        ...history.data,
+        {
+          timestamp: Date.now(),
+          prompt: promptToRecord,
+          response: codeToRecord,
+        },
+      ],
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -222,26 +249,47 @@ export default function CodeEditor({
           )
         )}
       </div>
-      <div className="absolute bottom-2 right-1">
-        {isLoading ? (
-          <div className="prompt-spinner">
-            <Loading
-              active={true}
-              description="Sending..."
-              withOverlay={false}
+      {(isComputation(currentFile?.path) && openAIApiKey) && (
+        <div className="relative">
+          <div className="text-right">
+            <div className="inline-block p-2">
+              <Bot size={24} className="align-middle" />
+              <span className="text-md align-middle">{agentName}</span>
+            </div>
+            <textarea
+              className="block-editor-prompt-input w-full resize-none p-2"
+              ref={chatTextarea}
+              placeholder="Ask to generate code or modify last code"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmit(e);
+                }
+              }}
             />
           </div>
-        ) : (
-          <IconButton
-            iconDescription="Send Prompt"
-            label="Send Prompt"
-            kind="ghost"
-            onClick={handleSubmit}
-          >
-            <SendFilled size={24} />
-          </IconButton>
-        )}
-      </div>
+          <div className="absolute bottom-2 right-1">
+            {isLoading ? (
+              <div className="prompt-spinner">
+                <Loading
+                  active={true}
+                  description="Sending..."
+                  withOverlay={false}
+                />
+              </div>
+            ) : (
+              <IconButton
+                iconDescription="Send Prompt"
+                label="Send Prompt"
+                kind="ghost"
+                onClick={handleSubmit}
+              >
+                <SendFilled size={24} />
+              </IconButton>
+            )}
+          </div>
+        </div>
+      )}
       <Modal
         open={isModalOpen}
         modalHeading="Unsaved Changes"
