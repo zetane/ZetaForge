@@ -20,6 +20,8 @@ import {
 import { publicProcedure, router } from "./trpc";
 import { errorHandling } from "./middleware";
 import { logger } from "./logger.js";
+import { anvilConfigurationSchema } from "./schema";
+import { syncExecutionResults } from "./execution";
 
 export const appRouter = router({
   getBlocks: publicProcedure.use(errorHandling).query(async () => {
@@ -224,22 +226,7 @@ export const appRouter = router({
         buffer: z.string(),
         name: z.string(),
         rebuild: z.boolean(),
-        anvilConfiguration: z.object({
-          name: z.string(),
-          anvil: z.object({
-            host: z.string(),
-            port: z.string(),
-            token: z.string(),
-          }),
-          s3: z.object({
-            host: z.string(),
-            port: z.string(),
-            region: z.string(),
-            bucket: z.string(),
-            accessKeyId: z.string(),
-            secretAccessKey: z.string(),
-          }),
-        }),
+        anvilConfiguration: anvilConfigurationSchema,
       }),
     )
     .mutation(async (opts) => {
@@ -292,6 +279,27 @@ export const appRouter = router({
       const { blockPath, blockSpecs } = input;
 
       return await saveBlockSpecs(blockPath, blockSpecs);
+    }),
+  downloadExecutionResults: publicProcedure
+    .use(errorHandling)
+    .input(
+      z.object({
+        buffer: z.string(),
+        pipelineUuid: z.string(),
+        executionUuid: z.string(),
+        anvilConfiguration: anvilConfigurationSchema,
+      }),
+    )
+    .mutation(async (opts) => {
+      const { input } = opts;
+      const { buffer, pipelineUuid, executionUuid, anvilConfiguration } = input;
+
+      await syncExecutionResults(
+        buffer,
+        pipelineUuid,
+        executionUuid,
+        anvilConfiguration,
+      );
     }),
   runTest: publicProcedure
     .use(errorHandling)

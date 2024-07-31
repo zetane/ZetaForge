@@ -107,6 +107,8 @@ export default function DrawflowWrapper() {
           openView={openView}
           id={key}
           history={pipeline.history}
+          pipelineId={pipeline?.record?.Uuid}
+          executionId={pipeline?.record?.Execution}
           addNodeRefs={addNodeRefs}
           removeNodeRefs={removeNodeRefs}
           nodeRefs={nodeRefs}
