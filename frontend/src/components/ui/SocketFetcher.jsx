@@ -18,7 +18,7 @@ export default function SocketFetcher() {
 
   const { updateLogs } = useUnifiedLogs();
 
-  const updateNodes = useCallback((parsedLogEntry) => {
+  const updateNodes = useCallback(async (parsedLogEntry) => {
     setPipeline((draft) => {
       if (draft?.data[parsedLogEntry?.blockId.slice(6)]) {
         const node = draft.data[parsedLogEntry?.blockId.slice(6)];
@@ -37,7 +37,7 @@ export default function SocketFetcher() {
 
     if (parsedLogEntry?.event?.tag === "outputs") {
       const key = `${pipeline.record.Uuid}.${pipeline.record.Execution}`;
-      syncResults(key);
+      await syncResults(key);
     }
   });
 

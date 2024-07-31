@@ -45,6 +45,8 @@ const BlockGenerator = ({
   openView,
   id,
   history,
+  pipelineId,
+  executionId,
   addNodeRefs,
   removeNodeRefs,
   nodeRefs,
@@ -93,14 +95,7 @@ const BlockGenerator = ({
     if (block.events.outputs?.html) {
       // these outputs are a special case
       const html = trimQuotes(block.events.outputs.html);
-      var fileUrl;
-      if (configuration.anvil.token) {
-        const data = atob(configuration.anvil.token.split(".")[1]);
-        fileUrl = `http://${configuration.s3.host}:${configuration.s3.port}/zetaforge/${JSON.parse(data).sub}/${history}/${html}`;
-      } else {
-        fileUrl = `http://${configuration.s3.host}:${configuration.s3.port}/zetaforge/${history}/${html}`;
-      }
-
+      const fileUrl = `http://localhost:3330/result/${pipelineId}/history/${executionId}/files/${html}`;
       checkPath(fileUrl, 0, setIframeSrc);
     }
   }, [block.events.outputs]);
