@@ -31,7 +31,12 @@ function startExpressServer() {
   // Everything else (like favicon.ico) is cached for an hour. You may want to be
   // more aggressive with this caching.
   app.use(express.json());
-  app.use("/result", express.static(path.join(app.getPath('appData'), 'zetaforge', '.cache') + path.sep));
+  app.use(
+    "/result",
+    express.static(
+      path.join(app.getPath("appData"), "zetaforge", ".cache") + path.sep,
+    ),
+  );
   app.use(bodyParser.json());
 
   const upload = multer({ dest: "_temp_import" });
