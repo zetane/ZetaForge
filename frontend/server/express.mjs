@@ -34,7 +34,7 @@ function startExpressServer() {
   app.use(
     "/result",
     express.static(
-      path.join(app.getPath("appData"), "zetaforge", ".cache") + path.sep,
+      path.join(electronApp.getPath("appData"), "zetaforge", ".cache") + path.sep,
     ),
   );
   app.use(bodyParser.json());
