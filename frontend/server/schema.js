@@ -5,6 +5,7 @@ export const anvilConfigurationSchema = z.object({
   anvil: z.object({
     host: z.string(),
     port: z.string(),
+    token: z.string(),
   }),
   s3: z.object({
     host: z.string(),

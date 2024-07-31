@@ -5,6 +5,7 @@ import { buildUrl } from "../utils/urlBuilder";
 import { LOCAL_DOMAINS } from "../utils/constants";
 
 export async function getBuildContextStatus(configuration, pipelineSpecs) {
+  console.log(configuration);
   const response = await handleRequest(
     buildUrl(
       getScheme(configuration.anvil.host),

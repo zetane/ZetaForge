@@ -8,7 +8,7 @@ export async function syncExecutionResults(
   anvilConfiguration,
 ) {
   const s3Prefix = `${pipelineUuid}/${executionUuid}`;
-  const localPath = path.join(buffer, "history", executionUuid, "files");
+  const localPath = path.join(buffer, "history", executionUuid);
 
   await syncS3ToLocalDirectory(s3Prefix, localPath, anvilConfiguration);
 }
