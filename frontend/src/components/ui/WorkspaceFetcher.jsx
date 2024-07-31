@@ -46,7 +46,7 @@ export default function WorkspaceFetcher() {
             return;
           }
 
-          if(workspace.tabs[key]){
+          if (workspace.tabs[key]) {
             await syncResults(key);
           }
         }
