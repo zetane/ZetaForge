@@ -7,13 +7,11 @@ import { useImmerAtom } from "jotai-immer";
 import { useAtom } from "jotai";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { getAllPipelines } from "@/client/anvil";
-import { useSyncExecutionResults } from "@/hooks/useExecutionResults";
 
 export default function WorkspaceFetcher() {
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
   const loadPipeline = useLoadServerPipeline();
   const [configuration] = useAtom(activeConfigurationAtom);
-  const syncResults = useSyncExecutionResults();
 
   const { pending, error, data } = useQuery({
     queryKey: ["pipelines"],
@@ -41,9 +39,6 @@ export default function WorkspaceFetcher() {
               draft.pipelines[key] = loaded;
               draft.executions[loaded?.record?.Execution] = loaded;
             });
-            if (workspace.tabs[key]) {
-              await syncResults(key, serverPipeline.Status);
-            }
           } catch (e) {
             console.log("Failed to load ", e);
             return;
