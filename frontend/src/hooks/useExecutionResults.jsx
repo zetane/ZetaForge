@@ -9,7 +9,6 @@ export const useSyncExecutionResults = () => {
   const downloadExecutionResults = trpc.downloadExecutionResults.useMutation();
 
   const syncExecutionResults = async (key) => {
-    console.log("syncin");
     const pipeline = workspace.pipelines[key];
     await downloadExecutionResults.mutateAsync({
       buffer: pipeline.buffer,
