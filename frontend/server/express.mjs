@@ -219,7 +219,7 @@ function startExpressServer() {
       res.status(200).json(contexts)
     } catch(err) {
       console.log(err)
-      res.status.send(err.message)
+      res.status(500).send(err.message)
     }
   })
 
@@ -241,63 +241,32 @@ function startExpressServer() {
       );
       if(agentName === 'gpt-4_python_compute') {
         try {
-          console.log("RUNNING THE AGENTTTTT")
-          console.log("RUNNING THE AGENTTTTT")
-          console.log("RUNNING THE AGENTTTTT")
-          console.log("RUNNING THE AGENTTTTT")
+          
 
           const result = await computeAgent(userMessage, 'gpt-4o', conversationHistory, apiKey);
   
           res.send(result);
         } catch (err) {
           console.error("Server error:", err);
-          res.status(500).send({ error: "Internal server error" });
+          res.status(500).send({ error: err.message });
         }
       }
       else{
-        const result = await computeViewAgent(userMessage, 'gpt-4o', conversationHistory, apiKey);
+        try{
+          const result = await computeViewAgent(userMessage, 'gpt-4o', conversationHistory, apiKey);
   
-        console.log("Received from compute function:", result);
-        res.send(result);
+          console.log("Received from compute function:", result);
+          res.send(result);
+        } catch(err) {
+          console.error("Agent error:", err);
+          res.status(500).send({ error: err.message});
+        }
+       
 
       }
-    //   const pythonProcess = spawn("python", [scriptPath]);
-
-    //   const inputData = { apiKey, userMessage, conversationHistory };
-    //   pythonProcess.stdin.write(JSON.stringify(inputData));
-    //   pythonProcess.stdin.end();
-
-    //   // Collect data from the Python script
-    //   let scriptOutput = "";
-    //   pythonProcess.stdout.on("data", (data) => {
-    //     scriptOutput += data.toString();
-    //   });
-
-    //   pythonProcess.stdout.on("end", () => {
-    //     console.log("Received from Python script:", scriptOutput);
-    //     try {
-    //       res.send(JSON.parse(scriptOutput));
-    //     } catch (parseError) {
-    //       console.error("Error parsing script output:", parseError);
-    //       res.status(500).send({ error: "Error parsing script output" });
-    //     }
-    //   });
-
-    //   pythonProcess.stderr.on("data", (data) => {
-    //     console.error(`stderr: ${data}`);
-    //   });
-
-    //   pythonProcess.on("close", (code) => {
-    //     if (code !== 0) {
-    //       console.log(`Python script exited with code ${code}`);
-    //       res.status(500).send({ error: "Python script error" });
-    //     }
-    //   });
-    // } catch (err) {
-    //   console.error("Server error:", err);
-    //   res.status(500).send({ error: "Internal server error" });
-    // }
+    
   } catch(err) {
+    res.status(500).send({ error: err.message});
 
   } });
 
@@ -371,15 +340,14 @@ function startExpressServer() {
       anvilProcess.stdout.on('data', (data) => {
           console.log(`[server] stdout: ${data}`);
           
-          if(data.toString().includes('[GIN-debug] [WARNING] Creating an Engine instance with the Logger and Recovery middleware already attached.')){
-            console.log("ANVIL RUN SUCCESFULLY")
+          if(data.toString().includes('[GIN-debug] Listening and serving HTTP on')){
             resolve()
           }
         });
           
       anvilProcess.stderr.on('data', (data) => {
           console.log(`[server] stderr: ${data}`);
-          if( data.toString().includes("Failed to fetch kubernetes resources;") || data.toString().includes("Failed to get client config;") || data.toString().includes("Failed to install argo;")) {
+          if( data.toString().toLowerCase().includes("failed to fetch kubernetes resources;") || data.toString().toLowerCase().includes("failed to get client config;") || data.toString().toLowerCase().includes("failed to install argo;")) {
             console.log("I AM REJECTING NOWWWWWW")
             reject(new Error(`Kubeservices not found: ${data.toString()}`))
           }
@@ -388,8 +356,7 @@ function startExpressServer() {
       anvilProcess.on('close', (code) => {});
 
     })
-    console.log("CHECK RES2")
-    console.log(res)
+    
 
     const runAnvilPromise = Promise.race([anvilTimeoutPromise, runAnvil])
 
@@ -420,8 +387,6 @@ function startExpressServer() {
       anvilProcess = null
       console.log("killed the process")
     }
-    
-    console.log("CAN I REACH HERE AFTER KILL???")
 
     const anvilDir = path.join(process.resourcesPath, 'server2')
     const body = req.body
@@ -449,10 +414,7 @@ function startExpressServer() {
     const configStr = JSON.stringify(config)
     try{
       fs.writeFileSync(configDir, configStr)
-      console.log("FILE WRITTEN")
     } catch(err) {
-      console.log("ERROR HAPPEND WHILE WRITING CONFIG.JS")
-      console.log(err)
       res.status(500).send("Error happend while writing config.js")
     }
     const kubeConfig = ['config', 'use-context', body.KubeContext]
@@ -474,7 +436,7 @@ function startExpressServer() {
       anvilProcess.stdout.on('data', (data) => {
           console.log(`[server] stdout: ${data}`);
           
-          if(data.toString().includes('[GIN-debug] [WARNING] Creating an Engine instance with the Logger and Recovery middleware already attached.')){
+          if(data.toString().includes('[GIN-debug] Listening and serving HTTP on')){
             console.log("ANVIL RUN SUCCESFULLY")
             resolve()
           }
@@ -482,7 +444,7 @@ function startExpressServer() {
           
       anvilProcess.stderr.on('data', (data) => {
           console.log(`[server] stderr: ${data}`);
-          if( data.toString().includes("Failed to fetch kubernetes resources;") || data.toString().includes("Failed to get client config;") || data.toString().includes("Failed to install argo;")) {
+          if( data.toString().toLowerCase().includes("failed to fetch kubernetes resources;") || data.toString().toLowerCase().includes("failed to get client config;") || data.toString().toLowerCase().includes("failed to install argo;")) {
             console.log("I AM REJECTING NOWWWWWW")
             reject(new Error(`Kubeservices not found: ${data.toString()}`))
           }
@@ -504,10 +466,6 @@ function startExpressServer() {
 
   app.get("/isPackaged", (req, res) => {
     const isPip = process.env.VITE_IS_PIP === 'True'? true : false
-    
-   
-
-
     return res.status(200).json(electronApp.isPackaged && !isPip)
   })
 
@@ -560,14 +518,7 @@ function startExpressServer() {
     });
 
     return fileSystem;
-  };
-  
-  app.post("/launch-anvil-locally", (req, res) => {
-    console.log("RECEIVED REQUEST")
-    const config = req.body
-
-    console.log(config)
-  })
+  };  
 
   app.post("/new-block-react", (req, res) => {
     const data = req.body;

@@ -21,7 +21,6 @@ import { useAtom } from "jotai";
 import { isPackaged} from "@/atoms/kubecontextAtom";
 import { availableKubeContexts } from "@/atoms/kubecontextAtom";
 import {Loading} from "@carbon/react"
-import { modalContentAtom } from "@/atoms/modalAtom";
 import { ping } from "./client/anvil";
 import { activeConfigurationAtom } from "./atoms/anvilConfigurationsAtom";
 
@@ -111,7 +110,11 @@ export default function App() {
       setConfirmationIsOpen(false)
       setIsLoading(false)
     } catch(err) {
+      console.log("CHECK THIS ERROR")
+      console.log(err)
       setErrText([err.message])
+      setErrModalOpen(true)
+      setIsLoading(false)
     }
   }
   return (

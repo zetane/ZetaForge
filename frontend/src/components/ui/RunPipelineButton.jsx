@@ -4,7 +4,7 @@ import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { mixpanelAtom } from "@/atoms/mixpanelAtom";
 import generateSchema from "@/utils/schemaValidation";
 import { trpc } from "@/utils/trpc";
-import { Button } from "@carbon/react";
+import { Button, Tooltip } from "@carbon/react";
 import { useAtom } from "jotai";
 import { useImmerAtom } from "jotai-immer";
 import { useState, useEffect } from "react";
@@ -166,10 +166,11 @@ export default function RunPipelineButton({ children, action, disabled }) {
     margin: "5px",
   };
 
-  
+
   return (
     <>
-      <Button style={styles} disabled={disabled} size="sm" onClick={() => runPipeline()}>
+    
+      <Button style={styles}  disabled={disabled} title={"This button is disabled and cannot be clicked."} size="sm" iconDescription="HOVER" onClick={() => runPipeline()}>
         <span>{action}</span>
         {children}
       </Button>
