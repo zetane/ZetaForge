@@ -299,6 +299,28 @@ func (q *Queries) GetPipeline(ctx context.Context, arg GetPipelineParams) (Pipel
 		&i.Json,
 		&i.Deployed,
 		&i.Deleted,
+
+	)
+	return i, err
+}
+
+const getPipelineById = `-- name: GetPipelineById :one
+SELECT id, organization, created, uuid, hash, json, deployed, deleted FROM Pipelines
+WHERE id = ?
+`
+
+func (q *Queries) GetPipelineById(ctx context.Context, id int64) (Pipeline, error) {
+	row := q.db.QueryRowContext(ctx, getPipelineById, id)
+	var i Pipeline
+	err := row.Scan(
+		&i.ID,
+		&i.Organization,
+		&i.Created,
+		&i.Uuid,
+		&i.Hash,
+		&i.Json,
+		&i.Deployed,
+		&i.Deleted,
 	)
 	return i, err
 }

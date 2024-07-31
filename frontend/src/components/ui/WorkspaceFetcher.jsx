@@ -30,7 +30,9 @@ export default function WorkspaceFetcher() {
 
         const existingStatus = existing?.record?.Status;
         const shouldUpdate =
-          serverPipeline?.Status != existingStatus || !existing;
+          !existing ||
+          serverPipeline?.Status != existingStatus ||
+          serverPipeline?.Deployed != existing?.record?.Deployed;
 
         if (shouldUpdate) {
           try {

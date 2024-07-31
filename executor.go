@@ -678,7 +678,7 @@ func buildImage(ctx context.Context, source string, tag string, cfg Config) erro
 	return nil
 }
 
-func localExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid string, organization string, build bool, cfg Config, db *sql.DB, hub *Hub) {
+func localExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid string, organization string, build bool, deployed bool, cfg Config, db *sql.DB, hub *Hub) {
 	ctx := context.Background()
 	defer log.Printf("Completed")
 
@@ -766,7 +766,7 @@ func localExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 		return
 	}
 
-	workflow, blocks, err := translate(ctx, pipeline, organization, s3Key, build, cfg)
+	workflow, blocks, err := translate(ctx, pipeline, organization, s3Key, executionUuid, build, deployed, cfg)
 	if err != nil {
 		log.Printf("failed to translate the pipeline; err=%v", err)
 		return
@@ -806,7 +806,7 @@ func localExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 	}
 
 	if err := eg.Wait(); err != nil {
-		log.Printf("error during pipeline execution; err=%v", err)
+		log.Printf("error during pipeline build execution; err=%v", err)
 		return
 	}
 
@@ -815,7 +815,7 @@ func localExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 		defer deleteArgo(ctx, workflow.Name, cfg)
 	}
 	if err != nil {
-		log.Printf("error during pipeline execution; err=%v", err)
+		log.Printf("error during pipeline run execution; err=%v", err)
 		return
 	}
 	// needs to be called here in addition to in defer
@@ -842,7 +842,7 @@ func cleanupRun(ctx context.Context, db *sql.DB, executionId int64, executionUui
 	}
 }
 
-func cloudExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid string, organization string, build bool, cfg Config, db *sql.DB, hub *Hub) {
+func cloudExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid string, organization string, build bool, deployed bool, cfg Config, db *sql.DB, hub *Hub) {
 	ctx := context.Background()
 	defer log.Printf("Completed")
 
@@ -918,13 +918,34 @@ func cloudExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 
 	defer file.Close()
 
-	workflow, _, err := translate(ctx, pipeline, organization, s3key, build, cfg)
+	jsonData, err := json.MarshalIndent(pipeline, "", "  ")
+	if err != nil {
+		log.Printf("invalid pipeline.json; err=%v", err)
+		return
+	}
+	if err := uploadData(ctx, string(jsonData), s3key+"/"+"pipeline.json", cfg); err != nil {
+		log.Printf("failed to write pipeline.json; err=%v", err)
+		return
+	}
+
+	workflow, _, err := translate(ctx, pipeline, organization, s3key, executionUuid, build, deployed, cfg)
 	if err != nil {
 		log.Printf("failed to translate the pipeline; err=%v", err)
 		return
 	}
 
 	defer cleanupRun(ctx, db, executionId, executionUuid, tempLog, s3key, *pipeline, *workflow, cfg)
+
+	jsonWorkflow, err := json.MarshalIndent(&workflow, "", "  ")
+	if err != nil {
+		log.Printf("invalid translated pipeline.json; err=%v", err)
+		return
+	}
+
+	if err := uploadData(ctx, string(jsonWorkflow), s3key+"/"+"argo.json", cfg); err != nil {
+		log.Printf("failed to write translated pipeline.json; err=%v", err)
+		return
+	}
 
 	if err := updateExecutionJson(ctx, db, executionId, workflow); err != nil {
 		log.Printf("failed to write workflow to database; err=%v", err)

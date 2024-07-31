@@ -31,6 +31,10 @@ ORDER BY e.created DESC;
 SELECT * FROM Pipelines
 WHERE organization = ? AND uuid = ? AND hash = ? AND deleted = FALSE;
 
+-- name: GetPipelineById :one
+SELECT * FROM Pipelines
+WHERE id = ?;
+
 -- name: CreatePipeline :one
 INSERT INTO Pipelines(
 	organization, created, uuid, hash, json

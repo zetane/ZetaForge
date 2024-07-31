@@ -13,6 +13,22 @@ export function getWsConnection(configuration, wsPath) {
   return wsUrl?.toString();
 }
 
+export async function deployPipeline(configuration, uuid, hash) {
+  const response = await handleRequest(
+    buildUrl(
+      getScheme(configuration.anvil.host),
+      configuration.anvil.host,
+      configuration.anvil.port,
+      `pipeline/${uuid}/${hash}/deploy`,
+    ),
+    HttpMethod.PATCH,
+    configuration.anvil.token,
+    {},
+  );
+  const body = await response.json();
+  return body;
+}
+
 export async function terminateExecution(configuration, executionId) {
   const response = await handleRequest(
     buildUrl(
@@ -69,7 +85,7 @@ export async function ping(configuration) {
   }
 }
 
-function getScheme(host) {
+export function getScheme(host) {
   return LOCAL_DOMAINS.includes(host) ? "http" : "https";
 }
 

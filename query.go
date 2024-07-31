@@ -279,7 +279,7 @@ func listAllPipelines(ctx context.Context, db *sql.DB, organization string) ([]z
 	return res, nil
 }
 
-func deployPipeline(ctx context.Context, db *sql.DB, organization string, uuid string, hash string) HTTPError {
+func deployPipelineById(ctx context.Context, db *sql.DB, organization string, uuid string, hash string) HTTPError {
 	tx, err := db.Begin()
 	if err != nil {
 		log.Printf("failed to initialize transaction; err=%v", err)
@@ -309,6 +309,45 @@ func deployPipeline(ctx context.Context, db *sql.DB, organization string, uuid s
 	}
 
 	return nil
+}
+
+func deployPipeline(ctx context.Context, db *sql.DB, organization string, uuid string, hash string) (zdatabase.Pipeline, HTTPError) {
+	tx, err := db.Begin()
+	if err != nil {
+		log.Printf("failed to initialize transaction; err=%v", err)
+		return zdatabase.Pipeline{}, InternalServerError{err.Error()}
+	}
+	defer tx.Rollback()
+
+	qtx := zdatabase.New(db).WithTx(tx)
+	pipeline, err := qtx.DeployPipeline(ctx, zdatabase.DeployPipelineParams{
+		Organization: organization,
+		Uuid:         uuid,
+		Hash:         hash,
+	})
+
+	if err != nil {
+		return zdatabase.Pipeline{}, InternalServerError{err.Error()}
+	}
+
+	if err := tx.Commit(); err != nil {
+		log.Printf("failed to commit transaction; err=%v", err)
+		return zdatabase.Pipeline{}, InternalServerError{err.Error()}
+	}
+
+	return pipeline, nil
+}
+
+func getPipelineById(ctx context.Context, db *sql.DB, id int64) (zdatabase.Pipeline, HTTPError) {
+	q := zdatabase.New(db)
+	res, err := q.GetPipelineById(ctx, id)
+	if err == sql.ErrNoRows {
+		return zdatabase.Pipeline{}, BadRequest{err.Error()}
+	} else if err != nil {
+		return zdatabase.Pipeline{}, InternalServerError{err.Error()}
+	}
+
+	return res, nil
 }
 
 func getPipeline(ctx context.Context, db *sql.DB, organization string, uuid string, hash string) (zdatabase.Pipeline, HTTPError) {

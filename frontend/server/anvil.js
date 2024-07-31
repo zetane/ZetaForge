@@ -60,7 +60,7 @@ export async function createExecution(
   return body;
 }
 
-function getScheme(host) {
+export function getScheme(host) {
   return LOCAL_DOMAINS.includes(host) ? "http" : "https";
 }
 

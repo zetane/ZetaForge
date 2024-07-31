@@ -13,10 +13,13 @@ import {
   Link,
 } from "@carbon/react";
 import { PipelineStopButton } from "./PipelineStopButton";
+import { PipelineDeployButton } from "./PipelineDeployButton";
+import { DeployedPipelineActions } from "./DeployedPipelineActions";
+
 import { useState, useEffect } from "react";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 
-export const ExecutionDataGrid = ({ executions, closeModal }) => {
+export const ExecutionDataGrid = ({ closeModal }) => {
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
   const [pipelineList, setPipelineList] = useState([]);
   const [configuration] = useAtom(activeConfigurationAtom);
@@ -34,9 +37,13 @@ export const ExecutionDataGrid = ({ executions, closeModal }) => {
 
   useEffect(() => {
     const items = [];
-    for (const pipeline of executions) {
+    const sorted = Array.from(Object.values(workspace.executions)).sort(
+      (a, b) => b?.record?.Execution.localeCompare(a?.record?.Execution),
+    );
+    for (const pipeline of sorted) {
       const record = pipeline.record;
       const pipelineData = JSON.parse(record.PipelineJson);
+      const sha1Hash = record.Hash;
       const friendlyName = pipelineData.name;
       const executionId = record?.Execution;
       let stopAction = null;
@@ -49,9 +56,25 @@ export const ExecutionDataGrid = ({ executions, closeModal }) => {
         );
       }
 
+      const deployedAction = record?.Deployed ? (
+        <DeployedPipelineActions
+          uuid={pipelineData.id}
+          hash={sha1Hash}
+          configuration={configuration}
+          pipelineData={pipelineData}
+        />
+      ) : (
+        <PipelineDeployButton
+          uuid={pipelineData.id}
+          hash={sha1Hash}
+          configuration={configuration}
+        />
+      );
+
       items.push({
         id: executionId,
         pipeline: friendlyName,
+        hash: sha1Hash,
         name: (
           <Link
             href="#"
@@ -64,12 +87,12 @@ export const ExecutionDataGrid = ({ executions, closeModal }) => {
         ),
         created: new Date(record?.ExecutionTime * 1000).toLocaleString(),
         status: record?.Status,
-        deployed: record?.Deployed ? "True" : "False",
+        deployed: deployedAction,
         actions: stopAction,
       });
     }
     setPipelineList(items);
-  }, [executions]);
+  }, [workspace.executions]);
 
   const headers = [
     {
@@ -79,6 +102,10 @@ export const ExecutionDataGrid = ({ executions, closeModal }) => {
     {
       key: "pipeline",
       header: "Pipeline",
+    },
+    {
+      key: "hash",
+      header: "Hash",
     },
     {
       key: "created",
@@ -119,7 +146,11 @@ export const ExecutionDataGrid = ({ executions, closeModal }) => {
               {rows.map((row) => (
                 <TableRow {...getRowProps({ row })}>
                   {row.cells.map((cell) => {
-                    return <TableCell key={cell.id}>{cell.value}</TableCell>;
+                    let value = cell.value;
+                    if (cell?.info?.header == "hash") {
+                      value = cell.value.slice(0, 8);
+                    }
+                    return <TableCell key={cell.id}>{value}</TableCell>;
                   })}
                 </TableRow>
               ))}

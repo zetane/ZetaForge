@@ -200,6 +200,29 @@ func initializeNils(v reflect.Value, visited map[uintptr]bool) {
 
 }
 
+// Helper function to merge inputs from POST into the pipeline graph
+func mergeInputsIntoPipeline(pipeline *zjson.Pipeline, postBody map[string]interface{}) {
+	inputs, ok := postBody["inputs"].(map[string]interface{})
+	if !ok {
+		// Handle the case where "inputs" is not present or not a map
+		log.Printf("Warning: 'inputs' not found in POST body or is not a map")
+		return
+	}
+	for nodeID, node := range pipeline.Pipeline {
+		if node.Action.Parameters != nil {
+			for paramName, param := range node.Action.Parameters {
+				inputKey := nodeID + "." + paramName
+				if value, exists := inputs[inputKey]; exists {
+					// Update the parameter value
+					param.Value = fmt.Sprintf("%v", value)
+					node.Action.Parameters[paramName] = param
+				}
+			}
+		}
+		pipeline.Pipeline[nodeID] = node
+	}
+}
+
 func checkVisited(v reflect.Value, visited map[uintptr]bool) bool {
 	kind := v.Kind()
 	if kind == reflect.Map || kind == reflect.Ptr || kind == reflect.Slice {
@@ -414,9 +437,9 @@ func main() {
 			return
 		}
 		if config.IsLocal || config.Cloud.Provider == "Debug" {
-			go localExecute(&execution.Pipeline, newExecution.ID, execution.Id, prefix, execution.Build, config, db, hub)
+			go localExecute(&execution.Pipeline, newExecution.ID, execution.Id, prefix, execution.Build, false, config, db, hub)
 		} else {
-			go cloudExecute(&execution.Pipeline, newExecution.ID, execution.Id, prefix, execution.Build, config, db, hub)
+			go cloudExecute(&execution.Pipeline, newExecution.ID, execution.Id, prefix, execution.Build, false, config, db, hub)
 		}
 
 		retData, err := filterPipeline(ctx, db, execution.Id)
@@ -558,7 +581,6 @@ func main() {
 
 		ctx.JSON(http.StatusOK, response)
 	})
-
 	pipeline := router.Group("/pipeline")
 	pipeline.POST("", func(ctx *gin.Context) {
 		prefix := getPrefix(ctx)
@@ -683,11 +705,18 @@ func main() {
 		uuid := ctx.Param("uuid")
 		hash := ctx.Param("hash")
 
-		if err := deployPipeline(ctx.Request.Context(), db, prefix, uuid, hash); err != nil {
+		pipeline, err := deployPipeline(ctx.Request.Context(), db, prefix, uuid, hash)
+		if err != nil {
 			log.Printf("failed to deploy pipeline; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
+		pipelineRes, err := newResponsePipeline(pipeline)
+		if err != nil {
+			ctx.String(err.Status(), err.Error())
+			return
+		}
+		ctx.JSON(http.StatusOK, pipelineRes)
 	})
 	pipeline.GET("/:uuid/list", func(ctx *gin.Context) {
 		prefix := getPrefix(ctx)
@@ -768,6 +797,15 @@ func main() {
 		prefix := getPrefix(ctx)
 		paramUuid := ctx.Param("uuid")
 		hash := ctx.Param("hash")
+
+		// Decode the POST body
+		var postBody map[string]interface{}
+		if err := ctx.BindJSON(&postBody); err != nil {
+			log.Printf("Failed to decode POST body: %v", err)
+			ctx.String(http.StatusBadRequest, "Invalid request body")
+			return
+		}
+
 		res, err := getPipeline(ctx.Request.Context(), db, prefix, paramUuid, hash)
 		if err != nil {
 			log.Printf("failed to get pipeline; err=%v", err)
@@ -777,7 +815,23 @@ func main() {
 
 		var pipeline zjson.Pipeline
 		if err := json.Unmarshal([]byte(res.Json), &pipeline); err != nil {
-			ctx.String(http.StatusInternalServerError, err.Error())
+			log.Printf("failed to unmarshal pipeline JSON; err=%v", err)
+			ctx.String(http.StatusInternalServerError, "Failed to parse pipeline data")
+			return
+		}
+
+		// Merge inputs from POST into the pipeline graph
+		mergeInputsIntoPipeline(&pipeline, postBody)
+
+		pipelineJSON, merr := json.Marshal(pipeline)
+		if merr != nil {
+			ctx.String(http.StatusInternalServerError, "Failed to serialize pipeline")
+			return
+		}
+
+		validatedPipeline, httpErr := validateJson[zjson.Pipeline](io.NopCloser(bytes.NewReader(pipelineJSON)))
+		if httpErr != nil {
+			ctx.String(httpErr.Status(), httpErr.Error())
 			return
 		}
 
@@ -789,7 +843,6 @@ func main() {
 		}
 
 		newExecution, err := createExecution(ctx, db, res.ID, executionId.String())
-
 		if err != nil {
 			log.Printf("failed to write execution to database; err=%v", err)
 			ctx.String(err.Status(), err.Error())
@@ -797,15 +850,26 @@ func main() {
 		}
 
 		if config.IsLocal || config.Cloud.Provider == "Debug" {
-			go localExecute(&pipeline, res.ID, executionId.String(), prefix, false, config, db, hub)
+			go localExecute(&validatedPipeline, newExecution.ID, executionId.String(), prefix, false, true, config, db, hub)
 		} else {
-			go cloudExecute(&pipeline, newExecution.ID, executionId.String(), prefix, false, config, db, hub)
+			go cloudExecute(&validatedPipeline, newExecution.ID, executionId.String(), prefix, false, true, config, db, hub)
 		}
 
-		newRes := make(map[string]any)
-		newRes["pipeline"] = res
-		newRes["executionId"] = executionId.String()
-		ctx.JSON(http.StatusCreated, newRes)
+		retData, err := filterPipeline(ctx, db, executionId.String())
+		if err != nil {
+			log.Printf("failed to get pipeline record; err=%v", err)
+			ctx.String(err.Status(), err.Error())
+			return
+		}
+
+		response, err := newResponsePipelineExecution(retData, []string{})
+		if err != nil {
+			log.Printf("failed to create response payload; err=%v", err)
+			ctx.String(err.Status(), err.Error())
+			return
+		}
+
+		ctx.JSON(http.StatusCreated, response)
 	})
 
 	pipeline.DELETE("/:uuid/:hash/:index", func(ctx *gin.Context) {
