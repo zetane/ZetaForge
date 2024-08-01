@@ -13,32 +13,43 @@ export const DeployedPipelineActions = ({
   pipelineData,
 }) => {
   const [modalContent, setModalContent] = useAtom(modalContentAtom);
-
   const generatePostPayload = () => {
-    const baseUrl = `${getScheme(configuration.anvil.host)}://${configuration.anvil.host}:${configuration.anvil.port}`;
-    const endpoint = `/pipeline/${uuid}/${hash}/execute`;
-
     // Generate input structure based on the pipeline graph
     const inputs = {};
     Object.entries(pipelineData.pipeline).forEach(([nodeId, node]) => {
-      if (node.action && node.action.parameters) {
-        Object.entries(node.action.parameters).forEach(([paramName, value]) => {
-          inputs[`${nodeId}.${paramName}`] = `${value?.value}`;
+      if (node.inputs) {
+        Object.entries(node.inputs).forEach(([inputName, input]) => {
+          if (input.connections && input.connections.length > 0) {
+            const connection = input.connections[0];
+            const sourceNode = pipelineData.pipeline[connection.block];
+            if (
+              sourceNode &&
+              sourceNode.action &&
+              sourceNode.action.parameters
+            ) {
+              const param = sourceNode.action.parameters[connection.variable];
+              if (param) {
+                inputs[inputName] = param.value;
+              }
+            }
+          }
         });
       }
     });
 
-    const payload = {
-      url: `${baseUrl}${endpoint}`,
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${configuration.anvil.token}`,
-      },
-      body: JSON.stringify({ inputs }),
-    };
+    const pythonCode = `
+from zetaforge import Zetaforge
 
-    const postPayload = JSON.stringify(payload, null, 2);
+zetaforge = Zetaforge(base_url='${getScheme(configuration.anvil.host)}://${configuration.anvil.host}:${configuration.anvil.port}', token='${configuration.anvil.token}')
+
+pipeline_uuid = '${uuid}'
+pipeline_hash = '${hash}'
+
+inputs = ${JSON.stringify(inputs, null, 2)}
+
+result = zetaforge.execute_pipeline(pipeline_uuid, pipeline_hash, inputs)
+print('Pipeline execution result:', result)
+    `;
 
     // Update modal content
     setModalContent({
@@ -50,7 +61,7 @@ export const DeployedPipelineActions = ({
           modalClass="custom-modal-size"
         >
           <CodeSnippet type="multi" feedback="Copied to clipboard">
-            {postPayload}
+            {pythonCode}
           </CodeSnippet>
         </ClosableModal>
       ),

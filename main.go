@@ -197,29 +197,44 @@ func initializeNils(v reflect.Value, visited map[uintptr]bool) {
 			initializeNils(field, visited)
 		}
 	}
-
 }
 
-// Helper function to merge inputs from POST into the pipeline graph
-func mergeInputsIntoPipeline(pipeline *zjson.Pipeline, postBody map[string]interface{}) {
-	inputs, ok := postBody["inputs"].(map[string]interface{})
+func mergeInputsIntoPipeline(pipeline *zjson.Pipeline, inputBody map[string]interface{}) {
+	inputs, ok := inputBody["inputs"].(map[string]interface{})
 	if !ok {
-		// Handle the case where "inputs" is not present or not a map
-		log.Printf("Warning: 'inputs' not found in POST body or is not a map")
+		log.Printf("Warning: 'inputs' not found in input body or is not a map")
 		return
 	}
-	for nodeID, node := range pipeline.Pipeline {
-		if node.Action.Parameters != nil {
-			for paramName, param := range node.Action.Parameters {
-				inputKey := nodeID + "." + paramName
-				if value, exists := inputs[inputKey]; exists {
-					// Update the parameter value
-					param.Value = fmt.Sprintf("%v", value)
-					node.Action.Parameters[paramName] = param
-				}
+	log.Printf("inputs: %v", inputs)
+
+	for blockID, block := range pipeline.Pipeline {
+		if block.Action.Parameters == nil {
+			continue
+		}
+
+		for paramName, param := range block.Action.Parameters {
+			// Find the output connection for this parameter
+			if block.Outputs == nil {
+				continue
+			}
+
+			outputConnection, found := block.Outputs[paramName]
+			if !found {
+				continue
+			}
+
+			// Construct the key for the input body
+			inputKey := fmt.Sprintf("%s", outputConnection.Connections[0].Variable)
+
+			if value, exists := inputs[inputKey]; exists {
+				// Update the parameter value
+				param.Value = fmt.Sprintf("%v", value)
+				block.Action.Parameters[paramName] = param
+				log.Printf("Updated parameter %s with value from input %s", paramName, inputKey)
 			}
 		}
-		pipeline.Pipeline[nodeID] = node
+
+		pipeline.Pipeline[blockID] = block
 	}
 }
 

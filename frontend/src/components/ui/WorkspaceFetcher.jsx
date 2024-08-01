@@ -1,11 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
 import { useLoadServerPipeline } from "@/hooks/useLoadPipeline";
 import { useEffect } from "react";
 import { workspaceAtom } from "@/atoms/pipelineAtom";
 import { useImmerAtom } from "jotai-immer";
 import { useAtom } from "jotai";
-import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
+import {
+  activeConfigurationAtom,
+  activeIndexAtom,
+} from "@/atoms/anvilConfigurationsAtom";
 import { getAllPipelines } from "@/client/anvil";
 import { useSyncExecutionResults } from "@/hooks/useExecutionResults";
 
@@ -14,9 +16,10 @@ export default function WorkspaceFetcher() {
   const loadPipeline = useLoadServerPipeline();
   const [configuration] = useAtom(activeConfigurationAtom);
   const syncResults = useSyncExecutionResults();
+  const queryKey = ["pipelines", configuration?.anvil?.host];
 
   const { pending, error, data } = useQuery({
-    queryKey: ["pipelines"],
+    queryKey: queryKey,
     queryFn: async () => {
       return await getAllPipelines(configuration);
     },

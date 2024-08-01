@@ -53,7 +53,7 @@ export async function getAllPipelines(configuration) {
       getScheme(configuration.anvil.host),
       configuration.anvil.host,
       configuration.anvil.port,
-      "pipeline/filter?limit=100000&offset=0",
+      "pipeline/filter?limit=15&offset=0",
     ),
     HttpMethod.GET,
     configuration.anvil.token,
