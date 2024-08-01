@@ -4,6 +4,7 @@ import path from "path";
 import { z } from "zod";
 import {
   compileComputation,
+  getDirectoryTree,
   runTest,
   saveBlockSpecs,
 } from "./blockSerialization.js";
@@ -375,6 +376,50 @@ export const appRouter = router({
 
           await updateIndex(blockPath, index);
         }),
+    }),
+  }),
+  block: router({
+    file: router({
+      get: publicProcedure
+      .use(errorHandling)
+          .input(
+            z.object({
+              pipelineId: z.string(),
+              blockId: z.string(),
+            }),
+          )
+      .query((opts) => {
+        const { input } = opts;
+        const { pipelineId, blockId } = input;
+
+        return getDirectoryTree(pipelineId, blockId);
+      }),
+      byPath: router({
+        get: publicProcedure
+          .use(errorHandling)
+          .input(
+            z.object({
+              blockId: z.string(),
+              path: z.string(),
+            }),
+          )
+          .query((opts) => {
+          const { input } = opts;
+          const { blockId, path } = input;
+        }),
+        update: publicProcedure
+          .use(errorHandling)
+          .input(
+            z.object({
+              blockId: z.string(),
+              path: z.string(),
+            }),
+          )
+          .mutation((opts) => {
+          const { input } = opts;
+          const { blockId, path } = input;
+        }),
+      }),
     }),
   }),
 });

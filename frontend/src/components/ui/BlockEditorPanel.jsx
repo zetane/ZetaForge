@@ -12,7 +12,7 @@ export default function BlockEditorPanel() {
   return (
     <>
       {isEditorOpen && pipeline.data[blockKey] && (
-        <Editor blockKey={blockKey} blockPath={blockPath} />
+        <Editor blockKey={blockKey} blockPath={blockPath} hidden />
       )}
     </>
   );

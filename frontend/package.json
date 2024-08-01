@@ -33,6 +33,7 @@
     "@sentry/react": "^7.112.2",
     "@types/source-map-support": "^0.5.10",
     "@uiw/codemirror-theme-github": "^4.21.25",
+    "directory-tree": "^3.5.2",
     "electron-trpc": "^0.5.2",
     "electron-updater": "^6.1.1",
     "getmac": "^6.6.0",

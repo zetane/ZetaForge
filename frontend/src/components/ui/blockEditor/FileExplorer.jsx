@@ -2,14 +2,19 @@ import { DocumentDownload, FolderOpen } from "@carbon/icons-react";
 import { Button, TreeView } from "@carbon/react";
 import { useRef } from "react";
 import DirentNode from "./DirentNode";
+import { trpc } from "@/utils/trpc";
 
 export default function FileExplorer({
+  pipelineId,
+  blockId,
   currentFile,
-  fileSystem,
   fetchFileSystem,
-  unsavedChanges,
   setCurrentFile,
 }) {
+  const root = trpc.block.file.get.useQuery({
+    pipelineId: pipelineId,
+    blockId: blockId,
+  });
   const fileInputRef = useRef(null);
   const folderInputRef = useRef(null);
 
@@ -68,7 +73,7 @@ export default function FileExplorer({
       console.error("Error during import:", error);
     }
   };
-
+  
   return (
     <div className="flex flex-col">
       <div className="flex gap-x-1">
@@ -109,17 +114,20 @@ export default function FileExplorer({
         />
       </div>
       <div className="mt-1 w-80 overflow-y-auto">
-        <TreeView label="directory view" selected={currentFile.file} hideLabel>
-          {Object.entries(fileSystem).map(([folder, folderData]) => (
+        {root.data && (
+          <TreeView
+            label="directory view"
+            selected={currentFile.file}
+            hideLabel
+          >
             <DirentNode
-              key={folder}
-              folder={folder}
-              folderData={folderData}
-              unsavedChanges={unsavedChanges}
+              name={root.data.name}
+              path={root.data.path}
+              children={root.data.children}
               setCurrentFile={setCurrentFile}
             />
-          ))}
-        </TreeView>
+          </TreeView>
+        )}
       </div>
     </div>
   );

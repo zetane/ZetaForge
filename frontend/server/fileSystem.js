@@ -85,7 +85,7 @@ export async function fileExists(filePath) {
 }
 
 export async function readJsonToObject(filePath) {
-  const buffer = await fs.readFile(filePath);
+  const buffer = await fs.readFile(filePath)
   return JSON.parse(buffer);
 }
 

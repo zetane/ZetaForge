@@ -33,7 +33,7 @@ export default function CodeEditor({
   const [isLoading, setIsLoading] = useState(false);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const [openAIApiKey] = useAtom(openAIApiKeyAtom);
-  const [agentName, setAgent] = useState("gpt-4_python_compute");
+  const [agentName, ] = useState("gpt-4_python_compute");
   const chatTextarea = useRef(null);
   const history = trpc.chat.history.get.useQuery({ blockPath });
   const utils = trpc.useUtils();
@@ -42,6 +42,8 @@ export default function CodeEditor({
       utils.chat.history.get.invalidate({ blockPath });
     },
   });
+
+  console.log(currentFile);
 
   const saveChanges = (e) => {
     if (!currentFile || !currentFile.path) {

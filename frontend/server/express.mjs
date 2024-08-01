@@ -11,6 +11,7 @@ import path from "path";
 import sha256 from "sha256";
 import getMAC from "getmac";
 import { BLOCK_SPECS_FILE_NAME } from "../src/utils/constants";
+import { logger } from "./logger";
 
 function startExpressServer() {
   const app = express();
@@ -203,6 +204,7 @@ function startExpressServer() {
   app.post("/get-directory-tree", (req, res) => {
     const blockFolder = req.body.folder;
     try {
+      logger.debug(`Get direcotry: ${req.body.folder}`);
       const fileSystem = getFileSystemContent(blockFolder);
       res.json(fileSystem);
     } catch (err) {

@@ -5,6 +5,7 @@ import Splitter from "./Splitter";
 import FileExplorer from "./FileExplorer";
 import CodeEditor from "./CodeEditor";
 import PromptList from "./PromptList";
+import { trpc } from "@/utils/trpc";
 
 export default function DirectoryViewer({ blockPath, blockKey }) {
   const serverAddress = "http://localhost:3330";
@@ -12,7 +13,9 @@ export default function DirectoryViewer({ blockPath, blockKey }) {
   const [currentFile, setCurrentFile] = useState({});
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const [pipeline] = useAtom(pipelineAtom);
-
+  const getFiles = trpc.block.file.get.useQuery({pipelineId: pipeline.id, blockId: blockKey});
+  console.log(getFiles.data);
+  
   useEffect(() => {
     fetchFileSystem();
   }, [pipeline]);
@@ -43,8 +46,9 @@ export default function DirectoryViewer({ blockPath, blockKey }) {
   return (
     <div className="flex h-full">
       <FileExplorer
+        pipelineId={pipeline.id}
+        blockId={blockKey}
         currentFile={currentFile}
-        fileSystem={fileSystem}
         fetchFileSystem={fetchFileSystem}
         unsavedChanges={unsavedChanges}
         setCurrentFile={setCurrentFile}
