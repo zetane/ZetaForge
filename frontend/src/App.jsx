@@ -41,28 +41,24 @@ export default function App() {
   useEffect( () => {
     const serverAddress = import.meta.env.VITE_EXPRESS
     const res = axios.get(`${serverAddress}/isPackaged`).then((response) => {
-      const isPackaged = response.data
       console.log(response.data)
       setIsPackaged(response.data)
       
-      if(isPackaged) {
+      if(appIsPackaged) {
 
         ping(configuration).then(res => {
-          
           if(!res) {
             axios.get(`${serverAddress}/get-kube-contexts`).then((res) => {
                 setAvailableKubeContexts(res.data)
 
 
                   axios.get(`${serverAddress}/get-anvil-config`).then(res => {
-                  console.log("CHECK RES")
-                  console.log(res)
-                  console.log(res.data)
+                  
                   
             
                   const data = res.data
                   if(data.has_config) {
-                    console.log("I SHOULD BE HERE ON THE RUN")
+                    
                     const config = data.config
                     const bucketPort = config.Local.BucketPort
                     const driver = config.Local.Driver
@@ -74,22 +70,21 @@ export default function App() {
                     setConfirmationText(configText)
                     }
                   } else {
-                    console.log("I MUST REACH HERE AT THE INITIAL RUN")
                     setConfigOpen(true)
                     setConfirmationIsOpen(false)
                   }
                 }).catch(err => {
-                  console.log("DEFINITELY NOT HERE")
                   setErrText(["Your local anvil did not started as expected. Please select a config", err.response?.data?.err, err.response?.data?.kubeErr])
                   setConfigOpen(true) //change this
                 })
-            }
-            ).catch(err => {
+            }).catch(err => {
               console.log(err.message)
             })
-          }
+          } else  {
+              //do nothing - double check this part
+            }
         }).catch(err => {
-          console.log("I AM NEVER HERE")
+              //do nothing - double check this part
         })
 
 
@@ -103,15 +98,10 @@ export default function App() {
     setIsLoading(true)
     const serverAddress = import.meta.env.VITE_EXPRESS
     try{
-      
       const res = await axios.post(`${serverAddress}/launch-anvil-from-config`)
-      console.log(res)
-      console.log("CONFIRMATION")
       setConfirmationIsOpen(false)
       setIsLoading(false)
     } catch(err) {
-      console.log("CHECK THIS ERROR")
-      console.log(err)
       setErrText([err.message])
       setErrModalOpen(true)
       setIsLoading(false)
