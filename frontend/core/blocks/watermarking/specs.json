@@ -1,0 +1,66 @@
+{
+  "information": {
+    "id": "watermark",
+    "name": "watermark",
+    "description": "Computes the watermark for the given image.",
+    "system_versions": [
+      "0.1"
+    ],
+    "block_version": "block version number",
+    "block_source": "core/blocks/watermark",
+    "block_type": "compute"
+  },
+  "inputs": {
+    "image_path": {
+      "type": "file",
+      "connections": []
+    },
+    "watermark_text": {
+      "type": "any",
+      "connections": []
+    },
+    "position": {
+      "type": "any",
+      "connections": []
+    }
+  },
+  "outputs": {
+    "result": {
+      "type": "List[file]",
+      "connections": []
+    }
+  },
+  "action": {
+    "container": {
+      "image": "watermark",
+      "version": "watermark-9kwxspugkuq9",
+      "command_line": [
+        "python",
+        "entrypoint.py"
+      ]
+    }
+  },
+  "views": {
+    "node": {
+      "active": "true",
+      "title_bar": {},
+      "preview": {},
+      "html": "",
+      "pos_x": "2589",
+      "pos_y": "178",
+      "pos_z": "999",
+      "behavior": "modal",
+      "order": {
+        "input": [
+          "image_path",
+          "watermark_text",
+          "position"
+        ],
+        "output": [
+          "result"
+        ]
+      }
+    }
+  },
+  "events": {}
+}
