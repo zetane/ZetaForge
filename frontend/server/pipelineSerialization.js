@@ -211,7 +211,7 @@ export async function executePipeline(
   specs["name"] = name;
   specs["id"] = id;
 
-  await uploadBuildContexts(anvilHostConfiguration, specs, buffer);
+  await uploadBuildContexts(anvilHostConfiguration, specs, buffer, rebuild);
 
   return await createExecution(
     anvilHostConfiguration,
@@ -272,14 +272,14 @@ async function uploadBlocks(
   return pipelineSpecs;
 }
 
-async function uploadBuildContexts(configuration, pipelineSpecs, buffer) {
+async function uploadBuildContexts(configuration, pipelineSpecs, buffer, rebuild) {
   const buildContextStatuses = await getBuildContextStatus(
     configuration,
     pipelineSpecs,
   );
   await Promise.all(
     buildContextStatuses
-      .filter((status) => !status.isUploaded)
+      .filter((status) => !status.isUploaded || rebuild)
       .map((status) => [path.join(buffer, status.blockKey), status.s3Key])
       .map(([blockPath, s3Key]) =>
         uploadDirectory(s3Key, blockPath, configuration),
