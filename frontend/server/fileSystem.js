@@ -85,7 +85,7 @@ export async function fileExists(filePath) {
 }
 
 export async function readJsonToObject(filePath) {
-  const buffer = await fs.readFile(filePath)
+  const buffer = await fs.readFile(filePath);
   return JSON.parse(buffer);
 }
 
@@ -140,4 +140,42 @@ export async function getDirectoryFilesRecursive(directoryPath) {
   );
   const files = stats.filter(([s]) => s.isFile()).map(([, f]) => f);
   return files;
+}
+
+export async function getDirectoryTree(directoryPath) {
+  const root = makeDirectoryTreeNode(
+    path.basename(directoryPath),
+    directoryPath,
+    ""
+  )
+  const stack = [root];
+
+  while (stack.length > 0) {
+    const currentDirectory = stack.pop();
+    const dirents = await fs.readdir(currentDirectory.absolutePath, { withFileTypes: true });
+
+    currentDirectory.children = [];
+    for (const dirent of dirents) {
+      const child = makeDirectoryTreeNode(
+        dirent.name,
+        path.join(currentDirectory.absolutePath, dirent.name),
+        path.join(currentDirectory.relativePath, dirent.name)
+      )
+
+      currentDirectory.children.push(child);
+      if (dirent.isDirectory()) {
+        stack.push(child);
+      }
+    }
+  }
+
+  return root;
+}
+
+function makeDirectoryTreeNode(name, absolutePath, relativePath) {
+  return {
+    name: name,
+    absolutePath: absolutePath,
+    relativePath: relativePath
+  }
 }

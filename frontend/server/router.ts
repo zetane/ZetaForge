@@ -4,7 +4,7 @@ import path from "path";
 import { z } from "zod";
 import {
   compileComputation,
-  getDirectoryTree,
+  getBlockDirectory,
   runTest,
   saveBlockSpecs,
 } from "./blockSerialization.js";
@@ -392,7 +392,7 @@ export const appRouter = router({
         const { input } = opts;
         const { pipelineId, blockId } = input;
 
-        return getDirectoryTree(pipelineId, blockId);
+        return getBlockDirectory(pipelineId, blockId);
       }),
       byPath: router({
         get: publicProcedure
