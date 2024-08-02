@@ -9,7 +9,7 @@ import PromptList from "./PromptList";
 export default function DirectoryViewer({ blockPath, blockKey }) {
   const serverAddress = "http://localhost:3330";
   const [fileSystem, setFileSystem] = useState({});
-  const [currentFile, setCurrentFile] = useState({});
+  const [currentFile, setCurrentFile] = useState({isSelected: false});
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const [pipeline] = useAtom(pipelineAtom);
 
@@ -52,14 +52,16 @@ export default function DirectoryViewer({ blockPath, blockKey }) {
       />
       <PromptList />
       <Splitter />
-      <CodeEditor
+      {currentFile.isSelected  && <CodeEditor
+        pipelineId={pipeline.id}
+        blockId={blockKey}
         currentFile={currentFile}
         setCurrentFile={setCurrentFile}
         setUnsavedChanges={setUnsavedChanges}
         fileSystem={fileSystem}
         setFileSystem={setFileSystem}
         fetchFileSystem={fetchFileSystem}
-      />
+      />}
     </div>
   );
 }

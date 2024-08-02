@@ -2,7 +2,11 @@ import { execFile, spawnSync } from "child_process";
 import { app } from "electron";
 import fs from "fs/promises";
 import path from "path";
-import { BLOCK_SPECS_FILE_NAME } from "../src/utils/constants";
+import {
+  BLOCK_SPECS_FILE_NAME,
+  SUPPORTED_FILE_EXTENSIONS,
+  SUPPORTED_FILE_NAMES,
+} from "../src/utils/constants";
 import { fileExists, getDirectoryTree } from "./fileSystem";
 import { logger } from "./logger";
 import { HttpStatus, ServerError } from "./serverError";
@@ -106,6 +110,32 @@ export async function getBlockDirectory(pipelineId, blockId) {
     blockId,
   );
 
-  const tree = getDirectoryTree(blockDirectory);
+  const tree = await getDirectoryTree(blockDirectory);
   return tree;
+}
+
+export async function getBlockFile(pipelineId, blockId, relativeFilePath) {
+  const absoluteFilePath = path.join(
+    process.cwd(),
+    ".cache",
+    pipelineId,
+    blockId,
+    relativeFilePath,
+  );
+
+  let fileContent = "File type is not supported";
+  if (isSupported(absoluteFilePath)) {
+    fileContent = await fs.readFile(absoluteFilePath, { encoding: "utf8" });
+  }
+  return fileContent;
+}
+
+function isSupported(filePath) {
+  const extension = path.extname(filePath).toLowerCase();
+  const basename = path.basename(filePath);
+
+  return (
+    SUPPORTED_FILE_EXTENSIONS.includes(extension) ||
+    SUPPORTED_FILE_NAMES.includes(basename)
+  );
 }

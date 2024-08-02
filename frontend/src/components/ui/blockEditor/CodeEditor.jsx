@@ -16,6 +16,8 @@ import { blockEditorRootAtom } from "@/atoms/editorAtom";
 
 const EDIT_ONLY_FILES = [BLOCK_SPECS_FILE_NAME, CHAT_HISTORY_FILE_NAME];
 export default function CodeEditor({
+  pipelineId,
+  blockId,
   currentFile,
   setCurrentFile,
   setUnsavedChanges,
@@ -33,7 +35,7 @@ export default function CodeEditor({
   const [isLoading, setIsLoading] = useState(false);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const [openAIApiKey] = useAtom(openAIApiKeyAtom);
-  const [agentName, ] = useState("gpt-4_python_compute");
+  const [agentName] = useState("gpt-4_python_compute");
   const chatTextarea = useRef(null);
   const history = trpc.chat.history.get.useQuery({ blockPath });
   const utils = trpc.useUtils();
@@ -43,7 +45,14 @@ export default function CodeEditor({
     },
   });
 
+  const fileContent = trpc.block.file.byPath.get.useQuery({
+    pipelineId: pipelineId,
+    blockId: blockId,
+    path: currentFile.relativePath,
+  });
+  // const setFileContent = trpc.block.file.byPath.get.useMutation({pipelineId, blockId: blockId, path: currentFile.relativePath });
   console.log(currentFile);
+  console.log(fileContent.data);
 
   const saveChanges = (e) => {
     if (!currentFile || !currentFile.path) {
@@ -216,23 +225,22 @@ export default function CodeEditor({
     <>
       <div className="flex w-full min-w-0 flex-col">
         <span className="text-md text-gray-30 mt-2">
-          {currentFile.path ? <span>{currentFile.path}</span> : null}
+          {currentFile.relativePath ? <span>{currentFile.relativePath}</span> : null}
         </span>
         {fileSystem === null ? (
           <div>Loading...</div>
-        ) : (
-          currentFile &&
-          currentFile.path && (
+        ) : ( 
+          currentFile?.relativePath && (
             <div className="relative mt-6 overflow-y-auto px-5">
               {EDIT_ONLY_FILES.some((fileName) =>
-                currentFile.path.endsWith(fileName),
+                currentFile.relativePath.endsWith(fileName),
               ) ? (
-                <ViewerCodeMirror code={currentFile.content || ""} />
+                <ViewerCodeMirror code={fileContent.data || ""} />
               ) : (
                 <>
                   <EditorCodeMirror
-                    key={currentFile.path}
-                    code={currentFile.content || ""}
+                    key={currentFile.relativePath}
+                    code={fileContent.data || ""}
                     onChange={(newValue) => onChange(newValue)}
                   />
                   <div className="absolute right-8 top-2">
@@ -251,7 +259,7 @@ export default function CodeEditor({
           )
         )}
       </div>
-      {(isComputation(currentFile?.path) && openAIApiKey) && (
+      {isComputation(currentFile?.relativePath) && openAIApiKey && (
         <div className="relative">
           <div className="text-right">
             <div className="inline-block p-2">

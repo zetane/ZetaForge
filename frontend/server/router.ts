@@ -7,6 +7,7 @@ import {
   getBlockDirectory,
   runTest,
   saveBlockSpecs,
+  getBlockFile,
 } from "./blockSerialization.js";
 import { getHistory, getIndex, updateHistory, updateIndex } from "./chat.js";
 import { readPipelines, readSpecs } from "./fileSystem.js";
@@ -388,24 +389,27 @@ export const appRouter = router({
               blockId: z.string(),
             }),
           )
-      .query((opts) => {
+      .query(async (opts) => {
         const { input } = opts;
         const { pipelineId, blockId } = input;
 
-        return getBlockDirectory(pipelineId, blockId);
+        return await getBlockDirectory(pipelineId, blockId);
       }),
       byPath: router({
         get: publicProcedure
           .use(errorHandling)
           .input(
             z.object({
+              pipelineId: z.string(),
               blockId: z.string(),
               path: z.string(),
             }),
           )
-          .query((opts) => {
+          .query(async (opts) => {
           const { input } = opts;
-          const { blockId, path } = input;
+          const { pipelineId, blockId, path } = input;
+
+          return await getBlockFile(pipelineId, blockId, path);
         }),
         update: publicProcedure
           .use(errorHandling)

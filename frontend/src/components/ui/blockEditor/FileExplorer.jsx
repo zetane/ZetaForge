@@ -1,6 +1,6 @@
 import { DocumentDownload, FolderOpen } from "@carbon/icons-react";
 import { Button, TreeView } from "@carbon/react";
-import { act, useRef } from "react";
+import { useRef } from "react";
 import DirentNode from "./DirentNode";
 import { trpc } from "@/utils/trpc";
 
@@ -73,7 +73,7 @@ export default function FileExplorer({
       console.error("Error during import:", error);
     }
   };
-  console.log(root.data); 
+
   return (
     <div className="flex flex-col">
       <div className="flex gap-x-1">
@@ -121,9 +121,7 @@ export default function FileExplorer({
             hideLabel
           >
             <DirentNode
-              name={root.data.name}
-              path={root.data.path}
-              children={root.data.children}
+              parent={root.data}
               setCurrentFile={setCurrentFile}
             />
           </TreeView>

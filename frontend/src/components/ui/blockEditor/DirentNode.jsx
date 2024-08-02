@@ -3,12 +3,11 @@ import { TreeNode } from "@carbon/react";
 import { useState } from "react";
 
 export default function DirentNode({
-  name,
-  path,
-  children,
+  parent,
   setCurrentFile,
   ...rest
 }) {
+  const name = parent.name;
   const specialFiles = ["computations.py", "Dockerfile", "requirements.txt"];
   const isSpecialFile = specialFiles.includes(name);
   const textStyle = isSpecialFile
@@ -63,7 +62,11 @@ export default function DirentNode({
   // };
 
   const handleFileClick = () => {
-    setCurrentFile(path);
+    setCurrentFile({
+      isSelected: true,
+      ...parent,
+    });
+    
     // if (unsavedChanges) {
     //   setPendingFile(filePath);
     //   setIsModalOpen(true);
@@ -79,7 +82,7 @@ export default function DirentNode({
     // }
   };
 
-  return children ? (
+  return parent.children ? (
     <TreeNode
       key={name}
       onClick={handleFolderClick}
@@ -88,15 +91,11 @@ export default function DirentNode({
       isExpanded={isExpanded}
       {...rest}
     >
-      {children.map((child) => (
+      {parent.children.map((child) => (
         <DirentNode
-          name={child.name}
-          path={child.path}
-          children={child.children}
+          key={name}
+          parent={child}
           setCurrentFile={setCurrentFile}
-          // parentPath={currentPath}
-          // unsavedChanges={unsavedChanges}
-          // setCurrentFile={setCurrentFile}
         />
       ))}
     </TreeNode>
