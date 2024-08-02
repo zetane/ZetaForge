@@ -75,7 +75,7 @@ export default function Editor({ blockKey, blockPath }) {
         </TabList>
         <TabPanels>
           <TabPanel className="overflow-hidden">
-            <DirectoryViewer blockPath={blockPath} blockKey={blockKey} />
+            <DirectoryViewer key={blockKey} blockPath={blockPath} blockKey={blockKey} />
           </TabPanel>
           <TabPanel className="overflow-y-auto">
             <SpecsInterface

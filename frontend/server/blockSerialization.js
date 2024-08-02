@@ -124,13 +124,25 @@ export async function getBlockFile(pipelineId, blockId, relativeFilePath) {
   );
 
   let fileContent = "File type is not supported";
-  if (isSupported(absoluteFilePath)) {
+  if (isFileSupported(absoluteFilePath)) {
     fileContent = await fs.readFile(absoluteFilePath, { encoding: "utf8" });
   }
   return fileContent;
 }
 
-function isSupported(filePath) {
+export async function updateBlockFile(pipelineId, blockId, relativeFilePath, content) {
+  const absoluteFilePath = path.join(
+    process.cwd(),
+    ".cache",
+    pipelineId,
+    blockId,
+    relativeFilePath,
+  );
+
+  await fs.writeFile(absoluteFilePath, content);
+}
+
+function isFileSupported(filePath) {
   const extension = path.extname(filePath).toLowerCase();
   const basename = path.basename(filePath);
 

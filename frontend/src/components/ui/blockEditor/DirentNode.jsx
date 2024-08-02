@@ -66,7 +66,7 @@ export default function DirentNode({
       isSelected: true,
       ...parent,
     });
-    
+
     // if (unsavedChanges) {
     //   setPendingFile(filePath);
     //   setIsModalOpen(true);
@@ -93,7 +93,7 @@ export default function DirentNode({
     >
       {parent.children.map((child) => (
         <DirentNode
-          key={name}
+          key={child.name}
           parent={child}
           setCurrentFile={setCurrentFile}
         />

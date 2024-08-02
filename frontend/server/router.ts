@@ -8,6 +8,7 @@ import {
   runTest,
   saveBlockSpecs,
   getBlockFile,
+  updateBlockFile,
 } from "./blockSerialization.js";
 import { getHistory, getIndex, updateHistory, updateIndex } from "./chat.js";
 import { readPipelines, readSpecs } from "./fileSystem.js";
@@ -415,13 +416,17 @@ export const appRouter = router({
           .use(errorHandling)
           .input(
             z.object({
+              pipelineId: z.string(),
               blockId: z.string(),
               path: z.string(),
+              content: z.string(),
             }),
           )
-          .mutation((opts) => {
+          .mutation(async (opts) => {
           const { input } = opts;
-          const { blockId, path } = input;
+          const { pipelineId, blockId, path, content } = input;
+
+          return await updateBlockFile(pipelineId, blockId, path, content);
         }),
       }),
     }),

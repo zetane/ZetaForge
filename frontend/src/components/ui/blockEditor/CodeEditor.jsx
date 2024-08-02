@@ -50,61 +50,66 @@ export default function CodeEditor({
     blockId: blockId,
     path: currentFile.relativePath,
   });
-  // const setFileContent = trpc.block.file.byPath.get.useMutation({pipelineId, blockId: blockId, path: currentFile.relativePath });
-  console.log(currentFile);
-  console.log(fileContent.data);
+  const updateFileContent = trpc.block.file.byPath.update.useMutation();
+  const [fileContentBuffer, setFileContentBuffer] = useState(fileContent.data);
 
-  const saveChanges = (e) => {
-    if (!currentFile || !currentFile.path) {
-      console.error("No file selected");
-      return;
-    }
-
-    const saveData = {
-      pipelinePath: pipeline.buffer,
-      filePath: currentFile.path,
-      content: currentFile.content,
-    };
-
-    fetch(`${serverAddress}/save-file`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(saveData),
-    })
-      .then((response) => response.json())
-      .then(async () => {
-        setUnsavedChanges(false);
-        if (isComputation(currentFile.path)) {
-          try {
-            const newSpecsIO = await compileComputation.mutateAsync({
-              blockPath: blockPath,
-            });
-            const newSpecs = await updateSpecs(
-              blockKey,
-              newSpecsIO,
-              pipeline.data,
-              editor,
-            );
-            setPipeline((draft) => {
-              draft.data[blockKey] = newSpecs;
-            });
-            await saveBlockSpecs.mutateAsync({
-              blockPath: blockPath,
-              blockSpecs: newSpecs,
-            });
-            fetchFileSystem();
-          } catch (error) {
-            console.error(error);
-            setCompilationErrorToast(true);
-          }
-        }
-      })
-      .catch((error) => {
-        console.error("Error saving file:", error);
-      });
-    e.currentTarget.blur();
+  const saveChanges = async () => {
+    await updateFileContent.mutateAsync({
+      pipelineId,
+      blockId: blockId,
+      path: currentFile.relativePath,
+      content: fileContentBuffer,
+    });
+    // if (!currentFile || !currentFile.path) {
+    //   console.error("No file selected");
+    //   return;
+    // }
+    //
+    // const saveData = {
+    //   pipelinePath: pipeline.buffer,
+    //   filePath: currentFile.path,
+    //   content: currentFile.content,
+    // };
+    //
+    // fetch(`${serverAddress}/save-file`, {
+    //   method: "POST",
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //   },
+    //   body: JSON.stringify(saveData),
+    // })
+    //   .then((response) => response.json())
+    //   .then(async () => {
+    //     setUnsavedChanges(false);
+    //     if (isComputation(currentFile.path)) {
+    //       try {
+    //         const newSpecsIO = await compileComputation.mutateAsync({
+    //           blockPath: blockPath,
+    //         });
+    //         const newSpecs = await updateSpecs(
+    //           blockKey,
+    //           newSpecsIO,
+    //           pipeline.data,
+    //           editor,
+    //         );
+    //         setPipeline((draft) => {
+    //           draft.data[blockKey] = newSpecs;
+    //         });
+    //         await saveBlockSpecs.mutateAsync({
+    //           blockPath: blockPath,
+    //           blockSpecs: newSpecs,
+    //         });
+    //         fetchFileSystem();
+    //       } catch (error) {
+    //         console.error(error);
+    //         setCompilationErrorToast(true);
+    //       }
+    //     }
+    //   })
+    //   .catch((error) => {
+    //     console.error("Error saving file:", error);
+    //   });
+    // e.currentTarget.blur();
   };
 
   const handleModalConfirm = (e) => {
@@ -134,34 +139,35 @@ export default function CodeEditor({
   };
 
   const onChange = (newValue) => {
-    setUnsavedChanges(true);
-
-    setCurrentFile((prevCurrentFile) => ({
-      ...prevCurrentFile,
-      content: newValue,
-    }));
-
-    setFileSystem((prevFileSystem) => {
-      const relPath = currentFile.path.replaceAll("\\", "/");
-      const pathSegments = relPath.split("/");
-      let updatedFileSystem = { ...prevFileSystem };
-
-      let currentLevel = updatedFileSystem;
-      for (let i = 0; i < pathSegments.length; i++) {
-        const segment = pathSegments[i];
-
-        if (i === pathSegments.length - 1) {
-          currentLevel[segment] = {
-            ...currentLevel[segment],
-            content: newValue,
-          };
-        } else {
-          currentLevel = currentLevel[segment].content;
-        }
-      }
-
-      return updatedFileSystem;
-    });
+    setFileContentBuffer(newValue);
+    // setUnsavedChanges(true);
+    //
+    // setCurrentFile((prevCurrentFile) => ({
+    //   ...prevCurrentFile,
+    //   content: newValue,
+    // }));
+    //
+    // setFileSystem((prevFileSystem) => {
+    //   const relPath = currentFile.path.replaceAll("\\", "/");
+    //   const pathSegments = relPath.split("/");
+    //   let updatedFileSystem = { ...prevFileSystem };
+    //
+    //   let currentLevel = updatedFileSystem;
+    //   for (let i = 0; i < pathSegments.length; i++) {
+    //     const segment = pathSegments[i];
+    //
+    //     if (i === pathSegments.length - 1) {
+    //       currentLevel[segment] = {
+    //         ...currentLevel[segment],
+    //         content: newValue,
+    //       };
+    //     } else {
+    //       currentLevel = currentLevel[segment].content;
+    //     }
+    //   }
+    //
+    //   return updatedFileSystem;
+    // });
   };
 
   const isComputation = (path) => {
@@ -225,11 +231,13 @@ export default function CodeEditor({
     <>
       <div className="flex w-full min-w-0 flex-col">
         <span className="text-md text-gray-30 mt-2">
-          {currentFile.relativePath ? <span>{currentFile.relativePath}</span> : null}
+          {currentFile.relativePath ? (
+            <span>{currentFile.relativePath}</span>
+          ) : null}
         </span>
         {fileSystem === null ? (
           <div>Loading...</div>
-        ) : ( 
+        ) : (
           currentFile?.relativePath && (
             <div className="relative mt-6 overflow-y-auto px-5">
               {EDIT_ONLY_FILES.some((fileName) =>
@@ -239,7 +247,6 @@ export default function CodeEditor({
               ) : (
                 <>
                   <EditorCodeMirror
-                    key={currentFile.relativePath}
                     code={fileContent.data || ""}
                     onChange={(newValue) => onChange(newValue)}
                   />
