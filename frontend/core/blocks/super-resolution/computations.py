@@ -1,12 +1,9 @@
 import os
 import torch
 from torchvision import transforms
-from torch.utils.data import DataLoader, Dataset
 from PIL import Image
 import numpy as np
-import matplotlib.pyplot as plt
 import torch.nn as nn
-import torch.optim as optim
 
 # Super-resolution function
 def super_resolve(model, image_path, transform, target_size=(256, 256)):

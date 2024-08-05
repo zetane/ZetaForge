@@ -1,6 +1,5 @@
 import json
 import uuid
-import os
 import ffmpeg
 
 def convert_mkv_to_mp4(input_file, output_file):

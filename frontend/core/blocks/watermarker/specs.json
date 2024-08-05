@@ -1,13 +1,13 @@
 {
   "information": {
-    "id": "watermark",
-    "name": "watermark",
+    "id": "watermarker",
+    "name": "Watermarker",
     "description": "Computes the watermark for the given image.",
     "system_versions": [
       "0.1"
     ],
     "block_version": "block version number",
-    "block_source": "core/blocks/watermark",
+    "block_source": "core/blocks/watermarker",
     "block_type": "compute"
   },
   "inputs": {
@@ -32,7 +32,7 @@
   },
   "action": {
     "container": {
-      "image": "watermark",
+      "image": "watermarker",
       "version": "latest",
       "command_line": [
         "python",

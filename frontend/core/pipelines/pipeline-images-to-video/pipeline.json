@@ -473,8 +473,8 @@
       "events": {}
     }
   },
-  "sink": "",
-  "build": "",
+  "sink": "/Users/zahra/Documents/Zetane/projects/zetaforge/frontend/core/pipelines/pipeline-creator-from-block-creator",
+  "build": "/Users/zahra/Documents/Zetane/projects/zetaforge/frontend/core/pipelines/pipeline-creator-from-block-creator",
   "name": "Images to Videos Demo",
   "id": "pipeline-3auastmgeard",
   "description": "Assembles a list of images into a video."

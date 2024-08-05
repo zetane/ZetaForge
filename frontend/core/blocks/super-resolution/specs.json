@@ -29,7 +29,7 @@
   "action": {
     "container": {
       "image": "super-resolution",
-      "version": "super-resolution-p0d35ztj0dm7",
+      "version": "latest",
       "command_line": [
         "python",
         "entrypoint.py"
