@@ -1,0 +1,61 @@
+{
+  "information": {
+    "id": "denoising",
+    "name": "Denoising",
+    "description": "Perform denoising on the given image and save the results",
+    "system_versions": [
+      "0.1"
+    ],
+    "block_version": "block version number",
+    "block_source": "core/blocks/denoising",
+    "block_type": "compute"
+  },
+  "inputs": {
+    "image_path": {
+      "type": "file",
+      "connections": []
+    }
+  },
+  "outputs": {
+    "result": {
+      "type": "List[file]",
+      "connections": []
+    },
+    "input_result": {
+      "type": "List[file]",
+      "connections": []
+    }
+  },
+  "action": {
+    "container": {
+      "image": "denoising",
+      "version": "latest",
+      "command_line": [
+        "python",
+        "entrypoint.py"
+      ]
+    }
+  },
+  "views": {
+    "node": {
+      "active": "true",
+      "title_bar": {},
+      "preview": {},
+      "html": "",
+      "pos_x": "1280",
+      "pos_y": "386.109375",
+      "pos_z": "999",
+      "behavior": "modal",
+      "order": {
+        "input": [
+          "image_path"
+        ],
+        "output": [
+          "result",
+          "input_result"
+        ]
+      }
+    }
+  },
+  "events": {}
+}
