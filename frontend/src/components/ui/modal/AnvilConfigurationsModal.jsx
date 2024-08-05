@@ -17,9 +17,10 @@ import {
 } from "@carbon/react";
 import KubecontextModal from "./KubecontextModal";
 import { isPackaged, choosenKubeContexts, choosenDriver } from "@/atoms/kubecontextAtom";
-import { activeConfigurationAtom, defaultAnvilConfigurationAtom, userAnvilConfigurationsAtom } from "@/atoms/anvilConfigurationsAtom";
+import { activeConfigurationAtom} from "@/atoms/anvilConfigurationsAtom";
 import axios from 'axios'
 import { ping } from "@/client/anvil";
+import ConfirmationModal from "./ConfirmationModal";
 
 const CONFIGURATION_TABLE_TITLE = "Anvil Configurations";
 const NEW_CONFIGURATION_TITLE = "New Configuration";
@@ -33,11 +34,8 @@ export default function AnvilConfigurationsModal(props) {
   const [initialConfiguration, setInitialConfiguration] = useState(undefined);
   const [handleSave, setHandleSave] = useState(undefined);
   const [title, setTitle] = useState(CONFIGURATION_TABLE_TITLE);
-  const [defaultAnvilConfiguration] = useAtom(defaultAnvilConfigurationAtom);
-  const [userAnvilConfigurations] = useAtom(userAnvilConfigurationsAtom);
   const [appIsPackaged] = useAtom(isPackaged)
   const [confirmationOpen, setConfirmationIsOpen] = useState(false)
-  const [showConfig, setShowConfig] = useState(false)
   const [configuration] = useAtom(activeConfigurationAtom);
   const [confirmationText, setConfirmationText] = useState([])
   const [currentKubeContext, setCurrentKubeContext] = useAtom(choosenKubeContexts)
@@ -172,8 +170,7 @@ export default function AnvilConfigurationsModal(props) {
           <Tab>
             Anvil Configurations
           </Tab>
-          <Tab>
-          {/* <Tab disabled={!appIsPackaged || (configuration.host !== 'localhost' && configuration.host !== '127.0.0.1')} > */}
+          <Tab disabled={!appIsPackaged || (configuration.host !== 'localhost' && configuration.host !== '127.0.0.1')} >
           Set KubeContext
           </Tab> 
         </TabList>
@@ -201,7 +198,6 @@ export default function AnvilConfigurationsModal(props) {
     <ClosableModal modalHeading="Are you sure you want to use this setting" size="md" primaryButtonText="Yes" secondaryButtonText="No" onRequestSubmit={confirmSettings} onRequestClose={() => setConfirmationIsOpen(false)} open={confirmationOpen}>
     <div className="flex flex-col gap-4 p-3">
           {confirmationText.map((error, i) => {
-            console.log(confirmationText)
             return (
               <p key={"error-msg-" + i}>{error}</p>
             )
