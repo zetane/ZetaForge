@@ -9,6 +9,7 @@ import {
   saveBlockSpecs,
   getBlockFile,
   updateBlockFile,
+  callAgent,
 } from "./blockSerialization.js";
 import { getHistory, getIndex, updateHistory, updateIndex } from "./chat.js";
 import { readPipelines, readSpecs } from "./fileSystem.js";
@@ -266,7 +267,7 @@ export const appRouter = router({
     )
     .mutation(async (opts) => {
       const { input } = opts;
-      const { pipelineId, blockId} = input;
+      const { pipelineId, blockId } = input;
 
       return await compileComputation(pipelineId, blockId);
     }),
@@ -384,19 +385,19 @@ export const appRouter = router({
   block: router({
     file: router({
       get: publicProcedure
-      .use(errorHandling)
-          .input(
-            z.object({
-              pipelineId: z.string(),
-              blockId: z.string(),
-            }),
-          )
-      .query(async (opts) => {
-        const { input } = opts;
-        const { pipelineId, blockId } = input;
+        .use(errorHandling)
+        .input(
+          z.object({
+            pipelineId: z.string(),
+            blockId: z.string(),
+          }),
+        )
+        .query(async (opts) => {
+          const { input } = opts;
+          const { pipelineId, blockId } = input;
 
-        return await getBlockDirectory(pipelineId, blockId);
-      }),
+          return await getBlockDirectory(pipelineId, blockId);
+        }),
       byPath: router({
         get: publicProcedure
           .use(errorHandling)
@@ -408,11 +409,11 @@ export const appRouter = router({
             }),
           )
           .query(async (opts) => {
-          const { input } = opts;
-          const { pipelineId, blockId, path } = input;
+            const { input } = opts;
+            const { pipelineId, blockId, path } = input;
 
-          return await getBlockFile(pipelineId, blockId, path);
-        }),
+            return await getBlockFile(pipelineId, blockId, path);
+          }),
         update: publicProcedure
           .use(errorHandling)
           .input(
@@ -424,13 +425,35 @@ export const appRouter = router({
             }),
           )
           .mutation(async (opts) => {
-          const { input } = opts;
-          const { pipelineId, blockId, path, content } = input;
+            const { input } = opts;
+            const { pipelineId, blockId, path, content } = input;
 
-          return await updateBlockFile(pipelineId, blockId, path, content);
-        }),
+            return await updateBlockFile(pipelineId, blockId, path, content);
+          }),
       }),
     }),
+    callAgent: publicProcedure
+      .use(errorHandling)
+      .input(
+        z.object({
+          userMessage: z.string(),
+          agentName: z.string(),
+          conversationHistory: z.array(
+            z.object({
+              prompt: z.string(),
+              response: z.string(),
+              timestamp: z.number(),
+            }),
+          ),
+          apiKey: z.string(),
+        }),
+      )
+      .mutation(async (opts) => {
+        const { input } = opts;
+        const { userMessage, agentName, conversationHistory, apiKey } = input;
+
+        return callAgent(userMessage, agentName, conversationHistory, apiKey);
+      }),
   }),
 });
 

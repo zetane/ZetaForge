@@ -51,6 +51,7 @@ export default function CodeEditor({
   });
   const updateFileContent = trpc.block.file.byPath.update.useMutation();
   const [fileContentBuffer, setFileContentBuffer] = useState(fileContent.data);
+  const callAgent = trpc.block.callAgent.useMutation();
 
   const isComputation = currentFile.relativePath.endsWith("computations.py");
 
@@ -118,7 +119,6 @@ export default function CodeEditor({
     setFileContentBuffer(newValue);
   };
 
-
   const recordCode = (promptToRecord, codeToRecord) => {
     updateHistory.mutateAsync({
       blockPath: blockPath,
@@ -145,30 +145,11 @@ export default function CodeEditor({
       apiKey: openAIApiKey,
     };
 
-    if (newPrompt) {
-      try {
-        const response = await fetch(`${serverAddress}/api/call-agent`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(toSend),
-        });
+    const response = await callAgent.mutateAsync(toSend);
+    console.log(response);
+    recordCode(newPrompt, response);
+    chatTextarea.current.value = "";
 
-        const data = await response.json();
-
-        if (response.ok) {
-          const only_code_response = data.response;
-          recordCode(newPrompt, only_code_response);
-        } else {
-          throw new Error(data.error || "Server error");
-        }
-      } catch (error) {
-        console.error("Error fetching response:", error);
-      }
-
-      chatTextarea.current.value = "";
-    }
     setIsLoading(false);
   };
 

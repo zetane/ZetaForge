@@ -12,7 +12,13 @@ import { logger } from "./logger";
 import { HttpStatus, ServerError } from "./serverError";
 
 export async function compileComputation(pipelineId, blockId) {
-  const sourcePath = path.join(process.cwd(), ".cache", pipelineId, blockId, "computations.py");
+  const sourcePath = path.join(
+    process.cwd(),
+    ".cache",
+    pipelineId,
+    blockId,
+    "computations.py",
+  );
   const source = await fs.readFile(sourcePath, { encoding: "utf8" });
 
   const scriptPath = app.isPackaged
@@ -130,7 +136,12 @@ export async function getBlockFile(pipelineId, blockId, relativeFilePath) {
   return fileContent;
 }
 
-export async function updateBlockFile(pipelineId, blockId, relativeFilePath, content) {
+export async function updateBlockFile(
+  pipelineId,
+  blockId,
+  relativeFilePath,
+  content,
+) {
   const absoluteFilePath = path.join(
     process.cwd(),
     ".cache",
@@ -150,4 +161,32 @@ function isFileSupported(filePath) {
     SUPPORTED_FILE_EXTENSIONS.includes(extension) ||
     SUPPORTED_FILE_NAMES.includes(basename)
   );
+}
+
+export async function callAgent(
+  userMessage,
+  agentName,
+  conversationHistory,
+  apiKey,
+) {
+  let agents = "agents";
+  if (app.isPackaged) {
+    agents = path.join(process.resourcesPath, "agents");
+  }
+  const scriptPath = path.join(
+    agents,
+    agentName,
+    "generate",
+    "computations.py",
+  );
+
+  const { stdout } = spawnSync("python", [scriptPath], {
+    input: JSON.stringify({
+      apiKey,
+      userMessage,
+      conversationHistory,
+    }),
+  });
+  logger.debug(stdout);
+  return stdout;
 }

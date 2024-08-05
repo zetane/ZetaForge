@@ -6,15 +6,15 @@ import FileExplorer from "./FileExplorer";
 import CodeEditor from "./CodeEditor";
 import PromptList from "./PromptList";
 
-  const [fileSystem, setFileSystem] = useState({});
 export default function DirectoryViewer({ blockId }) {
+  const [fileSystem, setFileSystem] = useState({});
   const [currentFile, setCurrentFile] = useState({ isSelected: false });
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const [pipeline] = useAtom(pipelineAtom);
 
-  useEffect(() => {
-    fetchFileSystem();
-  }, [pipeline]);
+  // useEffect(() => {
+  //   fetchFileSystem();
+  // }, [pipeline]);
 
   const fetchFileSystem = useCallback(async () => {
     try {
@@ -37,7 +37,8 @@ export default function DirectoryViewer({ blockId }) {
     } catch (error) {
       console.error("Error fetching file system:", error);
     }
-  }, [blockPath]);
+  });
+
   return (
     <div className="flex h-full">
       <FileExplorer
