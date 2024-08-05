@@ -21,10 +21,22 @@ export async function compileComputation(blockPath) {
     );
   }
 
-  const { stdout } = spawnSync("python", [scriptPath], {
+  const { stdout, stderr, status, error } = spawnSync("python", [scriptPath], {
     input: source,
     encoding: "utf8",
   });
+
+  if (error) {
+    logger.error(error, buildCompilationErrorLog(blockPath, scriptPath));
+    throw buildCompilationServerError();
+  }
+
+  if (status != 0) {
+    logger.error(buildCompilationErrorLog(blockPath, scriptPath));
+    logger.error(stderr);
+    throw buildCompilationServerError();
+  }
+
   const io = JSON.parse(stdout);
   return io;
 }
@@ -72,4 +84,16 @@ export async function runTest(blockPath, blockKey) {
       },
     );
   });
+}
+
+function buildCompilationErrorLog(blockPath, scriptPath) {
+  return `compilation failed for block \nblock path: ${blockPath} \nscript path: ${scriptPath}`;
+}
+
+function buildCompilationServerError(error) {
+  return new ServerError(
+    `Failed to compile code for the block`,
+    HttpStatus.INTERNAL_SERVER_ERROR,
+    error,
+  );
 }
