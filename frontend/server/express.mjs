@@ -94,6 +94,7 @@ function startExpressServer() {
     const files = req.files;
     const { pipelineId, blockId, paths } = req.body
 
+    if (!Array.isArray(paths) || paths.length !== files.length) {
       return res.status(400).send("Mismatch between files and paths data.");
     }
 

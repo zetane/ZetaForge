@@ -21,8 +21,6 @@ export default function CodeEditor({
   pipelineId,
   blockId,
   currentFile,
-  setCurrentFile,
-  fileSystem,
 }) {
   const serverAddress = "http://localhost:3330";
   const [blockPath] = useAtom(blockEditorRootAtom);
@@ -90,25 +88,25 @@ export default function CodeEditor({
   };
 
   const handleModalConfirm = (e) => {
-    saveChanges(e);
-    if (pendingFile) {
-      const relPath = pendingFile.replaceAll("\\", "/");
-      const pathSegments = relPath.split("/");
-      let fileContent = fileSystem;
-
-      for (let i = 0; i < pathSegments.length; i++) {
-        const segment = pathSegments[i];
-        if (i === pathSegments.length - 1) {
-          fileContent = fileContent[segment].content;
-        } else {
-          fileContent = fileContent[segment].content;
-        }
-      }
-
-      setCurrentFile({ path: pendingFile, content: fileContent });
-    }
-    setIsModalOpen(false);
-    setPendingFile(null);
+    // saveChanges(e);
+    // if (pendingFile) {
+    //   const relPath = pendingFile.replaceAll("\\", "/");
+    //   const pathSegments = relPath.split("/");
+    //   let fileContent = fileSystem;
+    //
+    //   for (let i = 0; i < pathSegments.length; i++) {
+    //     const segment = pathSegments[i];
+    //     if (i === pathSegments.length - 1) {
+    //       fileContent = fileContent[segment].content;
+    //     } else {
+    //       fileContent = fileContent[segment].content;
+    //     }
+    //   }
+    //
+    //   setCurrentFile({ path: pendingFile, content: fileContent });
+    // }
+    // setIsModalOpen(false);
+    // setPendingFile(null);
   };
 
   const handleModalCancel = () => {
@@ -161,35 +159,31 @@ export default function CodeEditor({
             <span>{currentFile.relativePath}</span>
           ) : null}
         </span>
-        {fileSystem === null ? (
-          <div>Loading...</div>
-        ) : (
-          currentFile?.relativePath && (
-            <div className="relative mt-6 overflow-y-auto px-5">
-              {EDIT_ONLY_FILES.some((fileName) =>
-                currentFile.relativePath.endsWith(fileName),
-              ) ? (
-                <ViewerCodeMirror code={fileContent.data || ""} />
-              ) : (
-                <>
-                  <EditorCodeMirror
-                    code={fileContent.data || ""}
-                    onChange={(newValue) => onChange(newValue)}
-                  />
-                  <div className="absolute right-8 top-2">
-                    <Button
-                      renderIcon={Save}
-                      iconDescription="Save code"
-                      tooltipPosition="left"
-                      hasIconOnly
-                      size="md"
-                      onClick={(e) => saveChanges(e)}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
-          )
+        {currentFile?.relativePath && (
+        <div className="relative mt-6 overflow-y-auto px-5">
+          {EDIT_ONLY_FILES.some((fileName) =>
+            currentFile.relativePath.endsWith(fileName),
+          ) ? (
+            <ViewerCodeMirror code={fileContent.data || ""} />
+          ) : (
+            <>
+              <EditorCodeMirror
+                code={fileContent.data || ""}
+                onChange={(newValue) => onChange(newValue)}
+              />
+              <div className="absolute right-8 top-2">
+                <Button
+                  renderIcon={Save}
+                  iconDescription="Save code"
+                  tooltipPosition="left"
+                  hasIconOnly
+                  size="md"
+                  onClick={(e) => saveChanges(e)}
+                />
+              </div>
+            </>
+          )}
+        </div>
         )}
       </div>
       {isComputation && openAIApiKey && (

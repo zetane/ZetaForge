@@ -7,7 +7,6 @@ export default function FileExplorer({
   pipelineId,
   blockId,
   currentFile,
-  fetchFileSystem,
   setCurrentFile,
 }) {
   const root = trpc.block.file.get.useQuery({
