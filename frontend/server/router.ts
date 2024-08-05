@@ -260,14 +260,15 @@ export const appRouter = router({
     .use(errorHandling)
     .input(
       z.object({
-        blockPath: z.string(),
+        pipelineId: z.string(),
+        blockId: z.string(),
       }),
     )
     .mutation(async (opts) => {
       const { input } = opts;
-      const { blockPath } = input;
+      const { pipelineId, blockId} = input;
 
-      return await compileComputation(blockPath);
+      return await compileComputation(pipelineId, blockId);
     }),
   saveBlockSpecs: publicProcedure
     .use(errorHandling)

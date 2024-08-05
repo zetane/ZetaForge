@@ -6,9 +6,8 @@ import FileExplorer from "./FileExplorer";
 import CodeEditor from "./CodeEditor";
 import PromptList from "./PromptList";
 
-export default function DirectoryViewer({ blockPath, blockKey }) {
-  const serverAddress = "http://localhost:3330";
   const [fileSystem, setFileSystem] = useState({});
+export default function DirectoryViewer({ blockId }) {
   const [currentFile, setCurrentFile] = useState({ isSelected: false });
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const [pipeline] = useAtom(pipelineAtom);
@@ -39,15 +38,13 @@ export default function DirectoryViewer({ blockPath, blockKey }) {
       console.error("Error fetching file system:", error);
     }
   }, [blockPath]);
-
   return (
     <div className="flex h-full">
       <FileExplorer
         pipelineId={pipeline.id}
-        blockId={blockKey}
+        blockId={blockId}
         currentFile={currentFile}
         fetchFileSystem={fetchFileSystem}
-        unsavedChanges={unsavedChanges}
         setCurrentFile={setCurrentFile}
       />
       <PromptList />
@@ -56,7 +53,7 @@ export default function DirectoryViewer({ blockPath, blockKey }) {
         <CodeEditor
           key={currentFile.relativePath}
           pipelineId={pipeline.id}
-          blockId={blockKey}
+          blockId={blockId}
           currentFile={currentFile}
           setCurrentFile={setCurrentFile}
           setUnsavedChanges={setUnsavedChanges}

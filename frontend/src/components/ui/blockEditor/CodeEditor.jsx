@@ -13,6 +13,8 @@ import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { openAIApiKeyAtom } from "@/atoms/apiKeysAtom";
 import { blockEditorRootAtom } from "@/atoms/editorAtom";
+import { updateSpecs } from "@/utils/specs";
+import { compilationErrorToastAtom } from "@/atoms/compilationErrorToast";
 
 const EDIT_ONLY_FILES = [BLOCK_SPECS_FILE_NAME, CHAT_HISTORY_FILE_NAME];
 export default function CodeEditor({
@@ -20,10 +22,7 @@ export default function CodeEditor({
   blockId,
   currentFile,
   setCurrentFile,
-  setUnsavedChanges,
   fileSystem,
-  setFileSystem,
-  fetchFileSystem,
 }) {
   const serverAddress = "http://localhost:3330";
   const [blockPath] = useAtom(blockEditorRootAtom);
@@ -37,6 +36,7 @@ export default function CodeEditor({
   const [openAIApiKey] = useAtom(openAIApiKeyAtom);
   const [agentName] = useState("gpt-4_python_compute");
   const chatTextarea = useRef(null);
+  const [, setCompilationErrorToast] = useAtom(compilationErrorToastAtom);
   const history = trpc.chat.history.get.useQuery({ blockPath });
   const utils = trpc.useUtils();
   const updateHistory = trpc.chat.history.update.useMutation({
@@ -44,7 +44,6 @@ export default function CodeEditor({
       utils.chat.history.get.invalidate({ blockPath });
     },
   });
-
   const fileContent = trpc.block.file.byPath.get.useQuery({
     pipelineId: pipelineId,
     blockId: blockId,
@@ -53,6 +52,8 @@ export default function CodeEditor({
   const updateFileContent = trpc.block.file.byPath.update.useMutation();
   const [fileContentBuffer, setFileContentBuffer] = useState(fileContent.data);
 
+  const isComputation = currentFile.relativePath.endsWith("computations.py");
+
   const saveChanges = async () => {
     await updateFileContent.mutateAsync({
       pipelineId,
@@ -60,56 +61,31 @@ export default function CodeEditor({
       path: currentFile.relativePath,
       content: fileContentBuffer,
     });
-    // if (!currentFile || !currentFile.path) {
-    //   console.error("No file selected");
-    //   return;
-    // }
-    //
-    // const saveData = {
-    //   pipelinePath: pipeline.buffer,
-    //   filePath: currentFile.path,
-    //   content: currentFile.content,
-    // };
-    //
-    // fetch(`${serverAddress}/save-file`, {
-    //   method: "POST",
-    //   headers: {
-    //     "Content-Type": "application/json",
-    //   },
-    //   body: JSON.stringify(saveData),
-    // })
-    //   .then((response) => response.json())
-    //   .then(async () => {
-    //     setUnsavedChanges(false);
-    //     if (isComputation(currentFile.path)) {
-    //       try {
-    //         const newSpecsIO = await compileComputation.mutateAsync({
-    //           blockPath: blockPath,
-    //         });
-    //         const newSpecs = await updateSpecs(
-    //           blockKey,
-    //           newSpecsIO,
-    //           pipeline.data,
-    //           editor,
-    //         );
-    //         setPipeline((draft) => {
-    //           draft.data[blockKey] = newSpecs;
-    //         });
-    //         await saveBlockSpecs.mutateAsync({
-    //           blockPath: blockPath,
-    //           blockSpecs: newSpecs,
-    //         });
-    //         fetchFileSystem();
-    //       } catch (error) {
-    //         console.error(error);
-    //         setCompilationErrorToast(true);
-    //       }
-    //     }
-    //   })
-    //   .catch((error) => {
-    //     console.error("Error saving file:", error);
-    //   });
-    // e.currentTarget.blur();
+
+    if (isComputation) {
+      try {
+        const newSpecsIO = await compileComputation.mutateAsync({
+          pipelineId: pipelineId,
+          blockId: blockId,
+        });
+        const newSpecs = await updateSpecs(
+          blockId,
+          newSpecsIO,
+          pipeline.data,
+          editor,
+        );
+        setPipeline((draft) => {
+          draft.data[blockKey] = newSpecs;
+        });
+        await saveBlockSpecs.mutateAsync({
+          blockPath: blockPath,
+          blockSpecs: newSpecs,
+        });
+      } catch (error) {
+        console.error(error);
+        setCompilationErrorToast(true);
+      }
+    }
   };
 
   const handleModalConfirm = (e) => {
@@ -140,39 +116,8 @@ export default function CodeEditor({
 
   const onChange = (newValue) => {
     setFileContentBuffer(newValue);
-    // setUnsavedChanges(true);
-    //
-    // setCurrentFile((prevCurrentFile) => ({
-    //   ...prevCurrentFile,
-    //   content: newValue,
-    // }));
-    //
-    // setFileSystem((prevFileSystem) => {
-    //   const relPath = currentFile.path.replaceAll("\\", "/");
-    //   const pathSegments = relPath.split("/");
-    //   let updatedFileSystem = { ...prevFileSystem };
-    //
-    //   let currentLevel = updatedFileSystem;
-    //   for (let i = 0; i < pathSegments.length; i++) {
-    //     const segment = pathSegments[i];
-    //
-    //     if (i === pathSegments.length - 1) {
-    //       currentLevel[segment] = {
-    //         ...currentLevel[segment],
-    //         content: newValue,
-    //       };
-    //     } else {
-    //       currentLevel = currentLevel[segment].content;
-    //     }
-    //   }
-    //
-    //   return updatedFileSystem;
-    // });
   };
 
-  const isComputation = (path) => {
-    return path?.endsWith("computations.py");
-  };
 
   const recordCode = (promptToRecord, codeToRecord) => {
     updateHistory.mutateAsync({
@@ -266,7 +211,7 @@ export default function CodeEditor({
           )
         )}
       </div>
-      {isComputation(currentFile?.relativePath) && openAIApiKey && (
+      {isComputation && openAIApiKey && (
         <div className="relative">
           <div className="text-right">
             <div className="inline-block p-2">

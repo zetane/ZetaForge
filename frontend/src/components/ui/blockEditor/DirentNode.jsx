@@ -19,6 +19,7 @@ export default function DirentNode({
   const handleFolderClick = () => {
     setExpanded(!isExpanded);
   };
+
   // const onToggle = (folderPath) => {
   //   setFileSystem((prevFileSystem) => {
   //     const toggleFolder = (pathSegments, fileSystem) => {
@@ -85,6 +86,7 @@ export default function DirentNode({
   return parent.children ? (
     <TreeNode
       key={name}
+      id={parent.relativePath}
       onClick={handleFolderClick}
       label={<span style={textStyle}>{name}</span>}
       renderIcon={Folder}

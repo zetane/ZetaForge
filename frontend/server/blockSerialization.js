@@ -11,8 +11,8 @@ import { fileExists, getDirectoryTree } from "./fileSystem";
 import { logger } from "./logger";
 import { HttpStatus, ServerError } from "./serverError";
 
-export async function compileComputation(blockPath) {
-  const sourcePath = path.join(blockPath, "computations.py");
+export async function compileComputation(pipelineId, blockId) {
+  const sourcePath = path.join(process.cwd(), ".cache", pipelineId, blockId, "computations.py");
   const source = await fs.readFile(sourcePath, { encoding: "utf8" });
 
   const scriptPath = app.isPackaged

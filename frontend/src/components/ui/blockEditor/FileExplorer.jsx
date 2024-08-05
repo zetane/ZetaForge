@@ -117,7 +117,7 @@ export default function FileExplorer({
         {root.data && (
           <TreeView
             label="directory view"
-            selected={currentFile.file}
+            selected={currentFile.relativePath}
             hideLabel
           >
             <DirentNode
