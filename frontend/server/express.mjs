@@ -12,6 +12,7 @@ import sha256 from "sha256";
 import getMAC from "getmac";
 import { BLOCK_SPECS_FILE_NAME } from "../src/utils/constants";
 import { logger } from "./logger";
+import { cacheJoin } from "./cache";
 
 function startExpressServer() {
   const app = express();
@@ -77,9 +78,10 @@ function startExpressServer() {
 
   app.post("/import-files", upload.array("files"), (req, res) => {
     const files = req.files;
+    const { pipelineId, blockId} = req.body
 
     files.forEach((file) => {
-      const targetPath = path.join(req.body.blockPath, file.originalname);
+      const targetPath = cacheJoin(pipelineId, blockId, file.originalname);
 
       // Move file from temporary location to target directory
       fs.renameSync(file.path, targetPath);
@@ -90,23 +92,20 @@ function startExpressServer() {
 
   app.post("/import-folder", upload.array("files"), (req, res) => {
     const files = req.files;
-    const paths = req.body.paths;
+    const { pipelineId, blockId, paths } = req.body
 
-    if (!Array.isArray(paths) || paths.length !== files.length) {
       return res.status(400).send("Mismatch between files and paths data.");
     }
 
     files.forEach((file, index) => {
       const relativePath = paths[index];
-      const targetPath = path.join(req.body.blockPath, relativePath);
-      const directory = path.dirname(targetPath);
+      const targetPath = cacheJoin(pipelineId, blockId, relativePath);
 
-      // Create directory if it doesn't exist, including any nested subdirectories
+      const directory = path.dirname(targetPath);
       if (!fs.existsSync(directory)) {
         fs.mkdirSync(directory, { recursive: true });
       }
 
-      // Move file from temporary location to target directory
       fs.renameSync(file.path, targetPath);
     });
 
