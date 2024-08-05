@@ -29,7 +29,7 @@
   "action": {
     "container": {
       "image": "denoising",
-      "version": "denoising-2wmtzyq2wj06",
+      "version": "latest",
       "command_line": [
         "python",
         "entrypoint.py"

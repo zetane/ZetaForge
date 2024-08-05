@@ -5,7 +5,7 @@ FROM python:3.9
 WORKDIR /app
 
 # Copy the current directory contents into the container at /app
-COPY . .
+COPY requirements.txt .
 
 # Install the dependencies specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
@@ -17,9 +17,6 @@ RUN apt-get update && apt-get install -y \
 
 # Copy the computations.py file into the container
 COPY computations.py .
-
-# Verify FFmpeg installation
-RUN ffmpeg -version
 
 # Specify the default command to run when starting the container
 CMD ["python", "computations.py"]

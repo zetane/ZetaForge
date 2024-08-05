@@ -33,7 +33,7 @@
   "action": {
     "container": {
       "image": "watermark",
-      "version": "watermark-9kwxspugkuq9",
+      "version": "latest",
       "command_line": [
         "python",
         "entrypoint.py"

@@ -123,12 +123,6 @@ def compute(image_path):
     save_path = os.path.join(output_dir, image_name)
     sr_image_rgb.save(save_path)
 
-    # Debug: Check the shape and data type of the image
-    image_shape = np.array(sr_image_rgb).shape
-    image_dtype = np.array(sr_image_rgb).dtype
-    print(f'Super-resolved image shape: {image_shape}')
-    print(f'Super-resolved image data type: {image_dtype}')
-
     result.append(save_path)
     input_result.append(input_save_path)
     return {"result": result, "input_result": input_result}

@@ -106,10 +106,6 @@ transform = transforms.Compose([
     transforms.ToTensor()
 ])
 
-# Dataset and DataLoader (Assume DIV2KDataset is defined elsewhere)
-# train_dataset = DIV2KDataset(root_dir=r'C:\Users\zadmin\Downloads\archive\DIV2K_train_HR\DIV2K_train_HR', transform=transform)
-# train_loader = DataLoader(dataset=train_dataset, batch_size=8, shuffle=True)
-
 def denoise_image(model, noisy_image_tensor):
     """
     Denoise the image using the pre-trained model.
