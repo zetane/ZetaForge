@@ -1,5 +1,5 @@
-import { IconButton } from "@carbon/react";
-import { Bot, SendFilled } from "@carbon/icons-react"
+import { IconButton, Loading } from "@carbon/react";
+import { Bot, SendFilled } from "@carbon/icons-react";
 import { openAIApiKeyAtom } from "@/atoms/apiKeysAtom";
 import { useState, useRef } from "react";
 import { useAtom } from "jotai";
@@ -50,6 +50,12 @@ export default function AgentPrompt() {
     setIsLoading(false);
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e);
+    }
+  };
 
   return (
     <div className="relative">
@@ -62,12 +68,7 @@ export default function AgentPrompt() {
           className="block-editor-prompt-input w-full resize-none p-2"
           ref={chatTextarea}
           placeholder="Ask to generate code or modify last code"
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              handleSubmit(e);
-            }
-          }}
+          onKeyDown={handleKeyDown}
         />
       </div>
       <div className="absolute bottom-2 right-1">
