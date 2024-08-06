@@ -41,12 +41,8 @@ export default function App() {
   useEffect( () => {
     const serverAddress = import.meta.env.VITE_EXPRESS
     const res = axios.get(`${serverAddress}/isPackaged`).then((response) => {
-      console.log(response)
-      console.log(response.data)
-      console.log("CHECK IF PACKAGED")
+      
       setIsPackaged(response.data)
-      console.log("CHECK ATOM")
-      console.log(appIsPackaged)
       if(response.data === true) {
 
         ping(configuration).then(res => {
@@ -73,7 +69,6 @@ export default function App() {
                     setConfirmationText(configText)
                     }
                   } else {
-                    console.log("I MUST REACH HERE")
                     setConfigOpen(true)
                     setConfirmationIsOpen(false)
                   }
@@ -87,7 +82,6 @@ export default function App() {
             })
           } else  {
             //do nothing, because you can ping
-            console.log("I CAN PING")
             setConfigOpen(false)
           }
         }).catch(err => {
@@ -97,7 +91,6 @@ export default function App() {
 
       } else {
           //do nothing, because either pip is the controller, or the user runs on dev, hence they're responsible for running anvil, setting kubectl context etc... 
-          console.log("APP MUST BE PACKAGED")
       }
   })
   }, [])

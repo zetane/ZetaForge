@@ -43,7 +43,6 @@ export default function Navbar({ children }) {
     queryKey: ["ping"],
     queryFn: async () => {
       const res = await ping(configuration)
-      console.log(res)
       setDisable(res !== true)
       return res
       

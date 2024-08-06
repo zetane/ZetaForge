@@ -58,8 +58,6 @@ export default function AnvilConfigurationsModal(props) {
   useEffect(() => {
     const serverAddress = import.meta.env.VITE_EXPRESS
     const res = axios.get(`${serverAddress}/isPackaged`).then((response) => {
-      console.log("CHECK HERE")
-      console.log(response.data)
       setAppIsPackaged(response.data)
     }
   )}, [])
@@ -138,10 +136,8 @@ export default function AnvilConfigurationsModal(props) {
   }
 
   let disableTab = false 
-  console.log("APP MUST BE PACKAGEDDDD")
-  console.log(appIsPackaged)
+  
   if(appIsPackaged === false) {
-    console.log("I SHOULD NEVER BE HEREEEEEE")
     disableTab = true
   } else {
     if(configuration?.anvil.host === 'localhost' || configuration?.anvil.host === '127.0.0.1') {
