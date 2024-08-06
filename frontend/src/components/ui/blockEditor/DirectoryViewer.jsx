@@ -3,7 +3,7 @@ import { useAtom } from "jotai";
 import { useState } from "react";
 import Splitter from "./Splitter";
 import FileExplorer from "./FileExplorer";
-import CodeEditor from "./CodeEditor";
+import FileViewer from "./FileViewer";
 import PromptList from "./PromptList";
 
 export default function DirectoryViewer({ blockId }) {
@@ -21,7 +21,7 @@ export default function DirectoryViewer({ blockId }) {
       <PromptList />
       <Splitter />
       {currentFile.isSelected && (
-        <CodeEditor
+        <FileViewer
           key={currentFile.relativePath}
           pipelineId={pipeline.id}
           blockId={blockId}
