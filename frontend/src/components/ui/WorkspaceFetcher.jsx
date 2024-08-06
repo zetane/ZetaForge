@@ -4,10 +4,7 @@ import { useEffect } from "react";
 import { workspaceAtom } from "@/atoms/pipelineAtom";
 import { useImmerAtom } from "jotai-immer";
 import { useAtom } from "jotai";
-import {
-  activeConfigurationAtom,
-  activeIndexAtom,
-} from "@/atoms/anvilConfigurationsAtom";
+import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { getAllPipelines } from "@/client/anvil";
 import { useSyncExecutionResults } from "@/hooks/useExecutionResults";
 
@@ -21,7 +18,11 @@ export default function WorkspaceFetcher() {
   const { pending, error, data } = useQuery({
     queryKey: queryKey,
     queryFn: async () => {
-      return await getAllPipelines(configuration);
+      return await getAllPipelines(
+        configuration,
+        workspace?.limit,
+        workspace?.offset,
+      );
     },
     refetchInterval: workspace.fetchInterval,
   });
@@ -29,6 +30,7 @@ export default function WorkspaceFetcher() {
   useEffect(() => {
     const updatePipelines = async () => {
       const pipelines = data ?? [];
+
       for (const serverPipeline of pipelines) {
         const key = serverPipeline.Uuid + "." + serverPipeline.Execution;
         const existing = workspace.pipelines[key];
@@ -44,7 +46,6 @@ export default function WorkspaceFetcher() {
             const loaded = await loadPipeline(serverPipeline, configuration);
             setWorkspace((draft) => {
               draft.pipelines[key] = loaded;
-              draft.executions[loaded?.record?.Execution] = loaded;
             });
           } catch (e) {
             console.log("Failed to load ", e);
@@ -63,8 +64,6 @@ export default function WorkspaceFetcher() {
         if (existing && isLogging) {
           setWorkspace((draft) => {
             draft.pipelines[key].logs = serverPipeline?.Log;
-            draft.executions[serverPipeline?.Execution].logs =
-              serverPipeline?.Log;
           });
         }
       }

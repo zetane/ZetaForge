@@ -47,13 +47,13 @@ export async function terminateExecution(configuration, executionId) {
   return body;
 }
 
-export async function getAllPipelines(configuration) {
+export async function getAllPipelines(configuration, limit, offset) {
   const response = await handleRequest(
     buildUrl(
       getScheme(configuration.anvil.host),
       configuration.anvil.host,
       configuration.anvil.port,
-      "pipeline/filter?limit=15&offset=0",
+      `pipeline/filter?limit=${limit}&offset=${offset}`,
     ),
     HttpMethod.GET,
     configuration.anvil.token,

@@ -44,20 +44,11 @@ const tabMap = {
 export const workspaceAtom = atom({
   tabs: tabMap,
   pipelines: { [emptyKey]: initPipeline },
-  executions: {},
   active: emptyKey,
   fetchInterval: 10 * 1000,
+  offset: 0,
+  limit: 15,
 });
-
-export const getPipelines = (workspace) => {
-  const running = [];
-  for (const [, pipeline] of Object.entries(workspace.executions)) {
-    running.push(pipeline);
-  }
-  return running.sort((a, b) =>
-    b?.record?.Execution.localeCompare(a?.record?.Execution),
-  );
-};
 
 const pipelineAtomWithImmer = atom(
   (get) => {
@@ -87,3 +78,58 @@ export const getPipelineFormat = (pipeline) => {
     pipeline: pipeline.data,
   };
 };
+
+export const lineageAtom = atom((get) => {
+  const workspace = get(workspaceAtom);
+
+  // Filter out pipelines with empty .record fields
+  const validPipelines = Object.values(workspace.pipelines).filter(
+    (pipeline) => pipeline.record,
+  );
+  const sortedPipelines = validPipelines.sort(([, a], [, b]) =>
+    b.record.Execution.localeCompare(a.record.Execution),
+  );
+
+  const lineage = new Map();
+
+  Object.values(sortedPipelines).forEach((pipeline) => {
+    const record = pipeline?.record;
+    const sha1Hash = record?.Hash;
+    if (!record || !sha1Hash) {
+      return;
+    }
+    const pipelineData = JSON.parse(record.PipelineJson);
+    const friendlyName = pipelineData.name;
+    if (!lineage.has(sha1Hash)) {
+      lineage.set(sha1Hash, {
+        id: pipeline.id,
+        name: friendlyName,
+        hash: sha1Hash,
+        deployed: record.Deployed,
+        executions: new Map(),
+      });
+    }
+
+    const lineageEntry = lineage.get(sha1Hash);
+    const existingExecution = lineageEntry.executions.get(record.Execution);
+
+    if (!existingExecution) {
+      lineageEntry.executions.set(record.Execution, {
+        id: record.Execution,
+        hash: sha1Hash,
+        pipeline: pipeline.id,
+        created: new Date(record.ExecutionTime * 1000).toLocaleString(),
+        status: record.Status,
+      });
+    } else {
+      Object.assign(existingExecution, {
+        status: pipeline.record.Status,
+        created: new Date(
+          pipeline.record.ExecutionTime * 1000,
+        ).toLocaleString(),
+      });
+    }
+  });
+
+  return lineage;
+});
