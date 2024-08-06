@@ -4,9 +4,6 @@ import {
   CHAT_HISTORY_FILE_NAME,
 } from "@/utils/constants";
 import { useState } from "react";
-import { useAtom } from "jotai";
-import { openAIApiKeyAtom } from "@/atoms/apiKeysAtom";
-import AgentPrompt from "./AgentPrompt";
 import CodeViewer from "./CodeViewer";
 import CodeEditor from "./CodeEditor";
 
@@ -14,7 +11,6 @@ const READ_ONLY_FILES = [BLOCK_SPECS_FILE_NAME, CHAT_HISTORY_FILE_NAME];
 export default function FileViewer({ pipelineId, blockId, currentFile }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [pendingFile, setPendingFile] = useState(null);
-  const [openAIApiKey] = useAtom(openAIApiKeyAtom);
 
   const isReadOnly = READ_ONLY_FILES.some((fileName) =>
     currentFile.relativePath.endsWith(fileName),
