@@ -2,6 +2,10 @@
 
 
 exports.default = async function(context) {
+  console.log(`\n- [INFO] building for ${context.electronPlatformName} \n`);
+  if(context.electronPlatformName !== 'darwin') {
+    return
+  }
   const appOutDir = context.appOutDir;
   const appName = context.packager.appInfo.productFilename;
   const { readFileSync, writeFileSync, copyFileSync, chmodSync } = require('fs');

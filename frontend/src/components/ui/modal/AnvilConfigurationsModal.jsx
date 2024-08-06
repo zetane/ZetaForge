@@ -20,7 +20,6 @@ import { isPackaged, choosenKubeContexts, choosenDriver } from "@/atoms/kubecont
 import { activeConfigurationAtom} from "@/atoms/anvilConfigurationsAtom";
 import axios from 'axios'
 import { ping } from "@/client/anvil";
-import ConfirmationModal from "./ConfirmationModal";
 
 const CONFIGURATION_TABLE_TITLE = "Anvil Configurations";
 const NEW_CONFIGURATION_TITLE = "New Configuration";

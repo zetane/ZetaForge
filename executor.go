@@ -541,7 +541,7 @@ func buildImage(ctx context.Context, source string, tag string, cfg Config) erro
 			}
 		}
 
-		minikubeImage := cmd.NewCmd("minikube", "-p", cfg.Local, "image", "ls")
+		minikubeImage := cmd.NewCmd("minikube", "-p", cfg.KubeContext, "image", "ls")
 		<-minikubeImage.Start()
 		for _, line := range minikubeImage.Status().Stdout {
 			if "docker.io/"+tag == line {
