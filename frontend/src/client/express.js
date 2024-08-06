@@ -1,9 +1,15 @@
+import config from "../../config";
 import { buildUrl } from "../../utils/urlBuilder";
 
 export async function uploadFiles(pipelineId, blockId, files) {
   const formData = buildFormData(pipelineId, blockId, files);
   handleRequest(
-    buildUrl("http", "localhost", "3330", "import-files"),
+    buildUrl(
+      config.express.scheme,
+      config.express.host,
+      config.express.port,
+      "import-files",
+    ),
     formData,
   );
 }
@@ -11,7 +17,12 @@ export async function uploadFiles(pipelineId, blockId, files) {
 export async function uploadFolders(pipelineId, blockId, files) {
   const formData = buildFormData(pipelineId, blockId, files);
   handleRequest(
-    buildUrl("http", "localhost", "3330", "import-folder"),
+    buildUrl(
+      config.express.scheme,
+      config.express.host,
+      config.express.port,
+      "import-folder",
+    ),
     formData,
   );
 }

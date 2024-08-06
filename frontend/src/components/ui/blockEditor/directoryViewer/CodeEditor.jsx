@@ -5,7 +5,8 @@ import { useState } from "react";
 import { EditorCodeMirror } from "./CodeMirrorComponents";
 import { useCompileComputation } from "@/hooks/useCompileSpecs";
 
-export default function CodeEditor({ pipelineId, blockId, currentFile }) {// TODO check why editing is laggy
+export default function CodeEditor({ pipelineId, blockId, currentFile }) {
+  // TODO check why editing is laggy
   const fileContent = trpc.block.file.byPath.get.useQuery({
     pipelineId: pipelineId,
     blockId: blockId,
@@ -24,7 +25,7 @@ export default function CodeEditor({ pipelineId, blockId, currentFile }) {// TOD
     });
 
     if (isComputation) {
-      compile(pipelineId, blockId)
+      compile(pipelineId, blockId);
     }
   };
 
@@ -34,7 +35,7 @@ export default function CodeEditor({ pipelineId, blockId, currentFile }) {// TOD
 
   return (
     <>
-        <EditorCodeMirror
+      <EditorCodeMirror
         code={fileContent.data || ""} //TODO loading state
         onChange={onChange}
       />
