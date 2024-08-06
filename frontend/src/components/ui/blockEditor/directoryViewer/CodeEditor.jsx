@@ -1,16 +1,11 @@
 import { Button } from "@carbon/react";
 import { Save } from "@carbon/icons-react";
-import { pipelineAtom } from "@/atoms/pipelineAtom";
-import { compilationErrorToastAtom } from "@/atoms/compilationErrorToast";
-import { useAtom } from "jotai";
 import { trpc } from "@/utils/trpc";
-import { useImmerAtom } from "jotai-immer";
 import { useState } from "react";
-import { updateSpecs } from "@/utils/specs";
-import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
 import { EditorCodeMirror } from "./CodeMirrorComponents";
+import { useCompileComputation } from "@/hooks/useCompileSpecs";
 
-export default function CodeEditor({ pipelineId, blockId, currentFile }) {
+export default function CodeEditor({ pipelineId, blockId, currentFile }) {// TODO check why editing is laggy
   const fileContent = trpc.block.file.byPath.get.useQuery({
     pipelineId: pipelineId,
     blockId: blockId,
@@ -18,13 +13,7 @@ export default function CodeEditor({ pipelineId, blockId, currentFile }) {
   });
   const updateFileContent = trpc.block.file.byPath.update.useMutation();
   const [fileContentBuffer, setFileContentBuffer] = useState(fileContent.data);
-
-
-  const [editor] = useAtom(drawflowEditorAtom);
-  const compileComputation = trpc.compileComputation.useMutation();
-  const saveBlockSpecs = trpc.saveBlockSpecs.useMutation();
-  const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
-  const [, setCompilationErrorToast] = useAtom(compilationErrorToastAtom);
+  const compile = useCompileComputation();
 
   const saveChanges = async () => {
     await updateFileContent.mutateAsync({
@@ -35,29 +24,7 @@ export default function CodeEditor({ pipelineId, blockId, currentFile }) {
     });
 
     if (isComputation) {
-      //TODO extract to hook
-      try {
-        const newSpecsIO = await compileComputation.mutateAsync({
-          pipelineId: pipelineId,
-          blockId: blockId,
-        });
-        const newSpecs = await updateSpecs(
-          blockId,
-          newSpecsIO,
-          pipeline.data,
-          editor,
-        );
-        setPipeline((draft) => {
-          draft.data[blockKey] = newSpecs;
-        });
-        await saveBlockSpecs.mutateAsync({//TODO check if it's still required
-          blockPath: blockPath,
-          blockSpecs: newSpecs,
-        });
-      } catch (error) {
-        console.error(error);
-        setCompilationErrorToast(true);
-      }
+      compile(pipelineId, blockId)
     }
   };
 
@@ -67,7 +34,7 @@ export default function CodeEditor({ pipelineId, blockId, currentFile }) {
 
   return (
     <>
-      <EditorCodeMirror
+        <EditorCodeMirror
         code={fileContent.data || ""} //TODO loading state
         onChange={onChange}
       />
