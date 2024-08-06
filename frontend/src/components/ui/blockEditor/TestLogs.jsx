@@ -2,7 +2,7 @@ import { trpc } from "@/utils/trpc";
 import { PlayFilled } from "@carbon/icons-react";
 import { Button } from "@carbon/react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { LogsCodeMirror } from "./CodeMirrorComponents";
+import { LogsCodeMirror } from "./directoryViewer/CodeMirrorComponents";
 
 const LogsViewer = ({ filePath, blockPath, blockKey }) => {
   const [logs, setLogs] = useState("");

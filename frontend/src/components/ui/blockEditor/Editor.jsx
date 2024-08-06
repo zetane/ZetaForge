@@ -11,7 +11,7 @@ import {
 } from "@carbon/react";
 import { useAtom, useSetAtom } from "jotai";
 import { useState } from "react";
-import DirectoryViewer from "./DirectoryViewer";
+import DirectoryViewer from "./directoryViewer/DirectoryViewer";
 import SpecsInterface from "./SpecsInterface";
 import TestLogs from "./TestLogs";
 
