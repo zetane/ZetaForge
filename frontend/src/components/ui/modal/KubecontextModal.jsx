@@ -20,9 +20,10 @@ export default function KubecontextModal({isPackaged, initialLaunch, closeFunc})
 
   useEffect(() => {
     const serverAddress = import.meta.env.VITE_EXPRESS
-        
+  
     axios.get(`${serverAddress}/get-kube-contexts`).then((res) => {
-      
+      console.log(res.data)
+      console.log("CHECK FOR RES.DATA")    
       setAvailableKubeContexts(res.data)
       }).catch(err => {
 

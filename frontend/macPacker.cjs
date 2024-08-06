@@ -1,15 +1,18 @@
 
-
-
+// import { readFileSync, writeFileSync, copyFileSync } from 'fs';
+// import path from 'path'
 exports.default = async function(context) {
   console.log(`\n- [INFO] building for ${context.electronPlatformName} \n`);
   if(context.electronPlatformName !== 'darwin') {
     return
   }
+  const { readFileSync, writeFileSync, copyFileSync } = await import('fs');
+  const path = (await import('path')).default;
+
   const appOutDir = context.appOutDir;
   const appName = context.packager.appInfo.productFilename;
-  const { readFileSync, writeFileSync, copyFileSync, chmodSync } = require('fs');
-  const path = require('path');
+  // const { readFileSync, writeFileSync, copyFileSync} = require('fs');
+  // const path = require('path');
 
   // Path to the Info.plist file
   const plistPath = path.join(appOutDir, `${appName}.app`, 'Contents', 'Info.plist');

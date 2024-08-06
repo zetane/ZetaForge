@@ -27,7 +27,7 @@ import { activeConfigurationAtom } from "./atoms/anvilConfigurationsAtom";
 export default function App() {
 
   
-  const [appIsPackaged, setIsPackaged] = useAtom(isPackaged)
+  const [appIsPackaged, setIsPackaged] = useState(false)
   const [availableKubeContextsAtom, setAvailableKubeContexts] = useAtom(availableKubeContexts)
   const [configOpen, setConfigOpen] = useState(false)
   const [confirmationOpen, setConfirmationIsOpen] = useState(false)
@@ -41,10 +41,13 @@ export default function App() {
   useEffect( () => {
     const serverAddress = import.meta.env.VITE_EXPRESS
     const res = axios.get(`${serverAddress}/isPackaged`).then((response) => {
+      console.log(response)
       console.log(response.data)
+      console.log("CHECK IF PACKAGED")
       setIsPackaged(response.data)
-      
-      if(appIsPackaged) {
+      console.log("CHECK ATOM")
+      console.log(appIsPackaged)
+      if(response.data === true) {
 
         ping(configuration).then(res => {
           if(!res) {
@@ -57,7 +60,7 @@ export default function App() {
                   
             
                   const data = res.data
-                  if(data.has_config) {
+                  if(data.has_config == true) {
                     
                     const config = data.config
                     const bucketPort = config.Local.BucketPort
@@ -70,26 +73,31 @@ export default function App() {
                     setConfirmationText(configText)
                     }
                   } else {
+                    console.log("I MUST REACH HERE")
                     setConfigOpen(true)
                     setConfirmationIsOpen(false)
                   }
                 }).catch(err => {
                   setErrText(["Your local anvil did not started as expected. Please select a config", err.response?.data?.err, err.response?.data?.kubeErr])
-                  setConfigOpen(true) //change this
+                  setConfigOpen(true) 
                 })
             }).catch(err => {
-              console.log(err.message)
+              setErrText(["Cannot find kubectl or there's an error with kubectl command. Please try again or check if kubectl is in your path. You can ignore this message if you're using cloud anvil", err.message])
+              setConfigOpen(true)
             })
           } else  {
-              //do nothing - double check this part
-            }
+            //do nothing, because you can ping
+            console.log("I CAN PING")
+            setConfigOpen(false)
+          }
         }).catch(err => {
-              //do nothing - double check this part
+              setConfigOpen(true)
         })
 
 
       } else {
           //do nothing, because either pip is the controller, or the user runs on dev, hence they're responsible for running anvil, setting kubectl context etc... 
+          console.log("APP MUST BE PACKAGED")
       }
   })
   }, [])
@@ -116,14 +124,12 @@ export default function App() {
           <BlockEditorPanel />
         </Navbar>
         <LibrarySwitcher />
-        <AnvilConfigurationsModal open={configOpen} onRequestClose={() => setConfigOpen(false)} isInitial={true}/>
-        {/* {configOpen ? modalPopper(<AnvilConfigurationsModal/>) : <></>} */}
+        <AnvilConfigurationsModal open={configOpen} onRequestClose={() => setConfigOpen(false)} isInitial={true} appIsPackaged={appIsPackaged}/>
 
         {/* Confirmation */}
         <ClosableModal modalHeading="Would you like to run your anvil locally with your existing settings" size="md" primaryButtonText="Yes" secondaryButtonText="No" onRequestSubmit={confirmSettings} onRequestClose={() => {setConfirmationIsOpen(false); setConfigOpen(true)} } open={confirmationOpen}>
     <div className="flex flex-col gap-4 p-3">
           {confirmationText.map((error, i) => {
-            console.log(confirmationText)
             return (
               <p key={"error-msg-" + i}>{error}</p>
             )

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AnvilConfigurationForm from "./AnvilConfigurationForm";
 import ClosableModal from "./ClosableModal";
 import AnvilConfigurationTable from "./AnvilConfigurationTable";
@@ -33,7 +33,7 @@ export default function AnvilConfigurationsModal(props) {
   const [initialConfiguration, setInitialConfiguration] = useState(undefined);
   const [handleSave, setHandleSave] = useState(undefined);
   const [title, setTitle] = useState(CONFIGURATION_TABLE_TITLE);
-  const [appIsPackaged] = useAtom(isPackaged)
+  const [appIsPackaged, setAppIsPackaged] = useState(false)
   const [confirmationOpen, setConfirmationIsOpen] = useState(false)
   const [configuration] = useAtom(activeConfigurationAtom);
   const [confirmationText, setConfirmationText] = useState([])
@@ -54,6 +54,15 @@ export default function AnvilConfigurationsModal(props) {
     setTitle(NEW_CONFIGURATION_TITLE);
     setFormOpen(true);
   }
+
+  useEffect(() => {
+    const serverAddress = import.meta.env.VITE_EXPRESS
+    const res = axios.get(`${serverAddress}/isPackaged`).then((response) => {
+      console.log("CHECK HERE")
+      console.log(response.data)
+      setAppIsPackaged(response.data)
+    }
+  )}, [])
 
 
   function handleEdit(userConfigurationIndex, configuration) {
@@ -109,7 +118,6 @@ export default function AnvilConfigurationsModal(props) {
     }
   }
   const saveAndRelaunch = () => {
-    console.log(configuration)
     if(configuration.anvil.host === 'localhost' || configuration.anvil.host === '127.0.0.1'){
       setConfirmationText(["Are you sure you want to launch local anvil server with the following settings?", `ANVIL HOST: ${configuration.anvil.host}`, `ANVIL PORT: ${configuration.anvil.port}`, `Kubernetes Context: ${currentKubeContext}`, `Driver: ${userDriver}`])
       setConfirmationIsOpen(true)
@@ -118,14 +126,28 @@ export default function AnvilConfigurationsModal(props) {
       setConfirmationIsOpen(true)
     }
   }
-
+  
   let disabled = false
-  if(!appIsPackaged) {
+  if(appIsPackaged === false) {
     disabled=true
 
   } else {
-    if( (configuration?.anvil?.host === 'localhost' || configuration?.anvil?.host === '127.0.0.1') && (userDriver === '' || currentKubeContext === '')) {
+    if( (configuration?.anvil.host !== 'localhost' && configuration?.anvil.host !== '127.0.0.1') || ((configuration?.anvil?.host === 'localhost' || configuration?.anvil?.host === '127.0.0.1') && (userDriver === '' || currentKubeContext === '')) ){
       disabled = true
+    }
+  }
+
+  let disableTab = false 
+  console.log("APP MUST BE PACKAGEDDDD")
+  console.log(appIsPackaged)
+  if(appIsPackaged === false) {
+    console.log("I SHOULD NEVER BE HEREEEEEE")
+    disableTab = true
+  } else {
+    if(configuration?.anvil.host === 'localhost' || configuration?.anvil.host === '127.0.0.1') {
+      disableTab = false
+    } else{
+      disableTab = true
     }
   }
 
@@ -139,7 +161,7 @@ export default function AnvilConfigurationsModal(props) {
             Anvil Configurations
           </Tab>
          
-          <Tab disabled={!appIsPackaged || (configuration.host !== 'localhost' && configuration.host !== '127.0.0.1')} >
+          <Tab disabled={disableTab} >
           Set KubeContext
           </Tab> 
         </TabList>
@@ -169,7 +191,7 @@ export default function AnvilConfigurationsModal(props) {
           <Tab>
             Anvil Configurations
           </Tab>
-          <Tab disabled={!appIsPackaged || (configuration.host !== 'localhost' && configuration.host !== '127.0.0.1')} >
+          <Tab disabled={disableTab} >
           Set KubeContext
           </Tab> 
         </TabList>
@@ -194,7 +216,7 @@ export default function AnvilConfigurationsModal(props) {
       </Tabs>
     </ClosableModal>}
     
-    <ClosableModal modalHeading="Are you sure you want to use this setting" size="md" primaryButtonText="Yes" secondaryButtonText="No" onRequestSubmit={confirmSettings} onRequestClose={() => setConfirmationIsOpen(false)} open={confirmationOpen}>
+    <ClosableModal modalHeading="Are you sure you want to use this setting?" size="md" primaryButtonText="Yes" secondaryButtonText="No" onRequestSubmit={confirmSettings} onRequestClose={() => setConfirmationIsOpen(false)} open={confirmationOpen}>
     <div className="flex flex-col gap-4 p-3">
           {confirmationText.map((error, i) => {
             return (
@@ -207,7 +229,6 @@ export default function AnvilConfigurationsModal(props) {
       <ClosableModal modalHeading="Following errors occurred while launching anvil" size="md" passiveModal onRequestClose={() => setErrModalIsOpen(false)} open={errModalOpen}>
       <div className="flex flex-col gap-4 p-3">
           {errMessage.map((error, i) => {
-            console.log(confirmationText)
             return (
               <p key={"error-msg-" + i}>{error}</p>
             )

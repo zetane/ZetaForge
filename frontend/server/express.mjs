@@ -11,7 +11,6 @@ import path from "path";
 import sha256 from "sha256";
 import getMAC from "getmac";
 import { BLOCK_SPECS_FILE_NAME } from "../src/utils/constants";
-import axios from 'axios'
 import {computeAgent} from '../agents/gpt-4_python_compute/generate/computations.cjs'
 import {computeViewAgent} from '../agents/gpt-4_python_view/generate/computations.cjs'
 let anvilProcess = null
@@ -177,7 +176,6 @@ function startExpressServer() {
         res.status(500).json({ message: 'kubectl is installed but there was an error.', stderr: stderr });
         return;
       }
-      res.status(200).json({ message: 'kubectl is installed.', stdout: stdout });
     });
 
     async function getKubectlContexts() {
@@ -204,18 +202,12 @@ function startExpressServer() {
         console.log(err)
         reject(new Error("kubectl error" + err.toString()))
       })
-
-      // kubeProcess.err('data', (data) => {
-      //   reject(new Error('kubectl error', data.toString()))
-      // })
       
       });
     }
     
     try {
       const contexts = await getKubectlContexts()
-      
-
       res.status(200).json(contexts)
     } catch(err) {
       console.log(err)
@@ -304,6 +296,11 @@ function startExpressServer() {
   })
 
   app.post("/launch-anvil-from-config", (req, res) => {
+
+    if(!electronApp.isPackaged) {
+      return res.sendStatus(200)
+    }
+
     const anvilTimeoutPromise = new Promise((resolve, reject) => {
       setTimeout(() => {
         reject(new Error("Anvil Timeout Error"))
@@ -348,7 +345,7 @@ function startExpressServer() {
       anvilProcess.stderr.on('data', (data) => {
           console.log(`[server] stderr: ${data}`);
           if( data.toString().toLowerCase().includes("failed to fetch kubernetes resources;") || data.toString().toLowerCase().includes("failed to get client config;") || data.toString().toLowerCase().includes("failed to install argo;")) {
-            console.log("I AM REJECTING NOWWWWWW")
+            
             reject(new Error(`Kubeservices not found: ${data.toString()}`))
           }
         });
