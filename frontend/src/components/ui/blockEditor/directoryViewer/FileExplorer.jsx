@@ -23,7 +23,7 @@ export default function FileExplorer({
         />
       </div>
       <div className="mt-1 w-80 overflow-y-auto">
-        {root.data && (
+        {root.data && (// TODO loading state
           <TreeView
             label="directory view"
             selected={currentFile.relativePath}

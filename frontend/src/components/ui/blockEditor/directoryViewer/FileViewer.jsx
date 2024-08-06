@@ -16,7 +16,6 @@ export default function FileViewer({ pipelineId, blockId, currentFile }) {
   const [pendingFile, setPendingFile] = useState(null);
   const [openAIApiKey] = useAtom(openAIApiKeyAtom);
 
-  const isComputation = currentFile.relativePath.endsWith("computations.py");
   const isReadOnly = READ_ONLY_FILES.some((fileName) =>
     currentFile.relativePath.endsWith(fileName),
   );
@@ -69,7 +68,6 @@ export default function FileViewer({ pipelineId, blockId, currentFile }) {
           )}
         </div>
       </div>
-      {isComputation && openAIApiKey && <AgentPrompt />}
       <Modal
         open={isModalOpen}
         modalHeading="Unsaved Changes"

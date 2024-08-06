@@ -4,9 +4,14 @@ import { trpc } from "@/utils/trpc";
 import { useState } from "react";
 import { EditorCodeMirror } from "./CodeMirrorComponents";
 import { useCompileComputation } from "@/hooks/useCompileSpecs";
+import { useAtomValue } from "jotai";
+import { openAIApiKeyAtom } from "@/atoms/apiKeysAtom";
+import AgentPrompt from "./AgentPrompt";
 
 export default function CodeEditor({ pipelineId, blockId, currentFile }) {
   // TODO check why editing is laggy
+  // TODO try make it saveable or readd the modal
+  const openAIApiKey = useAtomValue(openAIApiKeyAtom)
   const fileContent = trpc.block.file.byPath.get.useQuery({
     pipelineId: pipelineId,
     blockId: blockId,
@@ -15,6 +20,9 @@ export default function CodeEditor({ pipelineId, blockId, currentFile }) {
   const updateFileContent = trpc.block.file.byPath.update.useMutation();
   const [fileContentBuffer, setFileContentBuffer] = useState(fileContent.data);
   const compile = useCompileComputation();
+
+  const isComputation = currentFile.name === "computations.py"
+  const displayAgentPromp = isComputation && openAIApiKey
 
   const saveChanges = async () => {
     await updateFileContent.mutateAsync({
@@ -49,6 +57,7 @@ export default function CodeEditor({ pipelineId, blockId, currentFile }) {
           onClick={saveChanges}
         />
       </div>
+      {displayAgentPromp && <AgentPrompt />}
     </>
   );
 }
