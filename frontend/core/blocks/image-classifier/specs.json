@@ -12,7 +12,7 @@
   },
   "inputs": {
     "input_img": {
-      "type": "file",
+      "type": "Any",
       "connections": [],
       "relays": []
     }

@@ -12,12 +12,12 @@
   },
   "inputs": {
     "api_key": {
-      "type": "str",
+      "type": "Any",
       "connections": [],
       "relays": []
     },
     "story_description": {
-      "type": "str",
+      "type": "Any",
       "connections": [],
       "relays": []
     }

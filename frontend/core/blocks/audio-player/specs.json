@@ -12,14 +12,14 @@
   },
   "inputs": {
     "audio_paths": {
-      "type": "List[file]",
+      "type": "Any",
       "connections": [],
       "relays": []
     }
   },
   "outputs": {
     "html": {
-      "type": "file",
+      "type": "Any",
       "connections": [],
       "relays": []
     }

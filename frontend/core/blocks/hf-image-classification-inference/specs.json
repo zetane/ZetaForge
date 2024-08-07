@@ -12,34 +12,34 @@
     },
     "inputs": {
         "dataset_name": {
-            "type": "str",
+            "type": "Any",
             "connections": [],
             "relays": []
         },
         "split_name": {
-            "type": "str",
+            "type": "Any",
             "connections": [],
             "relays": []
         },
         "model_name": {
-            "type": "str",
+            "type": "Any",
             "connections": [],
             "relays": []
         },
         "n_samples": {
-            "type": "int",
+            "type": "Any",
             "connections": [],
             "relays": []
         }
     },
     "outputs": {
         "images": {
-            "type": "List[file]",
+            "type": "Any",
             "connections": [],
             "relays": []
         },
         "predictions": {
-            "type": "List",
+            "type": "Any",
             "connections": [],
             "relays": []
         }
