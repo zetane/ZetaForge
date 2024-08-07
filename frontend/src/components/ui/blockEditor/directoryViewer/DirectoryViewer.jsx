@@ -1,25 +1,29 @@
 import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { useAtom } from "jotai";
 import { useState } from "react";
-import Splitter from "./Splitter";
 import FileExplorer from "./FileExplorer";
 import FileViewer from "./FileViewer";
 import PromptList from "./PromptList";
+import { Allotment } from "allotment";
+import "allotment/dist/style.css";
 
 export default function DirectoryViewer({ blockId }) {
   const [currentFile, setCurrentFile] = useState({ isSelected: false });
   const [pipeline] = useAtom(pipelineAtom);
 
   return (
-    <div className="flex h-full">
-      <FileExplorer
-        pipelineId={pipeline.id}
-        blockId={blockId}
-        currentFile={currentFile}
-        setCurrentFile={setCurrentFile}
-      />
-      <PromptList />
-      <Splitter />
+    <Allotment>
+      <div className="h-full">
+        <Allotment vertical>
+            <FileExplorer
+              pipelineId={pipeline.id}
+              blockId={blockId}
+              currentFile={currentFile}
+              setCurrentFile={setCurrentFile}
+            />
+            <PromptList />
+        </Allotment>
+      </div>
       {currentFile.isSelected && (
         <FileViewer
           key={currentFile.relativePath}
@@ -28,6 +32,6 @@ export default function DirectoryViewer({ blockId }) {
           currentFile={currentFile}
         />
       )}
-    </div>
+    </Allotment>
   );
 }

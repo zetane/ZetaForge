@@ -1,12 +1,14 @@
 import { Button } from "@carbon/react";
-import { OverflowMenuVertical } from "@carbon/icons-react";
+import { OverflowMenuHorizontal } from "@carbon/icons-react";
 
-export default function Prompt({children}) {
+export default function Prompt({ children }) {
   return (
-  <div>
-      <Button renderIcon={OverflowMenuVertical} kind="ghost" hasIconOnly />
-
+    <div className="relative min-h-12 p-3 rounded-lg prompt">
+      <div className="absolute top-0 right-0">
+        <Button renderIcon={OverflowMenuHorizontal} kind="ghost" hasIconOnly />
+      </div>
       {children}
-  </div>
+    </div>
   );
 }
+

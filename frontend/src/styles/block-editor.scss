@@ -6,6 +6,7 @@
   --beCodeViewerBackground: #f8f8f8;
   --beCodeEditorBackground: #ffffff;
   --bePromptPlaceholderText: #bebebe;
+  --bePrompt: #E0E0E0;
 }
 
 @mixin dark {
@@ -16,6 +17,7 @@
   --beCodeViewerBackground: #1e1e1e;
   --beCodeEditorBackground: #080808;
   --bePromptPlaceholderText: #989898;
+  --bePrompt: #393939;
 }
 
 .editor-block {
@@ -90,4 +92,8 @@
 .icon-button:focus {
   outline: none;
   background-color: rgba(0, 0, 0, 0.1);
+}
+
+.prompt {
+  background-color: var(--bePrompt);
 }

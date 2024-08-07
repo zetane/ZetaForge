@@ -2,7 +2,7 @@ import { Button } from "@carbon/react";
 import { Save } from "@carbon/icons-react";
 import { trpc } from "@/utils/trpc";
 import { useState } from "react";
-import { EditorCodeMirror } from "./CodeMirrorComponents";
+import { EditorCodeMirror, LogsCodeMirror } from "./CodeMirrorComponents";
 import { useCompileComputation } from "@/hooks/useCompileSpecs";
 import { useAtomValue } from "jotai";
 import { openAIApiKeyAtom } from "@/atoms/apiKeysAtom";
@@ -11,7 +11,7 @@ import AgentPrompt from "./AgentPrompt";
 export default function CodeEditor({ pipelineId, blockId, currentFile }) {
   // TODO check why editing is laggy
   // TODO try make it saveable or readd the modal
-  const openAIApiKey = useAtomValue(openAIApiKeyAtom)
+  const openAIApiKey = useAtomValue(openAIApiKeyAtom);
   const fileContent = trpc.block.file.byPath.get.useQuery({
     pipelineId: pipelineId,
     blockId: blockId,
@@ -21,8 +21,8 @@ export default function CodeEditor({ pipelineId, blockId, currentFile }) {
   const [fileContentBuffer, setFileContentBuffer] = useState(fileContent.data);
   const compile = useCompileComputation();
 
-  const isComputation = currentFile.name === "computations.py"
-  const displayAgentPromp = isComputation && openAIApiKey
+  const isComputation = currentFile.name === "computations.py";
+  const displayAgentPrompt = isComputation && openAIApiKey;
 
   const saveChanges = async () => {
     await updateFileContent.mutateAsync({
@@ -42,11 +42,13 @@ export default function CodeEditor({ pipelineId, blockId, currentFile }) {
   };
 
   return (
-    <>
-      <EditorCodeMirror
-        code={fileContent.data || ""} //TODO loading state
-        onChange={onChange}
-      />
+    <div className="relative flex flex-col h-full">
+      <div className="flex-1 min-h-0">
+        <EditorCodeMirror
+          code={fileContent.data || ""} //TODO loading state
+          onChange={onChange}
+        />
+      </div>
       <div className="absolute right-8 top-2">
         <Button
           renderIcon={Save}
@@ -57,7 +59,7 @@ export default function CodeEditor({ pipelineId, blockId, currentFile }) {
           onClick={saveChanges}
         />
       </div>
-      {displayAgentPromp && <AgentPrompt />}
-    </>
+      {displayAgentPrompt && <AgentPrompt />}
+    </div>
   );
 }

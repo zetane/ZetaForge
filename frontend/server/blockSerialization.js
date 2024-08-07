@@ -173,7 +173,7 @@ export async function callAgent(
     "computations.py",
   );
 
-  const { stdout } = spawnSync("python", [scriptPath], {
+  const { stdout } = spawnSync("python", [scriptPath], { //TODO wrapper for invoking python scripts
     input: JSON.stringify({
       apiKey,
       userMessage,

@@ -74,7 +74,7 @@ export default function Editor({ blockKey, blockPath }) {
           <Tab>Test Block</Tab>
         </TabList>
         <TabPanels>
-          <TabPanel className="overflow-hidden">
+          <TabPanel className="overflow-hidden h-full p-0">
             <DirectoryViewer key={blockKey} blockId={blockKey} />
           </TabPanel>
           <TabPanel className="overflow-y-auto">

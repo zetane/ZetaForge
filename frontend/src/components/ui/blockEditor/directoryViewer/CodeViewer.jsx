@@ -8,5 +8,5 @@ export default function CodeViewer({ pipelineId, blockId, currentFile }) {
     path: currentFile.relativePath,
   });
 
-  return <ViewerCodeMirror code={fileContent.data || ""} />;//TODO loading state
+  return <ViewerCodeMirror code={fileContent.data || ""} /> // {/* TODO loading state */};
 }

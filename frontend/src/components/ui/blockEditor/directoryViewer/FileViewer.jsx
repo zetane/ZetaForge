@@ -44,11 +44,6 @@ export default function FileViewer({ pipelineId, blockId, currentFile }) {
 
   return (
     <>
-      <div className="flex w-full min-w-0 flex-col">
-        <span className="text-md text-gray-30 mt-2">
-          <span>{currentFile.relativePath}</span>
-        </span>
-        <div className="relative mt-6 overflow-y-auto px-5">
           {isReadOnly ? (
             <CodeViewer
               pipelineId={pipelineId}
@@ -62,8 +57,6 @@ export default function FileViewer({ pipelineId, blockId, currentFile }) {
               currentFile={currentFile}
             />
           )}
-        </div>
-      </div>
       <Modal
         open={isModalOpen}
         modalHeading="Unsaved Changes"

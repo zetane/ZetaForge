@@ -32,12 +32,13 @@ export const ViewerCodeMirror = ({ currentIndex, code }) => {
   const extensions = [loadLanguage("python"), viewerBackgroundTheme];
   return (
     <CodeMirror
-      key={currentIndex + "code"}
+      key={currentIndex}
       value={code}
+      style={{height: "100%"}}
+      height="100%"
       theme={theme}
       extensions={extensions}
       readOnly={true}
-      maxWidth="100%"
       basicSetup={{
         lineNumbers: true,
         highlightActiveLineGutter: false,
@@ -76,8 +77,9 @@ export const EditorCodeMirror = ({ code, onChange }) => {
   return (
     <CodeMirror
       value={code}
+      style={{height: "100%"}}
+      height="100%"
       extensions={extensions}
-      width="100%"
       basicSetup={{
         lineNumbers: true,
         highlightActiveLineGutter: false,

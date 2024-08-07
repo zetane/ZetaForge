@@ -51,9 +51,11 @@ main {
   @include drawflow-dark-theme.drawflow-dark;
   @include block-editor.dark;
 }
+
 .cds--header__global {
   justify-content: center;
 }
+
 .cds--header__action.cds--btn--icon-only {
   background: none;
   border: none;
@@ -124,12 +126,12 @@ main {
   margin-left: -5px;
   border-width: 5px;
   border-style: solid;
-  border-color: transparent transparent var(--tooltip-background-color)
-    transparent;
+  border-color: transparent transparent var(--tooltip-background-color) transparent;
 }
 
 .cm-editor {
   content-visibility: auto;
+  height: 100%
 }
 
 ::-webkit-scrollbar {
