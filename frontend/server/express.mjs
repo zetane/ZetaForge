@@ -172,12 +172,10 @@ function startExpressServer() {
         return;
       }
       if (stderr) {
-        res
-          .status(500)
-          .json({
-            message: "kubectl is installed but there was an error.",
-            stderr: stderr,
-          });
+        res.status(500).json({
+          message: "kubectl is installed but there was an error.",
+          stderr: stderr,
+        });
         return;
       }
     });
