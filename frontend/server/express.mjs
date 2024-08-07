@@ -186,7 +186,6 @@ function startExpressServer() {
         const kubeProcess = spawn("kubectl", kubectl_config);
 
         kubeProcess.stdout.on("data", (data) => {
-          console.log(data.toString());
 
           const contexts = data.toString().trim().split("\n");
           resolve(contexts);
@@ -196,9 +195,7 @@ function startExpressServer() {
         });
 
         kubeProcess.on("error", (err) => {
-          console.log("ERROR HAPPENS HERE");
 
-          console.log(err);
           reject(new Error("kubectl error" + err.toString()));
         });
       });
