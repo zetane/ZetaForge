@@ -8,7 +8,6 @@ export default function ClosableModal(props) {
   const { children, modalClass, ...modalProps } = props;
 
   const closeModal = () => {
-    
     setModalContent({
       ...modalContent.content,
       show: false,
@@ -30,7 +29,6 @@ export default function ClosableModal(props) {
       {...modalProps}
     >
       {children}
-      
     </Modal>
   );
 }

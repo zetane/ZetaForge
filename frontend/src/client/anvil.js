@@ -50,23 +50,21 @@ export async function getAllPipelines(configuration) {
 }
 
 export async function ping(configuration) {
-  try{
-  const response = await handleRequest(
-    buildUrl(
-      getScheme(configuration.anvil.host),
-      configuration.anvil.host,
-      configuration.anvil.port,
-      "ping",
-    ),
-    HttpMethod.GET,
-    configuration.anvil.token,
-    {},
-
-    
-  )
-  return response.ok 
+  try {
+    const response = await handleRequest(
+      buildUrl(
+        getScheme(configuration.anvil.host),
+        configuration.anvil.host,
+        configuration.anvil.port,
+        "ping",
+      ),
+      HttpMethod.GET,
+      configuration.anvil.token,
+      {},
+    );
+    return response.ok;
   } catch {
-    return false
+    return false;
   }
 }
 

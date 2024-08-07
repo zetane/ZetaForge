@@ -23,47 +23,55 @@ def test():
 `;
 
 function extractPythonCode(response) {
-    const patternBackticks = /```python\n(.*?)```/gs;
-    const matchesBackticks = [...response.matchAll(patternBackticks)];
-    if (matchesBackticks.length === 0) {
-        return response;
-    }
-    const processedCodeBlocks = matchesBackticks.map(match => {
-        let codeBlock = match[1];
-        codeBlock = codeBlock.replace(/^\s*compute\(.*?\)\s*$/gm, '');
-        codeBlock = codeBlock.replace(/^\s*test\(.*?\)\s*$/gm, '');
-        return codeBlock.trim();
-    });
-    return processedCodeBlocks.join('\n\n');
+  const patternBackticks = /```python\n(.*?)```/gs;
+  const matchesBackticks = [...response.matchAll(patternBackticks)];
+  if (matchesBackticks.length === 0) {
+    return response;
+  }
+  const processedCodeBlocks = matchesBackticks.map((match) => {
+    let codeBlock = match[1];
+    codeBlock = codeBlock.replace(/^\s*compute\(.*?\)\s*$/gm, "");
+    codeBlock = codeBlock.replace(/^\s*test\(.*?\)\s*$/gm, "");
+    return codeBlock.trim();
+  });
+  return processedCodeBlocks.join("\n\n");
 }
 
-async function computeAgent(userPrompt, modelVersion, conversationHistory, apiKey) {
-    if (conversationHistory.length > 0) {
-        conversationHistory = [conversationHistory[conversationHistory.length - 1]];
-    }
+async function computeAgent(
+  userPrompt,
+  modelVersion,
+  conversationHistory,
+  apiKey,
+) {
+  if (conversationHistory.length > 0) {
+    conversationHistory = [conversationHistory[conversationHistory.length - 1]];
+  }
 
-    const escapedHistory = [];
-    for (const entry of conversationHistory) {
-        const prompt = entry.prompt.replace(/{/g, '{{').replace(/}/g, '}}');
-        const response = entry.response.replace(/{/g, '{{').replace(/}/g, '}}');
-        escapedHistory.push({ role: 'user', content: prompt });
-        escapedHistory.push({ role: 'assistant', content: response });
-    }
+  const escapedHistory = [];
+  for (const entry of conversationHistory) {
+    const prompt = entry.prompt.replace(/{/g, "{{").replace(/}/g, "}}");
+    const response = entry.response.replace(/{/g, "{{").replace(/}/g, "}}");
+    escapedHistory.push({ role: "user", content: prompt });
+    escapedHistory.push({ role: "assistant", content: response });
+  }
 
-    const messages = [{ role: 'system', content: openaiSystemContent }, ...escapedHistory];
-    messages.push({ role: 'user', content: userPrompt });
+  const messages = [
+    { role: "system", content: openaiSystemContent },
+    ...escapedHistory,
+  ];
+  messages.push({ role: "user", content: userPrompt });
 
-    const configuration = new Configuration({ apiKey: apiKey });
-    const openai = new OpenAIApi(configuration);
+  const configuration = new Configuration({ apiKey: apiKey });
+  const openai = new OpenAIApi(configuration);
 
-    const response = await openai.createChatCompletion({
-        model: modelVersion,
-        messages: messages,
-    });
+  const response = await openai.createChatCompletion({
+    model: modelVersion,
+    messages: messages,
+  });
 
-    const code = extractPythonCode(response.data.choices[0].message.content);
+  const code = extractPythonCode(response.data.choices[0].message.content);
 
-    return { response: code, model: modelVersion };
+  return { response: code, model: modelVersion };
 }
 
 module.exports = { computeAgent };

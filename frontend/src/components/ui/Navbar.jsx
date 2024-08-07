@@ -27,7 +27,7 @@ import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { PipelineStopButton } from "./PipelineStopButton";
 import { getAllPipelines } from "@/client/anvil";
 import { ping } from "@/client/anvil";
-import {useState} from 'react'
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 export default function Navbar({ children }) {
@@ -35,24 +35,17 @@ export default function Navbar({ children }) {
   const [modalContent, setModalContent] = useAtom(modalContentAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const [configuration] = useAtom(activeConfigurationAtom);
-  const [disable, setDisable] = useState(false)
+  const [disable, setDisable] = useState(false);
 
-  
-
-  const { pingPending, pingError, pingData} = useQuery({
+  const { pingPending, pingError, pingData } = useQuery({
     queryKey: ["ping"],
     queryFn: async () => {
-      const res = await ping(configuration)
-      setDisable(res !== true)
-      return res
-      
-    }  ,
+      const res = await ping(configuration);
+      setDisable(res !== true);
+      return res;
+    },
     refetchInterval: 2 * 1000,
-  })
-
-  
-
-  
+  });
 
   const modalPopper = (content) => {
     setModalContent({
@@ -65,7 +58,11 @@ export default function Navbar({ children }) {
   const svgOverride = { position: "absolute", right: "15px", top: "5px" };
 
   let runButton = (
-    <RunPipelineButton modalPopper={modalPopper} action="Run" disabled={disable}>
+    <RunPipelineButton
+      modalPopper={modalPopper}
+      action="Run"
+      disabled={disable}
+    >
       <Play size={20} style={svgOverride} />
     </RunPipelineButton>
   );
@@ -130,7 +127,11 @@ export default function Navbar({ children }) {
       </HeaderNavigation>
       <HeaderGlobalBar>
         {runButton}
-        <RunPipelineButton modalPopper={modalPopper} action="Rebuild" disabled={disable}>
+        <RunPipelineButton
+          modalPopper={modalPopper}
+          action="Rebuild"
+          disabled={disable}
+        >
           <Renew size={20} style={svgOverride} />
         </RunPipelineButton>
         <LogsButton />

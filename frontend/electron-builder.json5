@@ -2,7 +2,7 @@
  * @see https://www.electron.build/configuration/configuration
  */
 {
-  "afterPack": "./macPacker.cjs",
+  afterPack: "./macPacker.cjs",
   appId: "com.zetane.zetaforge",
   productName: "ZetaForge",
   asar: true,
