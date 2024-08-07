@@ -1,5 +1,5 @@
 import bodyParser from "body-parser";
-import { spawn } from "child_process";
+import { spawn, exec } from "child_process";
 import compression from "compression";
 import cors from "cors";
 import "dotenv/config";
@@ -11,12 +11,29 @@ import path from "path";
 import sha256 from "sha256";
 import getMAC from "getmac";
 import { BLOCK_SPECS_FILE_NAME } from "../src/utils/constants";
+import { computeAgent } from "../agents/gpt-4_python_compute/generate/computations.cjs";
+import { computeViewAgent } from "../agents/gpt-4_python_view/generate/computations.cjs";
+let anvilProcess = null;
+
+function gracefullyStopAnvil() {
+  if (anvilProcess !== null) {
+    anvilProcess.kill("SIGINT");
+    const sleep = new Promise((resolve) => setTimeout(resolve, 5000));
+    sleep().then((res) => {
+      console.log("schleepy shleep");
+    });
+  }
+}
 
 function startExpressServer() {
   const app = express();
   const port = 3330;
 
-  app.use(cors());
+  app.use(
+    cors({
+      origin: "*",
+    }),
+  );
   app.use(compression());
 
   // http://expressjs.com/en/advanced/best-practice-security.html#at-a-minimum-disable-x-powered-by-header
@@ -40,7 +57,7 @@ function startExpressServer() {
   );
   app.use(bodyParser.json());
 
-  const upload = multer({ dest: "_temp_import" });
+  const upload = multer();
 
   app.get("/distinct-id", async (req, res) => {
     try {
@@ -146,6 +163,51 @@ function startExpressServer() {
     });
   });
 
+  app.get("/get-kube-contexts", async (req, res) => {
+    exec("kubectl version --client", (error, stdout, stderr) => {
+      if (error) {
+        res
+          .status(500)
+          .json({ message: "kubectl is not installed.", error: error.message });
+        return;
+      }
+      if (stderr) {
+        res.status(500).json({
+          message: "kubectl is installed but there was an error.",
+          stderr: stderr,
+        });
+        return;
+      }
+    });
+
+    async function getKubectlContexts() {
+      return new Promise((resolve, reject) => {
+        const kubectl_config = ["config", "get-contexts", "-o", "name"];
+        const kubeProcess = spawn("kubectl", kubectl_config);
+
+        kubeProcess.stdout.on("data", (data) => {
+          const contexts = data.toString().trim().split("\n");
+          resolve(contexts);
+        });
+        kubeProcess.stderr.on("data", (data) => {
+          reject(new Error("kubectl error: " + data.toString()));
+        });
+
+        kubeProcess.on("error", (err) => {
+          reject(new Error("kubectl error" + err.toString()));
+        });
+      });
+    }
+
+    try {
+      const contexts = await getKubectlContexts();
+      res.status(200).json(contexts);
+    } catch (err) {
+      console.log(err);
+      res.status(500).send(err.message);
+    }
+  });
+
   app.post("/api/call-agent", async (req, res) => {
     const { userMessage, agentName, conversationHistory, apiKey } = req.body;
     console.log("USER MESSAGE", userMessage);
@@ -162,41 +224,38 @@ function startExpressServer() {
         "generate",
         "computations.py",
       );
-      const pythonProcess = spawn("python", [scriptPath]);
-
-      const inputData = { apiKey, userMessage, conversationHistory };
-      pythonProcess.stdin.write(JSON.stringify(inputData));
-      pythonProcess.stdin.end();
-
-      // Collect data from the Python script
-      let scriptOutput = "";
-      pythonProcess.stdout.on("data", (data) => {
-        scriptOutput += data.toString();
-      });
-
-      pythonProcess.stdout.on("end", () => {
-        console.log("Received from Python script:", scriptOutput);
+      if (agentName === "gpt-4_python_compute") {
         try {
-          res.send(JSON.parse(scriptOutput));
-        } catch (parseError) {
-          console.error("Error parsing script output:", parseError);
-          res.status(500).send({ error: "Error parsing script output" });
-        }
-      });
+          const result = await computeAgent(
+            userMessage,
+            "gpt-4o",
+            conversationHistory,
+            apiKey,
+          );
 
-      pythonProcess.stderr.on("data", (data) => {
-        console.error(`stderr: ${data}`);
-      });
-
-      pythonProcess.on("close", (code) => {
-        if (code !== 0) {
-          console.log(`Python script exited with code ${code}`);
-          res.status(500).send({ error: "Python script error" });
+          res.send(result);
+        } catch (err) {
+          console.error("Server error:", err);
+          res.status(500).send({ error: err.message });
         }
-      });
+      } else {
+        try {
+          const result = await computeViewAgent(
+            userMessage,
+            "gpt-4o",
+            conversationHistory,
+            apiKey,
+          );
+
+          console.log("Received from compute function:", result);
+          res.send(result);
+        } catch (err) {
+          console.error("Agent error:", err);
+          res.status(500).send({ error: err.message });
+        }
+      }
     } catch (err) {
-      console.error("Server error:", err);
-      res.status(500).send({ error: "Internal server error" });
+      res.status(500).send({ error: err.message });
     }
   });
 
@@ -209,6 +268,231 @@ function startExpressServer() {
       console.error("Error reading directory:", err);
       res.status(500).send({ error: "Error reading directory" });
     }
+  });
+
+  app.get("/get-anvil-config", (req, res) => {
+    if (!electronApp.isPackaged) {
+      const response = { has_config: false };
+      res.status(200).send(response);
+    }
+    const anvilDir = path.join(process.resourcesPath, "server2");
+    const anvilFiles = fs.readdirSync(anvilDir);
+    if (anvilFiles.includes("config.json")) {
+      const configFile = path.join(anvilDir, "config.json");
+      const configStr = fs.readFileSync(configFile);
+      const config = JSON.parse(configStr);
+      const response = {
+        has_config: true,
+        config: config,
+      };
+      res.status(200).send(response);
+    } else {
+      const response = { has_config: false };
+      res.status(200).send(response);
+    }
+  });
+
+  app.post("/launch-anvil-from-config", (req, res) => {
+    if (!electronApp.isPackaged) {
+      return res.sendStatus(200);
+    }
+
+    const anvilTimeoutPromise = new Promise((resolve, reject) => {
+      setTimeout(
+        () => {
+          reject(new Error("Anvil Timeout Error"));
+        },
+        3 * 60 * 1000,
+      );
+    });
+    if (anvilProcess !== null) {
+      anvilProcess.kill("SIGINT");
+      anvilProcess = null;
+      console.log("killed the process");
+    }
+    const anvilDir = path.join(process.resourcesPath, "server2");
+    const configPath = path.join(anvilDir, "config.json");
+    const configStr = fs.readFileSync(configPath);
+    const config = JSON.parse(configStr);
+
+    const context = config.KubeContext;
+    const kubeConfig = ["config", "use-context", context];
+    const kubeExec = spawn("kubectl", kubeConfig);
+
+    kubeExec.stderr.on("data", (data) => {
+      console.log(`stderr: ${data}`);
+      res
+        .status(500)
+        .send({ err: "CAN'T SET KUBECONTEXT", kubeErr: data.toString() });
+    });
+
+    const anvilFiles = fs.readdirSync(anvilDir);
+    const anvilExec = anvilFiles.filter((file) => file.startsWith("s2-"))[0];
+    const runAnvil = new Promise((resolve, reject) => {
+      anvilProcess = spawn(path.join(anvilDir, anvilExec), {
+        cwd: anvilDir,
+        detached: true,
+        stdio: ["ignore", "pipe", "pipe"], // Ignore stdin, use pipes for stdout and stderr
+      });
+
+      anvilProcess.stdout.on("data", (data) => {
+        console.log(`[server] stdout: ${data}`);
+
+        if (
+          data.toString().includes("[GIN-debug] Listening and serving HTTP on")
+        ) {
+          resolve();
+        }
+      });
+
+      anvilProcess.stderr.on("data", (data) => {
+        console.log(`[server] stderr: ${data}`);
+        if (
+          data
+            .toString()
+            .toLowerCase()
+            .includes("failed to fetch kubernetes resources;") ||
+          data
+            .toString()
+            .toLowerCase()
+            .includes("failed to get client config;") ||
+          data.toString().toLowerCase().includes("failed to install argo;")
+        ) {
+          reject(new Error(`Kubeservices not found: ${data.toString()}`));
+        }
+      });
+
+      anvilProcess.on("close", (code) => {});
+    });
+
+    const runAnvilPromise = Promise.race([anvilTimeoutPromise, runAnvil]);
+
+    runAnvilPromise
+      .then((response) => {
+        res.sendStatus(200);
+      })
+      .catch((err) => {
+        res
+          .status(500)
+          .send({ err: "Error while launching anvil", kubeErr: err.message });
+      });
+  });
+
+  app.post("/launch-anvil", (req, res) => {
+    const anvilTimeoutPromise = new Promise((resolve, reject) => {
+      setTimeout(
+        () => {
+          reject(new Error("Anvil Timeout Error"));
+        },
+        3 * 60 * 1000,
+      );
+    });
+
+    if (!electronApp.isPackaged) {
+      res.sendStatus(200);
+    }
+
+    if (anvilProcess !== null) {
+      anvilProcess.kill("SIGINT");
+      anvilProcess = null;
+      console.log("killed the process");
+    }
+
+    const anvilDir = path.join(process.resourcesPath, "server2");
+    const body = req.body;
+
+    const config = {
+      IsLocal: true,
+      IsDev: true ? process.env.VITE_ZETAFORGE_IS_DEV === "True" : false,
+      ServerPort: parseInt(body.anvilPort),
+      KanikoImage: "gcr.io/kaniko-project/executor:latest",
+      WorkDir: "/app",
+      FileDir: "/files",
+      ComputationFile: "computations.py",
+      EntrypointFile: "entrypoint.py",
+      ServiceAccount: "executor",
+      Bucket: "forge-bucket",
+      Database: "./zetaforge.db",
+      KubeContext: body.KubeContext,
+      SetupVersion: "1",
+      Local: {
+        BucketPort: parseInt(body.s3Port),
+        Driver: body.driver,
+      },
+    };
+    const configDir = path.join(anvilDir, "config.json");
+    const configStr = JSON.stringify(config);
+    try {
+      fs.writeFileSync(configDir, configStr);
+    } catch (err) {
+      res.status(500).send("Error happend while writing config.js");
+    }
+    const kubeConfig = ["config", "use-context", body.KubeContext];
+    const kubeExec = spawn("kubectl", kubeConfig);
+    kubeExec.stderr.on("data", (data) => {
+      console.log(`stderr: ${data}`);
+      res
+        .status(500)
+        .send({ err: "CAN'T SET KUBECONTEXT", kubeErr: data.toString() });
+    });
+    const anvilFiles = fs.readdirSync(anvilDir);
+
+    const anvilExec = anvilFiles.filter((file) => file.startsWith("s2-"))[0];
+    const runAnvil = new Promise((resolve, reject) => {
+      anvilProcess = spawn(path.join(anvilDir, anvilExec), {
+        cwd: anvilDir,
+        detached: true,
+        stdio: ["ignore", "pipe", "pipe"], // Ignore stdin, use pipes for stdout and stderr
+      });
+
+      anvilProcess.stdout.on("data", (data) => {
+        console.log(`[server] stdout: ${data}`);
+
+        if (
+          data.toString().includes("[GIN-debug] Listening and serving HTTP on")
+        ) {
+          console.log("ANVIL RUN SUCCESFULLY");
+          resolve();
+        }
+      });
+
+      anvilProcess.stderr.on("data", (data) => {
+        console.log(`[server] stderr: ${data}`);
+        if (
+          data
+            .toString()
+            .toLowerCase()
+            .includes("failed to fetch kubernetes resources;") ||
+          data
+            .toString()
+            .toLowerCase()
+            .includes("failed to get client config;") ||
+          data.toString().toLowerCase().includes("failed to install argo;")
+        ) {
+          console.log("I AM REJECTING NOWWWWWW");
+          reject(new Error(`Kubeservices not found: ${data.toString()}`));
+        }
+      });
+
+      anvilProcess.on("close", (code) => {});
+    });
+
+    const runAnvilPromise = Promise.race([anvilTimeoutPromise, runAnvil]);
+
+    runAnvilPromise
+      .then((response) => {
+        res.sendStatus(200);
+      })
+      .catch((err) => {
+        res
+          .status(500)
+          .send({ err: "Error while launching anvil", kubeErr: err.message });
+      });
+  });
+
+  app.get("/isPackaged", (req, res) => {
+    const isPip = process.env.VITE_IS_PIP === "True" ? true : false;
+    return res.status(200).json(electronApp.isPackaged && !isPip);
   });
 
   const getFileSystemContent = (dirPath) => {
@@ -300,6 +584,22 @@ function startExpressServer() {
   app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
   });
+
+  process.on("SIGINT", () => {
+    console.log("SIGINT ANVIL");
+    if (anvilProcess !== null) {
+      console.log("KILLING ANVIL...");
+      anvilProcess.kill("SIGINT");
+    }
+  });
+
+  process.on("SIGTERM", () => {
+    console.log("SIGINT ANVIL");
+    if (anvilProcess !== null) {
+      console.log("KILLING ANVIL...");
+      anvilProcess.kill("SIGINT");
+    }
+  });
 }
 
-export { startExpressServer };
+export { startExpressServer, gracefullyStopAnvil };
