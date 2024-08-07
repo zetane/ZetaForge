@@ -91,7 +91,7 @@ export default function App() {
                     "Cannot find kubectl or there's an error with kubectl command. Please try again or check if kubectl is in your path. You can ignore this message if you're using cloud anvil",
                     err.message,
                   ]);
-                  setConfigOpen(true);
+                  setErrModalOpen(true);
                 });
             } else {
               //do nothing, because you can ping
