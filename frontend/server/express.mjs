@@ -183,9 +183,7 @@ function startExpressServer() {
     async function getKubectlContexts() {
       return new Promise((resolve, reject) => {
         const kubectl_config = ["config", "get-contexts", "-o", "name"];
-        const kubeProcess = spawn("kubectl", kubectl_config, {
-          cwd: "/usr/local/bin/",
-        });
+        const kubeProcess = spawn("kubectl", kubectl_config);
 
         kubeProcess.stdout.on("data", (data) => {
           console.log(data.toString());

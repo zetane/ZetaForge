@@ -179,10 +179,7 @@ export default function AnvilConfigurationsModal(props) {
           size="md"
           initialLaunch={false}
           primaryButtonText={
-            configuration.anvil.host === "127.0.0.1" ||
-            configuration.anvil.host === "localhost"
-              ? "Save & Relaunch"
-              : "Ping Cloud"
+            "Save & Relaunch"
           }
           primaryButtonDisabled={disabled}
           onRequestSubmit={saveAndRelaunch}
@@ -229,10 +226,7 @@ export default function AnvilConfigurationsModal(props) {
           size="md"
           initialLaunch={false}
           primaryButtonText={
-            configuration.anvil.host === "127.0.0.1" ||
-            configuration.anvil.host === "localhost"
-              ? "Save & Relaunch"
-              : "Ping Cloud"
+            "Save & Relaunch"
           }
           primaryButtonDisabled={disabled}
           onRequestSubmit={saveAndRelaunch}
