@@ -178,9 +178,7 @@ export default function AnvilConfigurationsModal(props) {
           modalHeading="Anvil Configurations"
           size="md"
           initialLaunch={false}
-          primaryButtonText={
-            "Save & Relaunch"
-          }
+          primaryButtonText={"Save & Relaunch"}
           primaryButtonDisabled={disabled}
           onRequestSubmit={saveAndRelaunch}
           modalType="Anvil Config"
@@ -225,9 +223,7 @@ export default function AnvilConfigurationsModal(props) {
           modalHeading="Anvil Configurations"
           size="md"
           initialLaunch={false}
-          primaryButtonText={
-            "Save & Relaunch"
-          }
+          primaryButtonText={"Save & Relaunch"}
           primaryButtonDisabled={disabled}
           onRequestSubmit={saveAndRelaunch}
           modalType="Anvil Config"
