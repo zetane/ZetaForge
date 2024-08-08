@@ -2,9 +2,9 @@ import { Document, Folder } from "@carbon/icons-react";
 import { TreeNode } from "@carbon/react";
 import { useState } from "react";
 
-export default function DirentNode({
+export default function DirectoryEntryNode({
   parent,
-  setCurrentFile,
+  onSelectFile,
   ...rest
 }) {
   const name = parent.name;
@@ -14,7 +14,7 @@ export default function DirentNode({
     ? { color: "darkorange", paddingRight: "4px", paddingLeft: "4px" }
     : {};
 
-  const [isExpanded, setExpanded] = useState(true);
+  const [isExpanded, setExpanded] = useState(true);// TODO decide default state
 
   const handleFolderClick = () => {
     setExpanded(!isExpanded);
@@ -63,10 +63,7 @@ export default function DirentNode({
   // };
 
   const handleFileClick = () => {
-    setCurrentFile({
-      isSelected: true,
-      ...parent,
-    });
+    onSelectFile(parent);
 
     // if (unsavedChanges) {
     //   setPendingFile(filePath);
@@ -94,10 +91,10 @@ export default function DirentNode({
       {...rest}
     >
       {parent.children.map((child) => (
-        <DirentNode
+        <DirectoryEntryNode
           key={child.name}
           parent={child}
-          setCurrentFile={setCurrentFile}
+          onSelectFile={onSelectFile}
         />
       ))}
     </TreeNode>

@@ -1,14 +1,19 @@
-import { Button } from "@carbon/react";
-import { Save } from "@carbon/icons-react";
 import { trpc } from "@/utils/trpc";
 import { useState } from "react";
-import { EditorCodeMirror } from "./CodeMirrorComponents";
 import { useCompileComputation } from "@/hooks/useCompileSpecs";
 import { useAtomValue } from "jotai";
 import { openAIApiKeyAtom } from "@/atoms/apiKeysAtom";
 import AgentPrompt from "./AgentPrompt";
+import PromptViewer from "./PromptViewer";
+import CodeManualEditor from "./CodeManualEditor";
 
-export default function CodeEditor({ pipelineId, blockId, currentFile }) {
+export default function CodeEditor({
+  pipelineId,
+  blockId,
+  currentFile,
+  promptResponse,
+  onAcceptPrompt,
+}) {
   // TODO check why editing is laggy
   // TODO try make it saveable or readd the modal
   const openAIApiKey = useAtomValue(openAIApiKeyAtom);
@@ -24,7 +29,7 @@ export default function CodeEditor({ pipelineId, blockId, currentFile }) {
   const isComputation = currentFile.name === "computations.py";
   const displayAgentPrompt = isComputation && openAIApiKey;
 
-  const saveChanges = async () => {
+  const handleSave = async () => {
     await updateFileContent.mutateAsync({
       pipelineId,
       blockId: blockId,
@@ -37,28 +42,30 @@ export default function CodeEditor({ pipelineId, blockId, currentFile }) {
     }
   };
 
-  const onChange = (newValue) => {
+  const handleChange = (newValue) => {
     setFileContentBuffer(newValue);
   };
 
+  const handleAcceptPrompt = () => {
+    setFileContentBuffer(promptResponse);
+    onAcceptPrompt();
+  };
+
+
   return (
-    <div className="relative flex h-full flex-col">
-      <div className="min-h-0 flex-1">
-        <EditorCodeMirror
-          code={fileContent.data || ""} //TODO loading state
-          onChange={onChange}
+    <div className="flex h-full flex-col">
+      {promptResponse ? (
+        <PromptViewer
+          response={promptResponse}
+          onAcceptPrompt={handleAcceptPrompt}
         />
-      </div>
-      <div className="absolute right-8 top-2">
-        <Button
-          renderIcon={Save}
-          iconDescription="Save code"
-          tooltipPosition="left"
-          hasIconOnly
-          size="md"
-          onClick={saveChanges}
+      ) : (
+        <CodeManualEditor
+          code={fileContentBuffer}
+          onChange={handleChange}
+          onSave={handleSave}
         />
-      </div>
+      )}
       {displayAgentPrompt && <AgentPrompt />}
     </div>
   );

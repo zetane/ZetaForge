@@ -1,4 +1,3 @@
-import { Modal } from "@carbon/react";
 import {
   BLOCK_SPECS_FILE_NAME,
   CHAT_HISTORY_FILE_NAME,
@@ -8,13 +7,15 @@ import CodeViewer from "./CodeViewer";
 import CodeEditor from "./CodeEditor";
 
 const READ_ONLY_FILES = [BLOCK_SPECS_FILE_NAME, CHAT_HISTORY_FILE_NAME];
-export default function FileViewer({ pipelineId, blockId, currentFile }) {
+export default function FileViewer({
+  pipelineId,
+  blockId,
+  currentFile,
+  promptResponse,
+  onAcceptPrompt,
+}) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [pendingFile, setPendingFile] = useState(null);
-
-  const isReadOnly = READ_ONLY_FILES.some((fileName) =>
-    currentFile.relativePath.endsWith(fileName),
-  );
 
   const handleModalConfirm = (e) => {
     // saveChanges(e);
@@ -42,32 +43,53 @@ export default function FileViewer({ pipelineId, blockId, currentFile }) {
     setIsModalOpen(false);
   };
 
-  return (
-    <>
-          {isReadOnly ? (
-            <CodeViewer
-              pipelineId={pipelineId}
-              blockId={blockId}
-              currentFile={currentFile}
-            />
-          ) : (
-            <CodeEditor
-              pipelineId={pipelineId}
-              blockId={blockId}
-              currentFile={currentFile}
-            />
-          )}
-      <Modal
-        open={isModalOpen}
-        modalHeading="Unsaved Changes"
-        primaryButtonText="Save Changes"
-        secondaryButtonText="Cancel"
-        onRequestSubmit={handleModalConfirm}
-        onRequestClose={handleModalCancel}
-        size="xs"
-      >
-        <p>You have unsaved changes. Do you want to save them?</p>
-      </Modal>
-    </>
-  );
+  const getViewer = () => {
+    if (currentFile) {
+      const isReadOnly = READ_ONLY_FILES.some((fileName) =>
+        currentFile.name.endsWith(fileName),
+      );
+      if(isReadOnly) {
+
+    return <CodeViewer
+      pipelineId={pipelineId}
+      blockId={blockId}
+      currentFile={currentFile}
+    />
+      } else {
+    return <CodeEditor
+      pipelineId={pipelineId}
+      blockId={blockId}
+      currentFile={currentFile}
+      promptResponse={promptResponse}
+      onAcceptPrompt={onAcceptPrompt}
+    />
+      }
+    } else {
+      return <></>;
+    }
+  };
+
+  return getViewer();
+
+  // return (
+  //   <>
+  //         {if (isPrompt) <CodeViewer
+  //             fileContentBuffer={fileContentBuffer}
+  //           />
+  //         else if (isReadOnly)
+  //         elsvkke
+  //         }
+  //     <Modal
+  //       open={isModalOpen}
+  //       modalHeading="Unsaved Changes"
+  //       primaryButtonText="Save Changes"
+  //       secondaryButtonText="Cancel"
+  //       onRequestSubmit={handleModalConfirm}
+  //       onRequestClose={handleModalCancel}
+  //       size="xs"
+  //     >
+  //       <p>You have unsaved changes. Do you want to save them?</p>
+  //     </Modal>
+  //   </>
+  // );
 }

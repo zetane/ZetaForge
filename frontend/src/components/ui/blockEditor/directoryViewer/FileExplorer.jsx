@@ -1,13 +1,13 @@
 import { TreeView } from "@carbon/react";
-import DirentNode from "./DirentNode";
+import DirectoryEntryNode from "./DirectoryEntryNode";
 import { trpc } from "@/utils/trpc";
 import ImportButtons from "./ImportButtons";
 
 export default function FileExplorer({
   pipelineId,
   blockId,
-  currentFile,
-  setCurrentFile,
+  // currentFile,
+  onSelectFile,
 }) {
   const root = trpc.block.file.get.useQuery({
     pipelineId: pipelineId,
@@ -15,23 +15,23 @@ export default function FileExplorer({
   });
 
   return (
-    <div className="flex flex-col">
+    <div className="flex h-full flex-col">
       <div className="flex gap-x-1">
         <ImportButtons
           pipelineId={pipelineId}
           blockId={blockId}
         />
       </div>
-      <div className="mt-1 w-80 overflow-y-auto">
+      <div className="mt-1 flex-1 overflow-y-auto">
         {root.data && (// TODO loading state
           <TreeView
             label="directory view"
-            selected={currentFile.relativePath}
+            // selected={currentFile.relativePath} // TODO check if this is needed at all
             hideLabel
           >
-            <DirentNode
+            <DirectoryEntryNode
               parent={root.data}
-              setCurrentFile={setCurrentFile}
+              onSelectFile={onSelectFile}
             />
           </TreeView>
         )}
