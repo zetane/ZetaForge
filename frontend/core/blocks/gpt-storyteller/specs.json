@@ -1,0 +1,58 @@
+{
+  "information": {
+    "id": "gpt-storyteller",
+    "name": "GPT Story Teller",
+    "description": "Generates a story based on a given prompt.",
+    "system_versions": [
+      "0.1"
+    ],
+    "block_version": "block version number",
+    "block_source": "core/blocks/gpt-storyteller",
+    "block_type": "compute"
+  },
+  "inputs": {
+    "api_key": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    },
+    "story_description": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    }
+  },
+  "outputs": {
+    "story": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    }
+  },
+  "action": {
+    "container": {
+      "image": "gpt-storyteller",
+      "version": "latest",
+      "command_line": [
+        "python",
+        "entrypoint.py"
+      ]
+    }
+  },
+  "views": {
+    "node": {
+      "behavior": "modal",
+      "active": "True",
+      "title_bar": {
+      },
+      "preview": {
+        "active": "false"
+      },
+      "html": "",
+      "pos_x": "300",
+      "pos_y": "200",
+      "pos_z": "999"
+    }
+  },
+  "events": {}
+}

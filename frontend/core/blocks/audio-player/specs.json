@@ -1,0 +1,54 @@
+{
+  "information": {
+    "id": "audio-player",
+    "name": "audio-player",
+    "description": "Generates an HTML file with an audio player per input file.",
+    "block_version": "block version number",
+    "block_source": "core/blocks/audio-player",
+    "block_type": "view",
+    "system_versions": [
+      "0.1"
+    ]
+  },
+  "inputs": {
+    "audio_paths": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    }
+  },
+  "outputs": {
+    "html": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    }
+  },
+  "action": {
+    "container": {
+      "image": "audio-player",
+      "version": "latest",
+      "command_line": [
+        "python",
+        "entrypoint.py"
+      ]
+    }
+  },
+  "views": {
+    "mode": "modal",
+    "node": {
+      "active": "True",
+      "title_bar": {
+        "background_color": "#D55908"
+      },
+      "preview": {
+        "active": "true"
+      },
+      "html": "",
+      "pos_x": "300",
+      "pos_y": "200",
+      "pos_z": "999, this is the z-index for 2D canvas"
+    }
+  },
+  "events": {}
+}
