@@ -8,47 +8,47 @@ import "allotment/dist/style.css";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
 
 export default function DirectoryViewer({ blockId }) {
-  const pipeline = useAtomValue(pipelineAtom)
+  const pipeline = useAtomValue(pipelineAtom);
   const [currentFile, setCurrentFile] = useState();
   const [promptResponse, setPromptResponse] = useState();
 
-  // const isComputation = currentFile.name === "computations.py";
+  const isComputation = currentFile?.name === "computations.py" ?? false;
 
   const handleSelectFile = (selectedFile) => {
     setCurrentFile(selectedFile);
-  }
-
-  const handleSelectPrompt = (response) => {
-    setPromptResponse(response)
+    setPromptResponse(undefined);
   };
 
-  const handleAcceptPromp = () => {
-    setPromptResponse(undefined)
-  }
+  const handleSelectPrompt = (response) => {
+    setPromptResponse(response);
+  };
+
+  const handleAcceptPrompt = () => {
+    setPromptResponse(undefined);
+  };
+
 
   return (
-    <Allotment>
-      <div className="h-full">
-        <Allotment vertical>
-          <FileExplorer
-            pipelineId={pipeline.id}
-            blockId={blockId}
-            currentFile={currentFile}
-            onSelectFile={handleSelectFile}
-          />
-         {/* isComputation && <PromptList onSelectPrompt={handleSelectPrompt} /> */}
-          <PromptList onSelectPrompt={handleSelectPrompt}/>
-        </Allotment>
-      </div>
-      <FileViewer
-        key={currentFile?.relativePath}
-        pipelineId={pipeline.id}
-        blockId={blockId}
-        currentFile={currentFile}
-        promptResponse={promptResponse}
-        onAcceptPrompt={handleSelectPrompt}
-      />
-      )
-    </Allotment>
+      <Allotment>
+        <div className="h-full">
+          <Allotment vertical>
+            <FileExplorer
+              pipelineId={pipeline.id}
+              blockId={blockId}
+              // currentFile={currentFile}
+              onSelectFile={handleSelectFile}
+            />
+            {isComputation && <PromptList onSelectPrompt={handleSelectPrompt} />}
+          </Allotment>
+        </div>
+        <FileViewer
+          pipelineId={pipeline.id}
+          blockId={blockId}
+          currentFile={currentFile}
+          promptResponse={promptResponse}
+          onAcceptPrompt={handleAcceptPrompt}
+        />
+        )
+      </Allotment>
   );
 }
