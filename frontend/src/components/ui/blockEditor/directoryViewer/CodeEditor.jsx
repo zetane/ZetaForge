@@ -51,7 +51,6 @@ export default function CodeEditor({
     onAcceptPrompt();
   };
 
-
   return (
     <div className="flex h-full flex-col">
       {promptResponse ? (
@@ -66,7 +65,10 @@ export default function CodeEditor({
           onSave={handleSave}
         />
       )}
-      {displayAgentPrompt && <AgentPrompt />}
+      {displayAgentPrompt && <AgentPrompt
+        pipelineId={pipelineId}
+        blockId={blockId}
+      />}
     </div>
   );
 }

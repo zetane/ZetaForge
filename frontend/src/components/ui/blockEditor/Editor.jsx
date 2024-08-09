@@ -80,7 +80,6 @@ export default function Editor({ blockKey, blockPath }) {
           <TabPanel className="overflow-y-auto">
             <SpecsInterface
               key={blockKey}
-              blockPath={blockPath}
               blockKey={blockKey}
             />
           </TabPanel>

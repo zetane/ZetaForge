@@ -4,20 +4,24 @@ import { openAIApiKeyAtom } from "@/atoms/apiKeysAtom";
 import { useState, useRef } from "react";
 import { useAtom } from "jotai";
 import { trpc } from "@/utils/trpc";
-import { blockEditorRootAtom } from "@/atoms/editorAtom";
 
-export default function AgentPrompt() {
+export default function AgentPrompt({ pipelineId, blockId }) {
   const [isLoading, setIsLoading] = useState(false);
   const [openAIApiKey] = useAtom(openAIApiKeyAtom);
-  const [blockPath] = useAtom(blockEditorRootAtom); // TODO remove this
   const [agentName] = useState("gpt-4_python_compute");
   const chatTextarea = useRef(null);
   const callAgent = trpc.block.callAgent.useMutation();
-  const history = trpc.chat.history.get.useQuery({ blockPath });
+  const history = trpc.chat.history.get.useQuery({
+    pipelineId: pipelineId,
+    blockId: blockId,
+  });
   const utils = trpc.useUtils();
   const updateHistory = trpc.chat.history.update.useMutation({
     onSuccess() {
-      utils.chat.history.get.invalidate({ blockPath });
+      utils.chat.history.get.invalidate({
+        pipelgneId: pipelineId,
+        blockId: blockId,
+      });
     },
   });
 

@@ -3,16 +3,19 @@ import fs from "fs/promises";
 import path from "path";
 import { z } from "zod";
 import {
+  callAgent,
   compileComputation,
   getBlockDirectory,
+  getBlockFile,
   runTest,
   saveBlockSpecs,
-  getBlockFile,
   updateBlockFile,
-  callAgent,
 } from "./blockSerialization.js";
 import { getHistory, getIndex, updateHistory, updateIndex } from "./chat.js";
+import { syncExecutionResults } from "./execution";
 import { readPipelines, readSpecs } from "./fileSystem.js";
+import { logger } from "./logger.js";
+import { errorHandling } from "./middleware";
 import {
   copyPipeline,
   executePipeline,
@@ -21,11 +24,8 @@ import {
   saveBlock,
   saveSpec,
 } from "./pipelineSerialization.js";
-import { publicProcedure, router } from "./trpc";
-import { errorHandling } from "./middleware";
-import { logger } from "./logger.js";
 import { anvilConfigurationSchema } from "./schema";
-import { syncExecutionResults } from "./execution";
+import { publicProcedure, router } from "./trpc";
 
 export const appRouter = router({
   getBlocks: publicProcedure.use(errorHandling).query(async () => {
@@ -275,15 +275,16 @@ export const appRouter = router({
     .use(errorHandling)
     .input(
       z.object({
-        blockPath: z.string(),
+        pipelineId: z.string(),
+        blockId: z.string(),
         blockSpecs: z.any(),
       }),
     )
     .mutation(async (opts) => {
       const { input } = opts;
-      const { blockPath, blockSpecs } = input;
+      const { pipelineId, blockId, blockSpecs } = input;
 
-      return await saveBlockSpecs(blockPath, blockSpecs);
+      return await saveBlockSpecs(pipelineId, blockId, blockSpecs);
     }),
   downloadExecutionResults: publicProcedure
     .use(errorHandling)
@@ -326,14 +327,15 @@ export const appRouter = router({
         .use(errorHandling)
         .input(
           z.object({
-            blockPath: z.string(),
+            pipelineId: z.string(),
+            blockId: z.string(),
           }),
         )
         .query(async (opts) => {
           const { input } = opts;
-          const { blockPath } = input;
+          const { pipelineId, blockId } = input;
 
-          const chatHistory = await getHistory(blockPath);
+          const chatHistory = await getHistory(pipelineId, blockId);
           return chatHistory;
         }),
       update: publicProcedure

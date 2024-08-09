@@ -50,8 +50,8 @@ export async function compileComputation(pipelineId, blockId) {
   return io;
 }
 
-export async function saveBlockSpecs(blockPath, specs) {
-  const specsPath = path.join(blockPath, BLOCK_SPECS_FILE_NAME);
+export async function saveBlockSpecs(pipelineId, blockId, specs) {
+  const specsPath = cacheJoin(pipelineId, blockId, BLOCK_SPECS_FILE_NAME);
 
   removeConnections(specs.inputs);
   removeConnections(specs.outputs);

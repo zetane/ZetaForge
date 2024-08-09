@@ -51,12 +51,14 @@ export default function FileViewer({
       if(isReadOnly) {
 
     return <CodeViewer
+      key={currentFile.relativePath}
       pipelineId={pipelineId}
       blockId={blockId}
       currentFile={currentFile}
     />
       } else {
     return <CodeEditor
+      key={currentFile.relativePath}
       pipelineId={pipelineId}
       blockId={blockId}
       currentFile={currentFile}

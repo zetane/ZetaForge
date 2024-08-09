@@ -5,12 +5,12 @@ import { TRPC_ERROR_CODE_KEY } from "@trpc/server/rpc/index";
 import { logger } from "./logger";
 
 export const errorHandling = middleware(async (opts) => {
-  const { ctx } = opts;
+  const { ctx, path } = opts;
   const response = await opts.next({ ctx });
 
   if (!response.ok) {
     const innerError = response.error.cause;
-    logger.error(innerError, "Server returned an error");
+    logger.error(innerError, `Server returned an error at path: ${path}`);
 
     if (innerError instanceof ServerError) {
       throw new TRPCError({

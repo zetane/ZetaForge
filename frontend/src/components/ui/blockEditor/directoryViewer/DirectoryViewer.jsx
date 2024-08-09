@@ -38,7 +38,7 @@ export default function DirectoryViewer({ blockId }) {
               // currentFile={currentFile}
               onSelectFile={handleSelectFile}
             />
-            {isComputation && <PromptList onSelectPrompt={handleSelectPrompt} />}
+            {isComputation && <PromptList pipelineId={pipeline.id} blockId={blockId} onSelectPrompt={handleSelectPrompt} />}
           </Allotment>
         </div>
         <FileViewer

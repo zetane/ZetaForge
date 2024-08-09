@@ -1,11 +1,11 @@
-import { useAtom } from "jotai";
 import Prompt from "./Prompt";
 import { trpc } from "@/utils/trpc";
-import { blockEditorRootAtom } from "@/atoms/editorAtom";
 
-export default function PromptList({onSelectPrompt}) {
-  const [blockPath] = useAtom(blockEditorRootAtom);
-  const history = trpc.chat.history.get.useQuery({ blockPath });
+export default function PromptList({ pipelineId, blockId, onSelectPrompt}) {
+  const history = trpc.chat.history.get.useQuery({ 
+    pipelineId: pipelineId,
+    blockId: blockId
+  });
   const historyData = history?.data ?? [];
 
   return (

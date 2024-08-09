@@ -46,7 +46,7 @@ const flattenSpecs = (data, prefix = "", path = []) => {
   return fields;
 };
 
-export default function SpecsInterface({ blockPath, blockKey }) {
+export default function SpecsInterface({ blockKey }) {
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const [blockSpecsBuffer, setBlockSpecsBuffer] = useImmer(
     pipeline.data[blockKey],
@@ -75,7 +75,8 @@ export default function SpecsInterface({ blockPath, blockKey }) {
 
   const saveSpecs = () => {
     saveBlockSpecs.mutate({
-      blockPath: blockPath,
+      pipelineId: pipeline.id,
+      blockId: blockKey,
       blockSpecs: blockSpecsBuffer,
     });
     setPipeline((draft) => {
