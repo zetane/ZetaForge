@@ -7,7 +7,7 @@ export default function BlockEditorPanel() {
   const [isEditorOpen] = useAtom(isBlockEditorOpenAtom);
   const [blockPath] = useAtom(blockEditorRootAtom);
   const [pipeline] = useAtom(pipelineAtom);
-  const blockKey = blockPath?.replaceAll("\\", "/").split("/").pop() ?? "";
+  const blockKey = blockPath?.replaceAll("\\", "/").split("/").pop() ?? "";// TODO flaky get the blockId directly
 
   return (
     <>
