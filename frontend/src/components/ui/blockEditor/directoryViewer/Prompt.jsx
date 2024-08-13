@@ -1,7 +1,7 @@
 import PromptMenu from "./PromptMenu";
 import { Button } from "@carbon/react";
 
-export default function Prompt({ children, response, onSelectPrompt }) {
+export default function Prompt({ children, index, pipelineId, blockId, response, onSelectPrompt }) {
   const handleClick = () => {
     onSelectPrompt(response);
   };
@@ -11,7 +11,7 @@ export default function Prompt({ children, response, onSelectPrompt }) {
       <Button onClick={handleClick} kind="ghost" className="max-w-full grow">
         {children}
       </Button>
-      <PromptMenu response={response} />
+      <PromptMenu index={index} pipelineId={pipelineId} blockId={blockId} response={response} />
     </div>
   );
 }

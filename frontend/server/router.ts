@@ -342,15 +342,16 @@ export const appRouter = router({
         .use(errorHandling)
         .input(
           z.object({
-            blockPath: z.string(),
+            pipelineId: z.string(),
+            blockId: z.string(),
             history: z.array(z.any()),
           }),
         )
         .mutation(async (opts) => {
           const { input } = opts;
-          const { blockPath, history } = input;
+          const { pipelineId, blockId, history } = input;
 
-          await updateHistory(blockPath, history);
+          await updateHistory(pipelineId, blockId, history);
         }),
     }),
     index: router({
@@ -358,29 +359,31 @@ export const appRouter = router({
         .use(errorHandling)
         .input(
           z.object({
-            blockPath: z.string(),
+            pipelineId: z.string(),
+            blockId: z.string(),
           }),
         )
         .query(async (opts) => {
           const { input } = opts;
-          const { blockPath } = input;
+          const { pipelineId, blockId } = input;
 
-          const chatIndex = await getIndex(blockPath);
+          const chatIndex = await getIndex(pipelineId, blockId);
           return chatIndex;
         }),
       update: publicProcedure
         .use(errorHandling)
         .input(
           z.object({
-            blockPath: z.string(),
+            pipelineId: z.string(),
+            blockId: z.string(),
             index: z.number(),
           }),
         )
         .mutation(async (opts) => {
           const { input } = opts;
-          const { blockPath, index } = input;
+          const { pipelineId, blockId, index } = input;
 
-          await updateIndex(blockPath, index);
+          await updateIndex(pipelineId, blockId, index);
         }),
     }),
   }),

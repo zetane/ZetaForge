@@ -13,7 +13,7 @@ export default function PromptList({ pipelineId, blockId, onSelectPrompt}) {
       <div className="pb-5">Prompts ({historyData.length})</div>
       <div className="flex flex-col">
         {historyData.map(({ prompt, response }, index) => (
-          <Prompt key={index} response={response} onSelectPrompt={onSelectPrompt}>{prompt}</Prompt>
+          <Prompt key={index} index={index} pipelineId={pipelineId} blockId={blockId} response={response} onSelectPrompt={onSelectPrompt}>{prompt}</Prompt>
         ))}
       </div>
     </div>
