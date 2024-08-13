@@ -15,12 +15,11 @@ import DirectoryViewer from "./directoryViewer/DirectoryViewer";
 import SpecsInterface from "./SpecsInterface";
 import TestLogs from "./TestLogs";
 
-export default function Editor({ blockKey, blockPath }) {
+export default function Editor({ blockKey, blockPath, isMaximized, onToggleMaximize }) {
   const [pipeline] = useAtom(pipelineAtom);
   const blockName = pipeline.data[blockKey].information.name;
   const blockLogs = `${blockPath}/logs.txt`;
   const setBlockEditorOpen = useSetAtom(isBlockEditorOpenAtom);
-  const [isMaximized, setMaximized] = useState(true);
 
   const sizeStyle =  isMaximized ? "maximized" : "minimized";
 
@@ -29,7 +28,7 @@ export default function Editor({ blockKey, blockPath }) {
   };
 
   const toggleMaximize = () => {
-    setMaximized((prev) => !prev);
+    onToggleMaximize();
   };
   
   //TODO reduce header size
