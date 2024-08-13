@@ -1,18 +1,17 @@
 import { useState } from "react";
-import { useAtom, useAtomValue } from "jotai";
+import { useAtomValue } from "jotai";
 import FileExplorer from "./FileExplorer";
 import FileViewer from "./FileViewer";
 import PromptList from "./PromptList";
-import { Allotment } from "allotment";
 import "allotment/dist/style.css";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
-import { splitPanelSizeAtom } from "@/atoms/editorAtom";
+import PersistentAllotment from "../../PersistentAllotment";
+import { Allotment } from "allotment";
 
 export default function DirectoryViewer({ blockId }) {
   const pipeline = useAtomValue(pipelineAtom);
   const [currentFile, setCurrentFile] = useState();
   const [promptResponse, setPromptResponse] = useState();
-  const [splitPanelSize, setSplitPanelSize] = useAtom(splitPanelSizeAtom);
 
   const isComputation = currentFile?.name === "computations.py" ?? false;
 
@@ -29,41 +28,24 @@ export default function DirectoryViewer({ blockId }) {
     setPromptResponse(undefined);
   };
 
-  const handleSplitPanelSizeChange = (key, size) => {
-    console.log(key);
-    setSplitPanelSize((previous) => ({
-      ...previous,
-      [key]: size,
-    }));
-  };
-
-  console.log(splitPanelSize.file, splitPanelSize.directory);
-
   return (
-    <Allotment
-      defaultSizes={splitPanelSize.file}
-      onChange={(size) => handleSplitPanelSizeChange("file", size)}//TODO find a way to avoid passing a string
-    >
+    <PersistentAllotment storageKey={"DirectoryViewerMain"} initialSize={[20, 80]}>
       <div className="h-full">
-        <Allotment
-          defaultSizes={splitPanelSize.directory}
-          onChange={(size) => handleSplitPanelSizeChange("directory", size)}//TODO find a way to avoid passing a string
-          vertical
-        >
+        <PersistentAllotment storageKey={"DirectoryViewerLeft"} initialSize={[50, 50]} vertical>
           <FileExplorer
             pipelineId={pipeline.id}
             blockId={blockId}
             // currentFile={currentFile}
             onSelectFile={handleSelectFile}
           />
-          {isComputation && (
+          <Allotment.Pane visible={isComputation}>
             <PromptList
               pipelineId={pipeline.id}
               blockId={blockId}
               onSelectPrompt={handleSelectPrompt}
             />
-          )}
-        </Allotment>
+          </Allotment.Pane>
+        </PersistentAllotment>
       </div>
       <FileViewer
         pipelineId={pipeline.id}
@@ -72,7 +54,6 @@ export default function DirectoryViewer({ blockId }) {
         promptResponse={promptResponse}
         onAcceptPrompt={handleAcceptPrompt}
       />
-      )
-    </Allotment>
+    </PersistentAllotment>
   );
 }
