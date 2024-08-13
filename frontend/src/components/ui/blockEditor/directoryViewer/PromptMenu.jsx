@@ -1,19 +1,20 @@
 import { OverflowMenu, OverflowMenuItem } from "@carbon/react";
 import { trpc } from "@/utils/trpc";
+import { Delete } from "@carbon/icons-react";
 
 export default function PromptMenu({ index, pipelineId, blockId }) {
   const utils = trpc.useUtils();
   const history = trpc.chat.history.get.useQuery({ pipelineId, blockId });
   const updateHistory = trpc.chat.history.update.useMutation({
     onSuccess() {
-      utils.chat.history.get.invalidate({ pipelineId, blockId});
+      utils.chat.history.get.invalidate({ pipelineId, blockId });
     },
   });
 
   const selectedIndex = trpc.chat.index.get.useQuery({ pipelineId, blockId });
   const updateIndex = trpc.chat.index.update.useMutation({
     onSuccess() {
-      utils.chat.index.get.invalidate({ pipelineId, blockId});
+      utils.chat.index.get.invalidate({ pipelineId, blockId });
     },
   });
 
@@ -39,11 +40,15 @@ export default function PromptMenu({ index, pipelineId, blockId }) {
 
   return (
     <OverflowMenu
+      className="rounded-lg"
       aria-label="overflow-menu"
       data-floating-menu-container="cds--header-panel"
       flipped
     >
-      <OverflowMenuItem itemText="Delete" onClick={handleDelete} />
+      <OverflowMenuItem itemText="Delete" isDelete onClick={handleDelete}>
+        <Delete/>
+      </OverflowMenuItem>
     </OverflowMenu>
   );
 }
+
