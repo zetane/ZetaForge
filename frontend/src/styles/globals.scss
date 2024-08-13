@@ -132,11 +132,11 @@ main {
   content-visibility: auto;
 }
 
-::-webkit-scrollbar { /* The scrollbar */
+::-webkit-scrollbar {
   width: 18px;
 }
 
-::-webkit-scrollbar-track { /* The track */
+::-webkit-scrollbar-track {
   background: var(--cds-background);
   padding: 1.5px;
 }
