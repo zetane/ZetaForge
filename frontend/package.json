@@ -24,6 +24,7 @@
     "pree2e": "vite build --mode=test",
     "lint": "eslint .",
     "format": "prettier --check .",
+    "format:fix": "prettier --write .",
     "test": "vitest run",
     "test:watch": "vitest"
   },
