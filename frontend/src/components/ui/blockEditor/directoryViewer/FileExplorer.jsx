@@ -16,12 +16,10 @@ export default function FileExplorer({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex gap-x-1">
         <ImportButtons
           pipelineId={pipelineId}
           blockId={blockId}
         />
-      </div>
       <div className="mt-1 flex-1 overflow-y-auto">
         {root.data && (// TODO loading state
           <TreeView

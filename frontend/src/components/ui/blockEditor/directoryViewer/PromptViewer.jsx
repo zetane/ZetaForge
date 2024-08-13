@@ -10,14 +10,16 @@ export default function PromptViewer({ response, onAcceptPrompt }) {
   return (
     <div className="relative min-h-0 flex-1">
       <ViewerCodeMirror code={response} />
-      <div className="absolute right-8 top-2 flex flex-row">
+      <div className="absolute right-2 top-2">
         <Button
           renderIcon={Copy}
           iconDescription="Accept"
           tooltipPosition="left"
           size="md"
           onClick={handleAccept}
-        />
+        >
+          Accept
+        </Button>
       </div>
     </div>
   );

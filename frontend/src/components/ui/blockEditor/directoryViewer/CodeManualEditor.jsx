@@ -16,7 +16,7 @@ export default function CodeManualEditor({ code, onChange, onSave }) {
         code={code}
         onChange={handleChange}
       />
-      <div className="absolute right-8 top-2">
+      <div className="absolute right-2 top-2">
         <Button
           renderIcon={Save}
           iconDescription="Save code"

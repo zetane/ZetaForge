@@ -31,7 +31,8 @@ export default function Editor({ blockKey, blockPath }) {
   const toggleMaximize = () => {
     setMaximized((prev) => !prev);
   };
-
+  
+  //TODO reduce header size
   return (
     <div
       className={
