@@ -1,13 +1,17 @@
 import PromptMenu from "./PromptMenu";
+import { Button } from "@carbon/react";
 
-export default function Prompt({ children, response, onSelectPrompt}) {
+export default function Prompt({ children, response, onSelectPrompt }) {
+  const handleClick = () => {
+    onSelectPrompt(response);
+  };
+
   return (
-    <div className="relative min-h-12 p-3 rounded-lg align-middle prompt">
-      <div className="absolute top-0 right-0">
-        <PromptMenu response={response} onSelectPrompt={onSelectPrompt}  />
-      </div>
-      {children}
+    <div className="prompt flex flex-row justify-between rounded-lg">
+      <Button onClick={handleClick} kind="ghost" className="max-w-full grow">
+        {children}
+      </Button>
+      <PromptMenu response={response} />
     </div>
   );
 }
-

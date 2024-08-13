@@ -12,16 +12,12 @@ export default function PromptMenu({response, onSelectPrompt}) {
   //     utils.chat.index.get.invalidate({ blockPath });
   //   },
   // });
-  const handleActivate = () => {
-    onSelectPrompt(response)
-  }
 
   const handleDelete = () => {
   }
 
   return (
     <OverflowMenu aria-label="overflow-menu" data-floating-menu-container="cds--header-panel" flipped>
-      <OverflowMenuItem itemText="Activate" onClick={handleActivate}/>
       <OverflowMenuItem itemText="Delete" onClick={handleDelete}/>
     </OverflowMenu>
   )
