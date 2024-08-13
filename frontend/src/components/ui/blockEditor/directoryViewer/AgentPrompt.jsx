@@ -1,4 +1,4 @@
-import { IconButton, Loading } from "@carbon/react";
+import { Button, Loading } from "@carbon/react";
 import { Bot, SendFilled } from "@carbon/icons-react";
 import { openAIApiKeyAtom } from "@/atoms/apiKeysAtom";
 import { useState, useRef } from "react";
@@ -63,17 +63,15 @@ export default function AgentPrompt({ pipelineId, blockId }) {
 
   return (
     <div className="relative">
-      <div className="text-right">
-        <div className="inline-block p-2">
-          <Bot size={24} className="align-middle" />
-          <span className="text-md align-middle">{agentName}</span>
-        </div>
-        <textarea
-          className="block-editor-prompt-input w-full resize-none p-2"
-          ref={chatTextarea}
-          placeholder="Ask to generate code or modify last code"
-          onKeyDown={handleKeyDown}
-        />
+      <textarea
+        className="block-editor-prompt-input relative"
+        ref={chatTextarea}
+        placeholder="Ask to generate code or modify your code"
+        onKeyDown={handleKeyDown}
+      />
+      <div className="inline-block p-2 absolute top-0 right-0">
+        <Bot size={24} className="align-middle" />
+        <span className="text-md align-middle">{agentName}</span>
       </div>
       <div className="absolute bottom-2 right-1">
         {isLoading ? (
@@ -85,14 +83,13 @@ export default function AgentPrompt({ pipelineId, blockId }) {
             />
           </div>
         ) : (
-          <IconButton
+          <Button
+            className="rounded-full"
             iconDescription="Send Prompt"
-            label="Send Prompt"
-            kind="ghost"
+            renderIcon={SendFilled}
+            hasIconOnly
             onClick={handleSubmit}
-          >
-            <SendFilled size={24} />
-          </IconButton>
+          />
         )}
       </div>
     </div>

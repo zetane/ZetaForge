@@ -14,7 +14,7 @@ export default function CodeEditor({
   promptResponse,
   onAcceptPrompt,
 }) {
-  // TODO check why editing is laggy
+  // TODO check why editing is laggy. add debounce?
   // TODO try make it saveable or readd the modal
   const openAIApiKey = useAtomValue(openAIApiKeyAtom);
   const fileContent = trpc.block.file.byPath.get.useQuery({
@@ -52,7 +52,7 @@ export default function CodeEditor({
   };
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col gap-8">
       {promptResponse ? (
         <PromptViewer
           response={promptResponse}

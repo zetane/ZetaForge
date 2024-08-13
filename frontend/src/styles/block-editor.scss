@@ -1,8 +1,7 @@
 @mixin light {
   --beHeader: #e8e8e8;
   --bePromptInputText: #000000;
-  --bePromptBackground: #c6c6c6;
-  --bePromptInputBackground: #f9f9f9;
+  --bePromptInputBackground: #ffffff;
   --beCodeViewerBackground: #f8f8f8;
   --beCodeEditorBackground: #ffffff;
   --bePromptPlaceholderText: #bebebe;
@@ -12,8 +11,7 @@
 @mixin dark {
   --beHeader: #141414;
   --bePromptInputText: #ffffff;
-  --bePromptBackground: #393939;
-  --bePromptInputBackground: #454545;
+  --bePromptInputBackground: #080808;
   --beCodeViewerBackground: #1e1e1e;
   --beCodeEditorBackground: #080808;
   --bePromptPlaceholderText: #989898;
@@ -51,14 +49,10 @@
   background-color: var(--beHeader);
 }
 
-.block-editor-prompt {
-  @apply rounded-lg p-4;
-  background-color: var(--bePromptBackground);
-}
-
 .block-editor-prompt-input {
-  @apply min-h-20 w-full rounded-lg border-gray-300 p-2 text-base placeholder-[var(--bePromptPlaceholderText)];
+  @apply min-h-24 w-full rounded-lg p-2 text-base placeholder-[var(--bePromptPlaceholderText)] resize-none;
   background-color: var(--bePromptInputBackground);
+  border-color: var(--beCodeViewerBackground);
   color: var(--bePromptInputText);
 }
 
