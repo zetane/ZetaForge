@@ -35,7 +35,6 @@ export default function DirectoryViewer({ blockId }) {
           <FileExplorer
             pipelineId={pipeline.id}
             blockId={blockId}
-            // currentFile={currentFile}
             onSelectFile={handleSelectFile}
           />
           <Allotment.Pane visible={isComputation}>
