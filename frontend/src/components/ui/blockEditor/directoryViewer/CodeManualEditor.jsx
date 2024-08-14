@@ -10,6 +10,8 @@ export default function CodeManualEditor({ code, onChange, onSave }) {
   const handleSave = () => {
     onSave();
   };
+
+
   return (
     <div className="relative min-h-0 flex-1">
       <EditorCodeMirror

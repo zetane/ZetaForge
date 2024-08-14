@@ -6,6 +6,7 @@ import { openAIApiKeyAtom } from "@/atoms/apiKeysAtom";
 import AgentPrompt from "./AgentPrompt";
 import PromptViewer from "./PromptViewer";
 import CodeManualEditor from "./CodeManualEditor";
+import useDebounce from "@/hooks/useDebounce";
 
 export default function CodeEditor({
   pipelineId,
@@ -24,6 +25,7 @@ export default function CodeEditor({
   });
   const updateFileContent = trpc.block.file.byPath.update.useMutation();
   const [fileContentBuffer, setFileContentBuffer] = useState(fileContent.data);
+  const setFileContentBufferDebounced = useDebounce(setFileContentBuffer, 100);
   const compile = useCompileComputation();
 
   const isComputation = currentFile.name === "computations.py";
@@ -43,7 +45,8 @@ export default function CodeEditor({
   };
 
   const handleChange = (newValue) => {
-    setFileContentBuffer(newValue);
+    setFileContentBufferDebounced(newValue);
+    // setFileContentBuffer(newValue);
   };
 
   const handleAcceptPrompt = () => {
