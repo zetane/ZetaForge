@@ -492,7 +492,6 @@ func main() {
 	})
 	router.POST("/build-context-status", func(ctx *gin.Context) {
 		prefix := getPrefix(ctx)
-		println(ctx.Request.Body)
 		request, err := validateJson[zjson.BuildContextStatusRequest](ctx.Request.Body)
 		if err != nil {
 			log.Printf("invalid json request; err=%v", err)

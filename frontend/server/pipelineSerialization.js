@@ -278,7 +278,6 @@ async function uploadBuildContexts(configuration, pipelineSpecs, buffer, rebuild
     pipelineSpecs,
     rebuild,
   );
-  logger.debug(buildContextStatuses);
   await Promise.all(
     buildContextStatuses
       .filter((status) => !status.isUploaded)
