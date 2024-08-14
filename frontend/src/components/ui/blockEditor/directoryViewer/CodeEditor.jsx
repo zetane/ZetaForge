@@ -15,8 +15,6 @@ export default function CodeEditor({
   promptResponse,
   onAcceptPrompt,
 }) {
-  // TODO check why editing is laggy. add debounce?
-  // TODO try make it saveable or readd the modal
   const openAIApiKey = useAtomValue(openAIApiKeyAtom);
   const fileContent = trpc.block.file.byPath.get.useQuery({
     pipelineId: pipelineId,
@@ -46,7 +44,6 @@ export default function CodeEditor({
 
   const handleChange = (newValue) => {
     setFileContentBufferDebounced(newValue);
-    // setFileContentBuffer(newValue);
   };
 
   const handleAcceptPrompt = () => {
