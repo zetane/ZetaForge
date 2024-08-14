@@ -4,7 +4,11 @@ import { HttpMethod } from "../utils/HttpMethod";
 import { buildUrl } from "../utils/urlBuilder";
 import { LOCAL_DOMAINS } from "../utils/constants";
 
-export async function getBuildContextStatus(configuration, pipelineSpecs, rebuild) {
+export async function getBuildContextStatus(
+  configuration,
+  pipelineSpecs,
+  rebuild,
+) {
   const response = await handleRequest(
     buildUrl(
       getScheme(configuration.anvil.host),
@@ -18,7 +22,7 @@ export async function getBuildContextStatus(configuration, pipelineSpecs, rebuil
     {
       rebuild: rebuild,
       pipeline: pipelineSpecs,
-    }
+    },
   );
 
   const body = await response.json();

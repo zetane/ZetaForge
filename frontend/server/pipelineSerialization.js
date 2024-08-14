@@ -272,7 +272,12 @@ async function uploadBlocks(
   return pipelineSpecs;
 }
 
-async function uploadBuildContexts(configuration, pipelineSpecs, buffer, rebuild) {
+async function uploadBuildContexts(
+  configuration,
+  pipelineSpecs,
+  buffer,
+  rebuild,
+) {
   const buildContextStatuses = await getBuildContextStatus(
     configuration,
     pipelineSpecs,
