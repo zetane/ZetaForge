@@ -101,7 +101,12 @@ type Execution struct {
 	Build    bool     `json:"build"`
 }
 
-type BuildContextStatus struct {
+type BuildContextStatusRequest struct {
+	Rebuild  bool     `json:"rebuild"`
+	Pipeline Pipeline `json:"pipeline"`
+}
+
+type BuildContextStatusResponse struct {
 	BlockKey   string `json:"blockKey"`
 	IsUploaded bool   `json:"isUploaded"`
 	S3Key      string `json:"s3Key"`

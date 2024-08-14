@@ -888,25 +888,29 @@ func cloudExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 	}
 }
 
-func getBuildContextStatus(ctx context.Context, pipeline *zjson.Pipeline, organization string, cfg Config) []zjson.BuildContextStatus {
-	var buildContextStatus []zjson.BuildContextStatus
+func getBuildContextStatus(ctx context.Context, pipeline *zjson.Pipeline, rebuild bool, organization string, cfg Config) []zjson.BuildContextStatusResponse {
+	var buildContextStatus []zjson.BuildContextStatusResponse
 	for id, block := range pipeline.Pipeline {
 		if len(block.Action.Container.Image) > 0 && !cfg.IsLocal {
-			status, _, err := checkImage(ctx, getImage(&block, organization), cfg)
-			s3Key := getKanikoBuildContextS3Key(&block)
-
-			if err != nil {
-				log.Printf("failed to get build context status; err=%v", err)
-				return buildContextStatus
+			var status = false
+			if !rebuild {
+				imageStatus, _, err := checkImage(ctx, getImage(&block, organization), cfg)
+				if err != nil {
+					log.Printf("failed to get build context status; err=%v", err)
+					return buildContextStatus
+				}
+				status = imageStatus
 			}
 
-			buildContextStatus = append(buildContextStatus, zjson.BuildContextStatus{
+			s3Key := getKanikoBuildContextS3Key(&block)
+
+			buildContextStatus = append(buildContextStatus, zjson.BuildContextStatusResponse{
 				BlockKey:   id,
 				IsUploaded: status,
 				S3Key:      s3Key,
 			})
 		} else {
-			buildContextStatus = append(buildContextStatus, zjson.BuildContextStatus{
+			buildContextStatus = append(buildContextStatus, zjson.BuildContextStatusResponse{
 				BlockKey:   id,
 				IsUploaded: true,
 				S3Key:      "",

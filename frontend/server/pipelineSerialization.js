@@ -276,10 +276,12 @@ async function uploadBuildContexts(configuration, pipelineSpecs, buffer, rebuild
   const buildContextStatuses = await getBuildContextStatus(
     configuration,
     pipelineSpecs,
+    rebuild,
   );
+  logger.debug(buildContextStatuses);
   await Promise.all(
     buildContextStatuses
-      .filter((status) => !status.isUploaded || rebuild)
+      .filter((status) => !status.isUploaded)
       .map((status) => [path.join(buffer, status.blockKey), status.s3Key])
       .map(([blockPath, s3Key]) =>
         uploadDirectory(s3Key, blockPath, configuration),
