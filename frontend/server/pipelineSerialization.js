@@ -167,10 +167,6 @@ export async function removeBlock(blockId, pipelinePath) {
   fs.rm(blockPath, { recursive: true });
 }
 
-export async function getBlockPath(blockId, pipelinePath) {
-  return await getPipelineBlockPath(pipelinePath, blockId);
-}
-
 export async function getPipelineBlockPath(pipelinePath, blockId) {
   const blockPaths = await getBlocksInDirectory(pipelinePath);
 

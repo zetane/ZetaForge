@@ -13,7 +13,7 @@ export default function DirectoryViewer({ blockId }) {
   const [currentFile, setCurrentFile] = useState();
   const [promptResponse, setPromptResponse] = useState();
 
-  const isComputation = currentFile?.name === "computations.py" ?? false;
+  const isComputation = currentFile?.name === "computations.py";
 
   const handleSelectFile = (selectedFile) => {
     setCurrentFile(selectedFile);

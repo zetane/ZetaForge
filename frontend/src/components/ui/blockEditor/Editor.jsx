@@ -10,15 +10,13 @@ import {
   Tabs,
 } from "@carbon/react";
 import { useAtom, useSetAtom } from "jotai";
-import { useState } from "react";
 import DirectoryViewer from "./directoryViewer/DirectoryViewer";
 import SpecsInterface from "./SpecsInterface";
 import TestLogs from "./TestLogs";
 
-export default function Editor({ blockKey, blockPath, isMaximized, onToggleMaximize }) {
+export default function Editor({ blockId, isMaximized, onToggleMaximize }) {
   const [pipeline] = useAtom(pipelineAtom);
-  const blockName = pipeline.data[blockKey].information.name;
-  const blockLogs = `${blockPath}/logs.txt`;
+  const blockName = pipeline.data[blockId].information.name;
   const setBlockEditorOpen = useSetAtom(isBlockEditorOpenAtom);
 
   const sizeStyle =  isMaximized ? "maximized" : "minimized";
@@ -30,7 +28,7 @@ export default function Editor({ blockKey, blockPath, isMaximized, onToggleMaxim
   const toggleMaximize = () => {
     onToggleMaximize();
   };
-  
+
   //TODO reduce header size
   return (
     <div
@@ -41,7 +39,7 @@ export default function Editor({ blockKey, blockPath, isMaximized, onToggleMaxim
       <div className="block-editor-header">
         <div className="p-4">
           <p className="text-lg italic">{blockName}</p>
-          <p className="text-sm">{blockKey}</p>
+          <p className="text-sm">{blockId}</p>
         </div>
         <div className="flex flex-row items-center justify-end">
           <IconButton
@@ -75,19 +73,18 @@ export default function Editor({ blockKey, blockPath, isMaximized, onToggleMaxim
         </TabList>
         <TabPanels>
           <TabPanel className="overflow-hidden h-full p-0">
-            <DirectoryViewer key={blockKey} blockId={blockKey} />
+            <DirectoryViewer key={blockId} blockId={blockId} />
           </TabPanel>
           <TabPanel className="overflow-y-auto">
             <SpecsInterface
-              key={blockKey}
-              blockKey={blockKey}
+              key={blockId}
+              blockId={blockId}
             />
           </TabPanel>
           <TabPanel className="overflow-hidden">
             <TestLogs
-              filePath={blockLogs}
-              blockPath={blockPath}
-              blockKey={blockKey}
+              pipelineId={pipeline.id}
+              blockId={blockId}
             />
           </TabPanel>
         </TabPanels>

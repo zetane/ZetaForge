@@ -1,6 +1,6 @@
 import { execFile, spawnSync } from "child_process";
 import { app } from "electron";
-import { cacheJoin } from "./cache"
+import { cacheJoin } from "./cache";
 import fs from "fs/promises";
 import path from "path";
 import {
@@ -13,11 +13,7 @@ import { logger } from "./logger";
 import { HttpStatus, ServerError } from "./serverError";
 
 export async function compileComputation(pipelineId, blockId) {
-  const sourcePath = cacheJoin(
-    pipelineId,
-    blockId,
-    "computations.py",
-  );
+  const sourcePath = cacheJoin(pipelineId, blockId, "computations.py");
   const source = await fs.readFile(sourcePath, { encoding: "utf8" });
 
   const scriptPath = app.isPackaged
@@ -70,7 +66,8 @@ function removeConnections(io) {
   return io;
 }
 
-export async function runTest(blockPath, blockKey) {
+export async function runTest(pipelineId, blockId) {
+  const blockPath = cacheJoin(pipelineId, blockId)
   const scriptPath = app.isPackaged
     ? path.join(process.resourcesPath, "resources", "run_test.py")
     : path.join("resources", "run_test.py");
@@ -81,7 +78,7 @@ export async function runTest(blockPath, blockKey) {
   return new Promise((resolve, reject) => {
     execFile(
       "python",
-      [scriptPath, blockPath, blockKey],
+      [scriptPath, blockPath, blockId],
       (error, stdout, stderr) => {
         if (error) {
           reject(error);
@@ -108,21 +105,14 @@ function buildCompilationServerError(error) {
 }
 
 export async function getBlockDirectory(pipelineId, blockId) {
-  const blockDirectory = cacheJoin(
-    pipelineId,
-    blockId,
-  );
+  const blockDirectory = cacheJoin(pipelineId, blockId);
 
   const tree = await getDirectoryTree(blockDirectory);
   return tree;
 }
 
 export async function getBlockFile(pipelineId, blockId, relativeFilePath) {
-  const absoluteFilePath = cacheJoin(
-    pipelineId,
-    blockId,
-    relativeFilePath,
-  );
+  const absoluteFilePath = cacheJoin(pipelineId, blockId, relativeFilePath);
 
   let fileContent = "File type is not supported";
   if (isFileSupported(absoluteFilePath)) {
@@ -137,11 +127,7 @@ export async function updateBlockFile(
   relativeFilePath,
   content,
 ) {
-  const absoluteFilePath = cacheJoin(
-    pipelineId,
-    blockId,
-    relativeFilePath,
-  );
+  const absoluteFilePath = cacheJoin(pipelineId, blockId, relativeFilePath);
 
   await fs.writeFile(absoluteFilePath, content);
 }
@@ -173,7 +159,8 @@ export async function callAgent(
     "computations.py",
   );
 
-  const { stdout } = spawnSync("python", [scriptPath], { //TODO wrapper for invoking python scripts
+  const { stdout } = spawnSync("python", [scriptPath], {
+    //TODO wrapper for invoking python scripts
     input: JSON.stringify({
       apiKey,
       userMessage,
@@ -184,4 +171,14 @@ export async function callAgent(
   const response = JSON.parse(stdout).response;
 
   return response;
+}
+
+export async function getLogs(pipelineId, blockId) {
+  const logsPath = cacheJoin(pipelineId, blockId, "logs.txt");
+
+  if (!(await fileExists(logsPath))) {
+    return "Logs not yet available";
+  }
+
+  return await fs.readFile(logsPath, "utf8");
 }

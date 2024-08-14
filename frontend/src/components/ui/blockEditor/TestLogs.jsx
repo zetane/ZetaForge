@@ -1,66 +1,26 @@
 import { trpc } from "@/utils/trpc";
 import { PlayFilled } from "@carbon/icons-react";
 import { Button } from "@carbon/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { LogsCodeMirror } from "./directoryViewer/CodeMirrorComponents";
+import ScrollToBottom from "react-scroll-to-bottom";
 
-const LogsViewer = ({ filePath, blockPath, blockKey }) => {
-  const [logs, setLogs] = useState("");
-  const [stickBottom, setStickBottom] = useState(false);
-  const logsDiv = useRef(null);
-  const serverAddress = "http://localhost:3330";
+const LogsViewer = ({ blockId, pipelineId }) => {
   const [isRunButtonPressed, setIsRunButtonPressed] = useState(false);
 
+  const logs = trpc.block.log.get.useQuery(
+    { pipelineId, blockId },
+    { enabled: isRunButtonPressed, refetchInterval: 1000 },
+  );
   const runTest = trpc.runTest.useMutation();
 
-  useEffect(() => {
-    let interval;
-
-    if (isRunButtonPressed) {
-      interval = setInterval(() => {
-        fetch(`${serverAddress}/api/logs?filePath=${filePath}`)
-          .then((response) => response.text())
-          .then((data) => {
-            setStickBottom(isAtBottom());
-            setLogs(data);
-          })
-          .catch((err) => console.error(err));
-      }, 1000);
-    }
-
-    return () => {
-      if (interval) {
-        clearInterval(interval);
-      }
-    };
-  }, [filePath, isRunButtonPressed]);
-
-  const isAtBottom = () => {
-    return (
-      logsDiv.current.scrollHeight -
-        logsDiv.current.scrollTop -
-        logsDiv.current.clientHeight <
-      100
-    );
-  };
-
-  const scrollToBottom = () => {
-    if (stickBottom) {
-      logsDiv.current.scrollTo({
-        lef: 0,
-        top: logsDiv.current.scrollHeight,
-        behavior: "smooth",
-      });
-    }
-  };
-
-  const handleDockerCommands = useCallback(async () => {
+  const handleDockerCommands = async () => {
     setIsRunButtonPressed(true);
-    runTest.mutateAsync({ blockPath: blockPath, blockKey: blockKey });
-  }, [blockKey, blockPath]);
+    await runTest.mutateAsync({ pipelineId, blockId });
+  };
 
   return (
-    <>
+    <div className="flex flex-col h-full">
       <Button
         renderIcon={PlayFilled}
         iconDescription="Run test"
@@ -71,10 +31,10 @@ const LogsViewer = ({ filePath, blockPath, blockKey }) => {
       >
         Run Test
       </Button>
-      <div ref={logsDiv} className="max-h-full overflow-y-scroll">
-        <LogsCodeMirror code={logs} onUpdate={scrollToBottom} />
-      </div>
-    </>
+      <ScrollToBottom className="flex-1 min-h-0">
+        <LogsCodeMirror code={logs.data ?? ""}/>
+      </ScrollToBottom>
+    </div>
   );
 };
 

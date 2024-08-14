@@ -7,6 +7,7 @@ import {
   compileComputation,
   getBlockDirectory,
   getBlockFile,
+  getLogs,
   runTest,
   saveBlockSpecs,
   updateBlockFile,
@@ -19,7 +20,6 @@ import { errorHandling } from "./middleware";
 import {
   copyPipeline,
   executePipeline,
-  getBlockPath,
   removeBlock,
   saveBlock,
   saveSpec,
@@ -193,19 +193,6 @@ export const appRouter = router({
       }
       return savePaths;
     }),
-  getBlockPath: publicProcedure
-    .use(errorHandling)
-    .input(
-      z.object({
-        blockId: z.string(),
-        pipelinePath: z.string(),
-      }),
-    )
-    .mutation(async (opts) => {
-      const { input } = opts;
-      const { blockId, pipelinePath } = input;
-      return await getBlockPath(blockId, pipelinePath);
-    }),
   removeBlock: publicProcedure
     .use(errorHandling)
     .input(
@@ -311,15 +298,15 @@ export const appRouter = router({
     .use(errorHandling)
     .input(
       z.object({
-        blockPath: z.string(),
-        blockKey: z.string(),
+        pipelineId: z.string(),
+        blockId: z.string(),
       }),
     )
     .mutation(async (opts) => {
       const { input } = opts;
-      const { blockPath, blockKey } = input;
+      const { pipelineId, blockId} = input;
 
-      await runTest(blockPath, blockKey);
+      await runTest(pipelineId, blockId);
     }),
   chat: router({
     history: router({
@@ -459,6 +446,22 @@ export const appRouter = router({
 
         return callAgent(userMessage, agentName, conversationHistory, apiKey);
       }),
+    log: router({
+      get: publicProcedure
+        .use(errorHandling)
+        .input(
+          z.object({
+            pipelineId: z.string(),
+            blockId: z.string(),
+          }),
+        )
+        .query(async (opts) => {
+          const { input } = opts;
+          const { pipelineId, blockId } = input;
+
+          return getLogs(pipelineId, blockId);
+        }),
+    }),
   }),
 });
 
