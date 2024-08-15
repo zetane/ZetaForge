@@ -11,56 +11,12 @@ export default function AgentPrompt({ pipelineId, blockId }) {
   const [agentName] = useState("gpt-4_python_compute");
   const chatTextarea = useRef(null);
   const utils = trpc.useUtils();
-  const callAgent = trpc.block.callAgent.useMutation({
-    onSuccess() {
-      utils.chat.history.get.invalidate({
-        pipelgneId: pipelineId,
-        blockId: blockId,
-      });
-    },
-  });
+  const callAgent = trpc.block.callAgent.useMutation();
   const history = trpc.chat.history.get.useQuery({
     pipelineId: pipelineId,
     blockId: blockId,
   });
-  const updateHistory = trpc.chat.history.update.useMutation({
-    onSuccess(a) {
-      // console.log(a);
-      // utils.chat.history.get.invalidate({
-      //   pipelgneId: pipelineId,
-      //   blockId: blockId,
-      // });
-    },
-    onMutate({ pipelineId, blockId, history }) {
-      // utils.chat.history.get.cancel({
-      //   pipelineId: pipelineId,
-      //   blockId: blockId,
-      // });
-      // console.log(history.length);
-      // utils.chat.history.get.setData(
-      //   {
-      //     pipelineId: pipelineId,
-      //     blockId: blockId,
-      //   },
-      //   history,
-      // );
-      // console.log("mutate", utils.chat.history.get.getData({
-      //   pipelineId: pipelineId,
-      //   blockId: blockId,
-      // }));
-    },
-    onSettled() {
-      // utils.chat.history.get.invalidate({
-      //   pipelgneId: pipelineId,
-      //   blockId: blockId,
-      // });
-      //
-      // console.log("settle", utils.chat.history.get.getData({
-      //   pipelineId: pipelineId,
-      //   blockId: blockId,
-      // }));
-    },
-  });
+  const updateHistory = trpc.chat.history.update.useMutation({});
 
   const handleSubmit = async (e) => {
     setIsLoading(true);
@@ -74,8 +30,6 @@ export default function AgentPrompt({ pipelineId, blockId }) {
       apiKey: openAIApiKey,
     });
 
-    console.log(response);
-
     const newHistory = [
       ...history.data,
       {
@@ -84,8 +38,6 @@ export default function AgentPrompt({ pipelineId, blockId }) {
         response: response,
       },
     ];
-
-    console.log(newHistory.length);
 
     await updateHistory.mutateAsync({
       pipelineId: pipelineId,

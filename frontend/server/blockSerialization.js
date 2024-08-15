@@ -1,6 +1,5 @@
-import { execFile, spawnSync } from "child_process";
+import { execFile, spawn, spawnSync } from "child_process";
 import { app } from "electron";
-import { cacheJoin } from "./cache";
 import fs from "fs/promises";
 import path from "path";
 import {
@@ -8,6 +7,7 @@ import {
   SUPPORTED_FILE_EXTENSIONS,
   SUPPORTED_FILE_NAMES,
 } from "../src/utils/constants";
+import { cacheJoin } from "./cache";
 import { fileExists, getDirectoryTree } from "./fileSystem";
 import { logger } from "./logger";
 import { HttpStatus, ServerError } from "./serverError";
@@ -67,7 +67,7 @@ function removeConnections(io) {
 }
 
 export async function runTest(pipelineId, blockId) {
-  const blockPath = cacheJoin(pipelineId, blockId)
+  const blockPath = cacheJoin(pipelineId, blockId);
   const scriptPath = app.isPackaged
     ? path.join(process.resourcesPath, "resources", "run_test.py")
     : path.join("resources", "run_test.py");
@@ -159,15 +159,18 @@ export async function callAgent(
     "computations.py",
   );
 
-  const { stdout } = spawnSync("python", [scriptPath], {
-    //TODO wrapper for invoking python scripts
-    input: JSON.stringify({
-      apiKey,
-      userMessage,
-      conversationHistory,
-    }),
-    encoding: "utf8",
-  });
+  const stdout = await spawnAsync(
+    "python",
+    [scriptPath],
+    {
+      input: JSON.stringify({
+        apiKey,
+        userMessage,
+        conversationHistory,
+      }),
+      encoding: "utf8",
+    },
+  );
   const response = JSON.parse(stdout).response;
 
   return response;
@@ -181,4 +184,36 @@ export async function getLogs(pipelineId, blockId) {
   }
 
   return await fs.readFile(logsPath, "utf8");
+}
+
+function spawnAsync(command, args, options) {
+  return new Promise((resolve, reject) => {
+    let stdout = "";
+    let stderr = "";
+    const process = spawn(command, args, options);
+
+    process.stdout.setEncoding(options.encoding);
+    process.stdout.on("data", (data) => {
+      stdout += data;
+    });
+
+    process.stderr.setEncoding(options.encoding);
+    process.stderr.on("data", (data) => {
+      stderr += data;
+    });
+
+    process.on("exit", (status) => {
+      if (status != 0) {
+        reject(stderr);
+      }
+      resolve(stdout);
+    });
+
+    process.on("error", (error) => {
+      reject(error);
+    });
+
+    process.stdin.write(options.input);
+    process.stdin.end();
+  });
 }
