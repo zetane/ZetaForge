@@ -33,6 +33,13 @@ export function generateId(block) {
   return id;
 }
 
+export function generatePipelineId(pipeline) {
+  const nanoid = customAlphabet("1234567890abcdefghijklmnopqrstuvwxyz", 12);
+  const newNanoid = nanoid();
+  const id = `${pipeline.name}-${newNanoid}`;
+  return id;
+}
+
 export function replaceIds(block, id) {
   if (block.action?.container) {
     block.action.container.version = id;
