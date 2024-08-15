@@ -11,11 +11,10 @@ export default function CodeManualEditor({ code, onChange, onSave }) {
     onSave();
   };
 
-
   return (
     <div className="relative min-h-0 flex-1">
       <EditorCodeMirror
-        code={code}
+        code={code ?? ""}
         onChange={handleChange}
       />
       <div className="absolute right-2 top-2">

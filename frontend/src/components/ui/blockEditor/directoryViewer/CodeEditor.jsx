@@ -1,5 +1,5 @@
 import { trpc } from "@/utils/trpc";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCompileComputation } from "@/hooks/useCompileSpecs";
 import { useAtomValue } from "jotai";
 import { openAIApiKeyAtom } from "@/atoms/apiKeysAtom";
@@ -22,12 +22,18 @@ export default function CodeEditor({
     path: currentFile.relativePath,
   });
   const updateFileContent = trpc.block.file.byPath.update.useMutation();
-  const [fileContentBuffer, setFileContentBuffer] = useState(fileContent.data);
+  const [fileContentBuffer, setFileContentBuffer] = useState();
   const setFileContentBufferDebounced = useDebounce(setFileContentBuffer, 100);
   const compile = useCompileComputation();
 
   const isComputation = currentFile.name === "computations.py";
   const displayAgentPrompt = isComputation && openAIApiKey;
+
+  useEffect(() => {
+    if (!fileContentBuffer) {
+      setFileContentBuffer(fileContent.data);
+    }
+  }, [fileContent.data]);
 
   const handleSave = async () => {
     await updateFileContent.mutateAsync({
@@ -65,10 +71,9 @@ export default function CodeEditor({
           onSave={handleSave}
         />
       )}
-      {displayAgentPrompt && <AgentPrompt
-        pipelineId={pipelineId}
-        blockId={blockId}
-      />}
+      {displayAgentPrompt && (
+        <AgentPrompt pipelineId={pipelineId} blockId={blockId} />
+      )}
     </div>
   );
 }

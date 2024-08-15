@@ -38,7 +38,8 @@ export default function AgentPrompt({ pipelineId, blockId }) {
     });
 
     await updateHistory.mutateAsync({
-      blockPath: blockPath,
+      pipelineId: pipelineId,
+      blockId: blockId,
       history: [
         ...history.data,
         {
