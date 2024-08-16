@@ -15,7 +15,7 @@ export default function FileExplorer({ pipelineId, blockId, onSelectFile }) {
       <div className="mt-1 flex-1 overflow-y-auto">
         {root.data && (
           <TreeView label="directory view" hideLabel>
-            <DirectoryEntryNode parent={root.data} onSelectFile={onSelectFile} />
+            <DirectoryEntryNode tree={root.data} isRoot={true} onSelectFile={onSelectFile} />
           </TreeView>
         )}
       </div>
