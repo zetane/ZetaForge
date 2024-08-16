@@ -3,12 +3,13 @@ import { Bot, SendFilled } from "@carbon/icons-react";
 import { openAIApiKeyAtom } from "@/atoms/apiKeysAtom";
 import { useState, useRef } from "react";
 import { useAtom } from "jotai";
+import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { trpc } from "@/utils/trpc";
 
 export default function AgentPrompt({ pipelineId, blockId }) {
+  const [pipeline] = useAtom(pipelineAtom);
   const [isLoading, setIsLoading] = useState(false);
   const [openAIApiKey] = useAtom(openAIApiKeyAtom);
-  const [agentName] = useState("gpt-4_python_compute");
   const chatTextarea = useRef(null);
   const utils = trpc.useUtils();
   const callAgent = trpc.block.callAgent.useMutation();
@@ -17,6 +18,9 @@ export default function AgentPrompt({ pipelineId, blockId }) {
     blockId: blockId,
   });
   const updateHistory = trpc.chat.history.update.useMutation({});
+  console.log(pipeline);
+  const isViewBlock = pipeline?.data[blockId]?.information?.block_type === "view" ?? false;
+  const agentName = isViewBlock ? "gpt-4_python_view" : "gpt-4_python_compute";
 
   const handleSubmit = async (e) => {
     setIsLoading(true);
