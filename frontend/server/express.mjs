@@ -1,5 +1,4 @@
 import bodyParser from "body-parser";
-import { spawn } from "child_process";
 import compression from "compression";
 import cors from "cors";
 import "dotenv/config";
