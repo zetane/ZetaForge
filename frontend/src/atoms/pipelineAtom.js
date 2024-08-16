@@ -1,6 +1,5 @@
 import { atom } from "jotai";
 import { withImmer } from "jotai-immer";
-import { customAlphabet } from "nanoid";
 import rfdc from "rfdc";
 import { sha1 } from "js-sha1";
 import { generateId } from "@/utils/blockUtils";
