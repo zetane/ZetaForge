@@ -8,7 +8,6 @@ export default function PromptList({ pipelineId, blockId, onSelectPrompt}) {
   });
   const historyData = history?.data ?? [];
 
-  // TODO make the list scrollable
   return (
     <div className="p-3 flex flex-col max-h-full gap-5">
       <div>Prompts ({historyData.length})</div>
