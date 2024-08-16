@@ -4,7 +4,7 @@ import { pipelineAtom, workspaceAtom } from "@/atoms/pipelineAtom";
 import { pipelineConnectionsAtom } from "@/atoms/pipelineConnectionsAtom";
 import Drawflow from "@/components/ZetaneDrawflowEditor";
 import BlockGenerator from "@/components/ui/blockGenerator/BlockGenerator";
-import { generateId, replaceIds, generatePipelineId } from "@/utils/blockUtils";
+import { generateId, replaceIds } from "@/utils/blockUtils";
 import { trpc } from "@/utils/trpc";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import { useAtom, useSetAtom } from "jotai";
@@ -12,7 +12,6 @@ import { useImmerAtom } from "jotai-immer";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLoadCorePipeline } from "@/hooks/useLoadPipeline";
 import { createConnections } from "@/utils/createConnections";
-import { customAlphabet } from "nanoid";
 
 const launchDrawflow = (
   parentDomRef,
@@ -169,7 +168,7 @@ export default function DrawflowWrapper() {
   }, [renderNodes]);
 
   const addBlockToPipeline = (block) => {
-    const id = generateId(block);
+    const id = generateId(block, block.information.id);
     block = replaceIds(block, id);
     setPipeline((draft) => {
       draft.data[id] = block;
@@ -203,9 +202,8 @@ export default function DrawflowWrapper() {
   const dropPipeline = (pipelineData) => {
     const pipelineJson = JSON.parse(pipelineData);
     const { specs, path } = pipelineJson;
-    const newId = generatePipelineId(specs);
+    const newId = generateId(pipeline, pipeline.name);
     specs.id = newId;
-    specs.history = newId;
     loadPipeline(specs, path);
   };
 

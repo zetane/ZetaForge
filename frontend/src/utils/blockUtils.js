@@ -26,18 +26,19 @@ export const genJSON = (block, id) => {
   };
 };
 
-export function generateId(block) {
-  const nanoid = customAlphabet("1234567890abcedfghijklmnopqrstuvwxyz", 12);
-  const newNanoid = nanoid();
-  const id = `${block.information.id}-${newNanoid}`;
-  return id;
-}
+export function generateId(entity, prefix) {
+  const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyz0123456789", 12);
 
-export function generatePipelineId(pipeline) {
-  const nanoid = customAlphabet("1234567890abcdefghijklmnopqrstuvwxyz", 12);
+  if (entity && entity.name) {
+    const [baseName] = entity.name.split("-");
+    const newNanoid = nanoid();
+    const newId = `${baseName}-${newNanoid}`;
+    return newId;
+  }
+
   const newNanoid = nanoid();
-  const id = `${pipeline.name}-${newNanoid}`;
-  return id;
+  const newId = `${prefix}-${newNanoid}`;
+  return newId;
 }
 
 export function replaceIds(block, id) {
