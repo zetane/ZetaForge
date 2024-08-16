@@ -9,7 +9,7 @@ export default function PromptList({ pipelineId, blockId, onSelectPrompt}) {
   const historyData = history?.data ?? [];
 
   return (
-    <div className="p-3 flex flex-col max-h-full gap-5">
+    <div className="p-3 flex flex-col h-full gap-5">
       <div>Prompts ({historyData.length})</div>
       <div className="flex flex-col gap-2 pr-1 flex-1 min-h-0 overflow-auto">
         {historyData.map(({ prompt, response }, index) => (
