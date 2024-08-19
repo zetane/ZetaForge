@@ -30,9 +30,14 @@ export function generateId(prefix) {
   const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyz0123456789", 12);
 
   const newNanoid = nanoid();
-  const basePrefix = prefix ? prefix.split("-")[0] : "pipeline";
-  const newId = `${basePrefix}-${newNanoid}`;
-  return newId;
+
+  if (prefix) {
+    const [basePrefix] = prefix.split("-");
+    const finalPrefix = basePrefix === "pipeline" ? basePrefix : prefix;
+    return `${finalPrefix}-${newNanoid}`;
+  }
+
+  return `pipeline-${newNanoid}`;
 }
 
 export function replaceIds(block, id) {
