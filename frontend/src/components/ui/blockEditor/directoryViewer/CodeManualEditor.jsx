@@ -1,14 +1,19 @@
 import { Button} from "@carbon/react";
 import { Save } from "@carbon/icons-react";
 import { EditorCodeMirror } from "./CodeMirrorComponents";
+import { useState } from "react";
 
 export default function CodeManualEditor({ code, onChange, onSave }) {
+  const [isLoading, setIsLoading] = useState(false)
+
   const handleChange = (value) => {
     onChange(value);
   };
 
-  const handleSave = () => {
-    onSave();
+  const handleSave = async () => {
+    setIsLoading(true)
+    await onSave();
+    setIsLoading(false);
   };
 
   return (
@@ -25,6 +30,7 @@ export default function CodeManualEditor({ code, onChange, onSave }) {
           hasIconOnly
           size="md"
           onClick={handleSave}
+          disabled={isLoading}
         />
       </div>
     </div>
