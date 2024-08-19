@@ -22,7 +22,7 @@ export default function CodeManualEditor({ code, onChange, onSave }) {
         code={code ?? ""}
         onChange={handleChange}
       />
-      <div className="absolute right-2 top-2">
+      <div className="absolute right-5 top-5">
         <Button
           renderIcon={Save}
           iconDescription="Save code"
