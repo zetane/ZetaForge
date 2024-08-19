@@ -29,7 +29,6 @@ export default function Editor({ blockId, isMaximized, onToggleMaximize }) {
     onToggleMaximize();
   };
 
-  //TODO reduce header size
   return (
     <div
       className={
@@ -37,19 +36,18 @@ export default function Editor({ blockId, isMaximized, onToggleMaximize }) {
       }
     >
       <div className="block-editor-header">
-        <div className="p-4">
-          <p className="text-lg italic">{blockName}</p>
-          <p className="text-sm">{blockId}</p>
+        <div className="py-2 pl-4">
+          <p className="text-base italic">{blockName}</p>
+          <p className="text-xs">{blockId}</p>
         </div>
         <div className="flex flex-row items-center justify-end">
           <IconButton
             kind="ghost"
             size="lg"
-            className="my-px-16"
             onClick={toggleMaximize}
             label={isMaximized ? "Minimize" : "Maximize"}
           >
-            {isMaximized ? <Minimize size={24} /> : <Maximize size={24} />}
+            {isMaximized ? <Minimize/> : <Maximize/>}
           </IconButton>
           <IconButton
             kind="ghost"
@@ -57,7 +55,7 @@ export default function Editor({ blockId, isMaximized, onToggleMaximize }) {
             onClick={handleClose}
             label="Close"
           >
-            <Close size={24} />
+            <Close/>
           </IconButton>
         </div>
       </div>
