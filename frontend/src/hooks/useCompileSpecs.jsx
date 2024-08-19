@@ -28,7 +28,7 @@ export const useCompileComputation = () => {
         setPipeline((draft) => {
           draft.data[blockId] = newSpecs;
         });
-        await saveBlockSpecs.mutateAsync({//TODO check if it's still required
+        await saveBlockSpecs.mutateAsync({
           pipelineId: pipelineId,
           blockId: blockId,
           blockSpecs: newSpecs,
