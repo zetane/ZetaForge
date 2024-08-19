@@ -16,11 +16,7 @@ export default function CodeEditor({
   onAcceptPrompt,
 }) {
   const openAIApiKey = useAtomValue(openAIApiKeyAtom);
-  const fileContent = trpc.block.file.byPath.get.useQuery({
-    pipelineId: pipelineId,
-    blockId: blockId,
-    path: currentFile.relativePath,
-  });
+  const getFileContent = trpc.block.file.byPath.get.useMutation();
   const updateFileContent = trpc.block.file.byPath.update.useMutation();
   const [fileContentBuffer, setFileContentBuffer] = useState();
   const setFileContentBufferDebounced = useDebounce(setFileContentBuffer, 100);
@@ -30,10 +26,17 @@ export default function CodeEditor({
   const displayAgentPrompt = isComputation && openAIApiKey;
 
   useEffect(() => {
-    if (!fileContentBuffer) {
-      setFileContentBuffer(fileContent.data);
-    }
-  }, [fileContent.data]);
+    const fetchFileContent = async () => {
+      const content = await getFileContent.mutateAsync({
+        pipelineId: pipelineId,
+        blockId: blockId,
+        path: currentFile.relativePath,
+      });
+      setFileContentBuffer(content);
+    };
+
+    fetchFileContent();
+  }, []);
 
   const handleSave = async () => {
     await updateFileContent.mutateAsync({

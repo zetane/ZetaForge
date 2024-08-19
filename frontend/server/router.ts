@@ -400,7 +400,7 @@ export const appRouter = router({
               path: z.string(),
             }),
           )
-          .query(async (opts) => {
+          .mutation(async (opts) => {
             const { input } = opts;
             const { pipelineId, blockId, path } = input;
 
