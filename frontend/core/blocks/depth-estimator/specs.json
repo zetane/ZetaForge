@@ -2,7 +2,7 @@
   "information": {
     "id": "depth-v2",
     "name": "Depth Anything",
-    "description": "Performs depth estimation on an input image using the Depth-Anything-V2-Small model.\n\nThis function uses the Hugging Face Transformers pipeline to load the \n'depth-anything/Depth-Anything-V2-Small-hf' model for depth estimation. It processes \nthe input image and generates a depth map, which is then saved as 'depth.jpg'.\n\nInputs:\n    img_path (str): Path to the input image file.(use file core block)\n\nOutputs:\n    dict: A dictionary containing the following key-value pair:\n        'depth' (list): A list containing the filename of the saved depth map ('depth.jpg').\n\nRequirements:\n    - transformers library\n    - PIL (Python Imaging Library)\n    - 'depth-anything/Depth-Anything-V2-Small-hf' model from Hugging Face\n\nExample:\n    result = compute('path/to/your/image.jpg')\n    print(result)  # Output: {'depth': ['depth.jpg']}\n\nNote:\n    The depth map is saved in the current working directory as 'depth.jpg'.\n    Ensure you have sufficient disk space and write permissions.",
+    "description": "Performs depth estimation on an input image using the Depth-Anything-V2-Small model.\n\nThis function uses the Hugging Face Transformers pipeline to load the 'depth-anything/Depth-Anything-V2-Small-hf' model for depth estimation. It processes the input image and generates a depth map, which is then saved as 'depth.jpg'.\n\nInputs:\n    img_path (str): Path to the input image file.(use file core block)\n\nOutputs:\n    dict: A dictionary containing the following key-value pair:\n        'depth' (list): A list containing the filename of the saved depth map ('depth.jpg').\n\nRequirements:\n    - transformers library\n    - PIL (Python Imaging Library)\n    - 'depth-anything/Depth-Anything-V2-Small-hf' model from Hugging Face.",
     "system_versions": [
       "0.1"
     ],
@@ -25,7 +25,7 @@
   "action": {
     "container": {
       "image": "depth-v2",
-      "version": "depth-estimator-latest",
+      "version": "latest",
       "command_line": [
         "python",
         "-u",
