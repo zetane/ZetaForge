@@ -6,7 +6,6 @@ export default function Prompt({ children, index, pipelineId, blockId, response,
     onSelectPrompt(response);
   };
 
-  // TODO limit size of very long prompts
   return (
     <div className="prompt flex flex-row justify-between rounded-lg">
       <Button onClick={handleClick} kind="ghost" className="max-w-full grow rounded-lg">
