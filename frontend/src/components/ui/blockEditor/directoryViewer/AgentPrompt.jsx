@@ -18,7 +18,7 @@ export default function AgentPrompt({ pipelineId, blockId }) {
     blockId: blockId,
   });
   const updateHistory = trpc.chat.history.update.useMutation({});
-  const isViewBlock = pipeline?.data[blockId]?.information?.block_type === "view" ?? false;
+  const isViewBlock = pipeline?.data[blockId]?.information?.block_type === "view";
   const agentName = isViewBlock ? "gpt-4_python_view" : "gpt-4_python_compute";
 
   const handleSubmit = async (e) => {
