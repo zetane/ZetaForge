@@ -13,6 +13,7 @@ import { logger } from "./logger";
 import { HttpStatus, ServerError } from "./serverError";
 
 export async function compileComputation(pipelineId, blockId) {
+  const blockPath = cacheJoin(pipelineId, blockId);
   const sourcePath = cacheJoin(pipelineId, blockId, "computations.py");
   const source = await fs.readFile(sourcePath, { encoding: "utf8" });
 
