@@ -24,6 +24,10 @@ export default function DirectoryViewer({ blockId }) {
     setPromptResponse(response);
   };
 
+  const handleSelectActivePrompt = () => {
+    setPromptResponse(undefined);
+  }
+
   const handleAcceptPrompt = () => {
     setPromptResponse(undefined);
   };
@@ -42,6 +46,7 @@ export default function DirectoryViewer({ blockId }) {
               pipelineId={pipeline.id}
               blockId={blockId}
               onSelectPrompt={handleSelectPrompt}
+              onSelectActive={handleSelectActivePrompt}
             />
           </Allotment.Pane>
         </PersistentAllotment>
