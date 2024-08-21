@@ -8,6 +8,7 @@ import PromptViewer from "./PromptViewer";
 import CodeManualEditor from "./CodeManualEditor";
 import useDebounce from "@/hooks/useDebounce";
 
+const MANUAL_EDIT_PROMPT = "Manual edit"; //TODO make sure this is the right prompt
 export default function CodeEditor({
   pipelineId,
   blockId,
@@ -16,8 +17,14 @@ export default function CodeEditor({
   onAcceptPrompt,
 }) {
   const openAIApiKey = useAtomValue(openAIApiKeyAtom);
+  const utils = trpc.useUtils();
   const getFileContent = trpc.block.file.byPath.get.useMutation();
   const updateFileContent = trpc.block.file.byPath.update.useMutation();
+  const history = trpc.chat.history.get.useQuery({
+    pipelineId: pipelineId,
+    blockId: blockId,
+  });
+  const updateHistory = trpc.chat.history.update.useMutation();
   const [fileContentBuffer, setFileContentBuffer] = useState();
   const setFileContentBufferDebounced = useDebounce(setFileContentBuffer, 100);
   const compile = useCompileComputation();
@@ -48,7 +55,39 @@ export default function CodeEditor({
 
     if (isComputation) {
       compile(pipelineId, blockId);
+      await addManualEditPrompt();
     }
+  };
+
+  //TODO duplicated code, find a way to extract it
+  const addManualEditPrompt = async () => {
+    const newHistory = [
+      ...history.data,
+      {
+        timestamp: Date.now(),
+        prompt: MANUAL_EDIT_PROMPT,
+        response: fileContentBuffer,
+      },
+    ];
+
+    await updateHistory.mutateAsync({
+      pipelineId: pipelineId,
+      blockId: blockId,
+      history: newHistory,
+    });
+
+    utils.chat.history.get.setData(
+      {
+        pipelineId: pipelineId,
+        blockId: blockId,
+      },
+      newHistory,
+    );
+
+    utils.chat.history.get.invalidate({
+      pipelgneId: pipelineId,
+      blockId: blockId,
+    });
   };
 
   const handleChange = (newValue) => {
