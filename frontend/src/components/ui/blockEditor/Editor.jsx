@@ -43,7 +43,6 @@ export default function Editor({ blockId, isMaximized, onToggleMaximize }) {
         <div className="flex flex-row items-center justify-end">
           <IconButton
             kind="ghost"
-            size="lg"
             onClick={toggleMaximize}
             label={isMaximized ? "Minimize" : "Maximize"}
           >
@@ -51,7 +50,6 @@ export default function Editor({ blockId, isMaximized, onToggleMaximize }) {
           </IconButton>
           <IconButton
             kind="ghost"
-            size="lg"
             onClick={handleClose}
             label="Close"
           >
