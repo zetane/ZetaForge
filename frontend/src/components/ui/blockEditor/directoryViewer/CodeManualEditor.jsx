@@ -3,8 +3,10 @@ import { Save } from "@carbon/icons-react";
 import { EditorCodeMirror } from "./CodeMirrorComponents";
 import { useState } from "react";
 
-export default function CodeManualEditor({ code, onChange, onSave }) {
+export default function CodeManualEditor({ code, hasPendingChanges, onChange, onSave }) {
   const [isLoading, setIsLoading] = useState(false)
+
+  const saveDisabled = isLoading || !hasPendingChanges
 
   const handleChange = (value) => {
     onChange(value);
@@ -30,7 +32,7 @@ export default function CodeManualEditor({ code, onChange, onSave }) {
           hasIconOnly
           size="md"
           onClick={handleSave}
-          disabled={isLoading}
+          disabled={saveDisabled}
         />
       </div>
     </div>

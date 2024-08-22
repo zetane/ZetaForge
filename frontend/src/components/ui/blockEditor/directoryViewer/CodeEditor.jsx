@@ -7,6 +7,7 @@ import AgentPrompt from "./AgentPrompt";
 import PromptViewer from "./PromptViewer";
 import CodeManualEditor from "./CodeManualEditor";
 import useDebounce from "@/hooks/useDebounce";
+import ChatHistory from "@/state/ChatHistory";
 
 const MANUAL_EDIT_PROMPT = "Manual edit"; //TODO make sure this is the right prompt
 export default function CodeEditor({
@@ -26,6 +27,7 @@ export default function CodeEditor({
   });
   const updateHistory = trpc.chat.history.update.useMutation();
   const [fileContentBuffer, setFileContentBuffer] = useState();
+  const [hasPendingChanges, setHasPendingChanges] = useState(false);
   const setFileContentBufferDebounced = useDebounce(setFileContentBuffer, 100);
   const compile = useCompileComputation();
 
@@ -41,6 +43,7 @@ export default function CodeEditor({
         path: currentFile.relativePath,
       });
       setFileContentBuffer(content);
+      setHasPendingChanges(false);
     };
 
     fetchFileContent();
@@ -48,6 +51,7 @@ export default function CodeEditor({
 
   const handleChange = (newValue) => {
     setFileContentBufferDebounced(newValue);
+    setHasPendingChanges(true)
   };
 
   const handleSave = async () => {
@@ -57,6 +61,7 @@ export default function CodeEditor({
       path: currentFile.relativePath,
       content: fileContentBuffer,
     });
+    setHasPendingChanges(false);
 
     if (isComputation) {
       compile(pipelineId, blockId);
@@ -77,6 +82,8 @@ export default function CodeEditor({
       path: currentFile.relativePath,
       content: fileContentBuffer,
     });
+    setHasPendingChanges(false);
+
 
     compile(pipelineId, blockId);
     addPrompt(prompt);
@@ -92,6 +99,7 @@ export default function CodeEditor({
       path: currentFile.relativePath,
       content: fileContentBuffer,
     });
+    setHasPendingChanges(false);
 
     compile(pipelineId, blockId);
     addPrompt(generatedPrompt);
@@ -131,6 +139,7 @@ export default function CodeEditor({
       ) : (
         <CodeManualEditor
           code={fileContentBuffer}
+          hasPendingChanges={hasPendingChanges}
           onChange={handleChange}
           onSave={handleSave}
         />
