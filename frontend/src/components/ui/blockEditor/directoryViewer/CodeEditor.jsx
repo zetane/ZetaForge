@@ -7,7 +7,6 @@ import AgentPrompt from "./AgentPrompt";
 import PromptViewer from "./PromptViewer";
 import CodeManualEditor from "./CodeManualEditor";
 import useDebounce from "@/hooks/useDebounce";
-import ChatHistory from "@/state/ChatHistory";
 
 const MANUAL_EDIT_PROMPT = "Manual edit"; //TODO make sure this is the right prompt
 export default function CodeEditor({
