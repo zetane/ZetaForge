@@ -132,3 +132,23 @@ main {
 .cm-editor {
   content-visibility: auto;
 }
+
+::-webkit-scrollbar {
+  width: 18px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--cds-background);
+  padding: 1.5px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--cds-layer);
+  border-radius: 0px;
+  border: 4px solid var(--cds-background);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--cds-layer) var(--cds-background);
+}

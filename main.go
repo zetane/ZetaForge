@@ -547,14 +547,14 @@ func main() {
 	})
 	router.POST("/build-context-status", func(ctx *gin.Context) {
 		prefix := getPrefix(ctx)
-		pipeline, err := validateJson[zjson.Pipeline](ctx.Request.Body)
+		request, err := validateJson[zjson.BuildContextStatusRequest](ctx.Request.Body)
 		if err != nil {
 			log.Printf("invalid json request; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
 
-		buildContextStatus := getBuildContextStatus(ctx.Request.Context(), &pipeline, prefix, config)
+		buildContextStatus := getBuildContextStatus(ctx.Request.Context(), &request.Pipeline, request.Rebuild, prefix, config)
 
 		ctx.JSON(http.StatusOK, buildContextStatus)
 	})

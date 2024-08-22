@@ -1,0 +1,61 @@
+{
+  "information": {
+    "id": "super-resolution",
+    "name": "Super-resolution",
+    "description": "Computes the super-resolved image from the given input image.",
+    "system_versions": [
+      "0.1"
+    ],
+    "block_version": "block version number",
+    "block_source": "core/blocks/super-resolution",
+    "block_type": "compute"
+  },
+  "inputs": {
+    "image_path": {
+      "type": "file",
+      "connections": []
+    }
+  },
+  "outputs": {
+    "result": {
+      "type": "List[file]",
+      "connections": []
+    },
+    "input_result": {
+      "type": "List[file]",
+      "connections": []
+    }
+  },
+  "action": {
+    "container": {
+      "image": "super-resolution",
+      "version": "latest",
+      "command_line": [
+        "python",
+        "entrypoint.py"
+      ]
+    }
+  },
+  "views": {
+    "node": {
+      "active": "true",
+      "title_bar": {},
+      "preview": {},
+      "html": "",
+      "pos_x": "1280.0000536572804",
+      "pos_y": "378.3765520368304",
+      "pos_z": "999",
+      "behavior": "modal",
+      "order": {
+        "input": [
+          "image_path"
+        ],
+        "output": [
+          "result",
+          "input_result"
+        ]
+      }
+    }
+  },
+  "events": {}
+}

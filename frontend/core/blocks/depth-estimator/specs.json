@@ -1,0 +1,59 @@
+{
+  "information": {
+    "id": "depth-v2",
+    "name": "Depth Anything",
+    "description": "Performs depth estimation on an input image using the Depth-Anything-V2-Small model.\n\nThis function uses the Hugging Face Transformers pipeline to load the 'depth-anything/Depth-Anything-V2-Small-hf' model for depth estimation. It processes the input image and generates a depth map, which is then saved as 'depth.jpg'.\n\nInputs:\n    img_path (str): Path to the input image file.(use file core block)\n\nOutputs:\n    dict: A dictionary containing the following key-value pair:\n        'depth' (list): A list containing the filename of the saved depth map ('depth.jpg').\n\nRequirements:\n    - transformers library\n    - PIL (Python Imaging Library)\n    - 'depth-anything/Depth-Anything-V2-Small-hf' model from Hugging Face.",
+    "system_versions": [
+      "0.1"
+    ],
+    "block_version": "block version number",
+    "block_source": "core/blocks/depth-estimator",
+    "block_type": "compute"
+  },
+  "inputs": {
+    "img_path": {
+      "type": "Any",
+      "connections": []
+    }
+  },
+  "outputs": {
+    "depth": {
+      "type": "Any",
+      "connections": []
+    }
+  },
+  "action": {
+    "container": {
+      "image": "depth-v2",
+      "version": "latest",
+      "command_line": [
+        "python",
+        "-u",
+        "entrypoint.py"
+      ]
+    }
+  },
+  "views": {
+    "node": {
+      "active": "True",
+      "title_bar": {
+        "background_color": "#6b2be0"
+      },
+      "preview": {},
+      "html": "",
+      "pos_x": "2536",
+      "pos_y": "429",
+      "pos_z": "999",
+      "behavior": "modal",
+      "order": {
+        "input": [
+          "img_path"
+        ],
+        "output": [
+          "depth"
+        ]
+      }
+    }
+  },
+  "events": {}
+}

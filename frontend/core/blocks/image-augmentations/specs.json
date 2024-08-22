@@ -1,0 +1,61 @@
+{
+  "information": {
+    "id": "image-augmentations",
+    "name": "Image Augmentations",
+    "description": "Data Augmentation block for Computer Vision\n\nInputs:\nimg_path (str): image path\n\n \nOutputs:\naugmented_img_path (all): result images path",
+    "system_versions": [
+      "0.1"
+    ],
+    "block_version": "block version number",
+    "block_source": "core/blocks/image-augmentations",
+    "block_type": "compute"
+  },
+  "inputs": {
+    "img_path": {
+      "type": "Any",
+      "connections": [
+      ]
+    }
+  },
+  "outputs": {
+    "augmented_img_path": {
+      "type": "Any",
+      "connections": [
+      ]
+    }
+  },
+  "action": {
+    "container": {
+      "image": "image-augmentations",
+      "version": "image-augmentations-8wtjb62vca3x",
+      "command_line": [
+        "python",
+        "-u",
+        "entrypoint.py"
+      ]
+    }
+  },
+  "views": {
+    "node": {
+      "active": "True",
+      "title_bar": {
+        "background_color": "#6b2be0"
+      },
+      "preview": {},
+      "html": "",
+      "pos_x": "1027",
+      "pos_y": "205",
+      "pos_z": "999",
+      "behavior": "modal",
+      "order": {
+        "input": [
+          "img_path"
+        ],
+        "output": [
+          "augmented_img_path"
+        ]
+      }
+    }
+  },
+  "events": {}
+}

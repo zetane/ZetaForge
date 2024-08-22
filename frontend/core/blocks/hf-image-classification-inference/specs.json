@@ -1,0 +1,73 @@
+{
+    "information": {
+        "id": "hf-image-classification-inference",
+        "name": "HuggingFace Image Classification Inference",
+        "description": "Runs image classification inference on pairs of models and datasets form HuggingFace Hub.",
+        "block_version": "latest",
+        "block_source": "core/blocks/hf-image-classification-inference",
+        "block_type": "compute",
+        "system_versions": [
+      "0.1"
+    ]
+    },
+    "inputs": {
+        "dataset_name": {
+            "type": "Any",
+            "connections": [],
+            "relays": []
+        },
+        "split_name": {
+            "type": "Any",
+            "connections": [],
+            "relays": []
+        },
+        "model_name": {
+            "type": "Any",
+            "connections": [],
+            "relays": []
+        },
+        "n_samples": {
+            "type": "Any",
+            "connections": [],
+            "relays": []
+        }
+    },
+    "outputs": {
+        "images": {
+            "type": "Any",
+            "connections": [],
+            "relays": []
+        },
+        "predictions": {
+            "type": "Any",
+            "connections": [],
+            "relays": []
+        }
+    },
+    "action": {
+        "container": {
+            "image": "hf-image-classification-inference",
+            "version": "latest",
+            "command_line": [
+                "python",
+                "entrypoint.py"
+            ]
+        }
+    },
+    "views": {
+        "node": {
+            "active": "True",
+            "html": "",
+            "pos_x": "300",
+            "pos_y": "200",
+            "pos_z": "999, this is the z-index for 2D canvas",
+            "preview": {
+                "active": "false"
+            },
+            "title_bar": {
+
+            }
+        }
+    },
+    "events": []
+}
