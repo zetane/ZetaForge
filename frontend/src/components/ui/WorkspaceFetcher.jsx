@@ -105,12 +105,8 @@ export default function WorkspaceFetcher() {
   });
 
   useEffect(() => {
-    console.log(data);
     const updatePipelines = async () => {
       const pipelines = data?.body ?? [];
-      const host = data?.configuration?.anvil?.host;
-      const port = data?.configuration?.anvil?.port;
-      const hostString = host + ":" + port;
 
       for (const serverPipeline of pipelines) {
         const key = serverPipeline.Uuid + "." + serverPipeline.Execution;
@@ -124,8 +120,10 @@ export default function WorkspaceFetcher() {
 
         if (shouldUpdate) {
           try {
-            const loaded = await loadPipeline(serverPipeline, hostString);
-            console.log(loaded);
+            const loaded = await loadPipeline(
+              serverPipeline,
+              data?.configuration,
+            );
             setWorkspace((draft) => {
               draft.pipelines[key] = loaded;
             });
@@ -135,7 +133,11 @@ export default function WorkspaceFetcher() {
           }
 
           if (workspace.tabs[key]) {
-            await syncResults(key);
+            try {
+              await syncResults(key);
+            } catch (err) {
+              console.error("Failed to sync results: ", err);
+            }
           }
         }
 

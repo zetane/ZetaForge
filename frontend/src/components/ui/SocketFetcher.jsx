@@ -37,7 +37,11 @@ export default function SocketFetcher() {
 
     if (parsedLogEntry?.event?.tag === "outputs") {
       const key = `${pipeline.record.Uuid}.${pipeline.record.Execution}`;
-      await syncResults(key);
+      try {
+        await syncResults(key);
+      } catch (err) {
+        console.error("Failed to sync: ", err);
+      }
     }
   });
 

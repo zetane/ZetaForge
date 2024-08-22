@@ -47,24 +47,27 @@ export const ExecutionDataGrid = ({ closeModal }) => {
     setPageSize(pageSize);
   };
 
-  const selectExecution = async (execution) => {
-    console.log(execution);
+  const selectExecution = async (execution, configuration) => {
     const key = execution.Uuid + "." + execution.Execution;
 
-    const serverExec = await loadExecution(execution);
-    console.log(serverExec);
+    const serverExec = await loadExecution(execution, configuration);
     setWorkspace((draft) => {
       draft.pipelines[key] = serverExec;
       draft.tabs[key] = {};
       draft.active = key;
     });
-    await syncResults(key);
+    try {
+      await syncResults(key);
+    } catch (error) {
+      console.error("Sync failed: ", error);
+    }
 
     closeModal();
   };
 
   const headers = [
     { key: "name", header: "Pipeline Name" },
+    { key: "uuid", header: "ID" },
     { key: "created", header: "Created" },
     { key: "lastExecution", header: "Last Execution" },
     { key: "host", header: "Host" },
@@ -91,6 +94,7 @@ export const ExecutionDataGrid = ({ closeModal }) => {
       );
       return {
         id: hash,
+        uuid: pipeline.id,
         created: pipeline.created,
         lastExecution: pipeline.lastExecution,
         name: pipeline.name,

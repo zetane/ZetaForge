@@ -20,10 +20,17 @@ const ExecutionCard = ({ execution, onSelect }) => {
     enabled: false,
   });
 
-  const handleViewDetails = async () => {
-    await refetch();
-    if (executionDetails) {
-      onSelect(executionDetails);
+  const handleViewDetails = async (configuration) => {
+    console.log(configuration);
+    const result = await refetch();
+    try {
+      if (result.data) {
+        onSelect(result.data, configuration);
+      } else {
+        console.log("No data");
+      }
+    } catch (error) {
+      console.error("Error fetching execution details: ", error);
     }
   };
 
@@ -55,7 +62,9 @@ const ExecutionCard = ({ execution, onSelect }) => {
             size="sm"
             renderIcon={Launch}
             iconDescription="Load Execution"
-            onClick={handleViewDetails}
+            onClick={() => {
+              handleViewDetails(configuration);
+            }}
           >
             View
           </Button>

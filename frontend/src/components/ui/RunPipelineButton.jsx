@@ -107,6 +107,7 @@ export default function RunPipelineButton({ children, action }) {
       });
       return newExecution;
     } catch (error) {
+      console.log(error);
       setValidationErrorMsg([error?.message]);
       setIsOpen(true);
       return false;

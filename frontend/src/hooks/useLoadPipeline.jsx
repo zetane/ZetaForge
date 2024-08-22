@@ -130,10 +130,14 @@ function sortSpecsKeys(pipeline) {
 }
 
 export const useLoadServerPipeline = () => {
-  const loadPipeline = async (pipeline, hostString) => {
+  const loadPipeline = async (pipeline, configuration) => {
     if (!pipeline) {
       return;
     }
+    const host = configuration?.anvil?.host;
+    const port = configuration?.anvil?.port;
+    const hostString = host + ":" + port;
+
     const bufferPath = `${await window.cache.local()}${pipeline.Uuid}`;
     const executionId = pipeline.Execution;
     const loadedPipeline = {
@@ -161,6 +165,10 @@ export const useLoadExecution = () => {
       return;
     }
 
+    const host = configuration?.anvil?.host;
+    const port = configuration?.anvil?.port;
+    const hostString = host + ":" + port;
+
     let pipelineData = JSON.parse(pipeline.PipelineJson);
     if (pipeline.Results != "") {
       pipelineData = JSON.parse(pipeline.Results);
@@ -182,6 +190,7 @@ export const useLoadExecution = () => {
       id: pipelineData.id,
       history: pipelineData.id + "/" + executionId,
       record: pipeline,
+      host: hostString,
       socketUrl: socketUrl,
       logs: pipeline?.Log,
     };
