@@ -12,7 +12,7 @@ export default function ToastWrapper() {
   };
 
   return (
-    <div class="absolute bottom-3 right-3 z-[9000]">
+    <div className="absolute bottom-3 right-3 z-[9000]">
       {compilationErrorToast && <CompilationErrorToast onClose={onClose} />}
     </div>
   );

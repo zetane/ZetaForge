@@ -92,7 +92,7 @@ print('Pipeline execution result:', result)
   ];
 
   return (
-    <ComboButton size="sm" label="Get Payload" onClick={generatePostPayload}>
+    <ComboButton size="sm" label="Payload" onClick={generatePostPayload}>
       <MenuItem
         label="Undeploy"
         onClick={handleUndeploy}

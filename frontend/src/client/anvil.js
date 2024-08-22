@@ -13,6 +13,22 @@ export function getWsConnection(configuration, wsPath) {
   return wsUrl?.toString();
 }
 
+export async function fetchExecutionDetails(configuration, executionId) {
+  const response = await handleRequest(
+    buildUrl(
+      getScheme(configuration.anvil.host),
+      configuration.anvil.host,
+      configuration.anvil.port,
+      `execution/${executionId}`,
+    ),
+    HttpMethod.GET,
+    configuration.anvil.token,
+    {},
+  );
+  const body = await response.json();
+  return body;
+}
+
 export async function deployPipeline(configuration, uuid, hash) {
   const response = await handleRequest(
     buildUrl(
@@ -53,7 +69,7 @@ export async function getAllPipelines(configuration, limit, offset) {
       getScheme(configuration.anvil.host),
       configuration.anvil.host,
       configuration.anvil.port,
-      `pipeline/filter?limit=${limit}&offset=${offset}`,
+      `pipeline/filter`,
     ),
     HttpMethod.GET,
     configuration.anvil.token,
@@ -62,7 +78,7 @@ export async function getAllPipelines(configuration, limit, offset) {
 
   const body = await response.json();
 
-  return body;
+  return { body: body, configuration: configuration };
 }
 
 export async function ping(configuration) {

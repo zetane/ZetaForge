@@ -130,7 +130,33 @@ function sortSpecsKeys(pipeline) {
 }
 
 export const useLoadServerPipeline = () => {
-  const loadPipeline = async (pipeline, configuration) => {
+  const loadPipeline = async (pipeline, hostString) => {
+    if (!pipeline) {
+      return;
+    }
+    const bufferPath = `${await window.cache.local()}${pipeline.Uuid}`;
+    const executionId = pipeline.Execution;
+    const loadedPipeline = {
+      name: pipeline.Name,
+      saveTime: Date.now(),
+      buffer: bufferPath,
+      id: pipeline.Uuid,
+      history: pipeline.Uuid + "/" + executionId,
+      record: pipeline,
+      host: hostString,
+    };
+    let newPipeline = pipelineFactory(
+      await window.cache.local(),
+      loadedPipeline,
+    );
+    return newPipeline;
+  };
+
+  return loadPipeline;
+};
+
+export const useLoadExecution = () => {
+  const loadExecution = async (pipeline, configuration) => {
     if (!pipeline) {
       return;
     }
@@ -168,7 +194,7 @@ export const useLoadServerPipeline = () => {
     return newPipeline;
   };
 
-  return loadPipeline;
+  return loadExecution;
 };
 
 export const useLoadCorePipeline = () => {

@@ -11,9 +11,9 @@ import (
 )
 
 const allFilterPipelines = `-- name: AllFilterPipelines :many
-SELECT p.id, p.organization, p.created, p.uuid, p.hash, p.json, p.deployed, p.deleted, e.id, e.pipeline, e.status, e.created, e.completed, e.json, e.deleted, e.executionid, e.workflow, e.results FROM Pipelines p
+SELECT p.id, p.organization, p.created, p.uuid, p.hash, p.json, p.deployed, p.deleted, e.id, e.status, e.created, e.completed, e.executionid FROM Pipelines p
 INNER JOIN Executions e on e.pipeline = p.id
-WHERE p.deleted = FALSE
+WHERE p.deleted = FALSE AND p.organization = ?
 ORDER BY e.created DESC
 `
 
@@ -27,19 +27,14 @@ type AllFilterPipelinesRow struct {
 	Deployed     int64
 	Deleted      int64
 	ID_2         int64
-	Pipeline     int64
 	Status       interface{}
 	Created_2    int64
 	Completed    sql.NullInt64
-	Json_2       sql.NullString
-	Deleted_2    int64
 	Executionid  string
-	Workflow     sql.NullString
-	Results      sql.NullString
 }
 
-func (q *Queries) AllFilterPipelines(ctx context.Context) ([]AllFilterPipelinesRow, error) {
-	rows, err := q.db.QueryContext(ctx, allFilterPipelines)
+func (q *Queries) AllFilterPipelines(ctx context.Context, organization string) ([]AllFilterPipelinesRow, error) {
+	rows, err := q.db.QueryContext(ctx, allFilterPipelines, organization)
 	if err != nil {
 		return nil, err
 	}
@@ -57,15 +52,10 @@ func (q *Queries) AllFilterPipelines(ctx context.Context) ([]AllFilterPipelinesR
 			&i.Deployed,
 			&i.Deleted,
 			&i.ID_2,
-			&i.Pipeline,
 			&i.Status,
 			&i.Created_2,
 			&i.Completed,
-			&i.Json_2,
-			&i.Deleted_2,
 			&i.Executionid,
-			&i.Workflow,
-			&i.Results,
 		); err != nil {
 			return nil, err
 		}
@@ -203,14 +193,15 @@ func (q *Queries) FilterPipeline(ctx context.Context, executionid string) (Filte
 const filterPipelines = `-- name: FilterPipelines :many
 SELECT p.id, p.organization, p.created, p.uuid, p.hash, p.json, p.deployed, p.deleted, e.id, e.pipeline, e.status, e.created, e.completed, e.json, e.deleted, e.executionid, e.workflow, e.results FROM Pipelines p
 INNER JOIN Executions e on e.pipeline = p.id
-WHERE p.deleted = FALSE
+WHERE p.deleted = FALSE AND p.organization = ?
 ORDER BY e.created DESC
 LIMIT ? OFFSET ?
 `
 
 type FilterPipelinesParams struct {
-	Limit  int64
-	Offset int64
+	Organization string
+	Limit        int64
+	Offset       int64
 }
 
 type FilterPipelinesRow struct {
@@ -235,7 +226,7 @@ type FilterPipelinesRow struct {
 }
 
 func (q *Queries) FilterPipelines(ctx context.Context, arg FilterPipelinesParams) ([]FilterPipelinesRow, error) {
-	rows, err := q.db.QueryContext(ctx, filterPipelines, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, filterPipelines, arg.Organization, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -299,7 +290,6 @@ func (q *Queries) GetPipeline(ctx context.Context, arg GetPipelineParams) (Pipel
 		&i.Json,
 		&i.Deployed,
 		&i.Deleted,
-
 	)
 	return i, err
 }

@@ -63,7 +63,7 @@ export const PipelineDeployButton = ({
   }
 
   return (
-    <Button size="sm" style={buttonStyles} onClick={() => mutationAction()}>
+    <Button size="sm" onClick={() => mutationAction()}>
       {deployButton}
     </Button>
   );

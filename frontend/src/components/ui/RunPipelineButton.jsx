@@ -38,7 +38,6 @@ export default function RunPipelineButton({ children, action }) {
     );
     const executionId = uuidv7();
 
-    if (!(await validateAnvilOnline())) return;
     if (!validateSchema()) return;
     const newExecution = await execute(pipelineSpecs, executionId);
     if (!newExecution) {
@@ -73,7 +72,6 @@ export default function RunPipelineButton({ children, action }) {
     });
 
     const loaded = await loadServerPipeline(newExecution, configuration);
-    console.log(workspace.pipelines);
     setWorkspace((draft) => {
       const currentTab = draft.active;
       const newKey = newExecution.Uuid + "." + newExecution.Execution;
@@ -92,18 +90,6 @@ export default function RunPipelineButton({ children, action }) {
 
   const validatePipelineExists = async () => {
     return pipeline.data && Object.keys(pipeline.data).length;
-  };
-
-  const validateAnvilOnline = async () => {
-    if (await ping(configuration)) {
-      return true;
-    } else {
-      setValidationErrorMsg([
-        "Seaweed ping did not return ok. Please wait a few seconds and retry.",
-      ]);
-      setIsOpen(true);
-      return false;
-    }
   };
 
   const execute = async (pipelineSpecs, executionId) => {
@@ -158,7 +144,12 @@ export default function RunPipelineButton({ children, action }) {
 
   return (
     <>
-      <Button style={styles} size="sm" onClick={() => runPipeline()}>
+      <Button
+        style={styles}
+        size="sm"
+        onClick={() => runPipeline()}
+        disabled={!workspace?.connected}
+      >
         <span>{action}</span>
         {children}
       </Button>

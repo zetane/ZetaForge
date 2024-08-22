@@ -201,6 +201,21 @@ func initializeNils(v reflect.Value, visited map[uintptr]bool) {
 	}
 }
 
+func removeParameterValuesFromPipeline(pipeline zjson.Pipeline) zjson.Pipeline {
+	for _, block := range pipeline.Pipeline {
+		if block.Action.Parameters == nil {
+			continue
+		}
+
+		for paramName, param := range block.Action.Parameters {
+			param.Value = ""
+			block.Action.Parameters[paramName] = param
+		}
+	}
+
+	return pipeline
+}
+
 func mergeInputsIntoPipeline(pipeline *zjson.Pipeline, inputBody map[string]interface{}) {
 	inputs, ok := inputBody["inputs"].(map[string]interface{})
 	if !ok {
@@ -465,7 +480,7 @@ func main() {
 			ctx.String(err.Status(), err.Error())
 			return
 		}
-		response, err := newResponsePipelineExecution(retData, []string{})
+		response, err := newResponsePipelineExecution(retData, []string{}, "")
 		if err != nil {
 			log.Printf("failed to create response payload; err=%v", err)
 			ctx.String(err.Status(), err.Error())
@@ -559,25 +574,44 @@ func main() {
 
 		ctx.JSON(http.StatusOK, response)
 	})
-	execution.GET("/:executionId/log", func(ctx *gin.Context) {
-		executionId := ctx.Param("executionId")
-		res, err := getExecutionById(ctx.Request.Context(), db, executionId)
-		if err != nil {
+	execution.GET("/:executionUuid", func(ctx *gin.Context) {
+		executionUuid := ctx.Param("executionUuid")
+		execution, httpErr := filterPipeline(ctx, db, executionUuid)
+		if httpErr != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to retrieve execution"})
 			return
 		}
 
-		tempLog := filepath.Join(os.TempDir(), executionId+".log")
-		if res.Status == "Running" {
-			logData, err := readTempLog(tempLog)
-			if err != nil {
-				ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to read temporary log"})
-				return
-			}
-			ctx.JSON(http.StatusOK, logData)
-		} else {
-			ctx.JSON(http.StatusOK, []string{})
+		logOutput := []string{}
+		logDir, exists := os.LookupEnv("ZETAFORGE_LOGS")
+		if !exists {
+			logDir = os.TempDir()
 		}
+		tempLog := filepath.Join(logDir, execution.Executionid+".log")
+
+		var s3key string
+		if execution.Status == "Running" || execution.Status == "Pending" {
+			logOutput, err = readTempLog(tempLog)
+			if err != nil {
+				fmt.Printf("failed to retrieve writing log; err=%v", err)
+			}
+		} else {
+			s3key = execution.Uuid + "/" + execution.Executionid + "/" + execution.Executionid + ".log"
+			// in certain cases the pipeline has succeeded or failed but
+			// has not yet uploaded to s3, so still attempt to send the tempLog
+			logOutput, err = readTempLog(tempLog)
+
+			if err != nil {
+				fmt.Printf("no temp log on the server; err=%v\n", err)
+			}
+		}
+		response, err := newResponsePipelineExecution(execution, logOutput, s3key)
+		if err != nil {
+			ctx.String(err.Status(), err.Error())
+			return
+		}
+
+		ctx.JSON(http.StatusOK, response)
 	})
 	execution.POST("/:executionId/terminate", func(ctx *gin.Context) {
 		executionId := ctx.Param("executionId")
@@ -647,56 +681,17 @@ func main() {
 	})
 	pipeline.GET("/filter", func(ctx *gin.Context) {
 		// TODO: Figure out how to get SQLC to emit the same struct for two different queries
-		limitStr := ctx.DefaultQuery("limit", "0")
-		offsetStr := ctx.DefaultQuery("offset", "0")
-
-		limit, err := strconv.Atoi(limitStr)
-		if err != nil {
-			log.Printf("Invalid limit parameter: %s", limitStr)
-			ctx.String(http.StatusBadRequest, "Invalid limit parameter")
-			return
-		}
-
-		offset, err := strconv.Atoi(offsetStr)
-		if err != nil {
-			log.Printf("Invalid offset parameter: %s", offsetStr)
-			ctx.String(http.StatusBadRequest, "Invalid offset parameter")
-			return
-		}
-
-		res, httpErr := filterPipelines(ctx, db, int64(limit), int64(offset))
+		prefix := getPrefix(ctx)
+		res, httpErr := allFilterPipelines(ctx, db, prefix)
 		if httpErr != nil {
 			log.Printf("failed to get filter pipelines; err=%v", httpErr)
 			ctx.String(httpErr.Status(), httpErr.Error())
 			return
 		}
 
-		var response []ResponsePipelineExecution
+		var response []AllPipelineExecution
 		for _, execution := range res {
-			logOutput := []string{}
-			logDir, exists := os.LookupEnv("ZETAFORGE_LOGS")
-			if !exists {
-				logDir = os.TempDir()
-			}
-			tempLog := filepath.Join(logDir, execution.Executionid+".log")
-
-			var s3key string
-			if execution.Status == "Running" || execution.Status == "Pending" {
-				logOutput, err = readTempLog(tempLog)
-				if err != nil {
-					fmt.Printf("failed to retrieve writing log; err=%v", err)
-				}
-			} else {
-				s3key = execution.Uuid + "/" + execution.Executionid + "/" + execution.Executionid + ".log"
-				// in certain cases the pipeline has succeeded or failed but
-				// has not yet uploaded to s3, so still attempt to send the tempLog
-				logOutput, err = readTempLog(tempLog)
-
-				if err != nil {
-					fmt.Printf("no temp log on the server; err=%v\n", err)
-				}
-			}
-			newRes, err := newResponsePipelinesExecution(execution, logOutput, s3key)
+			newRes, err := newResponseAllFilterPipelines(execution)
 			if err != nil {
 				ctx.String(err.Status(), err.Error())
 				return
@@ -879,7 +874,7 @@ func main() {
 			return
 		}
 
-		response, err := newResponsePipelineExecution(retData, []string{})
+		response, err := newResponsePipelineExecution(retData, []string{}, "")
 		if err != nil {
 			log.Printf("failed to create response payload; err=%v", err)
 			ctx.String(err.Status(), err.Error())
