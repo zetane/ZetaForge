@@ -21,13 +21,12 @@ export default function PromptList({
     <div className="flex h-full flex-col gap-5 p-3">
       <div>Prompts ({historyData.length})</div>
       <div className="flex min-h-0 flex-col gap-2 overflow-auto pr-1">
-        {previousPrompt.map(({ prompt, response }, index) => (
+        {previousPrompt.map((prompt, index) => (
           <Prompt
             key={index}
             index={index}
             pipelineId={pipelineId}
             blockId={blockId}
-            response={response}
             onSelectPrompt={onSelectPrompt}
           >
             {prompt}

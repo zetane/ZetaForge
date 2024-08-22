@@ -13,8 +13,8 @@ export default function CodeEditor({
   pipelineId,
   blockId,
   currentFile,
-  promptResponse,
-  onAcceptPrompt,
+  prompt,
+  onAddPrompt,
 }) {
   const openAIApiKey = useAtomValue(openAIApiKeyAtom);
   const utils = trpc.useUtils();
@@ -31,6 +31,7 @@ export default function CodeEditor({
 
   const isComputation = currentFile.name === "computations.py";
   const displayAgentPrompt = isComputation && openAIApiKey;
+  const promptResponse = prompt?.response;
 
   useEffect(() => {
     const fetchFileContent = async () => {
@@ -45,6 +46,10 @@ export default function CodeEditor({
     fetchFileContent();
   }, []);
 
+  const handleChange = (newValue) => {
+    setFileContentBufferDebounced(newValue);
+  };
+
   const handleSave = async () => {
     await updateFileContent.mutateAsync({
       pipelineId,
@@ -55,20 +60,46 @@ export default function CodeEditor({
 
     if (isComputation) {
       compile(pipelineId, blockId);
-      await addManualEditPrompt();
-    }
-  };
-
-  //TODO duplicated code, find a way to extract it
-  const addManualEditPrompt = async () => {
-    const newHistory = [
-      ...history.data,
-      {
+      await addPrompt({
         timestamp: Date.now(),
         prompt: MANUAL_EDIT_PROMPT,
         response: fileContentBuffer,
-      },
-    ];
+      });
+    }
+  };
+
+  const handleAcceptPrompt = async () => {
+    setFileContentBuffer(prompt.response);
+
+    await updateFileContent.mutateAsync({
+      pipelineId,
+      blockId: blockId,
+      path: currentFile.relativePath,
+      content: fileContentBuffer,
+    });
+
+    compile(pipelineId, blockId);
+    addPrompt(prompt);
+    onAddPrompt();
+  };
+
+  const handleGenerate = async (generatedPrompt) => {
+    setFileContentBuffer(generatedPrompt.response);
+
+    await updateFileContent.mutateAsync({
+      pipelineId,
+      blockId: blockId,
+      path: currentFile.relativePath,
+      content: fileContentBuffer,
+    });
+
+    compile(pipelineId, blockId);
+    addPrompt(generatedPrompt);
+    onAddPrompt();
+  };
+
+  const addPrompt = async (entry) => {
+    const newHistory = [...history.data, entry];
 
     await updateHistory.mutateAsync({
       pipelineId: pipelineId,
@@ -90,15 +121,6 @@ export default function CodeEditor({
     });
   };
 
-  const handleChange = (newValue) => {
-    setFileContentBufferDebounced(newValue);
-  };
-
-  const handleAcceptPrompt = () => {
-    setFileContentBuffer(promptResponse);
-    onAcceptPrompt();
-  };
-
   return (
     <div className="flex h-full flex-col gap-8">
       {promptResponse ? (
@@ -114,7 +136,11 @@ export default function CodeEditor({
         />
       )}
       {displayAgentPrompt && (
-        <AgentPrompt pipelineId={pipelineId} blockId={blockId} />
+        <AgentPrompt
+          pipelineId={pipelineId}
+          blockId={blockId}
+          onGenerate={handleGenerate}
+        />
       )}
     </div>
   );

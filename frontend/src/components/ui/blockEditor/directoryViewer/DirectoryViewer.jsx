@@ -11,26 +11,26 @@ import { Allotment } from "allotment";
 export default function DirectoryViewer({ blockId }) {
   const pipeline = useAtomValue(pipelineAtom);
   const [currentFile, setCurrentFile] = useState();
-  const [promptResponse, setPromptResponse] = useState();
+  const [prompt, setPrompt] = useState();
 
   const isComputation = currentFile?.name === "computations.py";
 
   const handleSelectFile = (selectedFile) => {
     setCurrentFile(selectedFile);
-    setPromptResponse(undefined);
+    setPrompt(undefined);
   };
 
   const handleSelectPrompt = (response) => {
-    setPromptResponse(response);
+    setPrompt(response);
   };
 
   const handleSelectActivePrompt = () => {
-    setPromptResponse(undefined);
+    setPrompt(undefined);
   }
 
-  const handleAcceptPrompt = () => {
-    setPromptResponse(undefined);
-  };
+  const handleAddPrompt = () => {
+    setPrompt(undefined);
+  }
 
   return (
     <PersistentAllotment storageKey={"DirectoryViewerMain"} initialSize={[20, 80]}>
@@ -55,8 +55,8 @@ export default function DirectoryViewer({ blockId }) {
         pipelineId={pipeline.id}
         blockId={blockId}
         currentFile={currentFile}
-        promptResponse={promptResponse}
-        onAcceptPrompt={handleAcceptPrompt}
+        prompt={prompt}
+        onAddPrompt={handleAddPrompt}
       />
     </PersistentAllotment>
   );

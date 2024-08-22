@@ -6,18 +6,16 @@ import { useAtom } from "jotai";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { trpc } from "@/utils/trpc";
 
-export default function AgentPrompt({ pipelineId, blockId }) {
+export default function AgentPrompt({ pipelineId, blockId, onGenerate }) {
   const [pipeline] = useAtom(pipelineAtom);
   const [isLoading, setIsLoading] = useState(false);
   const [openAIApiKey] = useAtom(openAIApiKeyAtom);
   const chatTextarea = useRef(null);
-  const utils = trpc.useUtils();
   const callAgent = trpc.block.callAgent.useMutation();
   const history = trpc.chat.history.get.useQuery({
     pipelineId: pipelineId,
     blockId: blockId,
   });
-  const updateHistory = trpc.chat.history.update.useMutation({});
   const isViewBlock = pipeline?.data[blockId]?.information?.block_type === "view";
   const agentName = isViewBlock ? "gpt-4_python_view" : "gpt-4_python_compute";
 
@@ -33,33 +31,11 @@ export default function AgentPrompt({ pipelineId, blockId }) {
       apiKey: openAIApiKey,
     });
 
-    const newHistory = [
-      ...history.data,
-      {
+    await onGenerate({
         timestamp: Date.now(),
         prompt: newPrompt,
         response: response,
-      },
-    ];
-
-    await updateHistory.mutateAsync({
-      pipelineId: pipelineId,
-      blockId: blockId,
-      history: newHistory,
-    });
-
-    utils.chat.history.get.setData(
-      {
-        pipelineId: pipelineId,
-        blockId: blockId,
-      },
-      newHistory,
-    );
-
-    utils.chat.history.get.invalidate({
-      pipelgneId: pipelineId,
-      blockId: blockId,
-    });
+      });
 
     chatTextarea.current.value = "";
 

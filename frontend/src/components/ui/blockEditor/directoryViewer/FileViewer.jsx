@@ -10,31 +10,34 @@ export default function FileViewer({
   pipelineId,
   blockId,
   currentFile,
-  promptResponse,
-  onAcceptPrompt,
+  prompt,
+  onAddPrompt,
 }) {
   const getViewer = () => {
     if (currentFile) {
       const isReadOnly = READ_ONLY_FILES.some((fileName) =>
         currentFile.name.endsWith(fileName),
       );
-      if(isReadOnly) {
-
-    return <CodeViewer
-      key={currentFile.relativePath}
-      pipelineId={pipelineId}
-      blockId={blockId}
-      currentFile={currentFile}
-    />
+      if (isReadOnly) {
+        return (
+          <CodeViewer
+            key={currentFile.relativePath}
+            pipelineId={pipelineId}
+            blockId={blockId}
+            currentFile={currentFile}
+          />
+        );
       } else {
-    return <CodeEditor
-      key={currentFile.relativePath}
-      pipelineId={pipelineId}
-      blockId={blockId}
-      currentFile={currentFile}
-      promptResponse={promptResponse}
-      onAcceptPrompt={onAcceptPrompt}
-    />
+        return (
+          <CodeEditor
+            key={currentFile.relativePath}
+            pipelineId={pipelineId}
+            blockId={blockId}
+            currentFile={currentFile}
+            prompt={prompt}
+            onAddPrompt={onAddPrompt}
+          />
+        );
       }
     } else {
       return <></>;

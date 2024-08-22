@@ -13,7 +13,7 @@ export default function PromptViewer({ response, onAcceptPrompt }) {
       <div className="absolute right-5 top-5">
         <Button
           renderIcon={Copy}
-          iconDescription="Accept"
+          iconDescription="Make current"
           tooltipPosition="left"
           size="md"
           onClick={handleAccept}
