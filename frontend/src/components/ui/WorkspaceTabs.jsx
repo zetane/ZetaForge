@@ -9,9 +9,9 @@ export default function WorkspaceTabs() {
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
   const [renderedTabs, setRenderedTabs] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [zoom_levels, setZoomLevels] = useState({});
+  const [zoomLevels, setZoomLevels] = useState({});
 
-  const [editor] = useAtom(drawflowEditorAtom); // Accessing the Drawflow editor instance from a global state
+  const [editor] = useAtom(drawflowEditorAtom);
 
   useEffect(() => {
     const pipelineTabs = [];
@@ -43,11 +43,9 @@ export default function WorkspaceTabs() {
     });
 
     if (editor) {
-      editor.zoom = zoom_levels[key] !== undefined ? zoom_levels[key] : 1;
-      editor.zoom_refresh(); // Refresh after setting zoom
+      editor.zoom = zoom_levels[key] ?? 1;
+      editor.zoom_refresh(); // Refresh after setting zoom, *required.
     }
-
-    console.log(editor.zoom);
   };
 
   const handleCloseTabRequest = (deleteIndex) => {
