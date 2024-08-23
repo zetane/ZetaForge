@@ -43,7 +43,7 @@ export default function WorkspaceTabs() {
     });
 
     if (editor) {
-      editor.zoom = zoom_levels[key] ?? 1;
+      editor.zoom = zoomLevels[key] ?? 1;
       editor.zoom_refresh(); // Refresh after setting zoom, *required.
     }
   };
