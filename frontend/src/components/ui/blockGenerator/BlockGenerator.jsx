@@ -82,7 +82,7 @@ const BlockGenerator = ({
 
         if (response.status === 404) {
           console.log("Path not found. Retrying in 1 second...");
-          if (count < 5) {
+          if (count < 15) {
             timeoutId = setTimeout(() => {
               checkPath(path, count + 1);
             }, 1000);

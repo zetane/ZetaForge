@@ -12,7 +12,10 @@ import { uuidv7 } from "uuidv7";
 import ClosableModal from "./modal/ClosableModal";
 import { workspaceAtom } from "@/atoms/pipelineAtom";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
-import { useLoadServerPipeline } from "@/hooks/useLoadPipeline";
+import {
+  useLoadExecution,
+  useLoadServerPipeline,
+} from "@/hooks/useLoadPipeline";
 import { ping } from "@/client/anvil";
 
 export default function RunPipelineButton({ children, action }) {
@@ -25,7 +28,7 @@ export default function RunPipelineButton({ children, action }) {
   const [configuration] = useAtom(activeConfigurationAtom);
   const executePipeline = trpc.executePipeline.useMutation();
   const queryClient = useQueryClient();
-  const loadServerPipeline = useLoadServerPipeline();
+  const loadExecution = useLoadExecution();
 
   const runPipeline = async () => {
     if (!validatePipelineExists()) return;
@@ -71,7 +74,7 @@ export default function RunPipelineButton({ children, action }) {
       return updatedPipelines;
     });
 
-    const loaded = await loadServerPipeline(newExecution, configuration);
+    const loaded = await loadExecution(newExecution, configuration);
     setWorkspace((draft) => {
       const currentTab = draft.active;
       const newKey = newExecution.Uuid + "." + newExecution.Execution;
@@ -82,7 +85,7 @@ export default function RunPipelineButton({ children, action }) {
       }
       draft.tabs[newKey] = {};
       draft.active = newKey;
-      delete draft.tabs[currentTab];
+      //delete draft.tabs[currentTab];
     });
 
     trackMixpanelRunCreated();

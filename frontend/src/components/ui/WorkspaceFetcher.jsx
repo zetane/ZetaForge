@@ -1,11 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
-import { useLoadServerPipeline } from "@/hooks/useLoadPipeline";
+import {
+  useLoadExecution,
+  useLoadServerPipeline,
+} from "@/hooks/useLoadPipeline";
 import { useEffect } from "react";
 import { workspaceAtom } from "@/atoms/pipelineAtom";
 import { useImmerAtom } from "jotai-immer";
 import { useAtom } from "jotai";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
-import { getAllPipelines, ping } from "@/client/anvil";
+import { fetchExecutionDetails, getAllPipelines, ping } from "@/client/anvil";
 import { useSyncExecutionResults } from "@/hooks/useExecutionResults";
 
 const getLineage = (workspace) => {
@@ -76,6 +79,7 @@ const getLineage = (workspace) => {
 export default function WorkspaceFetcher() {
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
   const loadPipeline = useLoadServerPipeline();
+  const loadExecution = useLoadExecution();
   const [configuration] = useAtom(activeConfigurationAtom);
   const syncResults = useSyncExecutionResults();
   const queryKey = ["pipelines", configuration?.anvil?.host];
@@ -118,37 +122,44 @@ export default function WorkspaceFetcher() {
           serverPipeline?.Status != existingStatus ||
           serverPipeline?.Deployed != existing?.record?.Deployed;
 
+        const isActive = workspace.tabs[key];
+
         if (shouldUpdate) {
           try {
             const loaded = await loadPipeline(
               serverPipeline,
               data?.configuration,
             );
+            const merged = { ...existing, ...loaded };
             setWorkspace((draft) => {
-              draft.pipelines[key] = loaded;
+              draft.pipelines[key] = merged;
             });
           } catch (e) {
             console.log("Failed to load ", e);
             return;
           }
 
-          if (workspace.tabs[key]) {
+          if (isActive) {
             try {
               await syncResults(key);
             } catch (err) {
               console.error("Failed to sync results: ", err);
             }
+
+            const execution = await fetchExecutionDetails(
+              configuration,
+              serverPipeline.Execution,
+            );
+            const loadedExecution = await loadExecution(
+              execution,
+              configuration,
+            );
+            const merged = { ...existing, ...loadedExecution };
+            console.log(execution, loadedExecution, merged);
+            setWorkspace((draft) => {
+              draft.pipelines[key] = merged;
+            });
           }
-        }
-
-        const isLogging =
-          serverPipeline.Status == "Pending" ||
-          serverPipeline.Status == "Running";
-
-        if (existing && isLogging) {
-          setWorkspace((draft) => {
-            draft.pipelines[key].logs = serverPipeline?.Log;
-          });
         }
       }
     };

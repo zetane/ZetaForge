@@ -67,6 +67,12 @@ const pipelineAtomWithImmer = atom(
   },
 );
 
+export const socketUrlAtom = atom(
+  (get) => get(pipelineAtom)?.socketUrl,
+  null,
+  (prev, next) => prev === next,
+);
+
 export const pipelineAtom = withImmer(pipelineAtomWithImmer);
 
 export const getPipelineFormat = (pipeline) => {

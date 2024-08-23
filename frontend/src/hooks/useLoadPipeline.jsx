@@ -139,21 +139,30 @@ export const useLoadServerPipeline = () => {
     const hostString = host + ":" + port;
 
     const bufferPath = `${await window.cache.local()}${pipeline.Uuid}`;
+    const pipelineData = JSON.parse(pipeline.PipelineJson);
+    let data = removeNullInputsOutputs(pipelineData?.pipeline);
     const executionId = pipeline.Execution;
+    let socketUrl = null;
+    if (pipeline.Status == "Pending" || pipeline.Status == "Running") {
+      socketUrl = getWsConnection(configuration, `ws/${executionId}`);
+    }
     const loadedPipeline = {
-      name: pipeline.Name,
+      name: pipelineData.name ? pipelineData.name : pipelineData.id,
+      path: pipelineData.sink ? pipelineData.sink : null,
       saveTime: Date.now(),
       buffer: bufferPath,
+      data: data,
       id: pipeline.Uuid,
       history: pipeline.Uuid + "/" + executionId,
       record: pipeline,
       host: hostString,
+      socketUrl: socketUrl,
     };
     let newPipeline = pipelineFactory(
       await window.cache.local(),
       loadedPipeline,
     );
-    return newPipeline;
+    return sortSpecsKeys(newPipeline);
   };
 
   return loadPipeline;
