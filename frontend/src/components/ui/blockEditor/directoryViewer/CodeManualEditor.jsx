@@ -4,9 +4,11 @@ import { EditorCodeMirror } from "./CodeMirrorComponents";
 import { useContext, useState } from "react";
 import { FileBufferContext } from "./FileBufferContext";
 import { ChatHistoryContext } from "./ChatHistoryContext";
+import { FileHandleContext } from "./FileHandleContext";
 
 const MANUAL_EDIT_PROMPT = "Manual Edit";
 export default function CodeManualEditor() {
+  const fileHandle = useContext(FileHandleContext);
   const fileBuffer = useContext(FileBufferContext);
   const chatHistory = useContext(ChatHistoryContext);
   const [isLoading, setIsLoading] = useState(false);
@@ -20,11 +22,13 @@ export default function CodeManualEditor() {
   const handleSave = async () => {
     setIsLoading(true);
     await fileBuffer.save();
-    await chatHistory.addPrompt({
-      timestamp: Date.now(),
-      prompt: MANUAL_EDIT_PROMPT,
-      response: fileBuffer.content,
-    });
+    if (fileHandle.isComputation) {
+      await chatHistory.addPrompt({
+        timestamp: Date.now(),
+        prompt: MANUAL_EDIT_PROMPT,
+        response: fileBuffer.content,
+      });
+    }
     setIsLoading(false);
   };
 
