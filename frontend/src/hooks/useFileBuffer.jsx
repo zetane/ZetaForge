@@ -22,7 +22,18 @@ export default function useFileBuffer(pipelineId, blockId, relativePath) {
       content: fileContentBuffer,
     });
     setHasPendingChanges(false);
-  };
+  }
+
+  const updateSave = async (newValue) => {
+    setFileContentBuffer(newValue);
+    await updateFileContent.mutateAsync({
+      pipelineId,
+      blockId: blockId,
+      path: relativePath,
+      content: newValue,
+    });
+    setHasPendingChanges(false);
+  }
 
   const load = async () => {
     const content = await getFileContent.mutateAsync({
@@ -40,5 +51,6 @@ export default function useFileBuffer(pipelineId, blockId, relativePath) {
     update: update,
     load: load,
     save: save,
+    updateSave: updateSave,
   };
 }

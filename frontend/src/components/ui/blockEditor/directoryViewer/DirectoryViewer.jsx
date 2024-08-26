@@ -37,8 +37,6 @@ export default function DirectoryViewer({ blockId }) {
     fileBuffer.load();
   }, [fileHandle.currentFile]);
 
-
-  console.log(displayAgentPrompt);
   return (
     <FileBufferContext.Provider value={fileBuffer}>
       <ChatHistoryContext.Provider value={chatHistory}>

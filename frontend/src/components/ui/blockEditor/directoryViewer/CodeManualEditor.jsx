@@ -6,14 +6,14 @@ import { FileBufferContext } from "./FileBufferContext";
 import { ChatHistoryContext } from "./ChatHistoryContext";
 import { FileHandleContext } from "./FileHandleContext";
 import { useCompileComputation } from "@/hooks/useCompileSpecs";
-import { useAtomValue } from "jotai";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { blockEditorIdAtom } from "@/atoms/editorAtom";
+import { useAtom } from "jotai";
 
 const MANUAL_EDIT_PROMPT = "Manual Edit";
 export default function CodeManualEditor() {
-  const pipeline = useAtomValue(pipelineAtom);
-  const blockId = useAtomValue(blockEditorIdAtom);
+  const [pipeline] = useAtom(pipelineAtom);
+  const [blockId] = useAtom(blockEditorIdAtom);
   const fileHandle = useContext(FileHandleContext);
   const fileBuffer = useContext(FileBufferContext);
   const chatHistory = useContext(ChatHistoryContext);

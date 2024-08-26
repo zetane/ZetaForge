@@ -4,13 +4,28 @@ import { ViewerCodeMirror } from "./CodeMirrorComponents";
 import { useContext } from "react";
 import { SelectedPromptContext } from "./SelectedPromptContext";
 import { ChatHistoryContext } from "./ChatHistoryContext";
+import { FileBufferContext } from "./FileBufferContext";
+import { useAtom } from "jotai";
+import { pipelineAtom } from "@/atoms/pipelineAtom";
+import { blockEditorIdAtom } from "@/atoms/editorAtom";
+import { FileHandleContext } from "./FileHandleContext";
+import { useCompileComputation } from "@/hooks/useCompileSpecs";
 
 export default function PromptViewer(){
+  const [pipeline] = useAtom(pipelineAtom);
+  const [blockId] = useAtom(blockEditorIdAtom);
+  const fileBuffer = useContext(FileBufferContext);
   const selectedPrompt = useContext(SelectedPromptContext)
   const chatHistory = useContext(ChatHistoryContext);
+  const fileHandle = useContext(FileHandleContext);
+  const compile = useCompileComputation();
 
-  const handleAccept = () => {
+  const handleAccept = async () => {
     chatHistory.addPrompt(selectedPrompt.selectedPrompt);
+    await fileBuffer.updateSave(selectedPrompt.selectedPrompt.response);
+    if (fileHandle.isComputation) {
+      compile(pipeline.id, blockId);
+    }
     selectedPrompt.setSelectedPrompt(undefined)
   };
 
@@ -31,3 +46,4 @@ export default function PromptViewer(){
     </div>
   );
 }
+

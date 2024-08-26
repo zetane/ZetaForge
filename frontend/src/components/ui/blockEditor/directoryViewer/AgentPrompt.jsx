@@ -9,6 +9,8 @@ import { ChatHistoryContext } from "./ChatHistoryContext";
 import { blockEditorIdAtom } from "@/atoms/editorAtom";
 import { SelectedPromptContext } from "./SelectedPromptContext";
 import { FileBufferContext } from "./FileBufferContext";
+import { FileHandleContext } from "./FileHandleContext";
+import { useCompileComputation } from "@/hooks/useCompileSpecs";
 
 export default function AgentPrompt() {
   const [pipeline] = useAtom(pipelineAtom);
@@ -20,16 +22,18 @@ export default function AgentPrompt() {
   const chatHistory = useContext(ChatHistoryContext);
   const selectedPrompt = useContext(SelectedPromptContext);
   const fileBuffer = useContext(FileBufferContext);
+  const fileHandle = useContext(FileHandleContext);
+  const compile = useCompileComputation();
 
   const isViewBlock =
     pipeline?.data[blockId]?.information?.block_type === "view";
   const agentName = isViewBlock ? "gpt-4_python_view" : "gpt-4_python_compute";
 
   const handleSubmit = async (e) => {
-    setIsLoading(true);
     e.preventDefault();
-    const newPrompt = chatTextarea.current.value.trim();
+    setIsLoading(true);
 
+    const newPrompt = chatTextarea.current.value.trim();
     const response = await callAgent.mutateAsync({
       userMessage: newPrompt,
       agentName: agentName,
@@ -42,14 +46,14 @@ export default function AgentPrompt() {
       prompt: newPrompt,
       response: response,
     });
-
-    fileBuffer.update(response);
-    await fileBuffer.save();
+    await fileBuffer.updateSave(response);
+    if (fileHandle.isComputation) {
+      compile(pipeline.id, blockId);
+    }
 
     selectedPrompt.setSelectedPrompt(undefined)
 
     chatTextarea.current.value = "";
-
     setIsLoading(false);
   };
 
@@ -61,7 +65,7 @@ export default function AgentPrompt() {
   };
 
   return (
-    <div className="py-2 px-52">
+    <div className="py-3 px-52">
     <div className="relative">
       <textarea
         className="block-editor-prompt-input relative"
