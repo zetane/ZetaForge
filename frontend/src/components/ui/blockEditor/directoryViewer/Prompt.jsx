@@ -9,12 +9,13 @@ export default function Prompt({ children, index }) {
     selectedPrompt.setSelectedPrompt(children)
   };
 
+  //TODO overflow text
   return (
     <div className="prompt flex flex-row justify-between rounded-lg">
       <Button onClick={handleClick} kind="ghost" className="max-w-full grow rounded-lg">
         {children.prompt}
       </Button>
-      <PromptMenu index={index}/>
+      <PromptMenu index={index} prompt={children}/>
     </div>
   );
 }
