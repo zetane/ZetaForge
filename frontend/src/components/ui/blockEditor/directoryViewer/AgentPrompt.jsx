@@ -61,6 +61,7 @@ export default function AgentPrompt() {
   };
 
   return (
+    <div className="py-2 px-52">
     <div className="relative">
       <textarea
         className="block-editor-prompt-input relative"
@@ -91,6 +92,7 @@ export default function AgentPrompt() {
           />
         )}
       </div>
+    </div>
     </div>
   );
 }

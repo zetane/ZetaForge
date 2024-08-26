@@ -14,9 +14,12 @@ import useChatHistory from "@/hooks/useChatHistory";
 import { SelectedPromptContext } from "./SelectedPromptContext";
 import { FileHandleContext } from "./FileHandleContext";
 import useFileHandle from "@/hooks/useFileHandle";
+import AgentPrompt from "./AgentPrompt";
+import { openAIApiKeyAtom } from "@/atoms/apiKeysAtom";
 
 export default function DirectoryViewer({ blockId }) {
   const pipeline = useAtomValue(pipelineAtom);
+  const openAIApiKey = useAtomValue(openAIApiKeyAtom);
   const fileHandle = useFileHandle();
   const chatHistory = useChatHistory(pipeline.id, blockId);
   const [selectedPrompt, setSelectedPrompt] = useState();
@@ -27,11 +30,15 @@ export default function DirectoryViewer({ blockId }) {
     fileHandle.currentFile?.relativePath,
   );
 
+  const displayAgentPrompt = fileHandle.isComputation && openAIApiKey;
+
   // TODO ugly find another way
   useEffect(() => {
     fileBuffer.load();
   }, [fileHandle.currentFile]);
 
+
+  console.log(displayAgentPrompt);
   return (
     <FileBufferContext.Provider value={fileBuffer}>
       <ChatHistoryContext.Provider value={chatHistory}>
@@ -39,6 +46,7 @@ export default function DirectoryViewer({ blockId }) {
           value={{ selectedPrompt, setSelectedPrompt }} //TODO rename
         >
           <FileHandleContext.Provider value={fileHandle}>
+              <div className="flex flex-col h-full">
               <PersistentAllotment
                 storageKey={"DirectoryViewerMain"}
                 initialSize={[20, 80]}
@@ -57,6 +65,8 @@ export default function DirectoryViewer({ blockId }) {
                 </div>
                 <FileViewer />
               </PersistentAllotment>
+              {displayAgentPrompt && <AgentPrompt />}
+              </div>
           </FileHandleContext.Provider>
         </SelectedPromptContext.Provider>
       </ChatHistoryContext.Provider>
