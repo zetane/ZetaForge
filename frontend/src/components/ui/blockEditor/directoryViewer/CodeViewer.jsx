@@ -1,22 +1,8 @@
-import { useState, useEffect } from "react";
-import { trpc } from "@/utils/trpc";
+import {  useContext } from "react";
 import { ViewerCodeMirror } from "./CodeMirrorComponents";
+import { FileBufferContext } from "./FileBufferContext";
 
-export default function CodeViewer({ pipelineId, blockId, currentFile }) {
-  const getFileContent = trpc.block.file.byPath.get.useMutation();
-  const [fileContentBuffer, setFileContentBuffer] = useState();
-
-  useEffect(() => {
-    const fetchFileContent = async () => {
-      const content = await getFileContent.mutateAsync({
-        pipelineId: pipelineId,
-        blockId: blockId,
-        path: currentFile.relativePath,
-      });
-      setFileContentBuffer(content);
-    };
-
-    fetchFileContent();
-  }, []);
-  return <ViewerCodeMirror code={fileContentBuffer ?? ""} />
+export default function CodeViewer() {
+  const fileBuffer = useContext(FileBufferContext)
+  return <ViewerCodeMirror code={fileBuffer.content ?? ""} />
 }

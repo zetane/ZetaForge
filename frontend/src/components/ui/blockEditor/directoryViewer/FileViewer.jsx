@@ -1,43 +1,17 @@
-import {
-  BLOCK_SPECS_FILE_NAME,
-  CHAT_HISTORY_FILE_NAME,
-} from "@/utils/constants";
 import CodeViewer from "./CodeViewer";
 import CodeEditor from "./CodeEditor";
+import { useContext } from "react";
+import { FileHandleContext } from "./FileHandleContext";
 
-const READ_ONLY_FILES = [BLOCK_SPECS_FILE_NAME, CHAT_HISTORY_FILE_NAME];
-export default function FileViewer({
-  pipelineId,
-  blockId,
-  currentFile,
-  prompt,
-  onAddPrompt,
-}) {
+export default function FileViewer() {
+  const fileHandle = useContext(FileHandleContext);
+
   const getViewer = () => {
-    if (currentFile) {
-      const isReadOnly = READ_ONLY_FILES.some((fileName) =>
-        currentFile.name.endsWith(fileName),
-      );
-      if (isReadOnly) {
-        return (
-          <CodeViewer
-            key={currentFile.relativePath}
-            pipelineId={pipelineId}
-            blockId={blockId}
-            currentFile={currentFile}
-          />
-        );
+    if (fileHandle.currentFile) {//TODO isSelectedProperty?
+      if (fileHandle.isReadOnly) {
+        return <CodeViewer />;
       } else {
-        return (
-          <CodeEditor
-            key={currentFile.relativePath}
-            pipelineId={pipelineId}
-            blockId={blockId}
-            currentFile={currentFile}
-            prompt={prompt}
-            onAddPrompt={onAddPrompt}
-          />
-        );
+        return <CodeEditor />;
       }
     } else {
       return <></>;

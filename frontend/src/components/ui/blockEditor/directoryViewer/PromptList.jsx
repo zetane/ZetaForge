@@ -1,44 +1,27 @@
+import { useContext } from "react";
 import ActivePrompt from "./ActivePrompt";
 import Prompt from "./Prompt";
-import { trpc } from "@/utils/trpc";
+import { ChatHistoryContext } from "./ChatHistoryContext";
 
-export default function PromptList({
-  pipelineId,
-  blockId,
-  onSelectPrompt,
-  onSelectActive,
-}) {
-  const history = trpc.chat.history.get.useQuery({
-    pipelineId: pipelineId,
-    blockId: blockId,
-  });
-  const historyData = history?.data ?? [];
+export default function PromptList(){
+  const chatHistory = useContext(ChatHistoryContext);
+  const history = chatHistory.history ?? [];
 
-  const previousPrompt = historyData.slice(0, -1);
-  const activePrompt = historyData.at(-1);
+  const previousPrompt = history.slice(0, -1);
+  const activePrompt = history.at(-1);
 
   return (
     <div className="flex h-full flex-col gap-5 p-3">
-      <div>Prompts ({historyData.length})</div>
+      <div>Prompts ({history.length})</div>
       <div className="flex min-h-0 flex-col gap-2 overflow-auto pr-1">
         {previousPrompt.map((prompt, index) => (
-          <Prompt
-            key={index}
-            index={index}
-            pipelineId={pipelineId}
-            blockId={blockId}
-            onSelectPrompt={onSelectPrompt}
-          >
+          <Prompt key={index} index={index}>
             {prompt}
           </Prompt>
         ))}
       </div>
       <div>Active Prompt</div>
-      {activePrompt && (
-        <ActivePrompt onSelectActive={onSelectActive}>
-          {activePrompt.prompt}
-        </ActivePrompt>
-      )}
+      {activePrompt && <ActivePrompt>{activePrompt.prompt}</ActivePrompt>}
     </div>
   );
 }

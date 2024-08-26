@@ -1,8 +1,11 @@
 import { Button } from "@carbon/react";
+import { useContext } from "react";
+import { SelectedPromptContext } from "./SelectedPromptContext";
 
-export default function ActivePrompt({ children, onSelectActive }) {
+export default function ActivePrompt({ children }) {
+  const selectedPrompt = useContext(SelectedPromptContext)
   const handleClick = () => {
-    onSelectActive();
+    selectedPrompt.setSelectedPrompt(undefined); 
   };
 
   return (

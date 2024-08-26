@@ -1,22 +1,28 @@
 import { Button, Loading } from "@carbon/react";
 import { Bot, SendFilled } from "@carbon/icons-react";
 import { openAIApiKeyAtom } from "@/atoms/apiKeysAtom";
-import { useState, useRef } from "react";
+import { useState, useRef, useContext } from "react";
 import { useAtom } from "jotai";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { trpc } from "@/utils/trpc";
+import { ChatHistoryContext } from "./ChatHistoryContext";
+import { blockEditorIdAtom } from "@/atoms/editorAtom";
+import { SelectedPromptContext } from "./SelectedPromptContext";
+import { FileBufferContext } from "./FileBufferContext";
 
-export default function AgentPrompt({ pipelineId, blockId, onGenerate }) {
+export default function AgentPrompt() {
   const [pipeline] = useAtom(pipelineAtom);
+  const [blockId] = useAtom(blockEditorIdAtom);
   const [isLoading, setIsLoading] = useState(false);
   const [openAIApiKey] = useAtom(openAIApiKeyAtom);
   const chatTextarea = useRef(null);
   const callAgent = trpc.block.callAgent.useMutation();
-  const history = trpc.chat.history.get.useQuery({
-    pipelineId: pipelineId,
-    blockId: blockId,
-  });
-  const isViewBlock = pipeline?.data[blockId]?.information?.block_type === "view";
+  const chatHistory = useContext(ChatHistoryContext);
+  const selectedPrompt = useContext(SelectedPromptContext);
+  const fileBuffer = useContext(FileBufferContext);
+
+  const isViewBlock =
+    pipeline?.data[blockId]?.information?.block_type === "view";
   const agentName = isViewBlock ? "gpt-4_python_view" : "gpt-4_python_compute";
 
   const handleSubmit = async (e) => {
@@ -27,15 +33,20 @@ export default function AgentPrompt({ pipelineId, blockId, onGenerate }) {
     const response = await callAgent.mutateAsync({
       userMessage: newPrompt,
       agentName: agentName,
-      conversationHistory: history.data,
+      conversationHistory: chatHistory.history,
       apiKey: openAIApiKey,
     });
 
-    await onGenerate({
-        timestamp: Date.now(),
-        prompt: newPrompt,
-        response: response,
-      });
+    chatHistory.addPrompt({
+      timestamp: Date.now(),
+      prompt: newPrompt,
+      response: response,
+    });
+
+    fileBuffer.update(response);
+    await fileBuffer.save();
+
+    selectedPrompt.setSelectedPrompt(undefined)
 
     chatTextarea.current.value = "";
 

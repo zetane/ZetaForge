@@ -1,9 +1,12 @@
+import { useContext } from "react";
 import PromptMenu from "./PromptMenu";
 import { Button } from "@carbon/react";
+import { SelectedPromptContext } from "./SelectedPromptContext";
 
-export default function Prompt({ children, index, pipelineId, blockId, onSelectPrompt }) {
+export default function Prompt({ children, index }) {
+  const selectedPrompt = useContext(SelectedPromptContext);
   const handleClick = () => {
-    onSelectPrompt(children);
+    selectedPrompt.setSelectedPrompt(children)
   };
 
   return (
@@ -11,7 +14,7 @@ export default function Prompt({ children, index, pipelineId, blockId, onSelectP
       <Button onClick={handleClick} kind="ghost" className="max-w-full grow rounded-lg">
         {children.prompt}
       </Button>
-      <PromptMenu index={index} pipelineId={pipelineId} blockId={blockId} response={children.response} />
+      <PromptMenu index={index}/>
     </div>
   );
 }
