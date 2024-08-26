@@ -5,12 +5,19 @@ import { useContext, useState } from "react";
 import { FileBufferContext } from "./FileBufferContext";
 import { ChatHistoryContext } from "./ChatHistoryContext";
 import { FileHandleContext } from "./FileHandleContext";
+import { useCompileComputation } from "@/hooks/useCompileSpecs";
+import { useAtomValue } from "jotai";
+import { pipelineAtom } from "@/atoms/pipelineAtom";
+import { blockEditorIdAtom } from "@/atoms/editorAtom";
 
 const MANUAL_EDIT_PROMPT = "Manual Edit";
 export default function CodeManualEditor() {
+  const pipeline = useAtomValue(pipelineAtom);
+  const blockId = useAtomValue(blockEditorIdAtom);
   const fileHandle = useContext(FileHandleContext);
   const fileBuffer = useContext(FileBufferContext);
   const chatHistory = useContext(ChatHistoryContext);
+  const compile = useCompileComputation();
   const [isLoading, setIsLoading] = useState(false);
 
   const saveDisabled = isLoading || !fileBuffer.hasPendingChanges;
@@ -28,6 +35,7 @@ export default function CodeManualEditor() {
         prompt: MANUAL_EDIT_PROMPT,
         response: fileBuffer.content,
       });
+      compile(pipeline.id, blockId);
     }
     setIsLoading(false);
   };
