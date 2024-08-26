@@ -158,6 +158,7 @@ async function getBlocksInDirectory(directory) {
 }
 
 async function readPipelineBlocks(specsPath) {
+  console.log("reading: ", specsPath);
   const specs = await readJsonToObject(specsPath);
   return getPipelineBlocks(specs);
 }
