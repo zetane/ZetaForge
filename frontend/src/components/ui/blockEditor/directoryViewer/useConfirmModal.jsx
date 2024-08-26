@@ -11,6 +11,7 @@ export function useConfirmModal() {
         const confirm = (selectedFile) => {
                 if (fileBuffer.hasPendingChanges) {
                         setSelectedFile(selectedFile);
+                        setIsOpen(true);
                         return;
                 }
 
