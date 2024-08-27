@@ -12,6 +12,7 @@ export default function PromptList() {
   const activeIndex = history.length - 1;
   const previousPrompt = history.slice(0, -1);
   const activePrompt = history[activeIndex];
+  const displayCounter = previousPrompt.length > 0
 
   return (
     <div className="flex h-full flex-col-reverse gap-5 p-3">
@@ -25,12 +26,14 @@ export default function PromptList() {
         <div className="flex flex-row justify-between">
           <div className="pb-4">
             <span>Version History </span>
-            {previousPrompt.length > 0 && (
+            {displayCounter && (
               <span>({previousPrompt.length})</span>
             )}
           </div>
           {fileHandle.currentFile && (
-            <div className="prompt-file-header ">File: {fileHandle.currentFile.name}</div>
+            <div className="prompt-file-header ">
+              File: {fileHandle.currentFile.name}
+            </div>
           )}
         </div>
         <div className="flex flex-col gap-2 overflow-auto pr-1">
