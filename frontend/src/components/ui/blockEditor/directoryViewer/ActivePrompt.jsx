@@ -18,23 +18,23 @@ export default function ActivePrompt({ children, index }) {
   };
 
   const handleDelete = async () => {
-    const newPrompt = chatHistory.history[index-1]
+    const newPrompt = chatHistory.history[index - 1];
     chatHistory.deletePrompt(index);
     await fileBuffer.updateSave(newPrompt.response);
     if (fileHandle.isComputation) {
       compile(pipeline.id, blockId);
     }
-    selectedPrompt.setSelectedPrompt(undefined)
-  }
+    selectedPrompt.setSelectedPrompt(undefined);
+  };
 
   return (
     <div className="prompt-active flex justify-between rounded-lg border-2 border-solid">
       <Button
         onClick={handleClick}
         kind="ghost"
-        className="max-w-full grow rounded-lg"
+        className="min-w-0 max-w-none flex-1 rounded-lg"
       >
-        {children.prompt}
+        <span className="line-clamp-3 text-wrap">{children.prompt}</span>
       </Button>
       <OverflowMenu
         className="rounded-lg"
@@ -42,7 +42,11 @@ export default function ActivePrompt({ children, index }) {
         data-floating-menu-container="cds--header-panel"
         flipped
       >
-        <OverflowMenuItem itemText="Delete" disabled={isLast} onClick={handleDelete} />
+        <OverflowMenuItem
+          itemText="Delete"
+          disabled={isLast}
+          onClick={handleDelete}
+        />
       </OverflowMenu>
     </div>
   );
