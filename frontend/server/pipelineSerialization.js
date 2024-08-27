@@ -6,11 +6,11 @@ import {
   BLOCK_SPECS_FILE_NAME,
   PIPELINE_SPECS_FILE_NAME,
 } from "../src/utils/constants";
-import { setDifference } from "../utils/set.js";
+// import { setDifference } from "../utils/set.js";
 import {
   fileExists,
   filterDirectories,
-  readJsonToObject,
+  // readJsonToObject,
 } from "./fileSystem.js";
 import { checkAndUpload, checkAndCopy, uploadDirectory } from "./s3.js";
 import { createExecution, getBuildContextStatus } from "./anvil";
@@ -53,22 +53,23 @@ export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
 
   const fromBlockIndex = await getBlockIndex([bufferPath]);
 
-  let toBlockIndex = {};
+  // let toBlockIndex = {};
+
   if (await fileExists(writePipelineDirectory)) {
-    toBlockIndex = await getBlockIndex([writePipelineDirectory]);
+    // toBlockIndex = await getBlockIndex([writePipelineDirectory]);
   } else {
     await fs.mkdir(writePipelineDirectory, { recursive: true });
   }
 
   const newPipelineBlocks = getPipelineBlocks(pipelineSpecs);
-  const existingPipelineBlocks = (await fileExists(pipelineSpecsPath))
-    ? await readPipelineBlocks(pipelineSpecsPath)
-    : new Set();
+  // const existingPipelineBlocks = (await fileExists(pipelineSpecsPath))
+  //   ? await readPipelineBlocks(pipelineSpecsPath)
+  //   : new Set();
 
-  const blocksToRemove = setDifference(
-    existingPipelineBlocks,
-    newPipelineBlocks,
-  );
+  // const blocksToRemove = setDifference(
+  //   existingPipelineBlocks,
+  //   newPipelineBlocks,
+  // );
 
   for (const key of Array.from(newPipelineBlocks)) {
     const newBlockPath = path.join(writePipelineDirectory, key);
@@ -153,10 +154,10 @@ async function getBlocksInDirectory(directory) {
   return directories;
 }
 
-async function readPipelineBlocks(specsPath) {
-  const specs = await readJsonToObject(specsPath);
-  return getPipelineBlocks(specs);
-}
+// async function readPipelineBlocks(specsPath) {
+//   const specs = await readJsonToObject(specsPath);
+//   return getPipelineBlocks(specs);
+// }
 
 export async function removeBlock(blockId, pipelinePath) {
   const blockPath = await getPipelineBlockPath(pipelinePath, blockId);
