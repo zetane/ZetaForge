@@ -210,6 +210,14 @@ func blockTemplate(block *zjson.Block, blockKey string, key string, organization
 			Image:           image,
 			Command:         block.Action.Container.CommandLine,
 			ImagePullPolicy: "IfNotPresent",
+			Resources: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceEphemeralStorage: resource.MustParse("50Gi"),
+				},
+				Limits: corev1.ResourceList{
+					corev1.ResourceEphemeralStorage: resource.MustParse("150Gi"),
+				},
+			},
 		},
 		Inputs:   inputs,
 		Metadata: wfv1.Metadata{Annotations: idMap},

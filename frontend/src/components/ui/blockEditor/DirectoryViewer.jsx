@@ -21,7 +21,7 @@ import { EditorCodeMirror, ViewerCodeMirror } from "./CodeMirrorComponents";
 import ComputationsFileEditor from "./ComputationsFileEditor";
 import Splitter from "./Splitter";
 
-const EDIT_ONLY_FILES = [BLOCK_SPECS_FILE_NAME, CHAT_HISTORY_FILE_NAME];
+const EDIT_ONLY_FILES = [CHAT_HISTORY_FILE_NAME];
 export default function DirectoryViewer({ blockPath, blockKey }) {
   const serverAddress = "http://localhost:3330";
   const [fileSystem, setFileSystem] = useState({});
@@ -281,7 +281,12 @@ export default function DirectoryViewer({ blockPath, blockKey }) {
     const content = folderData && folderData.content ? folderData.content : {};
     const currentPath = parentPath ? `${parentPath}/${folder}` : folder;
 
-    const specialFiles = ["computations.py", "Dockerfile", "requirements.txt"];
+    const specialFiles = [
+      "computations.py",
+      "Dockerfile",
+      "requirements.txt",
+      "specs.json",
+    ];
 
     const isSpecialFile = specialFiles.includes(folder);
     const textStyle = isSpecialFile

@@ -267,6 +267,7 @@ async function uploadBlocks(
         "/computations.py",
       );
       const awsKey = `${pipelineId}/${executionId}/${nodeId}.py`;
+      console.log(computationFile);
       await checkAndUpload(awsKey, computationFile, anvilConfiguration);
     }
   }
