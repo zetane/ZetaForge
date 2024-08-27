@@ -5,6 +5,7 @@ import { SelectedPromptContext } from "./SelectedPromptContext";
 
 export default function Prompt({ children, index }) {
   const selectedPrompt = useContext(SelectedPromptContext);
+
   const handleClick = () => {
     selectedPrompt.setSelectedPrompt(children);
   };
