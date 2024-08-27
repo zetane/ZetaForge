@@ -11,13 +11,15 @@ import { SelectedPromptContext } from "./SelectedPromptContext";
 import { FileBufferContext } from "./FileBufferContext";
 import { FileHandleContext } from "./FileHandleContext";
 import { useCompileComputation } from "@/hooks/useCompileSpecs";
+import useDebounce from "@/hooks/useDebounce";
 
 export default function AgentPrompt() {
   const [pipeline] = useAtom(pipelineAtom);
   const [blockId] = useAtom(blockEditorIdAtom);
   const [isLoading, setIsLoading] = useState(false);
   const [openAIApiKey] = useAtom(openAIApiKeyAtom);
-  const chatTextarea = useRef(null);
+  const [textArea, setTextArea] = useState("");
+  const setTextAreaDebounced = useDebounce(setTextArea);
   const callAgent = trpc.block.callAgent.useMutation();
   const chatHistory = useContext(ChatHistoryContext);
   const selectedPrompt = useContext(SelectedPromptContext);
@@ -29,11 +31,16 @@ export default function AgentPrompt() {
     pipeline?.data[blockId]?.information?.block_type === "view";
   const agentName = isViewBlock ? "gpt-4_python_view" : "gpt-4_python_compute";
 
+  const handleTextAreaChange = (e) => {
+    const newValue = e.target.value
+    setTextAreaDebounced(newValue)
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
-    const newPrompt = chatTextarea.current.value.trim();
+    const newPrompt = textArea.trim();
     const response = await callAgent.mutateAsync({
       userMessage: newPrompt,
       agentName: agentName,
@@ -53,7 +60,7 @@ export default function AgentPrompt() {
 
     selectedPrompt.setSelectedPrompt(undefined)
 
-    chatTextarea.current.value = "";
+    setTextArea("");
     setIsLoading(false);
   };
 
@@ -69,9 +76,10 @@ export default function AgentPrompt() {
     <div className="relative">
       <textarea
         className="block-editor-prompt-input relative"
-        ref={chatTextarea}
         placeholder="Ask to generate code or modify your code"
         onKeyDown={handleKeyDown}
+        value={textArea}
+        onChange={handleTextAreaChange}
       />
       <div className="absolute right-0 top-0 inline-block p-2">
         <Bot size={24} className="align-middle" />
@@ -92,6 +100,7 @@ export default function AgentPrompt() {
             iconDescription="Send Prompt"
             renderIcon={SendFilled}
             hasIconOnly
+            disabled={!textArea}
             onClick={handleSubmit}
           />
         )}
