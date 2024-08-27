@@ -44,14 +44,15 @@ export default function CodeManualEditor() {
       />
       <div className="absolute right-5 top-5">
         <Button
-          renderIcon={Save}
-          iconDescription="Save code"
+          className="w-16"
+          iconDescription="Save"
           tooltipPosition="left"
-          hasIconOnly
-          size="md"
+          size="sm"
           onClick={handleSave}
           disabled={saveDisabled}
-        />
+        >
+          Save
+        </Button>
       </div>
     </div>
   );

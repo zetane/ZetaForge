@@ -32,15 +32,18 @@ export default function PromptViewer(){
   return (
     <div className="relative min-h-0 flex-1">
       <ViewerCodeMirror code={selectedPrompt.selectedPrompt.response} />
-      <div className="absolute right-5 top-5">
+      <div className="absolute right-5 top-5 flex flex-row gap-4">
+        <div className="view-only-tag grid content-center">
+          View Only
+        </div>
         <Button
           renderIcon={Copy}
           iconDescription="Make current"
           tooltipPosition="left"
-          size="md"
+          size="sm"
           onClick={handleAccept}
         >
-          Accept
+          Duplicate to current
         </Button>
       </div>
     </div>
