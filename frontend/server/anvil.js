@@ -25,6 +25,15 @@ export async function getBuildContextStatus(
     },
   );
 
+  if (!response.ok) {
+    const errorMessage = await response.text();
+    throw new ServerError(
+      `Anvil could not start the execution: ${errorMessage}`,
+      HttpStatus.BAD_REQUEST,
+      null,
+    );
+  }
+
   const body = await response.json();
 
   return body;
