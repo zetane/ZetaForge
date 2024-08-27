@@ -26,17 +26,18 @@ export default function SavePipelineButton() {
     // The response from the server after saving will contain that new path
     // TODO: the pipelineAtom data and these fields are redundant
     // They should be consolidated
+    // everything is taken from here to save into the pipeline.json file
     pipelineSpecs["sink"] = pipeline.path ? pipeline.path : pipeline.buffer;
-    pipelineSpecs["build"] = pipeline.buffer;
+    pipelineSpecs["build"] = (pipeline.buffer).replace(/\\/g, '/');
     pipelineSpecs["name"] = pipeline.name;
     pipelineSpecs["id"] = pipeline.id;
-    const saveData = {
+    let saveData = {
       specs: pipelineSpecs,
       name: pipeline.name,
       buffer: pipeline.buffer,
       writePath: pipeline.path,
     };
-
+    saveData.buffer = pipeline.path ? pipeline.path : pipeline.buffer;
     const response = await savePipeline.mutateAsync(saveData);
     const { name, dirPath, specs } = response;
 

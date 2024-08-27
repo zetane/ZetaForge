@@ -138,7 +138,6 @@ export default function DrawflowWrapper() {
       editor.syncConnections(newConnections);
     }
     setPipelineConnections((draft) => (draft = newConnections));
-
     const syncData = async () => {
       try {
         if (Object.getOwnPropertyNames(pipeline?.data).length !== 0) {
@@ -146,15 +145,18 @@ export default function DrawflowWrapper() {
             pipeline.name,
             pipeline.data,
           );
-          // note that we are writing to the buffer, not the load path
-          pipelineSpecs["sink"] = pipeline.buffer;
-          pipelineSpecs["build"] = pipeline.buffer;
+          
+          // Everything here is set to the pipeline.json file.
+          pipelineSpecs["sink"] = pipeline.path;  // Update to saved folder path
+          pipelineSpecs["build"] = pipeline.path; // Update to saved folder path
+          pipelineSpecs["name"] = pipeline.name;
+          pipelineSpecs["id"] = pipeline.id;
 
           const saveData = {
             specs: pipelineSpecs,
             name: pipeline?.name,
             buffer: pipeline?.buffer,
-            writePath: pipeline?.buffer,
+            writePath: (pipeline.path?pipeline.path : pipeline.buffer), // opens the save terminal.
           };
 
           await savePipeline.mutateAsync(saveData);
@@ -163,7 +165,7 @@ export default function DrawflowWrapper() {
         console.error("Error saving pipeline:", error);
       }
     };
-
+  
     syncData();
   }, [renderNodes]);
 

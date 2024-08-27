@@ -21,27 +21,29 @@ export const useLoadPipeline = () => {
     const data = JSON.parse(await new Blob([file]).text());
     const folderPath = getDirectoryPath(file.path);
 
-    // Clear the pipeline object first to avoid key collisions
-    const bufferPath = `${await window.cache.local()}${data.id}`;
+    const bufferPath = (file.path?file.path.replace(/pipeline.json$/, '') : `${await window.cache.local()}${data.id}`);
+    // Preserve name and id from the loaded data
+    const name = data.name ?? "Unnamed Pipeline";
+    const id = data.id ?? "pipeline-" + Date.now();
 
     data["sink"] = folderPath;
     data["build"] = bufferPath;
 
     const cacheData = {
       specs: data,
-      name: data.name,
+      name: name,  // Ensure the name is saved
       buffer: folderPath,
       writePath: bufferPath,
     };
     await savePipelineMutation.mutateAsync(cacheData);
 
     const loadedPipeline = {
-      name: data.name,
+      name: name,
       path: folderPath,
       saveTime: Date.now(),
       buffer: bufferPath,
       data: data.pipeline,
-      id: data.id,
+      id: id,
     };
 
     const newPipeline = pipelineFactory(

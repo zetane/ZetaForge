@@ -45,13 +45,8 @@ function hasContainer(blockSpec) {
 
 export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
   const bufferPath = path.resolve(process.cwd(), fromDir);
-
-  // Takes existing pipeline + spec
   const writePipelineDirectory = toDir;
-  const pipelineSpecsPath = path.join(
-    writePipelineDirectory,
-    PIPELINE_SPECS_FILE_NAME,
-  );
+  const pipelineSpecsPath = path.join(writePipelineDirectory, PIPELINE_SPECS_FILE_NAME);
 
   const fromBlockIndex = await getBlockIndex([bufferPath]);
 
@@ -62,34 +57,21 @@ export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
     await fs.mkdir(writePipelineDirectory, { recursive: true });
   }
 
-  // Gets pipeline specs from the specs coming from the graph
-  // Submitted by the client
   const newPipelineBlocks = getPipelineBlocks(pipelineSpecs);
   const existingPipelineBlocks = (await fileExists(pipelineSpecsPath))
     ? await readPipelineBlocks(pipelineSpecsPath)
     : new Set();
 
-  const blocksToRemove = setDifference(
-    existingPipelineBlocks,
-    newPipelineBlocks,
-  );
+  const blocksToRemove = setDifference(existingPipelineBlocks, newPipelineBlocks);
 
   for (const key of Array.from(newPipelineBlocks)) {
     const newBlockPath = path.join(writePipelineDirectory, key);
     let existingBlockPath = fromBlockIndex[key];
     const blockSpec = pipelineSpecs.pipeline[key];
     if (!existingBlockPath) {
-      // NOTE: BAD KEY
-      // At a certain point we serialized non unique keys
-      // for folder names so there's a chance that we will
-      // fail to find the correct key and need to fall back
-      // to fetching a common folder name
-
       existingBlockPath = fromBlockIndex[blockSpec.information.id];
     }
     if (!existingBlockPath) {
-      // If we still can't find a path
-      // we try to fall back to the block source path
       existingBlockPath = blockSpec.information.block_source;
       if (app.isPackaged) {
         existingBlockPath = path.join(process.resourcesPath, existingBlockPath);
@@ -97,7 +79,6 @@ export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
     }
 
     if (existingBlockPath != newBlockPath) {
-      // if it's the same folder, don't try to copy it
       await fs.cp(existingBlockPath, newBlockPath, { recursive: true });
       await fs.writeFile(
         path.join(newBlockPath, BLOCK_SPECS_FILE_NAME),
@@ -106,10 +87,19 @@ export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
     }
   }
 
-  for (const block of Array.from(blocksToRemove)) {
-    await fs.rm(toBlockIndex[block], { recursive: true });
+  const historyFolder = path.join(bufferPath, 'history');
+  if (await fileExists(historyFolder)) {
+    console.log("History folder is copied too.");
+    const newHistoryFolder = path.join(writePipelineDirectory, 'history');
+    await fs.cp(historyFolder, newHistoryFolder, { recursive: true });
   }
 
+  // This block removes folder if a pipeline is removed.
+  // for (const block of Array.from(blocksToRemove)) {
+  //   await fs.rm(toBlockIndex[block], { recursive: true });
+  // }
+
+  // Save the updated pipeline spec
   await fs.writeFile(pipelineSpecsPath, JSON.stringify(pipelineSpecs, null, 2));
 
   return { specs: PIPELINE_SPECS_FILE_NAME, dirPath: writePipelineDirectory };
@@ -212,7 +202,6 @@ export async function executePipeline(
   specs["id"] = id;
 
   await uploadBuildContexts(anvilHostConfiguration, specs, buffer, rebuild);
-
   return await createExecution(
     anvilHostConfiguration,
     executionId,

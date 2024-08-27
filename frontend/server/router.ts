@@ -23,6 +23,8 @@ import { logger } from "./logger.js";
 import { anvilConfigurationSchema } from "./schema";
 import { syncExecutionResults } from "./execution";
 
+let saveLocation: string | undefined;
+
 export const appRouter = router({
   getBlocks: publicProcedure.use(errorHandling).query(async () => {
     const resources = process.resourcesPath;
@@ -123,7 +125,7 @@ export const appRouter = router({
         buffer: z.string(),
         writePath: z.optional(z.string()),
       }),
-    )
+    )  
     .mutation(async (opts) => {
       const { input } = opts;
       let { name, writePath } = input;
@@ -137,9 +139,9 @@ export const appRouter = router({
           name = pathArr ? pathArr[pathArr.length - 1] : name;
           writePath = savePath.filePath;
           specs["sink"] = writePath;
-          specs["build"] = writePath;
+          specs["build"] =( buffer?buffer:writePath);
           specs["name"] = name;
-
+          console.log("I was called.");
           if (writePath) {
             try {
               const stat = await fs.stat(writePath);
@@ -149,6 +151,7 @@ export const appRouter = router({
             } catch {
               logger.debug("Creating dir: ", writePath);
             }
+            saveLocation = writePath;
           }
         }
       }
@@ -198,6 +201,8 @@ export const appRouter = router({
       }),
     )
     .mutation(async (opts) => {
+      opts.input.pipelinePath = (saveLocation ? saveLocation : opts.input.pipelinePath)
+      // console.log("Came in blockpath with opts: " , opts);
       const { input } = opts;
       const { blockId, pipelinePath } = input;
       return await getBlockPath(blockId, pipelinePath);
@@ -241,7 +246,9 @@ export const appRouter = router({
         rebuild,
         anvilConfiguration,
       } = input;
-
+      
+      opts.input.specs.sink = opts.input.path + "/history";
+      
       return await executePipeline(
         id,
         executionId,
@@ -295,7 +302,7 @@ export const appRouter = router({
       const { buffer, pipelineUuid, executionUuid, anvilConfiguration } = input;
 
       await syncExecutionResults(
-        buffer,
+        (saveLocation ? saveLocation : buffer),
         pipelineUuid,
         executionUuid,
         anvilConfiguration,
