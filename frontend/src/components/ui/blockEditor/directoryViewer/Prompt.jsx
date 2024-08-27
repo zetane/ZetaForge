@@ -9,7 +9,6 @@ export default function Prompt({ children, index }) {
     selectedPrompt.setSelectedPrompt(children)
   };
 
-  //TODO overflow text
   return (
     <div className="prompt flex flex-row justify-between rounded-lg">
       <Button onClick={handleClick} kind="ghost" className="min-w-0 max-w-none flex-1 rounded-lg">
