@@ -10,7 +10,7 @@ import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { blockEditorIdAtom } from "@/atoms/editorAtom";
 import { useAtom } from "jotai";
 
-const MANUAL_EDIT_PROMPT = "Manual Edit";
+const MANUAL_EDIT_PROMPT = "Manual Edit of computations.py";
 export default function CodeManualEditor() {
   const [pipeline] = useAtom(pipelineAtom);
   const [blockId] = useAtom(blockEditorIdAtom);
