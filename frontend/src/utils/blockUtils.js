@@ -26,19 +26,18 @@ export const genJSON = (block, id) => {
   };
 };
 
-export function generateId(entity, prefix) {
+export function generateId(prefix) {
   const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyz0123456789", 12);
 
-  if (entity && entity.name) {
-    const [baseName] = entity.name.split("-");
-    const newNanoid = nanoid();
-    const newId = `${baseName}-${newNanoid}`;
-    return newId;
+  const newNanoid = nanoid();
+
+  if (prefix) {
+    const [basePrefix] = prefix.split("-");
+    const finalPrefix = basePrefix === "pipeline" ? basePrefix : prefix;
+    return `${finalPrefix}-${newNanoid}`;
   }
 
-  const newNanoid = nanoid();
-  const newId = `${prefix}-${newNanoid}`;
-  return newId;
+  return `pipeline-${newNanoid}`;
 }
 
 export function replaceIds(block, id) {

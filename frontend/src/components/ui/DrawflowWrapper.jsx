@@ -168,7 +168,7 @@ export default function DrawflowWrapper() {
   }, [renderNodes]);
 
   const addBlockToPipeline = (block) => {
-    const id = generateId(block, block.information.id);
+    const id = generateId(block.information.id);
     block = replaceIds(block, id);
     setPipeline((draft) => {
       draft.data[id] = block;
@@ -202,7 +202,7 @@ export default function DrawflowWrapper() {
   const dropPipeline = (pipelineData) => {
     const pipelineJson = JSON.parse(pipelineData);
     const { specs, path } = pipelineJson;
-    const newId = generateId(pipeline, pipeline.name);
+    const newId = generateId(pipeline.id);
     specs.id = newId;
     loadPipeline(specs, path);
   };
