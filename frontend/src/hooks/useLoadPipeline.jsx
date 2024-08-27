@@ -21,7 +21,9 @@ export const useLoadPipeline = () => {
     const data = JSON.parse(await new Blob([file]).text());
     const folderPath = getDirectoryPath(file.path);
 
-    const bufferPath = (file.path?file.path.replace(/pipeline.json$/, '') : `${await window.cache.local()}${data.id}`);
+    const bufferPath = file.path
+      ? file.path.replace(/pipeline.json$/, "")
+      : `${await window.cache.local()}${data.id}`;
     // Preserve name and id from the loaded data
     const name = data.name ?? "Unnamed Pipeline";
     const id = data.id ?? "pipeline-" + Date.now();
@@ -31,7 +33,7 @@ export const useLoadPipeline = () => {
 
     const cacheData = {
       specs: data,
-      name: name,  // Ensure the name is saved
+      name: name, // Ensure the name is saved
       buffer: folderPath,
       writePath: bufferPath,
     };

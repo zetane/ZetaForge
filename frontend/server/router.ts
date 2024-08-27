@@ -125,7 +125,7 @@ export const appRouter = router({
         buffer: z.string(),
         writePath: z.optional(z.string()),
       }),
-    )  
+    )
     .mutation(async (opts) => {
       const { input } = opts;
       let { name, writePath } = input;
@@ -139,7 +139,7 @@ export const appRouter = router({
           name = pathArr ? pathArr[pathArr.length - 1] : name;
           writePath = savePath.filePath;
           specs["sink"] = writePath;
-          specs["build"] =( buffer?buffer:writePath);
+          specs["build"] = buffer ? buffer : writePath;
           specs["name"] = name;
           console.log("I was called.");
           if (writePath) {
@@ -201,7 +201,9 @@ export const appRouter = router({
       }),
     )
     .mutation(async (opts) => {
-      opts.input.pipelinePath = (saveLocation ? saveLocation : opts.input.pipelinePath)
+      opts.input.pipelinePath = saveLocation
+        ? saveLocation
+        : opts.input.pipelinePath;
       // console.log("Came in blockpath with opts: " , opts);
       const { input } = opts;
       const { blockId, pipelinePath } = input;
@@ -246,9 +248,9 @@ export const appRouter = router({
         rebuild,
         anvilConfiguration,
       } = input;
-      
+
       opts.input.specs.sink = opts.input.path + "/history";
-      
+
       return await executePipeline(
         id,
         executionId,
@@ -302,7 +304,7 @@ export const appRouter = router({
       const { buffer, pipelineUuid, executionUuid, anvilConfiguration } = input;
 
       await syncExecutionResults(
-        (saveLocation ? saveLocation : buffer),
+        saveLocation ? saveLocation : buffer,
         pipelineUuid,
         executionUuid,
         anvilConfiguration,

@@ -46,7 +46,10 @@ function hasContainer(blockSpec) {
 export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
   const bufferPath = path.resolve(process.cwd(), fromDir);
   const writePipelineDirectory = toDir;
-  const pipelineSpecsPath = path.join(writePipelineDirectory, PIPELINE_SPECS_FILE_NAME);
+  const pipelineSpecsPath = path.join(
+    writePipelineDirectory,
+    PIPELINE_SPECS_FILE_NAME,
+  );
 
   const fromBlockIndex = await getBlockIndex([bufferPath]);
 
@@ -62,7 +65,10 @@ export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
     ? await readPipelineBlocks(pipelineSpecsPath)
     : new Set();
 
-  const blocksToRemove = setDifference(existingPipelineBlocks, newPipelineBlocks);
+  const blocksToRemove = setDifference(
+    existingPipelineBlocks,
+    newPipelineBlocks,
+  );
 
   for (const key of Array.from(newPipelineBlocks)) {
     const newBlockPath = path.join(writePipelineDirectory, key);
@@ -87,10 +93,10 @@ export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
     }
   }
 
-  const historyFolder = path.join(bufferPath, 'history');
+  const historyFolder = path.join(bufferPath, "history");
   if (await fileExists(historyFolder)) {
     console.log("History folder is copied too.");
-    const newHistoryFolder = path.join(writePipelineDirectory, 'history');
+    const newHistoryFolder = path.join(writePipelineDirectory, "history");
     await fs.cp(historyFolder, newHistoryFolder, { recursive: true });
   }
 

@@ -28,7 +28,7 @@ export default function SavePipelineButton() {
     // They should be consolidated
     // everything is taken from here to save into the pipeline.json file
     pipelineSpecs["sink"] = pipeline.path ? pipeline.path : pipeline.buffer;
-    pipelineSpecs["build"] = (pipeline.buffer).replace(/\\/g, '/');
+    pipelineSpecs["build"] = pipeline.buffer.replace(/\\/g, "/");
     pipelineSpecs["name"] = pipeline.name;
     pipelineSpecs["id"] = pipeline.id;
     let saveData = {

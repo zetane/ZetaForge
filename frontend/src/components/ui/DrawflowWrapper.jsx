@@ -145,9 +145,9 @@ export default function DrawflowWrapper() {
             pipeline.name,
             pipeline.data,
           );
-          
+
           // Everything here is set to the pipeline.json file.
-          pipelineSpecs["sink"] = pipeline.path;  // Update to saved folder path
+          pipelineSpecs["sink"] = pipeline.path; // Update to saved folder path
           pipelineSpecs["build"] = pipeline.path; // Update to saved folder path
           pipelineSpecs["name"] = pipeline.name;
           pipelineSpecs["id"] = pipeline.id;
@@ -156,7 +156,7 @@ export default function DrawflowWrapper() {
             specs: pipelineSpecs,
             name: pipeline?.name,
             buffer: pipeline?.buffer,
-            writePath: (pipeline.path?pipeline.path : pipeline.buffer), // opens the save terminal.
+            writePath: pipeline.path ? pipeline.path : pipeline.buffer, // opens the save terminal.
           };
 
           await savePipeline.mutateAsync(saveData);
@@ -165,7 +165,7 @@ export default function DrawflowWrapper() {
         console.error("Error saving pipeline:", error);
       }
     };
-  
+
     syncData();
   }, [renderNodes]);
 
