@@ -6,6 +6,7 @@
   --beCodeEditorBackground: #ffffff;
   --bePromptPlaceholderText: #bebebe;
   --bePrompt: #E0E0E0;
+  --bePromptFileHeader: #888888; //TODO wrong color
 }
 
 @mixin dark {
@@ -16,6 +17,7 @@
   --beCodeEditorBackground: #080808;
   --bePromptPlaceholderText: #989898;
   --bePrompt: #393939;
+  --bePromptFileHeader: #888888;
 }
 
 .editor-block {
@@ -86,6 +88,10 @@
 .icon-button:focus {
   outline: none;
   background-color: rgba(0, 0, 0, 0.1);
+}
+
+.prompt-file-header {
+  color: var(--bePromptFileHeader);
 }
 
 .prompt {
