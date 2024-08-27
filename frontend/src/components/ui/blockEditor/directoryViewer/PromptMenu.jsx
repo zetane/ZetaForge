@@ -18,6 +18,8 @@ export default function PromptMenu({ index, prompt }) {
   const fileHandle = useContext(FileHandleContext);
   const compile = useCompileComputation();
 
+  const isLast = index === 0;
+
   const handleDelete = async () => {
     chatHistory.deletePrompt(index);
   };
@@ -25,7 +27,6 @@ export default function PromptMenu({ index, prompt }) {
   const handleDuplicate = async  () => {
     chatHistory.addPrompt(prompt);
     await fileBuffer.updateSave(prompt.response);
-    console.log(fileHandle.isComputation);
     if (fileHandle.isComputation) {
       compile(pipeline.id, blockId);
     }
@@ -43,7 +44,7 @@ export default function PromptMenu({ index, prompt }) {
         itemText="Duplicate to current"
         onClick={handleDuplicate}
       />
-      <OverflowMenuItem itemText="Delete" onClick={handleDelete} />
+      <OverflowMenuItem itemText="Delete" disabled={isLast} onClick={handleDelete} />
     </OverflowMenu>
   );
 }

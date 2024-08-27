@@ -1,22 +1,49 @@
-import { Button } from "@carbon/react";
+import { Button, OverflowMenu, OverflowMenuItem } from "@carbon/react";
 import { useContext } from "react";
 import { SelectedPromptContext } from "./SelectedPromptContext";
+import { ChatHistoryContext } from "./ChatHistoryContext";
+import { FileBufferContext } from "./FileBufferContext";
+import { FileHandleContext } from "./FileHandleContext";
 
-export default function ActivePrompt({ children }) {
-  const selectedPrompt = useContext(SelectedPromptContext)
+export default function ActivePrompt({ children, index }) {
+  const selectedPrompt = useContext(SelectedPromptContext);
+  const chatHistory = useContext(ChatHistoryContext);
+  const fileBuffer = useContext(FileBufferContext);
+  const fileHandle = useContext(FileHandleContext);
+
+  const isLast = index === 0;
+
   const handleClick = () => {
-    selectedPrompt.setSelectedPrompt(undefined); 
+    selectedPrompt.setSelectedPrompt(undefined);
   };
 
+  const handleDelete = async () => {
+    const newPrompt = chatHistory.history[index-1]
+    chatHistory.deletePrompt(index);
+    await fileBuffer.updateSave(newPrompt.response);
+    if (fileHandle.isComputation) {
+      compile(pipeline.id, blockId);
+    }
+    selectedPrompt.setSelectedPrompt(undefined)
+  }
+
   return (
-    <div className="prompt-active border-solid border-2 flex rounded-lg">
+    <div className="prompt-active flex justify-between rounded-lg border-2 border-solid">
       <Button
         onClick={handleClick}
         kind="ghost"
         className="max-w-full grow rounded-lg"
       >
-        {children}
+        {children.prompt}
       </Button>
+      <OverflowMenu
+        className="rounded-lg"
+        aria-label="overflow-menu"
+        data-floating-menu-container="cds--header-panel"
+        flipped
+      >
+        <OverflowMenuItem itemText="Delete" disabled={isLast} onClick={handleDelete} />
+      </OverflowMenu>
     </div>
   );
 }

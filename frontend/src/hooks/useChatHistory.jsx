@@ -15,6 +15,7 @@ export default function useChatHistory(pipelineId, blockId){
   });
 
   const addPrompt = async (entry) => {
+    //TODO we should set the timestamp here
     const newHistory = [...history.data, entry];
 
     await updateHistory.mutateAsync({
@@ -23,18 +24,7 @@ export default function useChatHistory(pipelineId, blockId){
       history: newHistory,
     });
 
-    utils.chat.history.get.setData(
-      {
-        pipelineId: pipelineId,
-        blockId: blockId,
-      },
-      newHistory,
-    );
-
-    utils.chat.history.get.invalidate({
-      pipelgneId: pipelineId,
-      blockId: blockId,
-    });
+    eagerUpdateHistory(newHistory);
   };
 
   const deletePrompt = async (index) => {
@@ -50,10 +40,26 @@ export default function useChatHistory(pipelineId, blockId){
       blockId: blockId,
       index: newIndex,
     });
+    eagerUpdateHistory(newHistory);
   }
 
   const computeNewIndex = (deleted, selectedIndex) => {
     return selectedIndex - Math.min(1, Math.sign(selectedIndex - deleted) + 1);
+  }
+
+  const eagerUpdateHistory = (newHistory) => {
+    utils.chat.history.get.setData(
+      {
+        pipelineId: pipelineId,
+        blockId: blockId,
+      },
+      newHistory,
+    );
+
+    utils.chat.history.get.invalidate({
+      pipelgneId: pipelineId,
+      blockId: blockId,
+    });
   }
 
   return {

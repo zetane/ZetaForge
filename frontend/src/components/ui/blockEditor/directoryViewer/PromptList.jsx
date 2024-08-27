@@ -3,12 +3,13 @@ import ActivePrompt from "./ActivePrompt";
 import Prompt from "./Prompt";
 import { ChatHistoryContext } from "./ChatHistoryContext";
 
-export default function PromptList(){
+export default function PromptList() {
   const chatHistory = useContext(ChatHistoryContext);
   const history = chatHistory.history ?? [];
 
+  const activeIndex = history.length - 1;
   const previousPrompt = history.slice(0, -1);
-  const activePrompt = history.at(-1);
+  const activePrompt = history[activeIndex];
 
   return (
     <div className="flex h-full flex-col gap-5 p-3">
@@ -21,7 +22,9 @@ export default function PromptList(){
         ))}
       </div>
       <div>Active Prompt</div>
-      {activePrompt && <ActivePrompt>{activePrompt.prompt}</ActivePrompt>}
+      {activePrompt && (
+        <ActivePrompt index={activeIndex}>{activePrompt}</ActivePrompt>
+      )}
     </div>
   );
 }
