@@ -10,7 +10,7 @@ export default function ConfirmChangeFileModal() {
       modalHeading="Unsaved changes"
       primaryButtonText="Save"
       secondaryButtonText="Discard"
-      size="sm"
+      size="xs"
       open={confirmModal.isOpen}
       onRequestSubmit={confirmModal.save}
       onSecondarySubmit={confirmModal.discard}
