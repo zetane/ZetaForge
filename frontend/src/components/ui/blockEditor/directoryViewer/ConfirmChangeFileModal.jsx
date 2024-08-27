@@ -16,7 +16,7 @@ export default function ConfirmChangeFileModal() {
       onSecondarySubmit={confirmModal.discard}
       onRequestClose={confirmModal.close}
     >
-      If you leave page, any changes you have  made will be lost
+      If you leave the page, any changes you have made will be lost
     </Modal>
   );
 }
