@@ -21,7 +21,7 @@ export default function PromptViewer(){
   const compile = useCompileComputation();
 
   const handleAccept = async () => {
-    chatHistory.addPrompt(selectedPrompt.selectedPrompt);
+    chatHistory.addPrompt(selectedPrompt.selectedPrompt.prompt, selectedPrompt.selectedPrompt.response);
     await fileBuffer.updateSave(selectedPrompt.selectedPrompt.response);
     if (fileHandle.isComputation) {
       compile(pipeline.id, blockId);

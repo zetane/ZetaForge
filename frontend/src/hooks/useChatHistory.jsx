@@ -14,9 +14,13 @@ export default function useChatHistory(pipelineId, blockId){
     },
   });
 
-  const addPrompt = async (entry) => {
-    //TODO we should set the timestamp here
-    const newHistory = [...history.data, entry];
+  const addPrompt = async (prompt, response) => {
+    const newEntry = {
+      timestamp: Date.now(),
+      prompt: prompt,
+      response: response,
+    }
+    const newHistory = [...history.data, newEntry];
 
     await updateHistory.mutateAsync({
       pipelineId: pipelineId,

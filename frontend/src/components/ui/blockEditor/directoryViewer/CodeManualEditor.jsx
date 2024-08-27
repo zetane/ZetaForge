@@ -30,11 +30,7 @@ export default function CodeManualEditor() {
     setIsLoading(true);
     await fileBuffer.save();
     if (fileHandle.isComputation) {
-      await chatHistory.addPrompt({
-        timestamp: Date.now(),
-        prompt: MANUAL_EDIT_PROMPT,
-        response: fileBuffer.content,
-      });
+      await chatHistory.addPrompt(MANUAL_EDIT_PROMPT, fileBuffer.content);
       compile(pipeline.id, blockId);
     }
     setIsLoading(false);

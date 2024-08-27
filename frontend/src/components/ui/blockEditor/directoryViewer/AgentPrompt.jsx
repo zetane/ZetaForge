@@ -48,11 +48,7 @@ export default function AgentPrompt() {
       apiKey: openAIApiKey,
     });
 
-    chatHistory.addPrompt({
-      timestamp: Date.now(),
-      prompt: newPrompt,
-      response: response,
-    });
+    chatHistory.addPrompt(newPrompt, response);
     await fileBuffer.updateSave(response);
     if (fileHandle.isComputation) {
       compile(pipeline.id, blockId);
