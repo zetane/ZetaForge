@@ -18,5 +18,5 @@ export default function FileViewer() {
     viewerComponent = <></>;
   }
 
-  return viewerComponent;
+  return <div className="h-full pr-1.5">{ viewerComponent }</div>;
 }
