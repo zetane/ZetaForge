@@ -4,6 +4,7 @@ import { Code, View, CloudLogging } from "@carbon/icons-react";
 import { useImmerAtom } from "jotai-immer";
 import { useEffect, useRef, useState, useMemo } from "react";
 import { FileBlock } from "./FileBlock";
+import { FolderBlock } from "./Folder-uploadBlock";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { modalContentAtom } from "@/atoms/modalAtom";
 import { useAtom } from "jotai";
@@ -120,12 +121,16 @@ const BlockGenerator = ({
     />
   );
   const type = block?.action?.parameters?.path?.type;
-  if (
-    type == "folder" ||
-    type == "file" ||
-    type == "blob" ||
-    type == "fileLoad"
-  ) {
+  if (type == "folder") {
+    content = (
+      <FolderBlock
+        blockId={id}
+        block={block}
+        setFocusAction={setFocusAction}
+        history={history}
+      />
+    );
+  } else if (type == "file" || type == "blob" || type == "fileLoad") {
     content = (
       <FileBlock
         blockId={id}

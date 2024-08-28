@@ -1,0 +1,43 @@
+{
+  "information": {
+    "id": "folder-upload",
+    "name": "Folder-upload",
+    "description": "Folder upload input.",
+    "block_version": "block version number",
+    "block_source": "core/blocks",
+    "block_type": "entry",
+    "system_versions": [
+      "0.1"
+    ]
+  },
+  "inputs": {},
+  "outputs": {
+    "path": {
+      "type": "folder",
+      "connections": [],
+      "relays": []
+    }
+  },
+  "action": {
+    "parameters": {
+      "path": {
+        "type": "folder",
+        "value": ""
+      }
+    }
+  },
+  "views": {
+    "node": {
+      "active": "True or False",  
+      "title_bar": {
+        "background_color": "#909090"
+      },
+      "preview": {},
+      "html": "<input type='file' name='folder-upload' multiple webkitdirectory/>",
+      "pos_x": "300",
+      "pos_y": "200",
+      "pos_z": "999" 
+    }
+  },
+  "events": {}
+}
