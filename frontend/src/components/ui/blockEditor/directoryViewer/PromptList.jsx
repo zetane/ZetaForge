@@ -31,12 +31,12 @@ export default function PromptList() {
             )}
           </div>
           {fileHandle.currentFile && (
-            <div className="prompt-file-header ">
+            <div className="prompt-file-header">
               File: {fileHandle.currentFile.name}
             </div>
           )}
         </div>
-        <div className="flex flex-col gap-2 overflow-auto pr-1">
+        <div className="flex flex-col reverse min-h-0 grow gap-2 overflow-auto pr-1">
           {previousPrompt.map((prompt, index) => (
             <Prompt key={index} index={index}>
               {prompt}
@@ -47,3 +47,4 @@ export default function PromptList() {
     </div>
   );
 }
+
