@@ -70,9 +70,9 @@ export const ViewerCodeMirror = ({ currentIndex, code }) => {
   );
 };
 
-export const EditorCodeMirror = ({ code, onChange }) => {
+export const EditorCodeMirror = ({ code, onChange, keymap }) => {
   const [theme] = useAtom(themeAtom);
-  const extensions = [loadLanguage("python"), backgroundTheme];
+  const extensions = [loadLanguage("python"), backgroundTheme, keymap];
 
   return (
     <CodeMirror

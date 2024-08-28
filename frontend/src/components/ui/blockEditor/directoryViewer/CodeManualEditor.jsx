@@ -1,5 +1,4 @@
 import { Button } from "@carbon/react";
-import { Save } from "@carbon/icons-react";
 import { EditorCodeMirror } from "./CodeMirrorComponents";
 import { useContext, useState } from "react";
 import { FileBufferContext } from "./FileBufferContext";
@@ -9,6 +8,7 @@ import { useCompileComputation } from "@/hooks/useCompileSpecs";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { blockEditorIdAtom } from "@/atoms/editorAtom";
 import { useAtom } from "jotai";
+import { keymap } from "@codemirror/view";
 
 const MANUAL_EDIT_PROMPT = "Manual Edit of computations.py";
 export default function CodeManualEditor() {
@@ -20,6 +20,16 @@ export default function CodeManualEditor() {
   const compile = useCompileComputation();
   const [isLoading, setIsLoading] = useState(false);
 
+  const editorKeymap = keymap.of([
+    {
+      key: "Mod-s",
+      run: () => {
+        if (!saveDisabled) {
+          handleSave();
+        }
+      },
+    },
+  ]);
   const saveDisabled = isLoading || !fileBuffer.hasPendingChanges;
 
   const handleChange = (value) => {
@@ -41,6 +51,7 @@ export default function CodeManualEditor() {
       <EditorCodeMirror
         code={fileBuffer.content ?? ""}
         onChange={handleChange}
+        keymap={editorKeymap}
       />
       <div className="absolute right-5 top-5">
         <Button
