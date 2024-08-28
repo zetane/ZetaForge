@@ -6,20 +6,30 @@ import { SelectedPromptContext } from "./SelectedPromptContext";
 export default function Prompt({ children, index }) {
   const selectedPrompt = useContext(SelectedPromptContext);
 
+  const isSelected = children === selectedPrompt.selectedPrompt;
+  const borderStyle = isSelected ? " prompt-selected" : "";
+
   const handleClick = () => {
     selectedPrompt.setSelectedPrompt(children);
   };
 
   return (
-    <div className="prompt flex flex-row justify-between rounded-lg relative group">
+    <div
+      className={
+        "prompt group relative flex flex-row justify-between rounded-lg" +
+        borderStyle
+      }
+    >
       <Button
         onClick={handleClick}
         kind="ghost"
         className="min-w-0 max-w-none flex-1 rounded-lg"
       >
-        <span className="line-clamp-3 text-wrap w-11/12">{children.prompt}</span>
+        <span className="line-clamp-3 w-11/12 text-wrap">
+          {children.prompt}
+        </span>
       </Button>
-      <div className="absolute right-0 top-0 invisible group-hover:visible">
+      <div className="invisible absolute right-0 top-0 group-hover:visible">
         <PromptMenu index={index} prompt={children} />
       </div>
     </div>

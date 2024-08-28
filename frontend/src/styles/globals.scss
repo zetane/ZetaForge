@@ -153,3 +153,7 @@ main {
   scrollbar-width: thin;
   scrollbar-color: var(--cds-layer) var(--cds-background);
 }
+
+::-webkit-scrollbar-corner {
+  background: var(--cds-background);
+}

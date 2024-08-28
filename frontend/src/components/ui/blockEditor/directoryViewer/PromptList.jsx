@@ -15,7 +15,7 @@ export default function PromptList() {
   const displayCounter = previousPrompt.length > 0
 
   return (
-    <div className="flex h-full flex-col-reverse gap-5 p-3">
+    <div className="flex h-full flex-col-reverse gap-5 p-2">
       <div>
         <div className="pb-1.5">Latest Version</div>
         {activePrompt && (

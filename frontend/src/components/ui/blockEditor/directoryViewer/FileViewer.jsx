@@ -6,17 +6,17 @@ import { FileHandleContext } from "./FileHandleContext";
 export default function FileViewer() {
   const fileHandle = useContext(FileHandleContext);
 
-  const getViewer = () => {
-    if (fileHandle.currentFile) {//TODO isSelectedProperty?
-      if (fileHandle.isReadOnly) {
-        return <CodeViewer />;
-      } else {
-        return <CodeEditor />;
-      }
+  let viewerComponent;
+  if (fileHandle.currentFile) {
+    //TODO isSelectedProperty?
+    if (fileHandle.isReadOnly) {
+      viewerComponent = <CodeViewer />;
     } else {
-      return <></>;
+      viewerComponent = <CodeEditor />;
     }
-  };
+  } else {
+    viewerComponent = <></>;
+  }
 
-  return getViewer();
+  return viewerComponent;
 }

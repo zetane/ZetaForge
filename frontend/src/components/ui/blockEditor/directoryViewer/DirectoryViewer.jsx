@@ -49,7 +49,7 @@ export default function DirectoryViewer({ blockId }) {
                 storageKey={"DirectoryViewerMain"}
                 initialSize={[20, 80]}
               >
-                <div className="h-full">
+                <div className="left-panel h-full mx-1.5">
                   <PersistentAllotment
                     storageKey={"DirectoryViewerLeft"}
                     initialSize={[50, 50]}
