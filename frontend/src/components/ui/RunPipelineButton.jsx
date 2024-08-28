@@ -26,13 +26,13 @@ export default function RunPipelineButton({ children, action }) {
   const [isOpen, setIsOpen] = useState(false);
   const [mixpanelService] = useAtom(mixpanelAtom);
   const [configuration] = useAtom(activeConfigurationAtom);
+  const [clickedRun, setClickedRun] = useState(false);
   const executePipeline = trpc.executePipeline.useMutation();
   const queryClient = useQueryClient();
   const loadExecution = useLoadExecution();
 
   const runPipeline = async () => {
     if (!validatePipelineExists()) return;
-
     setValidationErrorMsg([]);
 
     const pipelineSpecs = editor.convert_drawflow_to_block(
@@ -42,7 +42,9 @@ export default function RunPipelineButton({ children, action }) {
     const executionId = uuidv7();
 
     if (!validateSchema()) return;
+    setClickedRun(true);
     const newExecution = await execute(pipelineSpecs, executionId);
+    setClickedRun(false);
     if (!newExecution) {
       return;
     }
@@ -85,7 +87,7 @@ export default function RunPipelineButton({ children, action }) {
       }
       draft.tabs[newKey] = {};
       draft.active = newKey;
-      //delete draft.tabs[currentTab];
+      delete draft.tabs[currentTab];
     });
 
     trackMixpanelRunCreated();
@@ -152,7 +154,7 @@ export default function RunPipelineButton({ children, action }) {
         style={styles}
         size="sm"
         onClick={() => runPipeline()}
-        disabled={!workspace?.connected}
+        disabled={!workspace?.connected || clickedRun}
       >
         <span>{action}</span>
         {children}

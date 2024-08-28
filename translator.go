@@ -274,7 +274,7 @@ func kanikoTemplate(block *zjson.Block, organization string, cfg Config) *wfv1.T
 			"--snapshot-mode=redo",
 			"--use-new-run",
 			"--cleanup",         // Add this to clean up after build
-			"--cache=false",     // If you don't need caching
+			"--cache=true",      // If you don't need caching
 			"--single-snapshot", // Can help reduce layers and save space
 		}
 		var volumes []corev1.Volume
@@ -351,10 +351,10 @@ func kanikoTemplate(block *zjson.Block, organization string, cfg Config) *wfv1.T
 				VolumeMounts: volumeMounts,
 				Resources: corev1.ResourceRequirements{
 					Requests: corev1.ResourceList{
-						corev1.ResourceEphemeralStorage: resource.MustParse("10Gi"),
+						corev1.ResourceEphemeralStorage: resource.MustParse("50Gi"),
 					},
 					Limits: corev1.ResourceList{
-						corev1.ResourceEphemeralStorage: resource.MustParse("20Gi"),
+						corev1.ResourceEphemeralStorage: resource.MustParse("100Gi"),
 						corev1.ResourceCPU:              resource.MustParse("4000m"),
 						corev1.ResourceMemory:           resource.MustParse("8096Mi"),
 					},
