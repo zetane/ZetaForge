@@ -212,10 +212,10 @@ func blockTemplate(block *zjson.Block, blockKey string, key string, organization
 			ImagePullPolicy: "IfNotPresent",
 			Resources: corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{
-					corev1.ResourceEphemeralStorage: resource.MustParse("50Gi"),
+					corev1.ResourceEphemeralStorage: resource.MustParse("70Gi"),
 				},
 				Limits: corev1.ResourceList{
-					corev1.ResourceEphemeralStorage: resource.MustParse("150Gi"),
+					corev1.ResourceEphemeralStorage: resource.MustParse("80Gi"),
 				},
 			},
 		},
@@ -273,8 +273,8 @@ func kanikoTemplate(block *zjson.Block, organization string, cfg Config) *wfv1.T
 			"--compressed-caching=false",
 			"--snapshot-mode=redo",
 			"--use-new-run",
-			"--cleanup",         // Add this to clean up after build
-			"--cache=true",      // If you don't need caching
+			"--cleanup", // Add this to clean up after build
+			"--cache=true",
 			"--single-snapshot", // Can help reduce layers and save space
 		}
 		var volumes []corev1.Volume
@@ -351,12 +351,10 @@ func kanikoTemplate(block *zjson.Block, organization string, cfg Config) *wfv1.T
 				VolumeMounts: volumeMounts,
 				Resources: corev1.ResourceRequirements{
 					Requests: corev1.ResourceList{
-						corev1.ResourceEphemeralStorage: resource.MustParse("50Gi"),
+						corev1.ResourceEphemeralStorage: resource.MustParse("90Gi"),
 					},
 					Limits: corev1.ResourceList{
-						corev1.ResourceEphemeralStorage: resource.MustParse("100Gi"),
-						corev1.ResourceCPU:              resource.MustParse("4000m"),
-						corev1.ResourceMemory:           resource.MustParse("8096Mi"),
+						corev1.ResourceEphemeralStorage: resource.MustParse("90Gi"),
 					},
 				},
 			},

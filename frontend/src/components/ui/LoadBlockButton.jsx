@@ -23,7 +23,7 @@ export default function LoadBlockButton() {
   const saveBlockMutation = trpc.saveBlock.useMutation();
 
   const addBlockToPipeline = async (block, path) => {
-    const id = generateId(block);
+    const id = generateId(block?.id);
     block = replaceIds(block, id);
     block = centerBlockPosition(block);
     block = removeConnections(block);
