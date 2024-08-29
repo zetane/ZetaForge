@@ -1,7 +1,7 @@
 import { Button, Loading } from "@carbon/react";
 import { Bot, SendFilled } from "@carbon/icons-react";
 import { openAIApiKeyAtom } from "@/atoms/apiKeysAtom";
-import { useState, useRef, useContext } from "react";
+import { useState,  useContext } from "react";
 import { useAtom } from "jotai";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { trpc } from "@/utils/trpc";
@@ -72,7 +72,7 @@ export default function AgentPrompt() {
     <div className="relative">
       <textarea
         className="block-editor-prompt-input relative"
-        placeholder="Ask to generate code or modify your code"
+        placeholder="Ask to generate new code or modify the latest version"
         onKeyDown={handleKeyDown}
         value={textArea}
         onChange={handleTextAreaChange}
