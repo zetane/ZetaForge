@@ -1,8 +1,8 @@
 import { atom } from "jotai";
 import { withImmer } from "jotai-immer";
-import { customAlphabet } from "nanoid";
 import rfdc from "rfdc";
 import { sha1 } from "js-sha1";
+import { generateId } from "@/utils/blockUtils";
 
 export const pipelineKey = (id, data) => {
   let hash = "";
@@ -13,9 +13,7 @@ export const pipelineKey = (id, data) => {
 };
 
 export const pipelineFactory = (cachePath, pipeline = null) => {
-  const nanoid = customAlphabet("1234567890abcedfghijklmnopqrstuvwxyz", 12);
-  const newNanoid = nanoid();
-  const id = `pipeline-${newNanoid}`;
+  const id = generateId("pipeline");
   const buffer = `${cachePath}${id}`;
   let defaultPipeline = {
     id: id,
