@@ -1,10 +1,12 @@
-import { Button, OverflowMenu, OverflowMenuItem } from "@carbon/react";
+import { Button, OverflowMenu} from "@carbon/react";
 import { useContext } from "react";
 import { SelectedPromptContext } from "./SelectedPromptContext";
 import { ChatHistoryContext } from "./ChatHistoryContext";
 import { FileBufferContext } from "./FileBufferContext";
 import { FileHandleContext } from "./FileHandleContext";
-
+import OverflowMenuIconItem from "../../OverflowMenuIconItem";
+import { TrashCan } from "@carbon/icons-react";
+ 
 export default function ActivePrompt({ children, index }) {
   const selectedPrompt = useContext(SelectedPromptContext);
   const chatHistory = useContext(ChatHistoryContext);
@@ -35,7 +37,7 @@ export default function ActivePrompt({ children, index }) {
         "prompt-active group relative flex justify-between rounded-lg" +
         borderStyle
       }
-    >
+   >
       <Button
         onClick={handleClick}
         kind="ghost"
@@ -52,11 +54,13 @@ export default function ActivePrompt({ children, index }) {
           data-floating-menu-container="cds--header-panel"
           flipped
         >
-          <OverflowMenuItem
-            itemText="Delete"
+          <OverflowMenuIconItem
             disabled={isLast}
+            icon={TrashCan}
             onClick={handleDelete}
-          />
+          >
+            Delete
+          </OverflowMenuIconItem>
         </OverflowMenu>
       </div>
     </div>

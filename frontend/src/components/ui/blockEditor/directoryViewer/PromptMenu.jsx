@@ -8,6 +8,8 @@ import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { blockEditorIdAtom } from "@/atoms/editorAtom";
 import { useCompileComputation } from "@/hooks/useCompileSpecs";
 import { FileHandleContext } from "./FileHandleContext";
+import { Copy, TrashCan } from "@carbon/icons-react";
+import OverflowMenuIconItem from "../../OverflowMenuIconItem";
 
 export default function PromptMenu({ index, prompt }) {
   const [pipeline] = useAtom(pipelineAtom);
@@ -24,13 +26,13 @@ export default function PromptMenu({ index, prompt }) {
     chatHistory.deletePrompt(index);
   };
 
-  const handleDuplicate = async  () => {
-    chatHistory.addPrompt(prompt.prompt, prompt.response);
+  const handleDuplicate = async () => {
+    chatHistory.addPrompt(prompt);
     await fileBuffer.updateSave(prompt.response);
     if (fileHandle.isComputation) {
       compile(pipeline.id, blockId);
     }
-    selectedPrompt.setSelectedPrompt(undefined)
+    selectedPrompt.setSelectedPrompt(undefined);
   };
 
   return (
@@ -40,12 +42,19 @@ export default function PromptMenu({ index, prompt }) {
       data-floating-menu-container="cds--header-panel"
       flipped
     >
-      <OverflowMenuItem
-        itemText="Duplicate to current"
+      <OverflowMenuIconItem
+        icon={Copy}
         onClick={handleDuplicate}
-      />
-      <OverflowMenuItem itemText="Delete" disabled={isLast} onClick={handleDelete} />
+      >
+        Duplicate to current
+      </OverflowMenuIconItem>
+      <OverflowMenuIconItem
+        icon={TrashCan}
+        disabled={isLast}
+        onClick={handleDelete}
+      >
+        Delete
+      </OverflowMenuIconItem>
     </OverflowMenu>
   );
 }
-
