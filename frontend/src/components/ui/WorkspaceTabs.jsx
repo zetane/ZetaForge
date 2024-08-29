@@ -2,11 +2,16 @@ import { useEffect, useState } from "react";
 import { Tabs, TabList, Tab, TabPanels, TabPanel } from "@carbon/react";
 import { workspaceAtom } from "@/atoms/pipelineAtom";
 import { useImmerAtom } from "jotai-immer";
+import { useAtom } from "jotai";
+import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
 
 export default function WorkspaceTabs() {
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
   const [renderedTabs, setRenderedTabs] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [zoomLevels, setZoomLevels] = useState({});
+
+  const [editor] = useAtom(drawflowEditorAtom);
 
   useEffect(() => {
     const pipelineTabs = [];
@@ -27,9 +32,20 @@ export default function WorkspaceTabs() {
   const handleTabChange = (evt) => {
     const index = evt.selectedIndex;
     const key = renderedTabs[index]?.id;
+
+    setZoomLevels((prevZoomLevels) => ({
+      ...prevZoomLevels,
+      [workspace.active]: editor?.zoom,
+    }));
+
     setWorkspace((draft) => {
       draft.active = key;
     });
+
+    if (editor) {
+      editor.zoom = zoomLevels[key] ?? 1;
+      editor.zoom_refresh(); // Refresh after setting zoom, *required.
+    }
   };
 
   const handleCloseTabRequest = (deleteIndex) => {
