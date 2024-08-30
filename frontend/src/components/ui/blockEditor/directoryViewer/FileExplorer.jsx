@@ -10,7 +10,7 @@ export default function FileExplorer({ pipelineId, blockId }) {
   });
 
   return (
-    <div className="flex h-full flex-col m-1.5">
+    <div className="flex h-full flex-col">
       <ImportButtons pipelineId={pipelineId} blockId={blockId} />
       <div className="mt-1 flex-1 overflow-y-auto">
         {root.data && (

@@ -15,15 +15,15 @@ export default function PromptList() {
   const displayCounter = previousPrompt.length > 0
 
   return (
-    <div className="flex h-full flex-col-reverse gap-5 p-2">
-      <div>
+    <div className="flex h-full flex-col-reverse gap-5">
+      <div className="p-2">
         <div className="pb-1.5">Latest Version</div>
         {activePrompt && (
           <ActivePrompt index={activeIndex}>{activePrompt}</ActivePrompt>
         )}
       </div>
       <div className="flex min-h-0 flex-1 flex-col">
-        <div className="flex flex-row justify-between">
+        <div className="flex flex-row justify-between p-2">
           <div className="pb-4">
             <span>Version History </span>
             {displayCounter && (
