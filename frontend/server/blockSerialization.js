@@ -12,7 +12,6 @@ import { cacheJoin } from "./cache";
 import { fileExists, getDirectoryTree } from "./fileSystem";
 import { logger } from "./logger";
 import { HttpStatus, ServerError } from "./serverError";
-import { Http } from "@carbon/icons-react";
 
 const READ_ONLY_FILES = [BLOCK_SPECS_FILE_NAME, CHAT_HISTORY_FILE_NAME];
 
@@ -128,7 +127,7 @@ export async function getBlockFile(pipelineId, blockId, relativeFilePath) {
   if (!read) {
     const message = `Reading file: ${absoluteFilePath}, is not permitted`;
     logger.error(message);
-    throw ServerError(message, HttpStatus.BAD_REQUEST);
+    throw new ServerError(message, HttpStatus.BAD_REQUEST);
   }
 
   return await fs.readFile(absoluteFilePath, { encoding: "utf8" });
@@ -147,7 +146,7 @@ export async function updateBlockFile(
   if (!write) {
     const message = `Writing file: ${absoluteFilePath}, is not permitted`;
     logger.error(message);
-    throw ServerError(message, HttpStatus.BAD_REQUEST);
+    throw new ServerError(message, HttpStatus.BAD_REQUEST);
   }
 
   await fs.writeFile(absoluteFilePath, content);
