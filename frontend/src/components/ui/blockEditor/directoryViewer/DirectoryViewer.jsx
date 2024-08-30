@@ -27,7 +27,7 @@ export default function DirectoryViewer({ blockId }) {
   const fileBuffer = useFileBuffer(
     pipeline.id,
     blockId,
-    fileHandle.currentFile?.relativePath,
+    fileHandle?.relativePath,
   );
 
   const displayAgentPrompt = fileHandle.isComputation && openAIApiKey;

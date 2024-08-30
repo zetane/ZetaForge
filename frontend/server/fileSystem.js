@@ -142,7 +142,7 @@ export async function getDirectoryFilesRecursive(directoryPath) {
   return files;
 }
 
-export async function getDirectoryTree(directoryPath) {
+export async function getDirectoryTree(directoryPath, visitor) {
   const root = makeDirectoryTreeNode(
     path.basename(directoryPath),
     directoryPath,
@@ -159,7 +159,8 @@ export async function getDirectoryTree(directoryPath) {
       const child = makeDirectoryTreeNode(
         dirent.name,
         path.join(parent.absolutePath, dirent.name),
-        path.join(parent.relativePath, dirent.name)
+        path.join(parent.relativePath, dirent.name),
+        visitor,
       )
 
       parent.children.push(child);
@@ -172,10 +173,16 @@ export async function getDirectoryTree(directoryPath) {
   return root;
 }
 
-function makeDirectoryTreeNode(name, absolutePath, relativePath) {
+function makeDirectoryTreeNode(name, absolutePath, relativePath, visitor) {
+  let visit = {}
+  if (visitor) {
+    visit = visitor(name, absolutePath, relativePath) ?? {};
+  }
+
   return {
     name: name,
     absolutePath: absolutePath,
-    relativePath: relativePath
+    relativePath: relativePath,
+    ...visit,
   }
 }

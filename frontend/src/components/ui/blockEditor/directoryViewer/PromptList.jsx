@@ -30,9 +30,9 @@ export default function PromptList() {
               <span>({previousPrompt.length})</span>
             )}
           </div>
-          {fileHandle.currentFile && (
+          {fileHandle&& (
             <div className="prompt-file-header">
-              File: {fileHandle.currentFile.name}
+              File: {fileHandle.name}
             </div>
           )}
         </div>

@@ -6,11 +6,15 @@ import {
   BLOCK_SPECS_FILE_NAME,
   SUPPORTED_FILE_EXTENSIONS,
   SUPPORTED_FILE_NAMES,
+  CHAT_HISTORY_FILE_NAME,
 } from "../src/utils/constants";
 import { cacheJoin } from "./cache";
 import { fileExists, getDirectoryTree } from "./fileSystem";
 import { logger } from "./logger";
 import { HttpStatus, ServerError } from "./serverError";
+import { Http } from "@carbon/icons-react";
+
+const READ_ONLY_FILES = [BLOCK_SPECS_FILE_NAME, CHAT_HISTORY_FILE_NAME];
 
 export async function compileComputation(pipelineId, blockId) {
   const blockPath = cacheJoin(pipelineId, blockId);
@@ -108,18 +112,26 @@ function buildCompilationServerError(error) {
 export async function getBlockDirectory(pipelineId, blockId) {
   const blockDirectory = cacheJoin(pipelineId, blockId);
 
-  const tree = await getDirectoryTree(blockDirectory);
+  const tree = await getDirectoryTree(blockDirectory, filePermissionVisitor);
   return tree;
+}
+
+function filePermissionVisitor(name) {
+  return getFilePermissions(name);
 }
 
 export async function getBlockFile(pipelineId, blockId, relativeFilePath) {
   const absoluteFilePath = cacheJoin(pipelineId, blockId, relativeFilePath);
+  const fileName = path.basename(absoluteFilePath);
+  const { read } = getFilePermissions(fileName);
 
-  let fileContent = "File type is not supported";
-  if (isFileSupported(absoluteFilePath)) {
-    fileContent = await fs.readFile(absoluteFilePath, { encoding: "utf8" });
+  if (!read) {
+    const message = `Reading file: ${absoluteFilePath}, is not permitted`;
+    logger.error(message);
+    throw ServerError(message, HttpStatus.BAD_REQUEST);
   }
-  return fileContent;
+
+  return await fs.readFile(absoluteFilePath, { encoding: "utf8" });
 }
 
 export async function updateBlockFile(
@@ -129,8 +141,26 @@ export async function updateBlockFile(
   content,
 ) {
   const absoluteFilePath = cacheJoin(pipelineId, blockId, relativeFilePath);
+  const fileName = path.basename(absoluteFilePath);
+  const { write } = getFilePermissions(fileName);
+
+  if (!write) {
+    const message = `Writing file: ${absoluteFilePath}, is not permitted`;
+    logger.error(message);
+    throw ServerError(message, HttpStatus.BAD_REQUEST);
+  }
 
   await fs.writeFile(absoluteFilePath, content);
+}
+
+function getFilePermissions(name) {
+  const readOnly = READ_ONLY_FILES.includes(name);
+  const supported = isFileSupported(name);
+
+  const read = supported;
+  const write = supported && !readOnly;
+
+  return { read, write };
 }
 
 function isFileSupported(filePath) {
@@ -160,18 +190,14 @@ export async function callAgent(
     "computations.py",
   );
 
-  const stdout = await spawnAsync(
-    "python",
-    [scriptPath],
-    {
-      input: JSON.stringify({
-        apiKey,
-        userMessage,
-        conversationHistory,
-      }),
-      encoding: "utf8",
-    },
-  );
+  const stdout = await spawnAsync("python", [scriptPath], {
+    input: JSON.stringify({
+      apiKey,
+      userMessage,
+      conversationHistory,
+    }),
+    encoding: "utf8",
+  });
   const response = JSON.parse(stdout).response;
 
   return response;

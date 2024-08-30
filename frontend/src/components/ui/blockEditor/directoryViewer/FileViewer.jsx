@@ -2,17 +2,20 @@ import CodeViewer from "./CodeViewer";
 import CodeEditor from "./CodeEditor";
 import { useContext } from "react";
 import { FileHandleContext } from "./FileHandleContext";
+import { ViewerCodeMirror } from "./CodeMirrorComponents";
 
 export default function FileViewer() {
   const fileHandle = useContext(FileHandleContext);
 
   let viewerComponent;
-  if (fileHandle.currentFile) {
+  if (fileHandle) {
     //TODO isSelectedProperty?
-    if (fileHandle.isReadOnly) {
+    if (fileHandle.write && fileHandle.read) {
+      viewerComponent = <CodeEditor />;
+    } else  if (!fileHandle.write && fileHandle.read) {
       viewerComponent = <CodeViewer />;
     } else {
-      viewerComponent = <CodeEditor />;
+      viewerComponent = <ViewerCodeMirror code={"File type is not supported"} />
     }
   } else {
     viewerComponent = <></>;
