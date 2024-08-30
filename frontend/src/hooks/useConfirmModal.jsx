@@ -8,7 +8,7 @@ export default function useConfirmModal() {
   const fileBuffer = useContext(FileBufferContext);
   const fileHandle = useContext(FileHandleContext);
 
-  const confirm = (selectedFile) => {
+  const confirm = async (selectedFile) => {
     if (fileBuffer.hasPendingChanges) {
       setSelectedFile(selectedFile);
       setIsOpen(true);
@@ -22,13 +22,13 @@ export default function useConfirmModal() {
     setIsOpen(false);
   };
 
-  const save = () => {
+  const save = async () => {
     fileBuffer.save();
     fileHandle.set(selectedFile);
     close();
   };
 
-  const discard = () => {
+  const discard = async () => {
     fileHandle.set(selectedFile);
     close();
   };

@@ -17,8 +17,8 @@ export default function FileNode({ tree, ...rest }) {
     ? { color: "darkorange", paddingRight: "4px", paddingLeft: "4px" }
     : {};
 
-  const handleFileClick = () => {
-    confirmModal.confirm(tree);
+  const handleFileClick = async () => {
+    await confirmModal.confirm(tree);
     selectedPrompt.unselect();
   };
 
