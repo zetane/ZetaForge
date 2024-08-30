@@ -23,7 +23,6 @@ export default function DirectoryViewer({ blockId }) {
   const fileHandle = useFileHandle();
   const chatHistory = useChatHistory(pipeline.id, blockId);
   const [selectedPrompt, setSelectedPrompt] = useState();
-  //TODO fix TRPC errors when undefined
   const fileBuffer = useFileBuffer(
     pipeline.id,
     blockId,
