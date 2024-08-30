@@ -139,6 +139,10 @@ main {
   outline-offset: 0;
 }
 
+.cds--btn--ghost:hover.disable-hover-color {
+  color: unset;
+}
+
 .cm-editor {
   content-visibility: auto;
   height: 100%
