@@ -75,7 +75,7 @@ function startExpressServer() {
 
   app.post("/import-files", upload.array("files"), (req, res) => {
     const files = req.files;
-    const { pipelineId, blockId} = req.body
+    const { pipelineId, blockId } = req.body;
 
     files.forEach((file) => {
       const targetPath = cacheJoin(pipelineId, blockId, file.originalname);
@@ -89,7 +89,7 @@ function startExpressServer() {
 
   app.post("/import-folder", upload.array("files"), (req, res) => {
     const files = req.files;
-    const { pipelineId, blockId, paths } = req.body
+    const { pipelineId, blockId, paths } = req.body;
 
     if (!Array.isArray(paths) || paths.length !== files.length) {
       return res.status(400).send("Mismatch between files and paths data.");

@@ -146,13 +146,15 @@ export async function getDirectoryTree(directoryPath, visitor) {
   const root = makeDirectoryTreeNode(
     path.basename(directoryPath),
     directoryPath,
-    ""
-  )
+    "",
+  );
   const stack = [root];
 
   while (stack.length > 0) {
     const parent = stack.pop();
-    const dirents = await fs.readdir(parent.absolutePath, { withFileTypes: true });
+    const dirents = await fs.readdir(parent.absolutePath, {
+      withFileTypes: true,
+    });
 
     parent.children = [];
     for (const dirent of dirents) {
@@ -161,7 +163,7 @@ export async function getDirectoryTree(directoryPath, visitor) {
         path.join(parent.absolutePath, dirent.name),
         path.join(parent.relativePath, dirent.name),
         visitor,
-      )
+      );
 
       parent.children.push(child);
       if (dirent.isDirectory()) {
@@ -174,7 +176,7 @@ export async function getDirectoryTree(directoryPath, visitor) {
 }
 
 function makeDirectoryTreeNode(name, absolutePath, relativePath, visitor) {
-  let visit = {}
+  let visit = {};
   if (visitor) {
     visit = visitor(name, absolutePath, relativePath) ?? {};
   }
@@ -184,5 +186,5 @@ function makeDirectoryTreeNode(name, absolutePath, relativePath, visitor) {
     absolutePath: absolutePath,
     relativePath: relativePath,
     ...visit,
-  }
+  };
 }

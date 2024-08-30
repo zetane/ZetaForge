@@ -11,11 +11,11 @@ import { blockEditorIdAtom } from "@/atoms/editorAtom";
 import { FileHandleContext } from "./FileHandleContext";
 import { useCompileComputation } from "@/hooks/useCompileSpecs";
 
-export default function PromptViewer(){
+export default function PromptViewer() {
   const [pipeline] = useAtom(pipelineAtom);
   const [blockId] = useAtom(blockEditorIdAtom);
   const fileBuffer = useContext(FileBufferContext);
-  const selectedPrompt = useContext(SelectedPromptContext)
+  const selectedPrompt = useContext(SelectedPromptContext);
   const chatHistory = useContext(ChatHistoryContext);
   const fileHandle = useContext(FileHandleContext);
   const compile = useCompileComputation();
@@ -26,16 +26,14 @@ export default function PromptViewer(){
     if (fileHandle.isComputation) {
       compile(pipeline.id, blockId);
     }
-    selectedPrompt.unselect()
+    selectedPrompt.unselect();
   };
 
   return (
     <div className="relative min-h-0 flex-1">
       <ViewerCodeMirror code={selectedPrompt.response} />
       <div className="absolute right-5 top-5 flex flex-row gap-4">
-        <div className="view-only-tag grid content-center">
-          View Only
-        </div>
+        <div className="view-only-tag grid content-center">View Only</div>
         <Button
           renderIcon={Copy}
           iconDescription="Make current"
@@ -49,4 +47,3 @@ export default function PromptViewer(){
     </div>
   );
 }
-

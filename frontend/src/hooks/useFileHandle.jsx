@@ -5,11 +5,7 @@ export default function useFileHandle(pipelineId, blockId) {
   const [currentFile, setCurrentFile] = useState();
   const isComputation = currentFile?.name === "computations.py";
   const isSelected = Boolean(currentFile);
-  const buffer = useFileBuffer(
-    pipelineId,
-    blockId,
-    currentFile?.relativePath,
-  );
+  const buffer = useFileBuffer(pipelineId, blockId, currentFile?.relativePath);
 
   const set = async (file) => {
     setCurrentFile(file);

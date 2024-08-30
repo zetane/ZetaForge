@@ -1,6 +1,6 @@
 import { trpc } from "@/utils/trpc";
 
-export default function useChatHistory(pipelineId, blockId){
+export default function useChatHistory(pipelineId, blockId) {
   const utils = trpc.useUtils();
   const history = trpc.chat.history.get.useQuery({
     pipelineId: pipelineId,
@@ -19,7 +19,7 @@ export default function useChatHistory(pipelineId, blockId){
       timestamp: Date.now(),
       prompt: prompt,
       response: response,
-    }
+    };
     const newHistory = [...history.data, newEntry];
 
     await updateHistory.mutateAsync({
@@ -45,11 +45,11 @@ export default function useChatHistory(pipelineId, blockId){
       index: newIndex,
     });
     eagerUpdateHistory(newHistory);
-  }
+  };
 
   const computeNewIndex = (deleted, selectedIndex) => {
     return selectedIndex - Math.min(1, Math.sign(selectedIndex - deleted) + 1);
-  }
+  };
 
   const eagerUpdateHistory = (newHistory) => {
     utils.chat.history.get.setData(
@@ -64,11 +64,11 @@ export default function useChatHistory(pipelineId, blockId){
       pipelgneId: pipelineId,
       blockId: blockId,
     });
-  }
+  };
 
   return {
     history: history?.data,
     addPrompt: addPrompt,
     deletePrompt: deletePrompt,
-  }
+  };
 }

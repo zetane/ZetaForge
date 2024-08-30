@@ -20,8 +20,8 @@
   --beCodeViewerBackground: #1e1e1e;
   --beCodeEditorBackground: #080808;
   --bePromptPlaceholderText: #989898;
-  --bePrompt: #1D1C1C;
-  --bePromptActive: #0D0D0D;
+  --bePrompt: #1d1c1c;
+  --bePromptActive: #0d0d0d;
   --bePromptSelectedStroke: #606060;
   --bePromptFileHeader: #888888;
   --beViewOnlyTag: #959595;
@@ -44,7 +44,7 @@
 .editor-block.minimized {
   top: 50px;
   height: calc(100vh - 55px);
-  width: 50%
+  width: 50%;
 }
 
 .editor-block {
@@ -60,7 +60,7 @@
 }
 
 .block-editor-prompt-input {
-  @apply min-h-16 w-full rounded-lg p-2 text-base placeholder-[var(--bePromptPlaceholderText)] resize-none;
+  @apply min-h-16 w-full resize-none rounded-lg p-2 text-base placeholder-[var(--bePromptPlaceholderText)];
   background-color: var(--bePromptInputBackground);
   border-color: var(--beCodeViewerBackground);
   color: var(--bePromptInputText);
@@ -111,7 +111,7 @@
 }
 
 .prompt-selected {
-  border: 1px solid var(--bePromptSelectedStroke)
+  border: 1px solid var(--bePromptSelectedStroke);
 }
 
 .view-only-tag {

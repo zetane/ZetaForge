@@ -1,3 +1,3 @@
 import { createContext } from "react";
 
-export const ChatHistoryContext = createContext()
+export const ChatHistoryContext = createContext();

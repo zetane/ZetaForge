@@ -34,7 +34,7 @@ export const ViewerCodeMirror = ({ currentIndex, code }) => {
     <CodeMirror
       key={currentIndex}
       value={code}
-      style={{height: "100%"}}
+      style={{ height: "100%" }}
       height="100%"
       theme={theme}
       extensions={extensions}
@@ -77,7 +77,7 @@ export const EditorCodeMirror = ({ code, onChange, keymap }) => {
   return (
     <CodeMirror
       value={code}
-      style={{height: "100%"}}
+      style={{ height: "100%" }}
       height="100%"
       extensions={extensions}
       basicSetup={{

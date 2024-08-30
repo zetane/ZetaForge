@@ -12,12 +12,16 @@ export default function BlockEditorPanel() {
 
   const handleToggleMaximize = () => {
     setMaximized((prev) => !prev);
-  }
+  };
 
   return (
     <>
       {isEditorOpen && pipeline.data[blockId] && (
-        <Editor blockId={blockId} isMaximized={isMaximized} onToggleMaximize={handleToggleMaximize}/>
+        <Editor
+          blockId={blockId}
+          isMaximized={isMaximized}
+          onToggleMaximize={handleToggleMaximize}
+        />
       )}
     </>
   );

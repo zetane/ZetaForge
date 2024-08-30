@@ -14,31 +14,29 @@ export const useCompileComputation = () => {
   const [, setCompilationErrorToast] = useAtom(compilationErrorToastAtom);
 
   const compile = async (pipelineId, blockId) => {
-      try {
-        const newSpecsIO = await compileComputation.mutateAsync({
-          pipelineId: pipelineId,
-          blockId: blockId,
-        });
-        const newSpecs = await updateSpecs(
-          blockId,
-          newSpecsIO,
-          pipeline.data,
-          editor,
-        );
-        setPipeline((draft) => {
-          draft.data[blockId] = newSpecs;
-        });
-        await saveBlockSpecs.mutateAsync({
-          pipelineId: pipelineId,
-          blockId: blockId,
-          blockSpecs: newSpecs,
-        });
-      } catch (error) {
-        console.error(error);
-        setCompilationErrorToast(true);
-      }
-  }
-  return compile
-}
-
-
+    try {
+      const newSpecsIO = await compileComputation.mutateAsync({
+        pipelineId: pipelineId,
+        blockId: blockId,
+      });
+      const newSpecs = await updateSpecs(
+        blockId,
+        newSpecsIO,
+        pipeline.data,
+        editor,
+      );
+      setPipeline((draft) => {
+        draft.data[blockId] = newSpecs;
+      });
+      await saveBlockSpecs.mutateAsync({
+        pipelineId: pipelineId,
+        blockId: blockId,
+        blockSpecs: newSpecs,
+      });
+    } catch (error) {
+      console.error(error);
+      setCompilationErrorToast(true);
+    }
+  };
+  return compile;
+};

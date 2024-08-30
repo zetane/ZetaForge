@@ -2,7 +2,12 @@ import { Allotment } from "allotment";
 import { allotmentSizesAtom } from "@/atoms/allotmentAtom";
 import { useImmerAtom } from "jotai-immer";
 
-export default function PersistentAllotment({ storageKey, initialSize, children, ...rest }) {
+export default function PersistentAllotment({
+  storageKey,
+  initialSize,
+  children,
+  ...rest
+}) {
   const [allotmentSizes, setAllotmentSizes] = useImmerAtom(allotmentSizesAtom);
   const size = allotmentSizes[storageKey] ?? initialSize;
 

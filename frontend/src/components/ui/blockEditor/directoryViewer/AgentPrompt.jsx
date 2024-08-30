@@ -76,8 +76,7 @@ export default function AgentPrompt() {
           onKeyDown={handleKeyDown}
           value={textArea}
           onChange={handleTextAreaChange}
-        >
-        </textarea>
+        ></textarea>
         <div className="absolute bottom-3 right-4">
           <Button
             className="rounded-full"
@@ -94,5 +93,5 @@ export default function AgentPrompt() {
 }
 
 function Spinner() {
-  return <Loading withOverlay={false} small/>
+  return <Loading withOverlay={false} small />;
 }

@@ -20,7 +20,7 @@ const LogsViewer = ({ blockId, pipelineId }) => {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full flex-col">
       <Button
         renderIcon={PlayFilled}
         iconDescription="Run test"
@@ -31,8 +31,8 @@ const LogsViewer = ({ blockId, pipelineId }) => {
       >
         Run Test
       </Button>
-      <ScrollToBottom className="flex-1 min-h-0">
-        <LogsCodeMirror code={logs.data ?? ""}/>
+      <ScrollToBottom className="min-h-0 flex-1">
+        <LogsCodeMirror code={logs.data ?? ""} />
       </ScrollToBottom>
     </div>
   );

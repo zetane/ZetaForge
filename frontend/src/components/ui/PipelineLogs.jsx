@@ -51,4 +51,3 @@ export const PipelineLogs = ({ title, filter }) => {
     </ClosableModal>
   );
 };
-

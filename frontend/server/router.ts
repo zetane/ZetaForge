@@ -304,7 +304,7 @@ export const appRouter = router({
     )
     .mutation(async (opts) => {
       const { input } = opts;
-      const { pipelineId, blockId} = input;
+      const { pipelineId, blockId } = input;
 
       await runTest(pipelineId, blockId);
     }),

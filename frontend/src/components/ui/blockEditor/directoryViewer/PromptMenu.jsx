@@ -37,15 +37,12 @@ export default function PromptMenu({ index, prompt }) {
 
   return (
     <OverflowMenu
-      className="rounded-lg disable-focus"
+      className="disable-focus rounded-lg"
       aria-label="overflow-menu"
       data-floating-menu-container="cds--header-panel"
       flipped
     >
-      <OverflowMenuIconItem
-        icon={Copy}
-        onClick={handleDuplicate}
-      >
+      <OverflowMenuIconItem icon={Copy} onClick={handleDuplicate}>
         Duplicate to current
       </OverflowMenuIconItem>
       <OverflowMenuIconItem

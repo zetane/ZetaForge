@@ -10,7 +10,7 @@ export default function Prompt({ children, index }) {
   const borderStyle = isSelected ? " prompt-selected" : "";
 
   const handleClick = (e) => {
-    e.preventDefault()
+    e.preventDefault();
     selectedPrompt.select(children, index);
   };
 
@@ -24,7 +24,7 @@ export default function Prompt({ children, index }) {
       <Button
         onClick={handleClick}
         kind="ghost"
-        className="min-w-0 max-w-none flex-1 rounded-lg disable-focus disable-hover-color"
+        className="disable-focus disable-hover-color min-w-0 max-w-none flex-1 rounded-lg"
       >
         <span className="line-clamp-3 w-11/12 text-wrap">
           {children.prompt}

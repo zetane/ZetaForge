@@ -30,8 +30,7 @@ export default function FileNode({ tree, ...rest }) {
         renderIcon={Document}
         {...rest}
       />
-      <ConfirmChangeFileModal/>
+      <ConfirmChangeFileModal />
     </ConfirmModalContext.Provider>
   );
 }
-

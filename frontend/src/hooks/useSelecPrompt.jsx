@@ -8,17 +8,17 @@ export default function useSelectPrompt() {
   const select = (prompt, index) => {
     setPrompt(prompt);
     setIndex(index);
-  }
+  };
 
   const unselect = () => {
     setPrompt(undefined);
-  }
+  };
 
   return {
     ...prompt,
     index,
     selected,
     select,
-    unselect
-  }
+    unselect,
+  };
 }

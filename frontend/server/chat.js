@@ -28,14 +28,22 @@ const legacySchema = z.array(
 
 export async function getHistory(pipelineId, blockId) {
   const chatPath = cacheJoin(pipelineId, blockId, CHAT_HISTORY_FILE_NAME);
-  const codeTemplatePath = cacheJoin(pipelineId, blockId, COMPUTATIONS_FILE_NAME);
+  const codeTemplatePath = cacheJoin(
+    pipelineId,
+    blockId,
+    COMPUTATIONS_FILE_NAME,
+  );
   const chat = await getChat(chatPath, codeTemplatePath);
   return chat.history;
 }
 
 export async function updateHistory(pipelineId, blockId, newHistory) {
   const chatPath = cacheJoin(pipelineId, blockId, CHAT_HISTORY_FILE_NAME);
-  const codeTemplatePath = cacheJoin(pipelineId, blockId, COMPUTATIONS_FILE_NAME);
+  const codeTemplatePath = cacheJoin(
+    pipelineId,
+    blockId,
+    COMPUTATIONS_FILE_NAME,
+  );
   const chat = await getChat(chatPath, codeTemplatePath);
   chat.history = newHistory;
   await fs.writeFile(chatPath, JSON.stringify(chat, null, 2));
@@ -43,21 +51,28 @@ export async function updateHistory(pipelineId, blockId, newHistory) {
 
 export async function getIndex(pipelineId, blockId) {
   const chatPath = cacheJoin(pipelineId, blockId, CHAT_HISTORY_FILE_NAME);
-  const codeTemplatePath = cacheJoin(pipelineId, blockId, COMPUTATIONS_FILE_NAME);
+  const codeTemplatePath = cacheJoin(
+    pipelineId,
+    blockId,
+    COMPUTATIONS_FILE_NAME,
+  );
   const chat = await getChat(chatPath, codeTemplatePath);
   return chat.index;
 }
 
 export async function updateIndex(pipelineId, blockId, newIndex) {
   const chatPath = cacheJoin(pipelineId, blockId, CHAT_HISTORY_FILE_NAME);
-  const codeTemplatePath = cacheJoin(pipelineId, blockId, COMPUTATIONS_FILE_NAME);
+  const codeTemplatePath = cacheJoin(
+    pipelineId,
+    blockId,
+    COMPUTATIONS_FILE_NAME,
+  );
   const chat = await getChat(chatPath, codeTemplatePath);
   chat.index = newIndex;
   await fs.writeFile(chatPath, JSON.stringify(chat, null, 2));
 }
 
-async function getChat(chatPath, codeTemplatePath){
-
+async function getChat(chatPath, codeTemplatePath) {
   if (!(await fileExists(chatPath))) {
     const chat = await createDefaultChat(codeTemplatePath);
     await fs.writeFile(chatPath, JSON.stringify(chat, null, 2));

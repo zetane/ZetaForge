@@ -3,7 +3,7 @@ import { Folder } from "@carbon/icons-react";
 import { useState } from "react";
 import { TreeNode } from "@carbon/react";
 
-export default function DirectoryNode({ tree, isRoot,  ...rest }) {
+export default function DirectoryNode({ tree, isRoot, ...rest }) {
   const [isExpanded, setExpanded] = useState(isRoot ? true : false);
 
   const handleFolderClick = () => {
@@ -20,11 +20,7 @@ export default function DirectoryNode({ tree, isRoot,  ...rest }) {
       {...rest}
     >
       {tree.children.map((child) => (
-        <DirectoryEntryNode
-          key={child.name}
-          tree={child}
-          isRoot={false}
-        />
+        <DirectoryEntryNode key={child.name} tree={child} isRoot={false} />
       ))}
     </TreeNode>
   );
