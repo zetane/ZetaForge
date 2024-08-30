@@ -54,7 +54,7 @@ export default function AgentPrompt() {
       compile(pipeline.id, blockId);
     }
 
-    selectedPrompt.setSelectedPrompt(undefined);
+    selectedPrompt.unselect();
 
     setTextArea("");
     setIsLoading(false);

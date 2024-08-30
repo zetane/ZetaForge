@@ -1,4 +1,4 @@
-import { Button, OverflowMenu} from "@carbon/react";
+import { Button, OverflowMenu } from "@carbon/react";
 import { useContext } from "react";
 import { SelectedPromptContext } from "./SelectedPromptContext";
 import { ChatHistoryContext } from "./ChatHistoryContext";
@@ -6,7 +6,7 @@ import { FileBufferContext } from "./FileBufferContext";
 import { FileHandleContext } from "./FileHandleContext";
 import OverflowMenuIconItem from "../../OverflowMenuIconItem";
 import { TrashCan } from "@carbon/icons-react";
- 
+
 export default function ActivePrompt({ children, index }) {
   const selectedPrompt = useContext(SelectedPromptContext);
   const chatHistory = useContext(ChatHistoryContext);
@@ -14,11 +14,10 @@ export default function ActivePrompt({ children, index }) {
   const fileHandle = useContext(FileHandleContext);
 
   const isLast = index === 0;
-  const isSelected = !selectedPrompt.selectedPrompt;
-  const borderStyle = isSelected ? " prompt-selected" : "";
+  const borderStyle = !selectedPrompt.selected ? " prompt-selected" : "";
 
   const handleClick = () => {
-    selectedPrompt.setSelectedPrompt(undefined);
+    selectedPrompt.unselect();
   };
 
   const handleDelete = async () => {
@@ -28,7 +27,7 @@ export default function ActivePrompt({ children, index }) {
     if (fileHandle.isComputation) {
       compile(pipeline.id, blockId);
     }
-    selectedPrompt.setSelectedPrompt(undefined);
+    selectedPrompt.unselect();
   };
 
   return (
@@ -37,11 +36,11 @@ export default function ActivePrompt({ children, index }) {
         "prompt-active group relative flex justify-between rounded-lg" +
         borderStyle
       }
-   >
+    >
       <Button
         onClick={handleClick}
         kind="ghost"
-        className="min-w-0 max-w-none flex-1 rounded-lg disable-focus disable-hover-color"
+        className="disable-focus disable-hover-color min-w-0 max-w-none flex-1 rounded-lg"
       >
         <span className="line-clamp-3 w-11/12 text-wrap">
           {children.prompt}
@@ -49,7 +48,7 @@ export default function ActivePrompt({ children, index }) {
       </Button>
       <div className="invisible absolute right-0 top-0 group-hover:visible">
         <OverflowMenu
-          className="rounded-lg disable-focus"
+          className="disable-focus rounded-lg"
           aria-label="overflow-menu"
           data-floating-menu-container="cds--header-panel"
           flipped

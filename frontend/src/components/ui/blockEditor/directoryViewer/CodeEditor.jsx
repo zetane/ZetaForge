@@ -8,7 +8,7 @@ export default function CodeEditor() {
 
   return (
     <div className="flex h-full flex-col gap-8">
-      {selectedPrompt.selectedPrompt ? <PromptViewer /> : <CodeManualEditor />}
+      {selectedPrompt.selected ? <PromptViewer /> : <CodeManualEditor />}
     </div>
   );
 }

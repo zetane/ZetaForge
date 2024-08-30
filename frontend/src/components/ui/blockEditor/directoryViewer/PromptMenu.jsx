@@ -27,12 +27,12 @@ export default function PromptMenu({ index, prompt }) {
   };
 
   const handleDuplicate = async () => {
-    chatHistory.addPrompt(prompt);
+    chatHistory.addPrompt(prompt.prompt, prompt.response);
     await fileBuffer.updateSave(prompt.response);
     if (fileHandle.isComputation) {
       compile(pipeline.id, blockId);
     }
-    selectedPrompt.setSelectedPrompt(undefined);
+    selectedPrompt.unselect();
   };
 
   return (

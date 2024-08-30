@@ -16,13 +16,14 @@ import { FileHandleContext } from "./FileHandleContext";
 import useFileHandle from "@/hooks/useFileHandle";
 import AgentPrompt from "./AgentPrompt";
 import { openAIApiKeyAtom } from "@/atoms/apiKeysAtom";
+import useSelectPrompt from "@/hooks/useSelecPrompt";
 
 export default function DirectoryViewer({ blockId }) {
   const pipeline = useAtomValue(pipelineAtom);
   const openAIApiKey = useAtomValue(openAIApiKeyAtom);
   const fileHandle = useFileHandle();
   const chatHistory = useChatHistory(pipeline.id, blockId);
-  const [selectedPrompt, setSelectedPrompt] = useState();
+  const selectedPrompt = useSelectPrompt();
   const fileBuffer = useFileBuffer(
     pipeline.id,
     blockId,
@@ -40,7 +41,7 @@ export default function DirectoryViewer({ blockId }) {
     <FileBufferContext.Provider value={fileBuffer}>
       <ChatHistoryContext.Provider value={chatHistory}>
         <SelectedPromptContext.Provider
-          value={{ selectedPrompt, setSelectedPrompt }} //TODO rename
+          value={selectedPrompt}
         >
           <FileHandleContext.Provider value={fileHandle}>
               <div className="flex flex-col h-full">

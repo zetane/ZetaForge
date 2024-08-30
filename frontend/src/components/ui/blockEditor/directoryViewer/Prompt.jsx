@@ -6,12 +6,12 @@ import { SelectedPromptContext } from "./SelectedPromptContext";
 export default function Prompt({ children, index }) {
   const selectedPrompt = useContext(SelectedPromptContext);
 
-  const isSelected = children === selectedPrompt.selectedPrompt;
+  const isSelected = index === selectedPrompt.index;
   const borderStyle = isSelected ? " prompt-selected" : "";
 
   const handleClick = (e) => {
     e.preventDefault()
-    selectedPrompt.setSelectedPrompt(children);
+    selectedPrompt.select(children, index);
   };
 
   return (

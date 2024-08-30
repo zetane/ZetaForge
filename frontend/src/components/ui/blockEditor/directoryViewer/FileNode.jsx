@@ -19,7 +19,7 @@ export default function FileNode({ tree, ...rest }) {
 
   const handleFileClick = () => {
     confirmModal.confirm(tree);
-    selectedPrompt.setSelectedPrompt(undefined);
+    selectedPrompt.unselect();
   };
 
   return (

@@ -21,17 +21,17 @@ export default function PromptViewer(){
   const compile = useCompileComputation();
 
   const handleAccept = async () => {
-    chatHistory.addPrompt(selectedPrompt.selectedPrompt.prompt, selectedPrompt.selectedPrompt.response);
-    await fileBuffer.updateSave(selectedPrompt.selectedPrompt.response);
+    chatHistory.addPrompt(selectedPrompt.prompt, selectedPrompt.response);
+    await fileBuffer.updateSave(selectedPrompt.response);
     if (fileHandle.isComputation) {
       compile(pipeline.id, blockId);
     }
-    selectedPrompt.setSelectedPrompt(undefined)
+    selectedPrompt.unselect()
   };
 
   return (
     <div className="relative min-h-0 flex-1">
-      <ViewerCodeMirror code={selectedPrompt.selectedPrompt.response} />
+      <ViewerCodeMirror code={selectedPrompt.response} />
       <div className="absolute right-5 top-5 flex flex-row gap-4">
         <div className="view-only-tag grid content-center">
           View Only
