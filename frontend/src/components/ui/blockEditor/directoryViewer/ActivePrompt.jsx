@@ -41,7 +41,7 @@ export default function ActivePrompt({ children, index }) {
       <Button
         onClick={handleClick}
         kind="ghost"
-        className="min-w-0 max-w-none flex-1 rounded-lg"
+        className="min-w-0 max-w-none flex-1 rounded-lg disable-focus"
       >
         <span className="line-clamp-3 w-11/12 text-wrap">
           {children.prompt}
@@ -49,7 +49,7 @@ export default function ActivePrompt({ children, index }) {
       </Button>
       <div className="invisible absolute right-0 top-0 group-hover:visible">
         <OverflowMenu
-          className="rounded-lg"
+          className="rounded-lg disable-focus"
           aria-label="overflow-menu"
           data-floating-menu-container="cds--header-panel"
           flipped

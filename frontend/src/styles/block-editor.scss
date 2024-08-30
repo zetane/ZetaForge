@@ -60,7 +60,7 @@
 }
 
 .block-editor-prompt-input {
-  @apply min-h-24 w-full rounded-lg p-2 text-base placeholder-[var(--bePromptPlaceholderText)] resize-none;
+  @apply min-h-16 w-full rounded-lg p-2 text-base placeholder-[var(--bePromptPlaceholderText)] resize-none;
   background-color: var(--bePromptInputBackground);
   border-color: var(--beCodeViewerBackground);
   color: var(--bePromptInputText);

@@ -37,7 +37,7 @@ export default function PromptMenu({ index, prompt }) {
 
   return (
     <OverflowMenu
-      className="rounded-lg"
+      className="rounded-lg disable-focus"
       aria-label="overflow-menu"
       data-floating-menu-container="cds--header-panel"
       flipped

@@ -1,7 +1,7 @@
 import { Button, Loading } from "@carbon/react";
 import { Bot, SendFilled } from "@carbon/icons-react";
 import { openAIApiKeyAtom } from "@/atoms/apiKeysAtom";
-import { useState,  useContext } from "react";
+import { useState, useContext } from "react";
 import { useAtom } from "jotai";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { trpc } from "@/utils/trpc";
@@ -32,9 +32,9 @@ export default function AgentPrompt() {
   const agentName = isViewBlock ? "gpt-4_python_view" : "gpt-4_python_compute";
 
   const handleTextAreaChange = (e) => {
-    const newValue = e.target.value
-    setTextAreaDebounced(newValue)
-  }
+    const newValue = e.target.value;
+    setTextAreaDebounced(newValue);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -54,7 +54,7 @@ export default function AgentPrompt() {
       compile(pipeline.id, blockId);
     }
 
-    selectedPrompt.setSelectedPrompt(undefined)
+    selectedPrompt.setSelectedPrompt(undefined);
 
     setTextArea("");
     setIsLoading(false);
@@ -68,40 +68,31 @@ export default function AgentPrompt() {
   };
 
   return (
-    <div className="py-3 px-40">
-    <div className="relative">
-      <textarea
-        className="block-editor-prompt-input relative"
-        placeholder="Ask to generate new code or modify the latest version"
-        onKeyDown={handleKeyDown}
-        value={textArea}
-        onChange={handleTextAreaChange}
-      />
-      <div className="absolute right-0 top-0 inline-block p-2">
-        <Bot size={24} className="align-middle" />
-        <span className="text-md align-middle">{agentName}</span>
-      </div>
-      <div className="absolute bottom-2 right-1">
-        {isLoading ? (
-          <div className="prompt-spinner">
-            <Loading
-              active={true}
-              description="Sending..."
-              withOverlay={false}
-            />
-          </div>
-        ) : (
+    <div className="px-40 py-3">
+      <div className="relative">
+        <textarea
+          className="block-editor-prompt-input relative"
+          placeholder="Ask to generate new code or modify the latest version"
+          onKeyDown={handleKeyDown}
+          value={textArea}
+          onChange={handleTextAreaChange}
+        >
+        </textarea>
+        <div className="absolute bottom-3 right-4">
           <Button
             className="rounded-full"
             iconDescription="Send Prompt"
-            renderIcon={SendFilled}
+            renderIcon={isLoading ? Spinner : SendFilled}
             hasIconOnly
             disabled={!textArea}
             onClick={handleSubmit}
           />
-        )}
+        </div>
       </div>
     </div>
-    </div>
   );
+}
+
+function Spinner() {
+  return <Loading withOverlay={false} small/>
 }
