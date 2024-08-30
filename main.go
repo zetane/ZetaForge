@@ -14,6 +14,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"fmt"
@@ -64,25 +65,101 @@ type Cloud struct {
 	Debug    `json:"Debug,omitempty"`
 }
 
-type WebSocketWriter struct {
-	Id          string
-	MessageFunc func(string, string)
-	// Add other fields as needed
+type LogWriter struct {
+	File        *os.File
+	ExecutionID string
+	MessageFunc func(string, string) ([]byte, error)
+	Hub         *Hub
+	mu          sync.Mutex
+	// mutex for any potential multithread writing
 }
 
-func (w *WebSocketWriter) Write(p []byte) (n int, err error) {
-	message := string(p)
-	w.MessageFunc(message, w.Id)
-	return len(p), nil
-}
+func (w *LogWriter) Write(p []byte) (n int, err error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
 
-func createLogger(id string, messageFunc func(string, string)) io.Writer {
-	wsWriter := &WebSocketWriter{
-		Id:          id,
-		MessageFunc: messageFunc,
+	jsonData, err := w.MessageFunc(string(p), w.ExecutionID)
+	jsonData = ensureNewline(jsonData)
+	if err != nil {
+		return n, fmt.Errorf("failed to parse message into log line: %v", err)
+	}
+	// Write to file
+	n, err = w.File.Write(jsonData)
+	if err != nil {
+		return n, fmt.Errorf("failed to write to file: %v", err)
 	}
 
-	return io.MultiWriter(os.Stdout, wsWriter)
+	w.Hub.Broadcast <- Message{Room: w.ExecutionID, Content: fmt.Sprintf("%s", jsonData)}
+
+	return n, nil
+}
+
+func (w *LogWriter) Close() error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return w.File.Close()
+}
+
+func ensureNewline(p []byte) []byte {
+	if len(p) > 0 && p[len(p)-1] != '\n' {
+		return append(p, '\n')
+	}
+	return p
+}
+
+// createLogger creates a new logger for the given execution ID
+func createLogger(executionID string, messageFunc func(string, string) ([]byte, error), hub *Hub) (*log.Logger, io.Closer, error) {
+	tempLog := filepath.Join(os.TempDir(), executionID+".log")
+	fileWriter, err := os.OpenFile(tempLog, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create log file: %v", err)
+	}
+
+	writer := &LogWriter{
+		File:        fileWriter,
+		ExecutionID: executionID,
+		MessageFunc: messageFunc,
+		Hub:         hub,
+	}
+	logger := log.New(writer, "", log.LstdFlags)
+	return logger, writer, nil
+}
+
+func processLogMessage(message string, executionUUID string) ([]byte, error) {
+	parts := strings.SplitN(message, " ", 3)
+	timestamp := ""
+	if len(parts) == 3 {
+		timestamp = parts[0] + " " + parts[1]
+		message = parts[2]
+	}
+	content := map[string]interface{}{
+		"executionId": executionUUID,
+		"time":        timestamp,
+	}
+	if strings.HasPrefix(message, "{") && strings.HasSuffix(message, "}\n") {
+		message = strings.TrimSuffix(message, "\n")
+		var jsonObj map[string]interface{}
+		err := json.Unmarshal([]byte(message), &jsonObj)
+		if err != nil {
+			fmt.Printf("Failed to log: %s", message)
+			return nil, err
+		}
+		for key, value := range jsonObj {
+			content[key] = value
+		}
+	} else {
+		content["message"] = strings.TrimSuffix(message, "\n")
+	}
+	jsonData, err := json.Marshal(content)
+	if err != nil {
+		fmt.Printf("Failed to log: %s", message)
+		return nil, err
+	}
+
+	// Logs to stdout
+	fmt.Printf("%s\n", jsonData)
+
+	return jsonData, nil
 }
 
 func readTempLog(tempLog string) ([]string, error) {

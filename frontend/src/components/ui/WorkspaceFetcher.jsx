@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueries } from "@tanstack/react-query";
 import {
   useLoadExecution,
   useLoadServerPipeline,
@@ -84,88 +84,97 @@ export default function WorkspaceFetcher() {
   const syncResults = useSyncExecutionResults();
   const queryKey = ["pipelines", configuration?.anvil?.host];
 
-  const { pending, error, data } = useQuery({
+  const {
+    pending,
+    error,
+    data: pipelinesData,
+  } = useQuery({
     queryKey: queryKey,
     queryFn: async () => {
       return await getAllPipelines(configuration);
     },
     refetchInterval: workspace.fetchInterval,
   });
-
-  const { pingPending, pingError, pingData } = useQuery({
+  const {
+    isPending: pingPending,
+    error: pingError,
+    data: pingData,
+  } = useQuery({
     queryKey: ["ping"],
     queryFn: async () => {
-      return await ping(configuration);
+      try {
+        return await ping(configuration);
+      } catch (err) {
+        setWorkspace((d) => {
+          d.connected = false;
+        });
+        throw new Error(err);
+      }
     },
-    refetchInterval: 3000,
+    refetchInterval: 2000,
+    retry: false,
     onSuccess: () =>
       setWorkspace((d) => {
         d.connected = true;
       }),
-    onError: () =>
-      setWorkspace((d) => {
-        d.connected = false;
+  });
+
+  const getDetails = async (key, existing, configuration, execution) => {
+    const fetchedExec = await fetchExecutionDetails(configuration, execution);
+    const loadedExecution = await loadExecution(fetchedExec, configuration);
+    const isActive = workspace.tabs[key];
+    const merged = { ...existing, ...loadedExecution };
+    setWorkspace((draft) => {
+      draft.pipelines[key] = merged;
+    });
+    if (isActive) {
+      try {
+        await syncResults(key);
+      } catch (err) {
+        console.error("Failed to sync results: ", err);
+      }
+    }
+    return merged;
+  };
+
+  useQueries({
+    queries: Object.keys(workspace.tabs)
+      ?.filter((key) => {
+        const pipeline = workspace.pipelines[key];
+        const existingStatus = pipeline?.record?.Status;
+
+        return existingStatus === "Running" || existingStatus === "Pending";
+      })
+      .map((key) => {
+        const pipeline = workspace.pipelines[key];
+        const id = key.split(".")[1];
+        return {
+          queryKey: ["execution", key],
+          queryFn: () => getDetails(key, pipeline, configuration, id),
+          enabled: !pending && !error,
+          refetchInterval: 1000,
+        };
       }),
   });
 
-  useEffect(() => {
-    const updatePipelines = async () => {
-      const pipelines = data?.body ?? [];
+  const loadShell = async (key, serverPipeline, configuration) => {
+    const loaded = await loadPipeline(serverPipeline, configuration);
+    setWorkspace((draft) => {
+      draft.pipelines[key] = loaded;
+    });
+  };
 
-      for (const serverPipeline of pipelines) {
+  useEffect(() => {
+    if (pipelinesData) {
+      pipelinesData.body?.forEach((serverPipeline) => {
         const key = serverPipeline.Uuid + "." + serverPipeline.Execution;
         const existing = workspace.pipelines[key];
-
-        const existingStatus = existing?.record?.Status;
-        const shouldUpdate =
-          !existing ||
-          serverPipeline?.Status != existingStatus ||
-          serverPipeline?.Deployed != existing?.record?.Deployed;
-
-        const isActive = workspace.tabs[key];
-
-        if (shouldUpdate) {
-          try {
-            const loaded = await loadPipeline(
-              serverPipeline,
-              data?.configuration,
-            );
-            const merged = { ...existing, ...loaded };
-            setWorkspace((draft) => {
-              draft.pipelines[key] = merged;
-            });
-          } catch (e) {
-            console.log("Failed to load ", e);
-            return;
-          }
-
-          if (isActive) {
-            try {
-              await syncResults(key);
-            } catch (err) {
-              console.error("Failed to sync results: ", err);
-            }
-
-            const execution = await fetchExecutionDetails(
-              configuration,
-              serverPipeline.Execution,
-            );
-            const loadedExecution = await loadExecution(
-              execution,
-              configuration,
-            );
-            const merged = { ...existing, ...loadedExecution };
-            console.log(execution, loadedExecution, merged);
-            setWorkspace((draft) => {
-              draft.pipelines[key] = merged;
-            });
-          }
+        if (!existing) {
+          loadShell(key, serverPipeline, pipelinesData.configuration);
         }
-      }
-    };
-
-    updatePipelines();
-  }, [data]);
+      });
+    }
+  }, [pipelinesData]);
 
   useEffect(() => {
     const lineage = getLineage(workspace);

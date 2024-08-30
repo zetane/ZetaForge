@@ -174,10 +174,10 @@ func results(ctx context.Context, db *sql.DB, execution int64, pipeline zjson.Pi
 	return updateExecutionResults(ctx, db, execution, pipeline)
 }
 
-func streaming(ctx context.Context, name string, cfg Config) {
+func streaming(ctx context.Context, name string, logger *log.Logger, cfg Config) {
 	client, err := kubernetesClient(cfg)
 	if err != nil {
-		log.Printf("Log stream error; err=%v", err)
+		logger.Printf("Log stream error; err=%v", err)
 		return
 	}
 	ctx, cli, err := apiclient.NewClientFromOpts(
@@ -190,14 +190,14 @@ func streaming(ctx context.Context, name string, cfg Config) {
 	)
 
 	if err != nil {
-		log.Printf("log stream error; err=%v", err)
+		logger.Printf("log stream error; err=%v", err)
 		return
 	}
 
 	namespace, _, err := client.Namespace()
 
 	if err != nil {
-		log.Printf("log stream error; err=%v", err)
+		logger.Printf("log stream error; err=%v", err)
 		return
 	}
 
@@ -213,7 +213,7 @@ func streaming(ctx context.Context, name string, cfg Config) {
 		})
 
 		if err != nil {
-			log.Printf("log stream error; err=%v", err)
+			logger.Printf("log stream error; err=%v", err)
 			return
 		}
 
@@ -223,14 +223,13 @@ func streaming(ctx context.Context, name string, cfg Config) {
 			if err == io.EOF {
 				break
 			} else if err != nil {
-				log.Printf("log stream error; err=%v", err)
+				logger.Printf("log stream error; err=%v", err)
 				break
 			}
 			// Remove the square brackets from the string
 			blockId := ""
 			blockId = strings.TrimPrefix(event.PodName, "[")
 			blockId = strings.TrimSuffix(blockId, "]")
-			fmt.Printf("logs: %s", blockId)
 
 			parts := strings.Split(blockId, "-")
 
@@ -250,7 +249,7 @@ func streaming(ctx context.Context, name string, cfg Config) {
 			}
 
 			// This writes stream output to log, mandatory
-			log.Printf("%s", jsonData)
+			logger.Printf("%s", jsonData)
 		}
 	}
 
@@ -259,7 +258,7 @@ func streaming(ctx context.Context, name string, cfg Config) {
 	}
 }
 
-func runArgo(ctx context.Context, workflow *wfv1.Workflow, execution int64, cfg Config, db *sql.DB, hub *Hub) (*wfv1.Workflow, error) {
+func runArgo(ctx context.Context, workflow *wfv1.Workflow, execution int64, cfg Config, db *sql.DB, logger *log.Logger, hub *Hub) (*wfv1.Workflow, error) {
 	//mixpanelClient is singleton, so a new instance won't be created.
 	mixpanelClient := GetMixpanelClient()
 
@@ -297,12 +296,12 @@ func runArgo(ctx context.Context, workflow *wfv1.Workflow, execution int64, cfg 
 	}
 
 	if err := addExecutionWorkflow(ctx, db, execution, workflow.Name); err != nil {
-		log.Printf("failed to write workflow id to database; err=%v", err)
+		logger.Printf("failed to write workflow id to database; err=%v", err)
 		return workflow, err
 	}
 
 	// streams to websocket
-	go streaming(ctx, workflow.Name, cfg)
+	go streaming(ctx, workflow.Name, logger, cfg)
 	status := string(workflow.Status.Phase)
 
 	for {
@@ -336,13 +335,13 @@ func runArgo(ctx context.Context, workflow *wfv1.Workflow, execution int64, cfg 
 		if string(workflow.Status.Phase) != status {
 			status = string(workflow.Status.Phase)
 			updateExecutionStatus(ctx, db, execution, status)
-			log.Printf("Status Updated: %s", status)
+			logger.Printf("Status Updated: %s", status)
 		} else {
 			fmt.Printf(".")
 		}
 
 		if workflow.Status.Phase.Completed() {
-			log.Printf("Status: Completed")
+			logger.Printf("Status: Completed")
 			mixpanelClient.TrackEvent(ctx, "Run Completed", map[string]any{})
 			break
 		}
@@ -449,7 +448,7 @@ func stopArgo(ctx context.Context, name string, cfg Config) error {
 func terminateArgo(ctx context.Context, cfg Config, db *sql.DB, name string, id int64) error {
 	client, err := kubernetesClient(cfg)
 	if err != nil {
-		log.Printf("Failed to terminate workflow %s; err=%v", name, err)
+		log.Printf("Failed to get kubernetes client: %s; err=%v", name, err)
 		return err
 	}
 
@@ -486,6 +485,8 @@ func terminateArgo(ctx context.Context, cfg Config, db *sql.DB, name string, id 
 			return updateErr
 		}
 
+		log.Printf("terminated workflow %s", name)
+
 		return err
 	}
 
@@ -509,7 +510,7 @@ func terminateArgo(ctx context.Context, cfg Config, db *sql.DB, name string, id 
 	return nil
 }
 
-func buildImage(ctx context.Context, source string, tag string, cfg Config) error {
+func buildImage(ctx context.Context, source string, tag string, logger *log.Logger, cfg Config) error {
 	if cfg.Local.Driver == "minikube" {
 		minikubeBuild := cmd.NewCmd("minikube", "-p", "zetaforge", "image", "build", "-t", tag, source)
 		minikubeChan := minikubeBuild.Start()
@@ -524,7 +525,7 @@ func buildImage(ctx context.Context, source string, tag string, cfg Config) erro
 				output := minikubeBuild.Status().Stderr
 				if len(output) > lineCount {
 					for i := 0; i < len(output)-lineCount; i++ {
-						log.Println(output[lineCount+i])
+						logger.Println(output[lineCount+i])
 					}
 					lineCount = len(output)
 				}
@@ -537,7 +538,7 @@ func buildImage(ctx context.Context, source string, tag string, cfg Config) erro
 		output := minikubeBuild.Status().Stderr
 		if len(output) > lineCount {
 			for i := 0; i < len(output)-lineCount; i++ {
-				log.Println(output[lineCount+i])
+				logger.Println(output[lineCount+i])
 			}
 		}
 
@@ -618,9 +619,9 @@ func buildImage(ctx context.Context, source string, tag string, cfg Config) erro
 			}
 
 			if stream, ok := message["stream"].(string); ok {
-				log.Printf("%s", stream)
+				logger.Printf("%s", stream)
 			} else if errorDetail, ok := message["errorDetail"].(map[string]interface{}); ok {
-				log.Printf("Docker build error: %v", errorDetail["message"])
+				logger.Printf("Docker build error: %v", errorDetail["message"])
 			}
 		}
 	}
@@ -649,62 +650,11 @@ func localExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 	s3Key := pipeline.Id + "/" + executionUuid
 	log.Printf("Writing to %s", tempLog)
 
-	file, err := os.OpenFile(tempLog, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	pipelineLogger, closer, err := createLogger(executionUuid, processLogMessage, hub)
 	if err != nil {
-		log.Printf("error creating pipeline log: %v", err)
+		log.Printf("error creating pipeline logger: %v", err)
 	}
-
-	pipelineLogger := createLogger(executionUuid, func(message string, executionUuid string) {
-		if executionUuid != "" {
-			// log printf produces a timestamp by default
-			// remove it here
-			parts := strings.SplitN(message, " ", 3)
-			timestamp := ""
-			if len(parts) == 3 {
-				timestamp = parts[0] + " " + parts[1]
-				message = parts[2]
-			}
-
-			content := map[string]interface{}{
-				"executionId": executionUuid,
-				"time":        timestamp,
-			}
-
-			if strings.HasPrefix(message, "{") && strings.HasSuffix(message, "}\n") {
-				message = strings.TrimSuffix(message, "\n")
-
-				// Parse the JSON string into a map
-				var jsonObj map[string]interface{}
-				err := json.Unmarshal([]byte(message), &jsonObj)
-				if err != nil {
-					log.Printf("Failed to log: %s", message)
-					return
-				}
-
-				// Merge the JSON object with the provided object
-				for key, value := range jsonObj {
-					content[key] = value
-				}
-			} else {
-				content["message"] = strings.TrimSuffix(message, "\n")
-			}
-
-			jsonData, err := json.Marshal(content)
-			if err != nil {
-				fmt.Printf("Failed to log: %s", message)
-			}
-
-			hub.Broadcast <- Message{
-				Room:    executionUuid,
-				Content: fmt.Sprintf("%s", jsonData),
-			}
-
-			file.WriteString(fmt.Sprintf("%s\n", jsonData))
-		}
-	})
-	log.SetOutput(pipelineLogger)
-
-	defer file.Close()
+	defer closer.Close()
 
 	jsonData, err := json.MarshalIndent(pipeline, "", "  ")
 	if err != nil {
@@ -750,21 +700,23 @@ func localExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 
 		if len(image) > 0 {
 			eg.Go(func() error {
-				return buildImage(egCtx, path, image, cfg)
+				return buildImage(egCtx, path, image, pipelineLogger, cfg)
 			})
 		}
 	}
 
 	if err := eg.Wait(); err != nil {
+		pipelineLogger.Printf("error during pipeline build execution; err=%v", err)
 		log.Printf("error during pipeline build execution; err=%v", err)
 		return
 	}
 
-	workflow, err = runArgo(ctx, workflow, executionId, cfg, db, hub)
+	workflow, err = runArgo(ctx, workflow, executionId, cfg, db, pipelineLogger, hub)
 	if workflow != nil {
 		defer deleteArgo(ctx, workflow.Name, cfg)
 	}
 	if err != nil {
+		pipelineLogger.Printf("error during pipeline run execution; err=%v", err)
 		log.Printf("error during pipeline run execution; err=%v", err)
 		return
 	}
@@ -804,62 +756,11 @@ func cloudExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 	}
 	tempLog := filepath.Join(logDir, executionUuid+".log")
 
-	file, err := os.OpenFile(tempLog, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	pipelineLogger, closer, err := createLogger(executionUuid, processLogMessage, hub)
 	if err != nil {
-		log.Printf("error creating pipeline log: %v", err)
+		log.Printf("error creating pipeline logger: %v", err)
 	}
-
-	pipelineLogger := createLogger(executionUuid, func(message string, executionUuid string) {
-		if executionUuid != "" {
-			// log printf produces a timestamp by default
-			// remove it here
-			parts := strings.SplitN(message, " ", 3)
-			timestamp := ""
-			if len(parts) == 3 {
-				timestamp = parts[0] + " " + parts[1]
-				message = parts[2]
-			}
-
-			content := map[string]interface{}{
-				"executionId": executionUuid,
-				"time":        timestamp,
-			}
-
-			if strings.HasPrefix(message, "{") && strings.HasSuffix(message, "}\n") {
-				message = strings.TrimSuffix(message, "\n")
-
-				// Parse the JSON string into a map
-				var jsonObj map[string]interface{}
-				err := json.Unmarshal([]byte(message), &jsonObj)
-				if err != nil {
-					log.Printf("Failed to log: %s", message)
-					return
-				}
-
-				// Merge the JSON object with the provided object
-				for key, value := range jsonObj {
-					content[key] = value
-				}
-			} else {
-				content["message"] = strings.TrimSuffix(message, "\n")
-			}
-
-			jsonData, err := json.Marshal(content)
-			if err != nil {
-				log.Printf("Failed to log: %s", message)
-			}
-
-			hub.Broadcast <- Message{
-				Room:    executionUuid,
-				Content: fmt.Sprintf("%s", jsonData),
-			}
-
-			file.WriteString(fmt.Sprintf("%s\n", jsonData))
-		}
-	})
-	log.SetOutput(pipelineLogger)
-
-	defer file.Close()
+	defer closer.Close()
 
 	jsonData, err := json.MarshalIndent(pipeline, "", "  ")
 	if err != nil {
@@ -895,11 +796,12 @@ func cloudExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 		return
 	}
 
-	workflow, err = runArgo(ctx, workflow, executionId, cfg, db, hub)
+	workflow, err = runArgo(ctx, workflow, executionId, cfg, db, pipelineLogger, hub)
 	if workflow != nil {
 		defer deleteArgo(ctx, workflow.Name, cfg)
 	}
 	if err != nil {
+		pipelineLogger.Printf("error during pipeline execution; err=%v", err)
 		log.Printf("error during pipeline execution; err=%v", err)
 		return
 	}

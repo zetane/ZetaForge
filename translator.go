@@ -212,7 +212,7 @@ func blockTemplate(block *zjson.Block, blockKey string, key string, organization
 			ImagePullPolicy: "IfNotPresent",
 			Resources: corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{
-					corev1.ResourceEphemeralStorage: resource.MustParse("70Gi"),
+					corev1.ResourceEphemeralStorage: resource.MustParse("10Gi"),
 				},
 				Limits: corev1.ResourceList{
 					corev1.ResourceEphemeralStorage: resource.MustParse("80Gi"),
@@ -351,7 +351,7 @@ func kanikoTemplate(block *zjson.Block, organization string, cfg Config) *wfv1.T
 				VolumeMounts: volumeMounts,
 				Resources: corev1.ResourceRequirements{
 					Requests: corev1.ResourceList{
-						corev1.ResourceEphemeralStorage: resource.MustParse("90Gi"),
+						corev1.ResourceEphemeralStorage: resource.MustParse("20Gi"),
 					},
 					Limits: corev1.ResourceList{
 						corev1.ResourceEphemeralStorage: resource.MustParse("90Gi"),

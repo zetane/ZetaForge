@@ -23,7 +23,6 @@ export default function LoadBlockButton() {
   const saveBlockMutation = trpc.saveBlock.useMutation();
 
   const addBlockToPipeline = async (block, path) => {
-    console.log(block);
     const defaultPrefix = block?.information?.id
       ? block.information.id
       : "block";
