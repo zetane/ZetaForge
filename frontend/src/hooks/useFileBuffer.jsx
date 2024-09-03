@@ -48,10 +48,10 @@ export default function useFileBuffer(pipelineId, blockId, relativePath) {
 
   return {
     content: fileContentBuffer,
-    hasPendingChanges: hasPendingChanges,
-    update: update,
-    load: load,
-    save: save,
-    updateSave: updateSave,
+    hasPendingChanges,
+    update,
+    load,
+    save,
+    updateSave,
   };
 }

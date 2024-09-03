@@ -68,7 +68,7 @@ export default function useChatHistory(pipelineId, blockId) {
 
   return {
     history: history?.data,
-    addPrompt: addPrompt,
-    deletePrompt: deletePrompt,
+    addPrompt,
+    deletePrompt,
   };
 }

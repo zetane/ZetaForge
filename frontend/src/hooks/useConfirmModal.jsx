@@ -34,10 +34,10 @@ export default function useConfirmModal() {
   };
 
   return {
-    isOpen: isOpen,
-    confirm: confirm,
-    save: save,
-    discard: discard,
-    close: close,
+    isOpen,
+    confirm,
+    save,
+    discard,
+    close,
   };
 }
