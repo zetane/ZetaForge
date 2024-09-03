@@ -1,4 +1,4 @@
-import { OverflowMenu, OverflowMenuItem } from "@carbon/react";
+import { OverflowMenu } from "@carbon/react";
 import { useContext } from "react";
 import { ChatHistoryContext } from "./ChatHistoryContext";
 import { SelectedPromptContext } from "./SelectedPromptContext";
@@ -42,10 +42,11 @@ export default function PromptMenu({ index, prompt }) {
       data-floating-menu-container="cds--header-panel"
       flipped
     >
-      <OverflowMenuIconItem icon={Copy} onClick={handleDuplicate}>
+      <OverflowMenuIconItem className="disable-focus" icon={Copy} onClick={handleDuplicate}>
         Duplicate to current
       </OverflowMenuIconItem>
       <OverflowMenuIconItem
+        className="disabled-focus"
         icon={TrashCan}
         disabled={isLast}
         onClick={handleDelete}
