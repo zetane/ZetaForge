@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import ClosableModal from "./modal/ClosableModal";
-import { workspaceAtom } from "@/atoms/pipelineAtom";
+import { lineageAtom, workspaceAtom } from "@/atoms/pipelineAtom";
 import { useImmerAtom } from "jotai-immer";
 import { useAtom } from "jotai";
 import {
@@ -36,6 +36,7 @@ export const PipelineTableRow = ({ row, getRowProps }) => {
 
 export const ExecutionDataGrid = ({ closeModal }) => {
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
+  const [lineage] = useAtom(lineageAtom);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(15);
   const syncResults = useSyncExecutionResults();
@@ -77,7 +78,7 @@ export const ExecutionDataGrid = ({ closeModal }) => {
   ];
 
   const allRows = useMemo(() => {
-    return Array.from(workspace?.lineage.entries()).map(([hash, pipeline]) => {
+    return Array.from(lineage.entries()).map(([hash, pipeline]) => {
       const deployedAction = pipeline?.deployed ? (
         <DeployedPipelineActions
           uuid={pipeline.id}
@@ -104,7 +105,7 @@ export const ExecutionDataGrid = ({ closeModal }) => {
         executionCount: pipeline.executions?.size,
       };
     });
-  }, [workspace?.lineage]);
+  }, [lineage]);
 
   const paginatedRows = useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
@@ -137,7 +138,7 @@ export const ExecutionDataGrid = ({ closeModal }) => {
                     <PipelineTableRow row={row} getRowProps={getRowProps} />
                     <TableExpandedRow colSpan={10} className="execution-group">
                       <ExecutionCardGrid
-                        executions={workspace?.lineage.get(row.id).executions}
+                        executions={lineage.get(row.id).executions}
                         selectExecution={selectExecution}
                       />
                     </TableExpandedRow>

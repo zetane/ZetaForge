@@ -2,10 +2,11 @@ import { Button } from "@carbon/react";
 import { useAtom } from "jotai";
 import { modalContentAtom } from "@/atoms/modalAtom";
 import { ExecutionDataGrid } from "@/components/ui/ExecutionDataGrid";
-import { workspaceAtom } from "@/atoms/pipelineAtom";
+import { lineageAtom, workspaceAtom } from "@/atoms/pipelineAtom";
 
 export default function PipelinesButton() {
   const [modalContent, setModalContent] = useAtom(modalContentAtom);
+  const [lineage] = useAtom(lineageAtom);
   const [workspace] = useAtom(workspaceAtom);
 
   const modalPopper = (content) => {
@@ -37,7 +38,7 @@ export default function PipelinesButton() {
       disabled={!workspace.connected}
       onClick={() => modalPopper(grid)}
     >
-      Pipelines ({workspace?.lineage.size})
+      Pipelines ({lineage?.size ?? 0})
     </Button>
   );
 }

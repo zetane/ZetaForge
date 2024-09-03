@@ -47,7 +47,6 @@ export const workspaceAtom = atom({
   offset: 0,
   limit: 15,
   connected: false,
-  lineage: new Map(),
 });
 
 const pipelineAtomWithImmer = atom(
@@ -84,3 +83,76 @@ export const getPipelineFormat = (pipeline) => {
     pipeline: pipeline.data,
   };
 };
+
+export const lineageAtom = atom((get) => {
+  console.log("being called");
+  const workspace = get(workspaceAtom);
+  const lineage = new Map();
+
+  if (!workspace?.pipelines) {
+    return lineage;
+  }
+
+  // Filter out pipelines with empty .record fields
+  const validPipelines = Object.entries(workspace?.pipelines).filter(
+    ([_, pipeline]) =>
+      pipeline.record && Object.keys(pipeline.record).length > 0,
+  );
+
+  const sortedPipelines = validPipelines.sort(([, a], [, b]) =>
+    b.record.Execution.localeCompare(a.record.Execution),
+  );
+
+  sortedPipelines.forEach((entry) => {
+    const pipeline = entry[1];
+    const record = pipeline?.record;
+    const sha1Hash = record?.Hash;
+    if (!record || !sha1Hash) {
+      return;
+    }
+    const pipelineData = JSON.parse(record.PipelineJson);
+    const friendlyName = pipelineData.name;
+    if (!lineage.has(sha1Hash)) {
+      const createDate = new Date(record.Created * 1000);
+      lineage.set(sha1Hash, {
+        id: pipeline.id,
+        name: friendlyName,
+        hash: sha1Hash,
+        deployed: record.Deployed,
+        pipelineData: pipelineData,
+        created: createDate.toLocaleString(),
+        lastExecution: createDate.toLocaleString(),
+        host: pipeline.host,
+        executions: new Map(),
+      });
+    }
+
+    const lineageEntry = lineage.get(sha1Hash);
+    const existingExecution = lineageEntry.executions.get(record.Execution);
+
+    if (!existingExecution) {
+      const execDate = new Date(record.ExecutionTime * 1000);
+      lineageEntry.executions.set(record.Execution, {
+        id: record.Execution,
+        hash: sha1Hash,
+        pipeline: pipeline.id,
+        created: execDate.toLocaleString(),
+        status: record.Status,
+      });
+    } else {
+      Object.assign(existingExecution, {
+        status: pipeline.record.Status,
+        created: new Date(
+          pipeline.record.ExecutionTime * 1000,
+        ).toLocaleString(),
+      });
+    }
+
+    const mostRecent = Array.from(lineageEntry.executions.values())[0]?.created;
+    if (mostRecent) {
+      lineageEntry.lastExecution = mostRecent;
+    }
+  });
+
+  return lineage;
+});
