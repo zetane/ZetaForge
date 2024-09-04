@@ -62,6 +62,11 @@ export const FolderBlock = ({ blockId, block, setFocusAction, history }) => {
         onChange={(e) => loadFiles(e)}
         webkitdirectory="true"
         multiple
+        parameters-path="true"
+				style={{ // for better visibility.
+					color: '#ffffff',
+					backgroundColor: '#333333',
+				}}
       />
     </div>
   );
