@@ -13,9 +13,9 @@ export default function FileNode({ tree, ...rest }) {
   const name = tree.name;
   const specialFiles = ["computations.py", "Dockerfile", "requirements.txt"];
   const isSpecialFile = specialFiles.includes(name);
-  const textStyle = isSpecialFile
-    ? { color: "darkorange", paddingRight: "4px", paddingLeft: "4px" }
-    : {};
+  const classes = isSpecialFile
+    ? "font-semibold"
+    : "";
 
   const handleFileClick = async () => {
     await confirmModal.confirm(tree);
@@ -26,7 +26,7 @@ export default function FileNode({ tree, ...rest }) {
     <ConfirmModalContext.Provider value={confirmModal}>
       <TreeNode
         onClick={handleFileClick}
-        label={<span style={textStyle}>{name}</span>}
+        label={<span className={classes}>{name}</span>}
         renderIcon={Document}
         {...rest}
       />
