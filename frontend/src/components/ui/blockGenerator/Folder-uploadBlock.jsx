@@ -63,10 +63,11 @@ export const FolderBlock = ({ blockId, block, setFocusAction, history }) => {
         webkitdirectory="true"
         multiple
         parameters-path="true"
-				style={{ // for better visibility.
-					color: '#ffffff',
-					backgroundColor: '#333333',
-				}}
+        style={{
+          // for better visibility.
+          color: "#ffffff",
+          backgroundColor: "#333333",
+        }}
       />
     </div>
   );

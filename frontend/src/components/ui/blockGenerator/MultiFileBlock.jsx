@@ -14,7 +14,8 @@ export const MultiFileBlock = ({ blockId, block, setFocusAction, history }) => {
 
       setFocusAction((draft) => {
         draft.data[blockId].action.parameters["files"].type = "file[]";
-        draft.data[blockId].action.parameters["files"].value = fileNames.join(", ");
+        draft.data[blockId].action.parameters["files"].value =
+          fileNames.join(", ");
       });
 
       setRenderedFiles(updatedFiles);
@@ -25,7 +26,7 @@ export const MultiFileBlock = ({ blockId, block, setFocusAction, history }) => {
     const files = Array.from(fileInput.current.files);
     const filePaths = files.map((file) => file.name);
     const value = filePaths.join(", ");
-    
+
     setFocusAction((draft) => {
       draft.data[blockId].action.parameters["files"].value = value;
       draft.data[blockId].action.parameters["files"].type = "file[]";
@@ -43,11 +44,12 @@ export const MultiFileBlock = ({ blockId, block, setFocusAction, history }) => {
         ref={fileInput}
         onChange={(e) => loadFiles(e)}
         multiple
-				parameters-path="true"
-				style={{ // for better visibility.
-					color: '#ffffff',
-					backgroundColor: '#333333',
-				}}
+        parameters-path="true"
+        style={{
+          // for better visibility.
+          color: "#ffffff",
+          backgroundColor: "#333333",
+        }}
       />
     </div>
   );

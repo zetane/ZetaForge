@@ -121,7 +121,9 @@ const BlockGenerator = ({
       nodeRefs={nodeRefs}
     />
   );
-  const type = block?.action?.parameters?.path?.type || block?.action?.parameters?.files?.type;
+  const type =
+    block?.action?.parameters?.path?.type ||
+    block?.action?.parameters?.files?.type;
   if (type == "folder") {
     content = (
       <FolderBlock
