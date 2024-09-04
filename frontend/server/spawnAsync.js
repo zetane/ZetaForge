@@ -6,12 +6,12 @@ export function spawnAsync(command, args, options) {
     let stderr = "";
     const process = spawn(command, args, options);
 
-    process.stdout.setEncoding(options.encoding);
+    process.stdout.setEncoding(options?.encoding);
     process.stdout.on("data", (data) => {
       stdout += data;
     });
 
-    process.stderr.setEncoding(options.encoding);
+    process.stderr.setEncoding(options?.encoding);
     process.stderr.on("data", (data) => {
       stderr += data;
     });
@@ -29,7 +29,9 @@ export function spawnAsync(command, args, options) {
       reject(new Error(message));
     });
 
-    process.stdin.write(options.input);
+    if (options?.input) {
+      process.stdin.write(options.input);
+    }
     process.stdin.end();
   });
 }
