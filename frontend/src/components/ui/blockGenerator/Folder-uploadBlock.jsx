@@ -66,7 +66,6 @@ export const FolderBlock = ({ blockId, block, setFocusAction, history }) => {
         style={{
           // for better visibility.
           color: "#ffffff",
-          backgroundColor: "#333333",
         }}
       />
     </div>

@@ -37,7 +37,16 @@ export const MultiFileBlock = ({ blockId, block, setFocusAction, history }) => {
 
   return (
     <div className="block-content">
-      <div className="mb-2 pl-2"></div>
+      <div className="mb-2 pl-2">
+        {renderedFiles.map((file, index) => (
+          <div
+            key={index}
+            style={{ color: "#ffffff", backgroundColor: "#333333" }}
+          >
+            {file}
+          </div>
+        ))}
+      </div>
       <input
         id="multi-file-input"
         type="file"
@@ -48,7 +57,7 @@ export const MultiFileBlock = ({ blockId, block, setFocusAction, history }) => {
         style={{
           // for better visibility.
           color: "#ffffff",
-          backgroundColor: "#333333",
+          // backgroundColor: "#333333",
         }}
       />
     </div>

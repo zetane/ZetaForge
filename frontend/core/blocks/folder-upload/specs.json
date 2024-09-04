@@ -33,7 +33,7 @@
         "background_color": "#909090"
       },
       "preview": {},
-      "html": "<input type='file' name='folder-upload' multiple webkitdirectory/>",
+      "html": "<input type='folder' name='folder-upload' multiple webkitdirectory/>",
       "pos_x": "300",
       "pos_y": "200",
       "pos_z": "999" 
