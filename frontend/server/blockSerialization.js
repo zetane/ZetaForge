@@ -1,4 +1,4 @@
-import { execFile, spawn, spawnSync } from "child_process";
+import { spawnAsync } from "./spawnAsync"
 import { app } from "electron";
 import fs from "fs/promises";
 import path from "path";
@@ -30,24 +30,18 @@ export async function compileComputation(pipelineId, blockId) {
     );
   }
 
-  const { stdout, stderr, status, error } = spawnSync("python", [scriptPath], {
-    input: source,
-    encoding: "utf8",
-  });
-
-  if (error) {
-    logger.error(error, buildCompilationErrorLog(blockPath, scriptPath));
-    throw buildCompilationServerError();
+  try {
+    const stdout = await spawnAsync("python", [scriptPath], {
+      input: source,
+      encoding: "utf8",
+    });
+    const io = JSON.parse(stdout);
+    return io;
+  } catch (error) {
+    const message = `Compilation failed for block \nblock path: ${blockPath} \nscript path: ${scriptPath}`;
+    logger.error(error, message);
+    throw new ServerError(message, HttpStatus.INTERNAL_SERVER_ERROR, error);
   }
-
-  if (status != 0) {
-    logger.error(buildCompilationErrorLog(blockPath, scriptPath));
-    logger.error(stderr);
-    throw buildCompilationServerError();
-  }
-
-  const io = JSON.parse(stdout);
-  return io;
 }
 
 export async function saveBlockSpecs(pipelineId, blockId, specs) {
@@ -76,36 +70,16 @@ export async function runTest(pipelineId, blockId) {
     ? path.join(process.resourcesPath, "resources", "run_test.py")
     : path.join("resources", "run_test.py");
   if (!(await fileExists(scriptPath))) {
-    throw new Error(`Could not find script for running tests: ${scriptPath}`);
+    throw new ServerError(`Could not find script for running tests: ${scriptPath}`, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
-  return new Promise((resolve, reject) => {
-    execFile(
-      "python",
-      [scriptPath, blockPath, blockId],
-      (error, stdout, stderr) => {
-        if (error) {
-          reject(error);
-        }
-
-        logger.debug(stdout);
-        logger.error(stderr);
-        resolve();
-      },
-    );
-  });
-}
-
-function buildCompilationErrorLog(blockPath, scriptPath) {
-  return `compilation failed for block \nblock path: ${blockPath} \nscript path: ${scriptPath}`;
-}
-
-function buildCompilationServerError(error) {
-  return new ServerError(
-    `Failed to compile code for the block`,
-    HttpStatus.INTERNAL_SERVER_ERROR,
-    error,
-  );
+  try {
+    await spawnAsync("python", [scriptPath, blockPath, blockId]);
+  } catch(error) {
+    const message = `Failed to run tests for block \nblock path: ${blockPath} \nscript path: ${scriptPath}`
+    logger.error(error, message)
+    throw new ServerError(message, HttpStatus.INTERNAL_SERVER_ERROR, error)
+  }
 }
 
 export async function getBlockDirectory(pipelineId, blockId) {
@@ -189,17 +163,22 @@ export async function callAgent(
     "computations.py",
   );
 
-  const stdout = await spawnAsync("python", [scriptPath], {
-    input: JSON.stringify({
-      apiKey,
-      userMessage,
-      conversationHistory,
-    }),
-    encoding: "utf8",
-  });
-  const response = JSON.parse(stdout).response;
-
-  return response;
+  try {
+    const stdout = await spawnAsync("python", [scriptPath], {
+      input: JSON.stringify({
+        apiKey,
+        userMessage,
+        conversationHistory,
+      }),
+      encoding: "utf8",
+    });
+    const response = JSON.parse(stdout).response;
+    return response;
+  } catch (error) {
+    const message = `Unable to call agent ${agentName} with message ${userMessage}`;
+    logger.error(error, message);
+    throw new ServerError(message, HttpStatus.INTERNAL_SERVER_ERROR, error);
+  }
 }
 
 export async function getLogs(pipelineId, blockId) {
@@ -212,34 +191,3 @@ export async function getLogs(pipelineId, blockId) {
   return await fs.readFile(logsPath, "utf8");
 }
 
-function spawnAsync(command, args, options) {
-  return new Promise((resolve, reject) => {
-    let stdout = "";
-    let stderr = "";
-    const process = spawn(command, args, options);
-
-    process.stdout.setEncoding(options.encoding);
-    process.stdout.on("data", (data) => {
-      stdout += data;
-    });
-
-    process.stderr.setEncoding(options.encoding);
-    process.stderr.on("data", (data) => {
-      stderr += data;
-    });
-
-    process.on("exit", (status) => {
-      if (status != 0) {
-        reject(stderr);
-      }
-      resolve(stdout);
-    });
-
-    process.on("error", (error) => {
-      reject(error);
-    });
-
-    process.stdin.write(options.input);
-    process.stdin.end();
-  });
-}
