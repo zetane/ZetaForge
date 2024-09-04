@@ -37,10 +37,12 @@ export default function RunPipelineButton({ children, action }) {
       pipeline.data,
     );
     const executionId = uuidv7();
-
+    const distinctId = await mixpanelService.getDistinctId();
+    console.log("CHECK ME")
+    console.log(distinctId)
     if (!(await validateAnvilOnline())) return;
     if (!validateSchema()) return;
-    const newExecution = await execute(pipelineSpecs, executionId);
+    const newExecution = await execute(pipelineSpecs, executionId, distinctId);
     if (!newExecution) {
       return;
     }
@@ -106,9 +108,11 @@ export default function RunPipelineButton({ children, action }) {
     }
   };
 
-  const execute = async (pipelineSpecs, executionId) => {
+  const execute = async (pipelineSpecs, executionId, distinctId) => {
     try {
       const rebuild = action == "Rebuild";
+      console.log("THIS IS IMPORTANT")
+      console.log(distinctId)
       const newExecution = await executePipeline.mutateAsync({
         id: pipeline.id,
         executionId: executionId,
@@ -118,6 +122,7 @@ export default function RunPipelineButton({ children, action }) {
         name: pipeline.name,
         rebuild: rebuild,
         anvilConfiguration: configuration,
+        distinctId: distinctId
       });
       return newExecution;
     } catch (error) {

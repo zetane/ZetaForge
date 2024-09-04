@@ -227,6 +227,7 @@ export const appRouter = router({
         name: z.string(),
         rebuild: z.boolean(),
         anvilConfiguration: anvilConfigurationSchema,
+        distinctId: z.string().optional()
       }),
     )
     .mutation(async (opts) => {
@@ -240,6 +241,7 @@ export const appRouter = router({
         name,
         rebuild,
         anvilConfiguration,
+        distinctId
       } = input;
 
       return await executePipeline(
@@ -251,6 +253,7 @@ export const appRouter = router({
         name,
         rebuild,
         anvilConfiguration,
+        distinctId
       );
     }),
   compileComputation: publicProcedure

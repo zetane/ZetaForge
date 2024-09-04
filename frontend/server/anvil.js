@@ -35,6 +35,7 @@ export async function createExecution(
   executionId,
   pipelineSpecs,
   rebuild,
+  distinctId
 ) {
   const sortedPipelines = buildSortKeys(pipelineSpecs);
   const response = await handleRequest(
@@ -51,6 +52,7 @@ export async function createExecution(
       id: executionId,
       pipeline: sortedPipelines,
       build: rebuild,
+      distinctId: distinctId
     },
   );
 
@@ -80,6 +82,9 @@ async function handleRequest(url, method, token, headers, body = null) {
   }
 
   try {
+    console.log("CHECK ME HERE")
+    console.log(url.href)
+    console.log(body)
     const response = await fetch(url, {
       method: method,
       headers: headers,

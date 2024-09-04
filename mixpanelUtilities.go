@@ -74,6 +74,8 @@ type MixpanelClient struct {
 	Token      string
 	Enabled    bool
 	IsDev      bool
+	mu         sync.Mutex // Mutex for synchronizing access to DistinctID
+
 }
 
 // mixpanelClient is now a singleton instance
@@ -152,4 +154,10 @@ func (m *MixpanelClient) TrackEvent(ctx context.Context, eventName string, prope
 		m.Enabled = false
 	}
 	return err
+}
+
+func (m *MixpanelClient) SetDistinctID(newID string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.DistinctID = newID
 }

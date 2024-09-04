@@ -29,6 +29,13 @@ class MixpanelService {
     }
   }
 
+  async getDistinctId() {
+    if(this.distinctId === null) {
+      await this.initializeDistinctId()
+    }
+    return this.distinctId
+  }
+
   async checkIsDev() {
     const serverAddress = import.meta.env.VITE_EXPRESS;
     const res = await fetch(`${serverAddress}/is-dev`);

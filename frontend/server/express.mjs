@@ -10,6 +10,8 @@ import multer from "multer";
 import path from "path";
 import sha256 from "sha256";
 import getMAC from "getmac";
+import {PythonShell} from 'python-shell'
+import {distinctIdGenerator} from './distinctId'
 import { BLOCK_SPECS_FILE_NAME } from "../src/utils/constants";
 
 function startExpressServer() {
@@ -43,27 +45,36 @@ function startExpressServer() {
   const upload = multer({ dest: "_temp_import" });
 
   app.get("/distinct-id", async (req, res) => {
-    try {
-      const macAddress = getMAC();
-      let macAsBigInt = BigInt(`0x${macAddress.split(":").join("")}`);
+    // try {
+    //   const macAddress = getMAC();
+    //   let macAsBigInt = BigInt(`0x${macAddress.split(":").join("")}`);
 
-      // Check if the MAC address is universally administered
-      const isUniversallyAdministered =
-        (macAsBigInt & BigInt(0x020000000000)) === BigInt(0);
+    //   // Check if the MAC address is universally administered
+    //   const isUniversallyAdministered =
+    //     (macAsBigInt & BigInt(0x020000000000)) === BigInt(0);
 
-      // If not universally administered, set the multicast bit
-      if (!isUniversallyAdministered) {
-        macAsBigInt |= BigInt(0x010000000000);
-      }
-      const distinctId = sha256(macAsBigInt.toString());
-      return res.send(distinctId);
-    } catch (error) {
-      console.log(
-        "Can't generate distinct_id for mixpanel. Using default distinct_id",
-      );
-      console.log(error);
-      return res.send(sha256(BigInt(0).toString())); // Sending default distinct_id
-    }
+    //   // If not universally administered, set the multicast bit
+    //   if (!isUniversallyAdministered) {
+    //     macAsBigInt |= BigInt(0x010000000000);
+    //   }
+    //   const distinctId = sha256(macAsBigInt.toString());
+    //   return res.send(distinctId);
+    // } catch (error) {
+    //   console.log(
+    //     "Can't generate distinct_id for mixpanel. Using default distinct_id",
+    //   );
+    //   console.log(error);
+    //   return res.send(sha256(BigInt(0).toString())); // Sending default distinct_id
+    // }
+
+    
+    PythonShell.runString(distinctIdGenerator).then(result => { 
+      res.send(result[0])
+      });
+   
+
+    
+
   });
 
   app.get("/is-dev", async (req, res) => {

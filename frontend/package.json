@@ -45,7 +45,8 @@
     "s3-sync-client": "^4.3.1",
     "source-map-support": "^0.5.21",
     "use-immer": "^0.9.0",
-    "uuidv7": "^0.6.3"
+    "uuidv7": "^0.6.3",
+    "python-shell":"5.0.0"
   },
   "devDependencies": {
     "@aws-sdk/client-s3": "^3.525.0",

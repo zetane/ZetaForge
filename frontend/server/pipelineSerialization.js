@@ -191,7 +191,10 @@ export async function executePipeline(
   name,
   rebuild,
   anvilHostConfiguration,
+  distinctId
 ) {
+  console.log("CHECK DISTINCT ID")
+  console.log(distinctId)
   specs = await uploadBlocks(
     id,
     executionId,
@@ -218,6 +221,7 @@ export async function executePipeline(
     executionId,
     specs,
     rebuild,
+    distinctId
   );
 }
 
