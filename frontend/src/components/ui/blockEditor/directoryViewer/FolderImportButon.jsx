@@ -24,6 +24,7 @@ export default function FolderImportButton({ pipelineId, blockId }) {
     <>
       <Button
         renderIcon={FolderOpen}
+        kind="tertiary"
         size="sm"
         iconDescription="Import folder"
         onClick={handleImport}

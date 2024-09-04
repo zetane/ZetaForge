@@ -24,6 +24,7 @@ export default function FileImportButton({ pipelineId, blockId }) {
     <>
       <Button
         renderIcon={DocumentDownload}
+        kind="tertiary"
         size="sm"
         iconDescription="Import files"
         onClick={handleImport}

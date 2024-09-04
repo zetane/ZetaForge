@@ -58,6 +58,7 @@ export default function CodeManualEditor() {
           className="w-16"
           iconDescription="Save"
           tooltipPosition="left"
+          kind="tertiary"
           size="sm"
           onClick={handleSave}
           disabled={saveDisabled}
