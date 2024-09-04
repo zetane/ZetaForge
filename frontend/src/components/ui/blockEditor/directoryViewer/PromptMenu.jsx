@@ -42,7 +42,11 @@ export default function PromptMenu({ index, prompt }) {
       data-floating-menu-container="cds--header-panel"
       flipped
     >
-      <OverflowMenuIconItem className="disable-focus" icon={Copy} onClick={handleDuplicate}>
+      <OverflowMenuIconItem
+        className="disable-focus"
+        icon={Copy}
+        onClick={handleDuplicate}
+      >
         Duplicate to current
       </OverflowMenuIconItem>
       <OverflowMenuIconItem

@@ -126,7 +126,8 @@ main {
   margin-left: -5px;
   border-width: 5px;
   border-style: solid;
-  border-color: transparent transparent var(--tooltip-background-color) transparent;
+  border-color: transparent transparent var(--tooltip-background-color)
+    transparent;
 }
 
 .cds--btn--ghost:focus.disable-focus {

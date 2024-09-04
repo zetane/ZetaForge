@@ -13,9 +13,7 @@ export default function FileNode({ tree, ...rest }) {
   const name = tree.name;
   const specialFiles = ["computations.py", "Dockerfile", "requirements.txt"];
   const isSpecialFile = specialFiles.includes(name);
-  const classes = isSpecialFile
-    ? "font-semibold"
-    : "";
+  const classes = isSpecialFile ? "font-semibold" : "";
 
   const handleFileClick = async () => {
     await confirmModal.confirm(tree);

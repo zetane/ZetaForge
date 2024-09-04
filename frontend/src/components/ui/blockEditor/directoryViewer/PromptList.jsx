@@ -17,19 +17,21 @@ export default function PromptList() {
   return (
     <div className="flex h-full flex-col-reverse gap-5">
       <div className="p-2">
-        <div className="pb-1.5 text-nowrap">Latest Version</div>
+        <div className="text-nowrap pb-1.5">Latest Version</div>
         {activePrompt && (
           <ActivePrompt index={activeIndex}>{activePrompt}</ActivePrompt>
         )}
       </div>
       <div className="flex min-h-0 flex-1 flex-col">
         <div className="flex flex-row justify-between gap-4 p-2">
-          <div className="pb-4 text-nowrap ">
+          <div className="text-nowrap pb-4 ">
             <span>Version History </span>
             {displayCounter && <span>({previousPrompt.length})</span>}
           </div>
           {fileHandle && (
-            <div className="prompt-file-header text-nowrap">File: {fileHandle.name}</div>
+            <div className="prompt-file-header text-nowrap">
+              File: {fileHandle.name}
+            </div>
           )}
         </div>
         <div className="flex grow flex-col-reverse gap-2 overflow-auto px-2">

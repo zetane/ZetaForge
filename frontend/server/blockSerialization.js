@@ -1,4 +1,4 @@
-import { spawnAsync } from "./spawnAsync"
+import { spawnAsync } from "./spawnAsync";
 import { app } from "electron";
 import fs from "fs/promises";
 import path from "path";
@@ -70,15 +70,18 @@ export async function runTest(pipelineId, blockId) {
     ? path.join(process.resourcesPath, "resources", "run_test.py")
     : path.join("resources", "run_test.py");
   if (!(await fileExists(scriptPath))) {
-    throw new ServerError(`Could not find script for running tests: ${scriptPath}`, HttpStatus.INTERNAL_SERVER_ERROR);
+    throw new ServerError(
+      `Could not find script for running tests: ${scriptPath}`,
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 
   try {
     await spawnAsync("python", [scriptPath, blockPath, blockId]);
-  } catch(error) {
-    const message = `Failed to run tests for block \nblock path: ${blockPath} \nscript path: ${scriptPath}`
-    logger.error(error, message)
-    throw new ServerError(message, HttpStatus.INTERNAL_SERVER_ERROR, error)
+  } catch (error) {
+    const message = `Failed to run tests for block \nblock path: ${blockPath} \nscript path: ${scriptPath}`;
+    logger.error(error, message);
+    throw new ServerError(message, HttpStatus.INTERNAL_SERVER_ERROR, error);
   }
 }
 
@@ -190,4 +193,3 @@ export async function getLogs(pipelineId, blockId) {
 
   return await fs.readFile(logsPath, "utf8");
 }
-
