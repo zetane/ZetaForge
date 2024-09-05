@@ -23,6 +23,7 @@ export default function FileNode({ tree, ...rest }) {
   return (
     <ConfirmModalContext.Provider value={confirmModal}>
       <TreeNode
+        className="file-explorer-node"
         onClick={handleFileClick}
         label={<span className={classes}>{name}</span>}
         renderIcon={Document}

@@ -1,31 +1,35 @@
 @mixin light {
-  --beHeader: #e8e8e8;
-  --bePromptInputText: #000000;
-  --bePromptInputBackground: #ffffff;
-  --beCodeViewerBackground: #f8f8f8;
-  --beCodeEditorBackground: #ffffff;
-  --bePromptPlaceholderText: #bebebe;
-  --bePrompt: #;
-  --bePromptActive: #;
-  --bePromptSelectedStroke: #;
-  --bePromptFileHeader: #;
-  --beViewOnlyTag: #;
-  --beLeftPanelBackground: #;
+  --beHeader: var(--cds-background);
+  --bePromptInputText: var(--ztn-black-0);
+  --bePromptInputBackground: var(--ztn-white-0);
+  --beCodeViewerBackground: var(--ztn-gray-2);
+  --beCodeEditorBackground: var(--ztn-white-0);
+  --bePromptPlaceholderText: var(--ztn-gray-0);
+  --bePrompt: var(--ztn-white-1);
+  --bePromptText: var(--ztn-black-0);
+  --bePromptActive: var(--ztn-white-0);
+  --bePromptSelectedStroke: var(--ztn-gray-0);
+  --bePromptFileHeader: var(--ztn-gray-0);
+  --beViewOnlyTag: var(--ztn-gray-0);
+  --beLeftPanelBackground: var(--ztn-gray-2);
+  --beFileExplorerBackground: vat(--ztn-gray-2);
 }
 
 @mixin dark {
-  --beHeader: #141414;
-  --bePromptInputText: #ffffff;
-  --bePromptInputBackground: #080808;
-  --beCodeViewerBackground: #1e1e1e;
-  --beCodeEditorBackground: #080808;
-  --bePromptPlaceholderText: #989898;
-  --bePrompt: #1d1c1c;
-  --bePromptActive: #0d0d0d;
-  --bePromptSelectedStroke: #606060;
-  --bePromptFileHeader: #888888;
-  --beViewOnlyTag: #959595;
-  --beLeftPanelBackground: #262626;
+  --beHeader: var(--cds-background);
+  --bePromptInputText: var(--ztn-white-0);
+  --bePromptInputBackground: var(--ztn-black-0);
+  --beCodeViewerBackground: var(--ztn-gray-1);
+  --beCodeEditorBackground: var(--ztn-black-0);
+  --bePromptPlaceholderText: var(--ztn-gray-0);
+  --bePrompt: var(--ztn-black-1);
+  --bePromptText: var(--ztn-white-0);
+  --bePromptActive: var(--ztn-black-0);
+  --bePromptSelectedStroke: var(--ztn-gray-0);
+  --bePromptFileHeader: var(--ztn-gray-0);
+  --beViewOnlyTag: var(--ztn-gray-0);
+  --beLeftPanelBackground: var(--ztn-gray-1);
+  --beFileExplorerBackground: var(--ztn-gray-1);
 }
 
 .editor-block {
@@ -106,6 +110,10 @@
   background-color: var(--bePrompt);
 }
 
+.prompt-text {
+  color: var(--bePromptText);
+}
+
 .prompt-active {
   background-color: var(--bePromptActive);
 }
@@ -120,4 +128,8 @@
 
 .left-panel {
   background: var(--beLeftPanelBackground);
+}
+
+.file-explorer-node {
+  background: var(--beFileExplorerBackground)
 }

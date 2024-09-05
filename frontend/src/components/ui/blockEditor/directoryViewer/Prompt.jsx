@@ -26,7 +26,7 @@ export default function Prompt({ children, index }) {
         kind="ghost"
         className="disable-focus disable-hover-color min-w-0 max-w-none flex-1 rounded-lg"
       >
-        <span className="line-clamp-3 w-11/12 text-wrap">
+        <span className="prompt-text line-clamp-3 w-11/12 text-wrap">
           {children.prompt}
         </span>
       </Button>

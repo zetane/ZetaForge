@@ -12,6 +12,7 @@ export default function DirectoryNode({ tree, isRoot, ...rest }) {
 
   return (
     <TreeNode
+      className="file-explorer-node"
       id={tree.relativePath}
       onClick={handleFolderClick}
       label={<span>{tree.name}</span>}
