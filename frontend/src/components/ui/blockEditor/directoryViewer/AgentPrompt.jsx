@@ -1,15 +1,15 @@
 import { Button, Loading } from "@carbon/react";
-import { Bot, SendFilled } from "@carbon/icons-react";
+import { SendFilled } from "@carbon/icons-react";
 import { openAIApiKeyAtom } from "@/atoms/apiKeysAtom";
 import { useState, useContext } from "react";
 import { useAtom } from "jotai";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { trpc } from "@/utils/trpc";
-import { ChatHistoryContext } from "./ChatHistoryContext";
+import { ChatHistoryContext } from "./DirectoryViewer";
 import { blockEditorIdAtom } from "@/atoms/editorAtom";
-import { SelectedPromptContext } from "./SelectedPromptContext";
-import { FileBufferContext } from "./FileBufferContext";
-import { FileHandleContext } from "./FileHandleContext";
+import { SelectedPromptContext } from "./DirectoryViewer";
+import { FileBufferContext } from "./DirectoryViewer";
+import { FileHandleContext } from "./DirectoryViewer";
 import { useCompileComputation } from "@/hooks/useCompileSpecs";
 import useDebounce from "@/hooks/useDebounce";
 

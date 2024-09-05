@@ -1,9 +1,9 @@
 import { Button, OverflowMenu } from "@carbon/react";
 import { useContext } from "react";
-import { SelectedPromptContext } from "./SelectedPromptContext";
-import { ChatHistoryContext } from "./ChatHistoryContext";
-import { FileBufferContext } from "./FileBufferContext";
-import { FileHandleContext } from "./FileHandleContext";
+import { SelectedPromptContext } from "./DirectoryViewer";
+import { ChatHistoryContext } from "./DirectoryViewer";
+import { FileBufferContext } from "./DirectoryViewer";
+import { FileHandleContext } from "./DirectoryViewer";
 import OverflowMenuIconItem from "../../OverflowMenuIconItem";
 import { TrashCan } from "@carbon/icons-react";
 

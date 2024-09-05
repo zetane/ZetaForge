@@ -1,13 +1,13 @@
 import { OverflowMenu } from "@carbon/react";
 import { useContext } from "react";
-import { ChatHistoryContext } from "./ChatHistoryContext";
-import { SelectedPromptContext } from "./SelectedPromptContext";
-import { FileBufferContext } from "./FileBufferContext";
+import { ChatHistoryContext } from "./DirectoryViewer";
+import { SelectedPromptContext } from "./DirectoryViewer";
+import { FileBufferContext } from "./DirectoryViewer";
 import { useAtom } from "jotai";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { blockEditorIdAtom } from "@/atoms/editorAtom";
 import { useCompileComputation } from "@/hooks/useCompileSpecs";
-import { FileHandleContext } from "./FileHandleContext";
+import { FileHandleContext } from "./DirectoryViewer";
 import { Copy, TrashCan } from "@carbon/icons-react";
 import OverflowMenuIconItem from "../../OverflowMenuIconItem";
 

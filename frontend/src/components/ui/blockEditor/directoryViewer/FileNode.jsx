@@ -1,10 +1,12 @@
 import { Document } from "@carbon/icons-react";
 import { TreeNode } from "@carbon/react";
-import { ConfirmModalContext } from "./ConfirmModalContext";
 import ConfirmChangeFileModal from "./ConfirmChangeFileModal";
 import useConfirmModal from "@/hooks/useConfirmModal";
 import { useContext } from "react";
-import { SelectedPromptContext } from "./SelectedPromptContext";
+import { SelectedPromptContext } from "./DirectoryViewer";
+import { createContext } from "react";
+
+export const ConfirmModalContext = createContext();
 
 export default function FileNode({ tree, ...rest }) {
   const confirmModal = useConfirmModal(ConfirmModalContext);

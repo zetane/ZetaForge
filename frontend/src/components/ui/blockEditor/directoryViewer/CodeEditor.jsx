@@ -1,7 +1,7 @@
 import { useContext } from "react";
 import PromptViewer from "./PromptViewer";
 import CodeManualEditor from "./CodeManualEditor";
-import { SelectedPromptContext } from "./SelectedPromptContext";
+import { SelectedPromptContext } from "./DirectoryViewer";
 
 export default function CodeEditor() {
   const selectedPrompt = useContext(SelectedPromptContext);

@@ -1,7 +1,7 @@
 import CodeViewer from "./CodeViewer";
 import CodeEditor from "./CodeEditor";
 import { useContext } from "react";
-import { FileHandleContext } from "./FileHandleContext";
+import { FileHandleContext } from "./DirectoryViewer";
 import { ViewerCodeMirror } from "./CodeMirrorComponents";
 
 export default function FileViewer() {

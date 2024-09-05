@@ -1,9 +1,9 @@
 import { Button } from "@carbon/react";
 import { EditorCodeMirror } from "./CodeMirrorComponents";
 import { useContext, useState } from "react";
-import { FileBufferContext } from "./FileBufferContext";
-import { ChatHistoryContext } from "./ChatHistoryContext";
-import { FileHandleContext } from "./FileHandleContext";
+import { FileBufferContext } from "./DirectoryViewer";
+import { ChatHistoryContext } from "./DirectoryViewer";
+import { FileHandleContext } from "./DirectoryViewer";
 import { useCompileComputation } from "@/hooks/useCompileSpecs";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { blockEditorIdAtom } from "@/atoms/editorAtom";

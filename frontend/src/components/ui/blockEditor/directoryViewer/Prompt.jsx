@@ -1,7 +1,7 @@
 import { useContext } from "react";
 import PromptMenu from "./PromptMenu";
 import { Button } from "@carbon/react";
-import { SelectedPromptContext } from "./SelectedPromptContext";
+import { SelectedPromptContext } from "./DirectoryViewer";
 
 export default function Prompt({ children, index }) {
   const selectedPrompt = useContext(SelectedPromptContext);

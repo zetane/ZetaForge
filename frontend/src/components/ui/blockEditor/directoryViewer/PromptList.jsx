@@ -1,8 +1,8 @@
 import { useContext } from "react";
 import ActivePrompt from "./ActivePrompt";
 import Prompt from "./Prompt";
-import { ChatHistoryContext } from "./ChatHistoryContext";
-import { FileHandleContext } from "./FileHandleContext";
+import { ChatHistoryContext } from "./DirectoryViewer";
+import { FileHandleContext } from "./DirectoryViewer";
 
 export default function PromptList() {
   const fileHandle = useContext(FileHandleContext);

@@ -1,5 +1,5 @@
 import { Modal } from "@carbon/react";
-import { ConfirmModalContext } from "./ConfirmModalContext";
+import { ConfirmModalContext } from "./FileNode";
 import { useContext } from "react";
 
 export default function ConfirmChangeFileModal() {

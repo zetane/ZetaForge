@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { ViewerCodeMirror } from "./CodeMirrorComponents";
-import { FileBufferContext } from "./FileBufferContext";
+import { FileBufferContext } from "./DirectoryViewer";
 
 export default function CodeViewer() {
   const fileBuffer = useContext(FileBufferContext);

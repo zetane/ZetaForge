@@ -1,6 +1,6 @@
 import { useState, useContext } from "react";
-import { FileBufferContext } from "@/components/ui/blockEditor/directoryViewer/FileBufferContext";
-import { FileHandleContext } from "@/components/ui/blockEditor/directoryViewer/FileHandleContext";
+import { FileBufferContext } from "@/components/ui/blockEditor/directoryViewer/DirectoryViewer";
+import { FileHandleContext } from "@/components/ui/blockEditor/directoryViewer/DirectoryViewer";
 
 export default function useConfirmModal() {
   const [isOpen, setIsOpen] = useState(false);

@@ -2,13 +2,13 @@ import { Button } from "@carbon/react";
 import { Copy } from "@carbon/icons-react";
 import { ViewerCodeMirror } from "./CodeMirrorComponents";
 import { useContext } from "react";
-import { SelectedPromptContext } from "./SelectedPromptContext";
-import { ChatHistoryContext } from "./ChatHistoryContext";
-import { FileBufferContext } from "./FileBufferContext";
+import { SelectedPromptContext } from "./DirectoryViewer";
+import { ChatHistoryContext } from "./DirectoryViewer";
+import { FileBufferContext } from "./DirectoryViewer";
 import { useAtom } from "jotai";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { blockEditorIdAtom } from "@/atoms/editorAtom";
-import { FileHandleContext } from "./FileHandleContext";
+import { FileHandleContext } from "./DirectoryViewer";
 import { useCompileComputation } from "@/hooks/useCompileSpecs";
 
 export default function PromptViewer() {

@@ -6,15 +6,17 @@ import "allotment/dist/style.css";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
 import PersistentAllotment from "../../PersistentAllotment";
 import { Allotment } from "allotment";
-import { FileBufferContext } from "./FileBufferContext";
-import { ChatHistoryContext } from "./ChatHistoryContext";
 import useChatHistory from "@/hooks/useChatHistory";
-import { SelectedPromptContext } from "./SelectedPromptContext";
-import { FileHandleContext } from "./FileHandleContext";
 import useFileHandle from "@/hooks/useFileHandle";
 import AgentPrompt from "./AgentPrompt";
 import { openAIApiKeyAtom } from "@/atoms/apiKeysAtom";
 import useSelectPrompt from "@/hooks/useSelecPrompt";
+import { createContext } from "react";
+
+export const ChatHistoryContext = createContext();
+export const FileBufferContext = createContext(null);
+export const FileHandleContext = createContext();
+export const SelectedPromptContext = createContext();
 
 export default function DirectoryViewer({ blockId }) {
   const pipeline = useAtomValue(pipelineAtom);
