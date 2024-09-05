@@ -158,15 +158,17 @@ export async function getDirectoryTree(directoryPath, visitor) {
 
     parent.children = [];
     for (const dirent of dirents) {
+      const isDirectory = dirent.isDirectory();
       const child = makeDirectoryTreeNode(
         dirent.name,
         path.join(parent.absolutePath, dirent.name),
         path.join(parent.relativePath, dirent.name),
+        isDirectory,
         visitor,
       );
 
       parent.children.push(child);
-      if (dirent.isDirectory()) {
+      if (isDirectory) {
         stack.push(child);
       }
     }
@@ -175,10 +177,16 @@ export async function getDirectoryTree(directoryPath, visitor) {
   return root;
 }
 
-function makeDirectoryTreeNode(name, absolutePath, relativePath, visitor) {
+function makeDirectoryTreeNode(
+  name,
+  absolutePath,
+  relativePath,
+  isDirectory,
+  visitor,
+) {
   let visit = {};
   if (visitor) {
-    visit = visitor(name, absolutePath, relativePath) ?? {};
+    visit = visitor(name, absolutePath, relativePath, isDirectory) ?? {};
   }
 
   return {

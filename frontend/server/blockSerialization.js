@@ -92,8 +92,16 @@ export async function getBlockDirectory(pipelineId, blockId) {
   return tree;
 }
 
-function filePermissionVisitor(name) {
-  return getFilePermissions(name);
+function filePermissionVisitor(name, absolutePath, relativePath, isDirectory) {
+  if (isDirectory) {
+    logger.debug(name);
+    return {
+      read: true,
+      write: true,
+    };
+  } else {
+    return getFilePermissions(name);
+  }
 }
 
 export async function getBlockFile(pipelineId, blockId, relativeFilePath) {
