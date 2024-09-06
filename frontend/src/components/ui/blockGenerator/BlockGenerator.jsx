@@ -322,13 +322,7 @@ const parseHtmlToInputs = (html) => {
   return inputs;
 };
 
-const InputField = ({
-  value,
-  name,
-  parameterName,
-  onChange,
-  id,
-}) => {
+const InputField = ({ value, name, parameterName, onChange, id }) => {
   const [editor] = useAtom(drawflowEditorAtom);
   const [currentValue, setCurrentValue] = useState(value);
   const inputRef = useRef(null);
@@ -530,13 +524,7 @@ const InputField = ({
   }
 };
 
-const BlockContent = ({
-  html,
-  block,
-  onInputChange,
-  id,
-  nodeRefs,
-}) => {
+const BlockContent = ({ html, block, onInputChange, id, nodeRefs }) => {
   const parsedInputs = parseHtmlToInputs(html);
 
   return (

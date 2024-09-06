@@ -20,7 +20,7 @@ export default function LoadPipelineButton() {
     try {
       mixpanelService.trackEvent("Load Pipeline");
     } catch (err) {
-      console.error(err)
+      console.error(err);
     }
     const files = event.target.files;
     for (const key in files) {

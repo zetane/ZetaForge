@@ -9,8 +9,7 @@ import { mixpanelAtom } from "@/atoms/mixpanelAtom";
 export default function SaveAsPipelineButton() {
   const [editor] = useAtom(drawflowEditorAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
-  const [mixpanelService] = useAtom(mixpanelAtom)
-
+  const [mixpanelService] = useAtom(mixpanelAtom);
 
   const copyPipeline = trpc.copyPipeline.useMutation();
 
@@ -18,7 +17,7 @@ export default function SaveAsPipelineButton() {
     try {
       mixpanelService.trackEvent("Save Pipeline");
     } catch (err) {
-      console.error(err)
+      console.error(err);
     }
     const pipelineSpecs = editor.convert_drawflow_to_block(
       pipeline.name,
