@@ -17,7 +17,7 @@ export default function SavePipelineButton() {
     try {
       mixpanelService.trackEvent("Save Pipeline");
     } catch (err) {
-      console.error(err)
+      console.error(err);
     }
     const pipelineSpecs = editor.convert_drawflow_to_block(
       pipeline.name,

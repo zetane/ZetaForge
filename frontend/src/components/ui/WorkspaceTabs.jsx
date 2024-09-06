@@ -63,13 +63,13 @@ export default function WorkspaceTabs() {
     if (Object.keys(workspace.tabs).length > 1) {
       const deleteTab = renderedTabs[deleteIndex];
       const selectedTab = renderedTabs[selectedIndex];
-      const newTabArray = Object.keys(workspace.tabs)
-        .filter((k) => k != deleteTab.id)
-      const filteredTabs= newTabArray
-        .reduce((tabs, k) => {
-          tabs[k] = workspace.tabs[k];
-          return tabs;
-        }, {});
+      const newTabArray = Object.keys(workspace.tabs).filter(
+        (k) => k != deleteTab.id,
+      );
+      const filteredTabs = newTabArray.reduce((tabs, k) => {
+        tabs[k] = workspace.tabs[k];
+        return tabs;
+      }, {});
 
       setWorkspace((draft) => {
         // make the same tab we're deleting active, unless it's at the end, in which case we get -1

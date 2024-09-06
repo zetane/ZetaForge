@@ -54,7 +54,7 @@ export default function LoadBlockButton() {
     try {
       mixpanelService.trackEvent("Load Block");
     } catch (err) {
-      console.error(err)
+      console.error(err);
     }
     const files = fileInput.current.files;
     for (let i = 0; i < files.length; i++) {
