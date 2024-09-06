@@ -23,6 +23,7 @@
     "preview": "vite preview",
     "pree2e": "vite build --mode=test",
     "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
     "test": "vitest run",
