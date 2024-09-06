@@ -9,18 +9,29 @@ export default [
   ...tseslint.configs.recommended,
   pluginReactConfig,
   {
+    files: [
+      "**/*.js",
+      "**/*.cjs",
+      "**/*.mjs",
+      "**/*.tx",
+      "**/*.jsx",
+      "**/*.tsx",
+      "**/*.css",
+      "**/*.json",
+      "**/*.json5",
+    ],
     rules: {
       "no-control-regex": 0,
     },
   },
   {
     ignores: [
-      "core/*",
-      "dist/*",
-      "dist-electron/*",
-      "electron/*",
-      "release/*",
-      "utils/schema/*",
+      "core/",
+      "dist/",
+      "dist-electron/",
+      "electron/",
+      "release/",
+      "utils/schema/",
     ],
   },
 ];
