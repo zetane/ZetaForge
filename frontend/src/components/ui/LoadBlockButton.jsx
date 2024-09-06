@@ -42,7 +42,7 @@ export default function LoadBlockButton() {
       blockPath: path,
       pipelinePath: pipeline.path,
     };
-    const res = await saveBlockMutation.mutateAsync(cacheData);
+    await saveBlockMutation.mutateAsync(cacheData);
 
     setPipeline((draft) => {
       draft.data[id] = block;
@@ -50,10 +50,12 @@ export default function LoadBlockButton() {
     return id;
   };
 
-  const loadBlock = async (pipeline) => {
+  const loadBlock = async () => {
     try {
       mixpanelService.trackEvent("Load Block");
-    } catch (err) {}
+    } catch (err) {
+      console.error(err)
+    }
     const files = fileInput.current.files;
     for (let i = 0; i < files.length; i++) {
       const file = files.item(i);
@@ -109,9 +111,7 @@ export default function LoadBlockButton() {
         webkitdirectory=""
         directory=""
         ref={fileInput}
-        onChange={(e) => {
-          loadBlock(pipeline);
-        }}
+        onChange={loadBlock}
         hidden
       />
     </div>

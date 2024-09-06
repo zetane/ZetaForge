@@ -25,13 +25,10 @@ function getLastFolder(path) {
 }
 
 export const useLoadPipeline = () => {
-  const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
+  const [, setWorkspace] = useImmerAtom(workspaceAtom);
 
   const loadPipeline = async (file) => {
     console.log("***********Loading pipeline from file:", file);
-
-    let relPath = file.webkitRelativePath;
-    relPath = relPath.replaceAll("\\", "/");
 
     const data = JSON.parse(await new Blob([file]).text());
     const saveFolder = getDirectoryPath(file.path);
@@ -71,7 +68,7 @@ function removeNullInputsOutputs(obj) {
 
   // Iterate through all keys in the object
   for (const key in obj) {
-    if (obj.hasOwnProperty(key)) {
+    if (Object.prototype.hasOwnProperty.call(key)) {
       const value = obj[key];
 
       // Check if both inputs and outputs are null
@@ -243,7 +240,7 @@ export const useLoadExecution = () => {
 };
 
 export const useLoadCorePipeline = () => {
-  const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
+  const [, setWorkspace] = useImmerAtom(workspaceAtom);
   const copyPipelineMutation = trpc.copyPipeline.useMutation();
 
   const loadPipeline = async (specs, corePath) => {

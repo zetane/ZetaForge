@@ -19,7 +19,9 @@ export default function LoadPipelineButton() {
   const handleFileChange = async (event) => {
     try {
       mixpanelService.trackEvent("Load Pipeline");
-    } catch (err) {}
+    } catch (err) {
+      console.error(err)
+    }
     const files = event.target.files;
     for (const key in files) {
       const file = files[key];

@@ -16,9 +16,7 @@ export default [
       "**/*.tx",
       "**/*.jsx",
       "**/*.tsx",
-      "**/*.css",
       "**/*.json",
-      "**/*.json5",
     ],
     rules: {
       "no-control-regex": 0,
