@@ -4,17 +4,22 @@ import { HeaderMenuItem } from "@carbon/react";
 import { useAtom } from "jotai";
 import { trpc } from "@/utils/trpc";
 import { useImmerAtom } from "jotai-immer";
+import { mixpanelAtom } from "@/atoms/mixpanelAtom";
 
 export default function SaveAsPipelineButton() {
   const [editor] = useAtom(drawflowEditorAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
+  const [mixpanelService] = useAtom(mixpanelAtom)
+
 
   const savePipeline = trpc.savePipeline.useMutation();
 
   const handleClick = async (editor, pipeline) => {
     try {
       mixpanelService.trackEvent("Save Pipeline");
-    } catch (err) {}
+    } catch (err) {
+      console.error(err)
+    }
     const pipelineSpecs = editor.convert_drawflow_to_block(
       pipeline.name,
       pipeline.data,
@@ -33,7 +38,7 @@ export default function SaveAsPipelineButton() {
       writeToDir: undefined,
     };
     const response = await savePipeline.mutateAsync(saveData);
-    const { name, dirPath, specs } = response;
+    const { name, dirPath } = response;
 
     setPipeline((draft) => {
       draft.saveTime = Date.now();
