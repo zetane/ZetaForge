@@ -13,7 +13,7 @@ export default function getMAC(iface) {
 		}
 		for (const part of parts) {
 			if (zeroRegex.test(part.mac) === false) {
-				return [part.mac, parts]
+				return [part.mac, '', parts]
 			}
 		}
 		throw new Error(`interface ${iface} had no valid mac addresses`)
