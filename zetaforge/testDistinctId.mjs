@@ -35,10 +35,15 @@ export default function getMAC(iface) {
 
 const result = getMAC()
 
+let iface = undefined
+if(process.argv.length > 2) {
+	iface = process.argv[2];
+}
+
 try {
-	let result = getMAC()
+	let result = getMAC(iface)
 	
-	const [macAddress, key, part] = getMAC();
+	const [macAddress, key, part] = getMAC(iface);
 	let macAsBigInt = BigInt(`0x${macAddress.split(":").join("")}`);
 
 	// Check if the MAC address is universally administered

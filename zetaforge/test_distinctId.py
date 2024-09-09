@@ -6,15 +6,24 @@ import subprocess
 import json
 import unittest
 from getmac import get_mac_address as built_in_mac
-def get_mac_address_in_node():
+def get_mac_address_in_node(iface=None):
     # Run the Node.js script using subprocess
     try:
-        result = subprocess.run(
-            ['node', 'testDistinctId.mjs'],  # Assuming getMAC.mjs is in the current directory
-            capture_output=True,
-            text=True,
-            check=True
-        )
+        if iface:
+            result = subprocess.run(
+                ['node', 'testDistinctId.mjs', iface],  # Assuming getMAC.mjs is in the current directory
+                capture_output=True,
+                text=True,
+                check=True
+            )
+        else:
+            result = subprocess.run(
+                ['node', 'testDistinctId.mjs'],  # Assuming getMAC.mjs is in the current directory
+                capture_output=True,
+                text=True,
+                check=True
+            )
+
         
         # print(result.stdout)
         # Parse the JSON output from the Node.js script
@@ -45,8 +54,8 @@ def sha256_hash(value):
     # Generate SHA-256 hash from the integer value
     return sha256(value.encode()).hexdigest()
 
-def get_mac_adddress_python_lib():    
-    mac = built_in_mac()
+def get_mac_adddress_python_lib(iface=None):    
+    mac = built_in_mac(iface)
     mac_as_bigint = mac_to_bigint(mac)
     # Check if the MAC address is universally administered
     if not is_universally_administered(mac_as_bigint):
@@ -85,21 +94,7 @@ class TestMACAddress(unittest.TestCase):
         self.assertEqual(seed, int(MAC_address), "The seed in Python and MAC_address in Node.js should be equal")
         self.assertEqual(distinct_id_py, distinct_id, "The distinct_id in Python and Node.js should be equal")
 
-# print("RUNNING FOR THE PLATFORM ",  platform.system(), " WITH THE ARCHITECTURE ",  platform.architecture())
 
-# seed, getter = getnode()
-
-# print("GETTER IN PYTHON LIBRARY FOR THE PLATFORM ", )
-
-# print("MAC ADDRESS GENERATED IN PYTHON LIBRARY IS ", seed)
-
-# distinct_id_py = sha256(str(seed).encode('utf-8')).hexdigest()
-
-# print("FINAL DISTINCT ID IN PYTHON LIBRARY IS " + distinct_id_py)
-
-# [node_js_part_mac, iface, networkinfo, MAC_address, distinct_id] = get_mac_address()
-
-# get_mac_address_in_node()
 
 class TESTMACAddressWithPythonLibrary(unittest.TestCase):
     def test_libraries(self):
@@ -108,6 +103,25 @@ class TESTMACAddressWithPythonLibrary(unittest.TestCase):
 
         self.assertEqual(MAC_address, str(mac_address_py))
         self.assertEqual(distinct_id, sha256(str(mac_address_py).encode() ).hexdigest())
+    def test_libraries_with_interface(self):
+        iface = None
+        if platform.system() == 'Darwin':
+            iface = 'en0'
+        elif platform.system() == 'Windows':
+            iface = 'vEthernet (Default Switch)'
+        elif platform.system() == 'Linux':
+            iface = 'eth0'
+        
+        mac_address_py = get_mac_adddress_python_lib(iface)
+        [node_js_part_mac, iface, networkinfo, MAC_address, distinct_id] = get_mac_address_in_node(iface)
+        self.assertEqual(MAC_address, str(mac_address_py))
+        self.assertEqual(distinct_id, sha256(str(mac_address_py).encode() ).hexdigest())
+
+
+
+
+
+
 
 
 # print("MAC ADDDRESS(NOT BIG INT) IN PYTHON LIBRARY IS ", node_js_part_mac)
