@@ -235,9 +235,9 @@ func createPipeline(ctx context.Context, db *sql.DB, organization string, pipeli
 	// remove the values from a copy of the pipeline so that
 	// pipelines with the identical structure but different inputs are
 	// not unique hashes
-	//strippedPipeline := removeParameterValuesFromPipeline(pipeline)
-	//strippedMarshal, err := json.Marshal(initialize(&strippedPipeline))
-	hash := fmt.Sprintf("%x", sha1.Sum([]byte(jsonData)))
+	strippedPipeline := removeParameterValuesFromPipeline(pipeline)
+	strippedMarshal, err := json.Marshal(initialize(&strippedPipeline))
+	hash := fmt.Sprintf("%x", sha1.Sum([]byte(strippedMarshal)))
 
 	tx, err := db.Begin()
 	if err != nil {

@@ -231,7 +231,7 @@ export default function DirectoryViewer({ blockPath, blockKey }) {
     }
 
     const saveData = {
-      pipelinePath: pipeline.buffer,
+      pipelinePath: pipeline.path,
       filePath: currentFile.path,
       content: currentFile.content,
     };

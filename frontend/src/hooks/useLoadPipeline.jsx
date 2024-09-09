@@ -8,9 +8,24 @@ import {
 } from "@/atoms/pipelineAtom";
 import { getWsConnection } from "@/client/anvil";
 
+function getLastFolder(path) {
+  // Remove trailing slashes
+  path = path.replace(/\/+$/, "");
+
+  // Split the path by '/'
+  const parts = path.split("/");
+
+  // Filter out empty strings
+  const nonEmptyParts = parts.filter((part) => part.length > 0);
+
+  // Return the last non-empty part, or null if there are no parts
+  return nonEmptyParts.length > 0
+    ? nonEmptyParts[nonEmptyParts.length - 1]
+    : null;
+}
+
 export const useLoadPipeline = () => {
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
-  const savePipelineMutation = trpc.savePipeline.useMutation();
 
   const loadPipeline = async (file) => {
     console.log("***********Loading pipeline from file:", file);
@@ -19,27 +34,18 @@ export const useLoadPipeline = () => {
     relPath = relPath.replaceAll("\\", "/");
 
     const data = JSON.parse(await new Blob([file]).text());
-    const folderPath = getDirectoryPath(file.path);
+    const saveFolder = getDirectoryPath(file.path);
 
-    // Clear the pipeline object first to avoid key collisions
-    const bufferPath = `${await window.cache.local()}${data.id}`;
+    data["sink"] = saveFolder;
+    data["build"] = saveFolder;
 
-    data["sink"] = folderPath;
-    data["build"] = bufferPath;
-
-    const cacheData = {
-      specs: data,
-      name: data.name,
-      buffer: folderPath,
-      writePath: bufferPath,
-    };
-    await savePipelineMutation.mutateAsync(cacheData);
+    let name = data?.name ? data.name : getLastFolder(saveFolder);
+    console.log("NAME: ", name);
 
     const loadedPipeline = {
-      name: data.name,
-      path: folderPath,
+      name: name,
+      path: saveFolder,
       saveTime: Date.now(),
-      buffer: bufferPath,
       data: data.pipeline,
       id: data.id,
     };
@@ -138,7 +144,7 @@ export const useLoadServerPipeline = () => {
     const port = configuration?.anvil?.port;
     const hostString = host + ":" + port;
 
-    const bufferPath = `${await window.cache.local()}${pipeline.Uuid}`;
+    const path = `${await window.cache.local()}${pipeline.Uuid}`;
     const pipelineData = JSON.parse(pipeline.PipelineJson);
     let data = removeNullInputsOutputs(pipelineData?.pipeline);
     const executionId = pipeline.Execution;
@@ -148,9 +154,8 @@ export const useLoadServerPipeline = () => {
     }
     const loadedPipeline = {
       name: pipelineData.name ? pipelineData.name : pipelineData.id,
-      path: pipelineData.sink ? pipelineData.sink : null,
       saveTime: Date.now(),
-      buffer: bufferPath,
+      path: path,
       data: data,
       id: pipeline.Uuid,
       history: pipeline.Uuid + "/" + executionId,
@@ -182,7 +187,7 @@ export const useLoadExecution = () => {
     if (pipeline.Results != "") {
       pipelineData = JSON.parse(pipeline.Results);
     }
-    const bufferPath = `${await window.cache.local()}${pipelineData.id}`;
+    const path = `${await window.cache.local()}${pipelineData.id}`;
     const executionId = pipeline.Execution;
     let socketUrl = null;
     if (pipeline.Status == "Pending" || pipeline.Status == "Running") {
@@ -192,9 +197,8 @@ export const useLoadExecution = () => {
 
     const loadedPipeline = {
       name: pipelineData.name ? pipelineData.name : pipelineData.id,
-      path: pipelineData.sink ? pipelineData.sink : null,
       saveTime: Date.now(),
-      buffer: bufferPath,
+      path: path,
       data: data,
       id: pipelineData.id,
       history: pipelineData.id + "/" + executionId,
@@ -217,23 +221,23 @@ export const useLoadExecution = () => {
 
 export const useLoadCorePipeline = () => {
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
-  const savePipelineMutation = trpc.savePipeline.useMutation();
+  const copyPipelineMutation = trpc.copyPipeline.useMutation();
 
-  const loadPipeline = async (specs, path) => {
-    const bufferPath = `${await window.cache.local()}${specs.id}`;
+  const loadPipeline = async (specs, corePath) => {
+    const tempFile = `${await window.cache.local()}${specs.id}`;
 
-    const cacheData = {
+    const copyData = {
       specs: specs,
       name: specs.name,
-      buffer: path,
-      writePath: bufferPath,
+      writeFromDir: corePath,
+      writeToDir: tempFile,
     };
-    await savePipelineMutation.mutateAsync(cacheData);
+    await copyPipelineMutation.mutateAsync(copyData);
 
     const loadedPipeline = {
       name: specs.name,
       saveTime: Date.now(),
-      buffer: bufferPath,
+      path: tempFile,
       data: specs.pipeline,
       id: specs.id,
     };

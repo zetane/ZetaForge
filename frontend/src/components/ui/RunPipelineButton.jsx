@@ -105,7 +105,6 @@ export default function RunPipelineButton({ children, action }) {
         executionId: executionId,
         specs: pipelineSpecs,
         path: pipeline.path,
-        buffer: pipeline.buffer,
         name: pipeline.name,
         rebuild: rebuild,
         anvilConfiguration: configuration,

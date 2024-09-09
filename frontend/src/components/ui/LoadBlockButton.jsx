@@ -40,7 +40,7 @@ export default function LoadBlockButton() {
       blockSpec: block,
       blockId: id,
       blockPath: path,
-      pipelinePath: pipeline.buffer,
+      pipelinePath: pipeline.path,
     };
     const res = await saveBlockMutation.mutateAsync(cacheData);
 

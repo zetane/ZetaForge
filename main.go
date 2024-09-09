@@ -109,7 +109,12 @@ func ensureNewline(p []byte) []byte {
 
 // createLogger creates a new logger for the given execution ID
 func createLogger(executionID string, messageFunc func(string, string) ([]byte, error), hub *Hub) (*log.Logger, io.Closer, error) {
-	tempLog := filepath.Join(os.TempDir(), executionID+".log")
+	logDir, exists := os.LookupEnv("ZETAFORGE_LOGS")
+	if !exists {
+		logDir = os.TempDir()
+	}
+
+	tempLog := filepath.Join(logDir, executionID+".log")
 	fileWriter, err := os.OpenFile(tempLog, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create log file: %v", err)

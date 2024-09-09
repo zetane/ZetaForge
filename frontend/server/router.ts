@@ -113,48 +113,47 @@ export const appRouter = router({
         return { coverImagePath: null };
       }
     }),
-  //TODO: load and validate schema
-  savePipeline: publicProcedure
+  copyPipeline: publicProcedure
     .use(errorHandling)
     .input(
       z.object({
         specs: z.any(),
         name: z.optional(z.string()),
-        buffer: z.string(),
-        writePath: z.optional(z.string()),
+        writeFromDir: z.string(),
+        writeToDir: z.string().optional(),
       }),
     )
     .mutation(async (opts) => {
       const { input } = opts;
-      let { name, writePath } = input;
-      const { buffer, specs } = input;
-      if (!writePath) {
+      let { name, writeToDir } = input;
+      const { writeFromDir, specs } = input;
+      if (!writeToDir) {
         const savePath = await dialog.showSaveDialog({
           properties: ["createDirectory"],
         });
         if (!savePath.canceled) {
           const pathArr = savePath.filePath?.split(path.sep);
           name = pathArr ? pathArr[pathArr.length - 1] : name;
-          writePath = savePath.filePath;
-          specs["sink"] = writePath;
-          specs["build"] = writePath;
+          writeToDir = savePath.filePath;
+          specs["sink"] = writeToDir;
+          specs["build"] = writeToDir;
           specs["name"] = name;
 
-          if (writePath) {
+          if (writeToDir) {
             try {
-              const stat = await fs.stat(writePath);
+              const stat = await fs.stat(writeToDir);
               if (stat.isDirectory()) {
-                fs.rm(writePath, { recursive: true, force: true });
+                fs.rm(writeToDir, { recursive: true, force: true });
               }
             } catch {
-              logger.debug("Creating dir: ", writePath);
+              logger.debug("Creating dir: ", writeToDir);
             }
           }
         }
       }
 
-      if (writePath) {
-        const savePaths = await copyPipeline(specs, buffer, writePath);
+      if (writeToDir) {
+        const savePaths = await copyPipeline(specs, writeFromDir, writeToDir);
         return { name: name, ...savePaths };
       }
 
@@ -223,7 +222,6 @@ export const appRouter = router({
         executionId: z.string(),
         specs: z.any(),
         path: z.string().optional(),
-        buffer: z.string(),
         name: z.string(),
         rebuild: z.boolean(),
         anvilConfiguration: anvilConfigurationSchema,
@@ -236,7 +234,6 @@ export const appRouter = router({
         executionId,
         specs,
         path,
-        buffer,
         name,
         rebuild,
         anvilConfiguration,
@@ -247,7 +244,6 @@ export const appRouter = router({
         executionId,
         specs,
         path,
-        buffer,
         name,
         rebuild,
         anvilConfiguration,
@@ -284,7 +280,7 @@ export const appRouter = router({
     .use(errorHandling)
     .input(
       z.object({
-        buffer: z.string(),
+        path: z.string(),
         pipelineUuid: z.string(),
         executionUuid: z.string(),
         anvilConfiguration: anvilConfigurationSchema,
@@ -292,10 +288,10 @@ export const appRouter = router({
     )
     .mutation(async (opts) => {
       const { input } = opts;
-      const { buffer, pipelineUuid, executionUuid, anvilConfiguration } = input;
+      const { path, pipelineUuid, executionUuid, anvilConfiguration } = input;
 
       await syncExecutionResults(
-        buffer,
+        path,
         pipelineUuid,
         executionUuid,
         anvilConfiguration,

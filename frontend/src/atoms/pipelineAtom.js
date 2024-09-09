@@ -14,13 +14,12 @@ export const pipelineKey = (id, data) => {
 
 export const pipelineFactory = (cachePath, pipeline = null) => {
   const id = generateId("pipeline");
-  const buffer = `${cachePath}${id}`;
+  const tempFile = `${cachePath}${id}`;
   let defaultPipeline = {
     id: id,
     name: id,
     saveTime: null,
-    buffer: buffer,
-    path: undefined,
+    path: tempFile,
     data: {},
     logs: [],
     history: null,
@@ -33,21 +32,34 @@ export const pipelineFactory = (cachePath, pipeline = null) => {
   return defaultPipeline;
 };
 
-const initPipeline = pipelineFactory(await window.cache.local());
-const emptyKey = `${initPipeline.id}.`;
-const tabMap = {
-  [emptyKey]: {},
-};
-
-export const workspaceAtom = atom({
-  tabs: tabMap,
-  pipelines: { [emptyKey]: initPipeline },
-  active: emptyKey,
+// Initialize with a default value synchronously
+const defaultWorkspace = {
+  tabs: {},
+  pipelines: {},
+  active: null,
   fetchInterval: 10 * 1000,
   offset: 0,
   limit: 15,
   connected: false,
-});
+};
+
+export const workspaceAtom = atom(defaultWorkspace);
+
+export const initializeWorkspaceAtom = atom(
+  null,
+  async (get, set, { cachePath }) => {
+    const initPipeline = pipelineFactory(cachePath);
+    const emptyKey = `${initPipeline.id}.`;
+    const tabMap = { [emptyKey]: {} };
+
+    set(workspaceAtom, {
+      ...defaultWorkspace,
+      tabs: tabMap,
+      pipelines: { [emptyKey]: initPipeline },
+      active: emptyKey,
+    });
+  },
+);
 
 const pipelineAtomWithImmer = atom(
   (get) => {
@@ -76,8 +88,8 @@ export const pipelineAtom = withImmer(pipelineAtomWithImmer);
 
 export const getPipelineFormat = (pipeline) => {
   return {
-    sink: pipeline.path ? pipeline.path : pipeline.buffer,
-    build: pipeline.buffer,
+    sink: pipeline.path,
+    build: pipeline.path,
     name: pipeline.name,
     id: pipeline.id,
     pipeline: pipeline.data,
@@ -85,7 +97,6 @@ export const getPipelineFormat = (pipeline) => {
 };
 
 export const lineageAtom = atom((get) => {
-  console.log("being called");
   const workspace = get(workspaceAtom);
   const lineage = new Map();
 
