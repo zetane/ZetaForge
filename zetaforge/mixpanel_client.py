@@ -5,6 +5,7 @@ import platform
 import os
 from pathlib import Path
 import json
+from .my_uuid import *
 #mixpanel client is created in different parts of the code, using singleton design pattern to prevent creating multiple 
 #instance.
 
@@ -58,7 +59,7 @@ class MixpanelClient():
     def generate_distinct_id(self):
         seed = 0
         try:
-            seed = uuid.getnode()
+            seed = getnode()
         except:
             seed = 0
             
