@@ -121,6 +121,7 @@ class TESTMACAddressWithPythonLibrary(unittest.TestCase):
         elif platform.system() == 'Linux':
             iface = 'eth0'
         
+        #if fails in windows, try with pyiface
         mac_address_py = get_mac_adddress_python_lib(iface)
         [node_js_part_mac, iface, networkinfo, MAC_address, distinct_id] = get_mac_address_in_node(iface)
         self.assertEqual(MAC_address, str(mac_address_py), "MAC ADDRESSES MUST BE EQUAL")
