@@ -6,6 +6,11 @@ import subprocess
 import json
 import unittest
 from getmac import get_mac_address as built_in_mac
+from pathlib import Path
+import os
+
+node_path = Path(__file__).parent.parent / "frontend" / "server"
+
 def get_mac_address_in_node(iface=None):
     # Run the Node.js script using subprocess
     try:
@@ -14,14 +19,16 @@ def get_mac_address_in_node(iface=None):
                 ['node', 'testDistinctId.mjs', iface],  # Assuming getMAC.mjs is in the current directory
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
+                cwd= node_path
             )
         else:
             result = subprocess.run(
                 ['node', 'testDistinctId.mjs'],  # Assuming getMAC.mjs is in the current directory
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
+                cwd=node_path
             )
 
         
@@ -114,18 +121,5 @@ class TESTMACAddressWithPythonLibrary(unittest.TestCase):
         
         mac_address_py = get_mac_adddress_python_lib(iface)
         [node_js_part_mac, iface, networkinfo, MAC_address, distinct_id] = get_mac_address_in_node(iface)
-        self.assertEqual(MAC_address, str(mac_address_py))
-        self.assertEqual(distinct_id, sha256(str(mac_address_py).encode() ).hexdigest())
-
-
-
-
-
-
-
-
-# print("MAC ADDDRESS(NOT BIG INT) IN PYTHON LIBRARY IS ", node_js_part_mac)
-# print("IFACE FOR NODEJS IS", iface)
-# print("NETWORK INFO IN NODEJS IS ", networkinfo)
-# print("MAC AS BIG INT IN NODEJS IS", MAC_address)
-# print("DISTINCT ID GENERATED IN NODEJS IS ", distinct_id)
+        self.assertEqual(MAC_address, str(mac_address_py), "MAC ADDRESSES MUST BE EQUAL")
+        self.assertEqual(distinct_id, sha256(str(mac_address_py).encode() ).hexdigest(), "MAC ADDRESSES MUST BE EQUAL")

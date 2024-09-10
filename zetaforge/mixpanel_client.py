@@ -9,6 +9,8 @@ from .my_uuid import *
 #mixpanel client is created in different parts of the code, using singleton design pattern to prevent creating multiple 
 #instance.
 
+current_directory = Path(__file__).parent
+print(current_directory)
 class Singleton(type):
     _instances = {}
     def __call__(cls, *args, **kwargs):
