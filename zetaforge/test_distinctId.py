@@ -112,10 +112,12 @@ class TESTMACAddressWithPythonLibrary(unittest.TestCase):
         self.assertEqual(distinct_id, sha256(str(mac_address_py).encode() ).hexdigest())
     def test_libraries_with_interface(self):
         iface = None
+        pyiface = None
         if platform.system() == 'Darwin':
             iface = 'en0'
         elif platform.system() == 'Windows':
             iface = 'vEthernet (Default Switch)'
+            pyiface = 'Ethernet'
         elif platform.system() == 'Linux':
             iface = 'eth0'
         
