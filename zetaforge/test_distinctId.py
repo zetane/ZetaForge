@@ -18,7 +18,7 @@ def get_mac_and_distinctId_in_go(iface=None):
     try:
         if iface:
             result = subprocess.run(
-                ["go", "run", ".", "--iface", iface],
+                ["go", "run", "main.go", "--iface", iface],
                 capture_output=True,
                 text=True,
                 check=True,
@@ -26,7 +26,7 @@ def get_mac_and_distinctId_in_go(iface=None):
             )
         else:
             result = subprocess.run(
-                ["go", "run", "."],
+                ["go", "run", "main.go"],
                 capture_output=True,
                 text=True,
                 check=True,
