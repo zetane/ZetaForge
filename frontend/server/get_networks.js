@@ -1,4 +1,6 @@
 import { networkInterfaces } from 'os'
 
 
-const list = os.networkInterfaces()
+const list = networkInterfaces()
+
+console.log(list)
