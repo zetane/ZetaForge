@@ -10,6 +10,37 @@ from pathlib import Path
 import os
 
 node_path = Path(__file__).parent.parent / "frontend" / "server"
+go_path = Path(__file__).parent / "test"
+print(go_path)
+
+def get_mac_and_distinctId_in_go(iface=None):
+
+    try:
+        if iface:
+            result = subprocess.run(
+                ["go", "run", ".", "--iface", iface],
+                capture_output=True,
+                text=True,
+                check=True,
+                cwd= go_path
+            )
+        else:
+            result = subprocess.run(
+                ["go", "run", "."],
+                capture_output=True,
+                text=True,
+                check=True,
+                cwd= go_path)
+            
+        
+        mac_data = result.stdout.splitlines()
+       
+        return mac_data
+    except subprocess.CalledProcessError as e:
+        print(f"Error running GO script: {e}")
+        print(f"GO stderr: {e.stderr}")
+
+
 
 def get_mac_address_in_node(iface=None):
     # Run the Node.js script using subprocess
@@ -106,10 +137,14 @@ class TestMACAddress(unittest.TestCase):
 class TESTMACAddressWithPythonLibrary(unittest.TestCase):
     def test_libraries(self):
         mac_address_py = get_mac_adddress_python_lib()
+        [mac_go, distinct_id_go] = get_mac_and_distinctId_in_go()
         [node_js_part_mac, iface, networkinfo, MAC_address, distinct_id] = get_mac_address_in_node()
 
         self.assertEqual(MAC_address, str(mac_address_py))
+        self.assertEqual(MAC_address, mac_go)
+
         self.assertEqual(distinct_id, sha256(str(mac_address_py).encode() ).hexdigest())
+        self.assertEqual(distinct_id, distinct_id_go)
     def test_libraries_with_interface(self):
         iface = None
         pyiface = None
@@ -121,8 +156,17 @@ class TESTMACAddressWithPythonLibrary(unittest.TestCase):
         elif platform.system() == 'Linux':
             iface = 'eth0'
         
+        [mac_go, distinct_id_go] = get_mac_and_distinctId_in_go(iface)
+
         #if fails in windows, try with pyiface
+        #windows error, even with pyiface
         mac_address_py = get_mac_adddress_python_lib(iface)
+
+        #windows error with iface
         [node_js_part_mac, iface, networkinfo, MAC_address, distinct_id] = get_mac_address_in_node(iface)
         self.assertEqual(MAC_address, str(mac_address_py), "MAC ADDRESSES MUST BE EQUAL")
+        self.assertEqual(MAC_address, mac_go)
+        
         self.assertEqual(distinct_id, sha256(str(mac_address_py).encode() ).hexdigest(), "MAC ADDRESSES MUST BE EQUAL")
+        self.assertEqual(distinct_id, distinct_id_go)
+

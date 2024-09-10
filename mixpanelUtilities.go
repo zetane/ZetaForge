@@ -44,10 +44,26 @@ func macAddressToDecimal(mac string) (*big.Int, error) {
 
 }
 
-func getMACAddress() (string, *big.Int, error) {
+func getMACAddress(optionalIface ...string) (string, *big.Int, error) {
+	// Check if an interface was passed as input
+	if len(optionalIface) > 0 {
+		iface, err := net.InterfaceByName(optionalIface[0])
+		if err != nil {
+			return "", nil, fmt.Errorf("unable to find interface: %s", optionalIface[0])
+		}
+		// Ensure the interface is not a loopback and has a hardware address
+		if iface.Flags&net.FlagLoopback == 0 && len(iface.HardwareAddr) > 0 {
+			macAddress := iface.HardwareAddr.String()
+			macInt, err := macAddressToDecimal(macAddress)
+			if err != nil {
+				return "", nil, err
+			}
+			return macAddress, macInt, nil
+		}
+		return "", new(big.Int).SetInt64(0), fmt.Errorf("unable to determine MAC address, using default distinct_id")
+	}
 
-	// return value: big Int, which is MAC address of the device. In the case of Failure, we return zero, as big Int.
-
+	// If no specific interface was provided, search all interfaces
 	interfaces, err := net.Interfaces()
 	if err != nil {
 		return "", nil, err
@@ -65,7 +81,7 @@ func getMACAddress() (string, *big.Int, error) {
 		}
 	}
 
-	return "", new(big.Int).SetInt64(int64(0)), fmt.Errorf("unable to determine distinct_id, using default distinct_id")
+	return "", new(big.Int).SetInt64(0), fmt.Errorf("unable to determine MAC address, using default distinct_id")
 }
 
 type MixpanelClient struct {
