@@ -113,11 +113,6 @@ func main() {
 	}
 
 
-	// _, mac, _ := getMACAddress()
-	// fmt.Println(mac.String())
-	// fmt.Println(generateDistinctID())
-
-	// _, mac_iface, _ := getMACAddress("en0")
-	// fmt.Println(mac_iface)
+	
 
 }
