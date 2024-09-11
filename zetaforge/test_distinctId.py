@@ -151,19 +151,26 @@ class TESTMACAddressWithPythonLibrary(unittest.TestCase):
         if platform.system() == 'Darwin':
             iface = 'en0'
         elif platform.system() == 'Windows':
-            iface = 'vEthernet (Default Switch)'
+            iface = 'WiFi'
             pyiface = 'Ethernet'
         elif platform.system() == 'Linux':
             iface = 'eth0'
         
-        [mac_go, distinct_id_go] = get_mac_and_distinctId_in_go(iface)
+        [mac_go, distinct_id_go] = get_mac_and_distinctId_in_go(iface=iface)
 
         #if fails in windows, try with pyiface
         #windows error, even with pyiface
-        mac_address_py = get_mac_adddress_python_lib(iface)
+        mac_address_py = get_mac_adddress_python_lib(iface=iface)
 
         #windows error with iface
-        [node_js_part_mac, iface, networkinfo, MAC_address, distinct_id] = get_mac_address_in_node(iface)
+        [node_js_part_mac, iface, networkinfo, MAC_address, distinct_id] = get_mac_address_in_node(iface=iface)
+        print("MAC ADDRESS FOR NODEJS IS ", MAC_address)
+        print("MAC ADDRESS FOR PYTHON IS", mac_address_py)
+        print("MAC ADDRESS FOR GO IS ", mac_go)
+
+        print("DISTINCT ID FOR NODEJS IS ", distinct_id)
+        print("DISTINCT ID FOR PYTHON IS ", sha256(str(mac_address_py).encode() ).hexdigest())
+        print("DISTINCT ID FOR GO IS ", distinct_id_go)
         self.assertEqual(MAC_address, str(mac_address_py), "MAC ADDRESSES MUST BE EQUAL")
         self.assertEqual(MAC_address, mac_go)
         
