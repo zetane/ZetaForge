@@ -124,7 +124,7 @@ const BlockGenerator = ({
   const type =
     block?.action?.parameters?.path?.type ||
     block?.action?.parameters?.files?.type;
-  if (type == "folder") {
+  if (type == "folder" || block.information.id == "folder-upload") {
     content = (
       <FolderBlock
         blockId={id}
