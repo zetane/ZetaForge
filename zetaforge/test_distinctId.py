@@ -93,7 +93,7 @@ def sha256_hash(value):
     return sha256(value.encode()).hexdigest()
 
 def get_mac_adddress_python_lib(iface=None):    
-    mac = built_in_mac(iface)
+    mac = built_in_mac(interface=iface)
     mac_as_bigint = mac_to_bigint(mac)
     # Check if the MAC address is universally administered
     if not is_universally_administered(mac_as_bigint):
