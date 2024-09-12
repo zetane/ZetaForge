@@ -15,6 +15,10 @@ import SocketFetcher from "@/components/ui/SocketFetcher";
 import "./styles/globals.scss";
 
 export default function App() {
+
+
+  
+
   return (
     <ProviderInjector>
       <ForgeTheme>

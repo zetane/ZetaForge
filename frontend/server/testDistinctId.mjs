@@ -1,39 +1,11 @@
 import { networkInterfaces } from 'os'
 import sha256 from "sha256";
+import getMAC from "./getMac.mjs"
 
 const macRegex = /(?:[a-z0-9]{1,2}[:-]){5}[a-z0-9]{1,2}/i
 const zeroRegex = /(?:[0]{1,2}[:-]){5}[0]{1,2}/
 
-export default function getMAC(iface) {
-	const list = networkInterfaces()
-	if (iface) {
-		const parts = list[iface]
-		if (!parts) {
-			throw new Error(`interface ${iface} was not found`)
-		}
-		for (const part of parts) {
-			if (zeroRegex.test(part.mac) === false) {
-				return [part.mac, '', parts]
-			}
-		}
-		throw new Error(`interface ${iface} had no valid mac addresses`)
-	} else {
-		for (const [key, parts] of Object.entries(list)) {
-			// for some reason beyond me, this is needed to satisfy typescript
-			// fix https://github.com/bevry/getmac/issues/100
-			
-			if (!parts) continue
-			for (const part of parts) {
-				if (zeroRegex.test(part.mac) === false) {
-					return [part.mac, key, part]
-				}
-			}
-		}
-	}
-	throw new Error('failed to get the MAC address')
-}
 
-const result = getMAC()
 
 let iface = undefined
 if(process.argv.length > 2) {

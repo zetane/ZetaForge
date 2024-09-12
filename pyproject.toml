@@ -24,7 +24,8 @@ dependencies = [
         "langchain==0.1.15", 
         "langchain-openai==0.1.2",
         "sentry-sdk===2.0.1",
-        "getmac===0.9.5"]
+        "getmac===0.9.5",
+        "psutil]
 
 requires-python = ">=3.7"
 

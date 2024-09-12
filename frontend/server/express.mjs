@@ -9,7 +9,8 @@ import fs from "fs";
 import multer from "multer";
 import path from "path";
 import sha256 from "sha256";
-import getMAC from "./getMac"
+import getMAC from "./getMac.mjs"
+import os from 'os';
 
 import { BLOCK_SPECS_FILE_NAME } from "../src/utils/constants";
 
@@ -44,8 +45,22 @@ function startExpressServer() {
   const upload = multer({ dest: "_temp_import" });
 
   app.get("/distinct-id", async (req, res) => {
+    const platform = os.platform()
+    console.log("CHECK PLATFORM ", platform) 
+    let iface;
+    if (platform === 'win32') {
+      iface = 'Wi-Fi'
+    } else if (platform === 'darwin') {
+      iface = 'en0'
+    } else if (platform === 'linux') {
+      iface = 'eht0'
+    } else {
+      return res.sendStatus(500)
+    }
+
     try {
-      const macAddress = getMAC();
+      const [macAddress, _, __] = getMAC(iface);
+
       let macAsBigInt = BigInt(`0x${macAddress.split(":").join("")}`);
 
       // Check if the MAC address is universally administered
@@ -56,6 +71,7 @@ function startExpressServer() {
       if (!isUniversallyAdministered) {
         macAsBigInt |= BigInt(0x010000000000);
       }
+
       const distinctId = sha256(macAsBigInt.toString());
       return res.send(distinctId);
     } catch (error) {
@@ -75,11 +91,8 @@ function startExpressServer() {
   });
 
   app.get("/is-dev", async (req, res) => {
-    return res.send(
-      !electronApp.isPackaged ||
-        (electronApp.isPackaged &&
-          process.env.VITE_ZETAFORGE_IS_DEV === "True"),
-    );
+
+    return res.send(process.env.VITE_IS_DEV)
   });
 
   app.post("/import-files", upload.array("files"), (req, res) => {

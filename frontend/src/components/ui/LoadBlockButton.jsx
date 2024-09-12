@@ -49,6 +49,8 @@ export default function LoadBlockButton() {
 
   const loadBlock = async (pipeline) => {
     try {
+      console.log("CHECK HERE")
+      console.log(mixpanelService.isDev)
       mixpanelService.trackEvent("Load Block");
     } catch (err) {}
     const files = fileInput.current.files;
