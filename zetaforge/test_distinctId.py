@@ -9,16 +9,17 @@ from getmac import get_mac_address as built_in_mac
 from pathlib import Path
 from generate_distinct_id import get_mac as get_mac_py
 import os
-
+import psutil
 node_path = Path(__file__).parent.parent / "frontend" / "server"
 go_path = Path(__file__).parent / "test"
 print("RUNNING FOR THE PLATFORM ", platform.system(), " WITH THE ARCHITECTURE ", platform.architecture())
 
 
-print(get_mac_py()[0])
+# print(get_mac_py()[0])
 
-
-
+# interfaces = psutil.net_if_addrs()
+# for iface in interfaces:
+#     print(iface)
 
 
 
