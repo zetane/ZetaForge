@@ -216,7 +216,7 @@ class TESTMACAddressWithPythonLibrary(unittest.TestCase):
         elif platform.system() == 'Linux':
             iface = 'eth0'
         
-        [mac_go, distinct_id_go] = get_mac_and_distinctId_in_go()
+        [mac_go, distinct_id_go] = get_mac_and_distinctId_in_go(iface=iface)
         
         mac_address_py = get_mac_adddress_python_lib(iface=iface, func=get_mac_py)
         [node_js_part_mac, _, networkinfo, MAC_address, distinct_id] = get_mac_address_in_node(iface=iface)
