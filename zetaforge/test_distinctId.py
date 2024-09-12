@@ -88,6 +88,9 @@ def get_mac_address_in_node(iface=None):
 def mac_to_bigint(mac):
     # Remove colons and convert to a BigInt (integer in Python)
     mac_as_hex = mac.replace(":", "")
+    mac_as_hex = mac_as_hex.replace("-", "")
+    mac_as_hex = mac_as_hex.lower()
+
     return int(mac_as_hex, 16)
 
 def is_universally_administered(mac_bigint):
@@ -111,6 +114,8 @@ def get_mac_adddress_python_lib(iface=None, func=built_in_mac):
         mac = func(iface=iface)[0]
     else:
         mac = func(interface=iface)
+    
+
     mac_as_bigint = mac_to_bigint(mac)
     # Check if the MAC address is universally administered
     if not is_universally_administered(mac_as_bigint):
@@ -212,6 +217,7 @@ class TESTMACAddressWithPythonLibrary(unittest.TestCase):
             iface = 'eth0'
         
         [mac_go, distinct_id_go] = get_mac_and_distinctId_in_go()
+        
         mac_address_py = get_mac_adddress_python_lib(iface=iface, func=get_mac_py)
         [node_js_part_mac, _, networkinfo, MAC_address, distinct_id] = get_mac_address_in_node(iface=iface)
 

@@ -37,14 +37,16 @@ func generateDistinctID(iface ...string) string {
 
 func macAddressToDecimal(mac string) (*big.Int, error) {
 	macWithoutColons := strings.ReplaceAll(mac, ":", "")
-
-	macBytes, err := hex.DecodeString(macWithoutColons)
-	if err != nil {
-		return nil, err
-	}
+	interimMac := strings.ReplaceAll(macWithoutColons, ":", "-")
+	macLower := strings.ToLower(interimMac)
+	
 
 	// Convert the byte slice to a BigInt
-	macAsBigInt := new(big.Int).SetBytes(macBytes)
+    macAsBigInt, success := new(big.Int).SetString(macLower, 16)
+
+	if !success {
+        return nil, fmt.Errorf("failed to convert MAC to big.Int")
+    }
 
 	return macAsBigInt, nil
 
