@@ -15,13 +15,6 @@ go_path = Path(__file__).parent / "test"
 print("RUNNING FOR THE PLATFORM ", platform.system(), " WITH THE ARCHITECTURE ", platform.architecture())
 
 
-# print(get_mac_py()[0])
-
-# interfaces = psutil.net_if_addrs()
-# for iface in interfaces:
-#     print(iface)
-
-
 
 def get_mac_and_distinctId_in_go(iface=None):
 
