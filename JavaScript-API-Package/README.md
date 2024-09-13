@@ -66,8 +66,8 @@ See the [LICENSE](LICENSE) file for the full text of the ISC License.
 
 For any inquiries, support, or contributions related to this project, please contact:
 
-**Maharaj Teertha Deb**  
-Email: [your-email@example.com](maharaj.deb.concordia@gmail.com)  
-GitHub: [TeerthaDeb](https://github.com/TeerthaDeb)
+**Zetane**  
+Email: [info@zetane.com](info@zetane.com)  
+GitHub: [Zetnane](https://github.com/zetane)
 
 Feel free to reach out for any questions or issues you may have regarding the `zetaforge` package.
