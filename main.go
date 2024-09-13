@@ -816,17 +816,22 @@ func main() {
 		prefix := getPrefix(ctx)
 		uuid := ctx.Param("uuid")
 
-		res, err := listAllExecutions(ctx.Request.Context(), db, prefix, uuid)
+		res, err := getPipelinesByUuid(ctx, db, prefix, uuid)
 
 		if err != nil {
-			log.Printf("failed to list executions; err=%v", err)
+			log.Printf("failed to get pipeline; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
 
-		var response []ResponseExecution
-		for _, execution := range res {
-			response = append(response, newResponseExecutionRow(execution))
+		var response []ResponsePipeline
+		for _, pipeline := range res {
+			newRes, err := newResponsePipeline(pipeline)
+			if err != nil {
+				ctx.String(err.Status(), err.Error())
+				return
+			}
+			response = append(response, newRes)
 		}
 
 		ctx.JSON(http.StatusOK, response)

@@ -11,20 +11,21 @@ async function computeFileHash(filePath) {
 // Function to recursively read directory and compute hashes
 async function readDirectoryRecursively(dirPath) {
   const entries = await fs.readdir(dirPath, { withFileTypes: true });
-  let children = [];
+  const children = [];
 
   for (const entry of entries) {
     const fullPath = path.join(dirPath, entry.name);
     if (entry.isDirectory()) {
-      const subDirChildren = await readDirectoryRecursively(fullPath);
-      children = children.concat(subDirChildren);
+      const subDirNode = await readDirectoryRecursively(fullPath);
+      children.push(subDirNode);
     } else {
       const fileHash = await computeFileHash(fullPath);
       children.push({ path: fullPath, hash: fileHash });
     }
   }
 
-  return children;
+  const merkle = computeMerkleTree(children);
+  return { path: dirPath, hash: merkle, children: children };
 }
 
 // Function to compute Merkle tree
@@ -49,6 +50,5 @@ function computeMerkleTree(nodes) {
 // Main function to compute Merkle tree for a directory
 export async function computeMerkleTreeForDirectory(dirPath) {
   const files = await readDirectoryRecursively(dirPath);
-  const merkleRoot = computeMerkleTree(files);
-  return { files, merkleRoot };
+  return files;
 }

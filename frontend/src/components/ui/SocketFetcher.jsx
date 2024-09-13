@@ -12,11 +12,12 @@ enableMapSet();
 export default function SocketFetcher() {
   const [socketUrl] = useAtom(socketUrlAtom);
   const [pipeline, setPipeline] = useAtom(pipelineAtom);
-  const { lastMessage, readyState, wsError } = useStableWebSocket(socketUrl);
+  //const { lastMessage, readyState, wsError } = useStableWebSocket(socketUrl);
   const syncResults = useSyncExecutionResults();
 
   const { updateLogs } = useUnifiedLogs();
 
+  /*
   const updateNodes = useCallback(async (parsedLogEntry) => {
     setPipeline((draft) => {
       if (draft?.data[parsedLogEntry?.blockId.slice(6)]) {
@@ -59,6 +60,7 @@ export default function SocketFetcher() {
       }
     }
   }, [lastMessage, updateLogs, setPipeline]);
+  */
 
   return null;
 }

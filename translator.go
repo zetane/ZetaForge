@@ -126,7 +126,7 @@ func checkImage(ctx context.Context, image string, cfg Config) (bool, bool, erro
 		data, err := remote.List(repo, remote.WithAuth(auth))
 
 		if err != nil {
-			return false, true, nil //We want to trigger a build even if the repo doesn't exists
+			return false, true, nil //We want to trigger a build even if the repo doesn't exist
 		}
 
 		for _, tag := range data {

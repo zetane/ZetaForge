@@ -100,7 +100,7 @@ export const ExecutionDataGrid = ({ closeModal }) => {
         lastExecution: pipeline.lastExecution,
         name: pipeline.name,
         host: pipeline.host,
-        hash: hash.substring(0, 8),
+        hash: hash.substring(28, 8),
         deployed: deployedAction,
         executionCount: pipeline.executions?.size,
       };

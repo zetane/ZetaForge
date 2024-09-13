@@ -235,7 +235,11 @@ func createPipeline(ctx context.Context, db *sql.DB, organization string, pipeli
 	// remove the values from a copy of the pipeline so that
 	// pipelines with the identical structure but different inputs are
 	// not unique hashes
-	strippedPipeline := removeParameterValuesFromPipeline(pipeline)
+	var pipelineCopy zjson.Pipeline
+	if err := json.Unmarshal(jsonData, &pipelineCopy); err != nil {
+		log.Printf("failed to unmarshal pipeline JSON; err=%v", err)
+	}
+	strippedPipeline := removeParameterValuesFromPipeline(pipelineCopy)
 	strippedMarshal, err := json.Marshal(initialize(&strippedPipeline))
 	hash := fmt.Sprintf("%x", sha1.Sum([]byte(strippedMarshal)))
 
@@ -321,6 +325,18 @@ func allFilterPipelines(ctx context.Context, db *sql.DB, org string) ([]zdatabas
 func listAllPipelines(ctx context.Context, db *sql.DB, organization string) ([]zdatabase.Pipeline, HTTPError) {
 	q := zdatabase.New(db)
 	res, err := q.ListAllPipelines(ctx, organization)
+	if err != nil {
+		return []zdatabase.Pipeline{}, InternalServerError{err.Error()}
+	}
+	return res, nil
+}
+
+func getPipelinesByUuid(ctx context.Context, db *sql.DB, organization string, uuid string) ([]zdatabase.Pipeline, HTTPError) {
+	q := zdatabase.New(db)
+	res, err := q.GetPipelinesByUuid(ctx, zdatabase.GetPipelinesByUuidParams{
+		Organization: organization,
+		Uuid:         uuid,
+	})
 	if err != nil {
 		return []zdatabase.Pipeline{}, InternalServerError{err.Error()}
 	}

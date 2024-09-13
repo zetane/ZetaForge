@@ -39,6 +39,34 @@ export async function getBuildContextStatus(
   return body;
 }
 
+export async function getPipelinesByUuid(configuration, pipelineUuid) {
+  const response = await handleRequest(
+    buildUrl(
+      getScheme(configuration.anvil.host),
+      configuration.anvil.host,
+      configuration.anvil.port,
+      `pipeline/${pipelineUuid}/list`,
+    ),
+    HttpMethod.GET,
+    configuration.anvil.token,
+    {},
+  );
+
+  console.log("res: ", response);
+
+  if (!response.ok) {
+    const errorMessage = await response.text();
+    throw new ServerError(
+      `Could not find pipeline: ${errorMessage}`,
+      HttpStatus.BAD_REQUEST,
+      null,
+    );
+  }
+
+  const body = await response.json();
+  return body;
+}
+
 export async function createExecution(
   configuration,
   executionId,

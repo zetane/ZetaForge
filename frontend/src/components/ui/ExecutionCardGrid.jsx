@@ -21,7 +21,6 @@ const ExecutionCard = ({ execution, onSelect }) => {
   });
 
   const handleViewDetails = async (configuration) => {
-    console.log(configuration);
     const result = await refetch();
     try {
       if (result.data) {
@@ -48,7 +47,7 @@ const ExecutionCard = ({ execution, onSelect }) => {
           className="execution-card-title"
           style={{ backgroundColor: "var(--title-background-color)" }}
         >
-          <span>{execution.id.substring(0, 8)}</span>
+          <span>{execution.id.substring(28, 36)}</span>
         </div>
         <div className="execution-card-body">
           <Tag type={tagType} style={{ width: "50%" }}>
@@ -77,7 +76,7 @@ const ExecutionCard = ({ execution, onSelect }) => {
 
 export const ExecutionCardGrid = ({ executions, selectExecution }) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 12;
+  const itemsPerPage = 36;
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = Array.from(executions.values()).slice(

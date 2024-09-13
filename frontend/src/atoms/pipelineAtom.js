@@ -37,7 +37,7 @@ const defaultWorkspace = {
   tabs: {},
   pipelines: {},
   active: null,
-  fetchInterval: 10 * 1000,
+  fetchInterval: 0.5 * 1000,
   offset: 0,
   limit: 15,
   connected: false,

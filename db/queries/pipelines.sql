@@ -35,6 +35,10 @@ WHERE organization = ? AND uuid = ? AND hash = ? AND deleted = FALSE;
 SELECT * FROM Pipelines
 WHERE id = ?;
 
+-- name: GetPipelinesByUuid :many
+SELECT * FROM Pipelines
+WHERE organization = ? AND uuid = ?;
+
 -- name: CreatePipeline :one
 INSERT INTO Pipelines(
 	organization, created, uuid, hash, json

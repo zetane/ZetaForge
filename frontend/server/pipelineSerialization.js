@@ -13,7 +13,11 @@ import {
   readJsonToObject,
 } from "./fileSystem.js";
 import { checkAndUpload, checkAndCopy, uploadDirectory } from "./s3.js";
-import { createExecution, getBuildContextStatus } from "./anvil";
+import {
+  createExecution,
+  getBuildContextStatus,
+  getPipelinesByUuid,
+} from "./anvil";
 import { logger } from "./logger";
 import { computeMerkleTreeForDirectory } from "./merkle.js";
 
@@ -195,8 +199,8 @@ export async function executePipeline(
   specs["name"] = name;
   specs["id"] = id;
 
-  const merkle = await computeMerkleTreeForDirectory(path);
-  console.log(merkle);
+  //const merkle = await computeMerkleTreeForDirectory(path);
+  //const pipelines = await getPipelinesByUuid(anvilHostConfiguration, id);
 
   await uploadBuildContexts(anvilHostConfiguration, specs, path, rebuild);
 

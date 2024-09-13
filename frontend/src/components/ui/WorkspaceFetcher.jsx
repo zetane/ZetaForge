@@ -98,7 +98,12 @@ export default function WorkspaceFetcher() {
     }
     const pipelinesToLoad = pipelinesData.body?.filter((serverPipeline) => {
       const key = serverPipeline.Uuid + "." + serverPipeline.Execution;
-      return !workspace.pipelines[key];
+      const existing = workspace.pipelines[key];
+      const wasDeployed =
+        existing && existing?.record?.Deployed != serverPipeline.Deployed;
+      const statusUpdated =
+        existing && existing?.record?.Status != serverPipeline.Status;
+      return !existing || wasDeployed || statusUpdated;
     });
 
     // If there are pipelines to load, process them

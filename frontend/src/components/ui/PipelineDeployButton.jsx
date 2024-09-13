@@ -16,26 +16,31 @@ export const PipelineDeployButton = ({
     mutationFn: async () => {
       return await deployPipeline(configuration, uuid, hash);
     },
+    onSuccess: (data) => {
+      // Update the React Query cache
+      console.log(data);
+      const queryKey = ["pipelines", configuration?.anvil?.host];
+      queryClient.setQueryData(queryKey, (pipelines) => {
+        return pipelines?.body.map((pipeline) => {
+          if (pipeline.Hash === hash) {
+            console.log("updating ", hash);
+            // Update the deployed status of the matching pipeline
+            const newPipeline = {
+              ...pipeline,
+              Deployed: true,
+            };
+            console.log("hello: ", newPipeline);
+            return newPipeline;
+          }
+          return pipeline;
+        });
+      });
+    },
   });
 
   const mutationAction = async () => {
     try {
-      const result = await deploy.mutateAsync();
-
-      // Update the React Query cache
-      queryClient.setQueryData(["pipelines"], (oldExecutions) => {
-        return oldExecutions.map((execution) => {
-          if (execution.Hash === hash) {
-            console.log("updating ", hash);
-            // Update the deployed status of the matching pipeline
-            return {
-              ...execution,
-              Deployed: true,
-            };
-          }
-          return execution;
-        });
-      });
+      await deploy.mutateAsync();
     } catch (error) {
       // todo pop error modal
       console.error("Failed to deploy pipeline:", error);

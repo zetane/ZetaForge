@@ -11,7 +11,7 @@ import (
 )
 
 const allFilterPipelines = `-- name: AllFilterPipelines :many
-SELECT p.id, p.organization, p.created, p.uuid, p.hash, p.json, p.deployed, p.deleted, e.id, e.status, e.created, e.completed, e.executionid FROM Pipelines p
+SELECT p.id, p.organization, p.created, p.uuid, p.hash, p.json, p.deployed, p.deleted, p.merkle, e.id, e.status, e.created, e.completed, e.executionid FROM Pipelines p
 INNER JOIN Executions e on e.pipeline = p.id
 WHERE p.deleted = FALSE AND p.organization = ?
 ORDER BY e.created DESC
@@ -26,6 +26,7 @@ type AllFilterPipelinesRow struct {
 	Json         string
 	Deployed     int64
 	Deleted      int64
+	Merkle       sql.NullString
 	ID_2         int64
 	Status       interface{}
 	Created_2    int64
@@ -51,6 +52,7 @@ func (q *Queries) AllFilterPipelines(ctx context.Context, organization string) (
 			&i.Json,
 			&i.Deployed,
 			&i.Deleted,
+			&i.Merkle,
 			&i.ID_2,
 			&i.Status,
 			&i.Created_2,
@@ -76,7 +78,7 @@ INSERT INTO Pipelines(
 ) VALUES (
 	?, unixepoch('now'), ?, ?, json(?)
 )
-RETURNING id, organization, created, uuid, hash, json, deployed, deleted
+RETURNING id, organization, created, uuid, hash, json, deployed, deleted, merkle
 `
 
 type CreatePipelineParams struct {
@@ -103,6 +105,7 @@ func (q *Queries) CreatePipeline(ctx context.Context, arg CreatePipelineParams) 
 		&i.Json,
 		&i.Deployed,
 		&i.Deleted,
+		&i.Merkle,
 	)
 	return i, err
 }
@@ -111,7 +114,7 @@ const deployPipeline = `-- name: DeployPipeline :one
 UPDATE Pipelines
 SET deployed = TRUE
 WHERE organization = ? AND uuid = ? AND hash = ?
-RETURNING id, organization, created, uuid, hash, json, deployed, deleted
+RETURNING id, organization, created, uuid, hash, json, deployed, deleted, merkle
 `
 
 type DeployPipelineParams struct {
@@ -132,12 +135,13 @@ func (q *Queries) DeployPipeline(ctx context.Context, arg DeployPipelineParams) 
 		&i.Json,
 		&i.Deployed,
 		&i.Deleted,
+		&i.Merkle,
 	)
 	return i, err
 }
 
 const filterPipeline = `-- name: FilterPipeline :one
-SELECT p.id, p.organization, p.created, p.uuid, p.hash, p.json, p.deployed, p.deleted, e.id, e.pipeline, e.status, e.created, e.completed, e.json, e.deleted, e.executionid, e.workflow, e.results FROM Pipelines p
+SELECT p.id, p.organization, p.created, p.uuid, p.hash, p.json, p.deployed, p.deleted, p.merkle, e.id, e.pipeline, e.status, e.created, e.completed, e.json, e.deleted, e.executionid, e.workflow, e.results FROM Pipelines p
 INNER JOIN Executions e on e.pipeline = p.id
 WHERE e.executionid = ?
 ORDER BY e.created DESC
@@ -152,6 +156,7 @@ type FilterPipelineRow struct {
 	Json         string
 	Deployed     int64
 	Deleted      int64
+	Merkle       sql.NullString
 	ID_2         int64
 	Pipeline     int64
 	Status       interface{}
@@ -176,6 +181,7 @@ func (q *Queries) FilterPipeline(ctx context.Context, executionid string) (Filte
 		&i.Json,
 		&i.Deployed,
 		&i.Deleted,
+		&i.Merkle,
 		&i.ID_2,
 		&i.Pipeline,
 		&i.Status,
@@ -191,7 +197,7 @@ func (q *Queries) FilterPipeline(ctx context.Context, executionid string) (Filte
 }
 
 const filterPipelines = `-- name: FilterPipelines :many
-SELECT p.id, p.organization, p.created, p.uuid, p.hash, p.json, p.deployed, p.deleted, e.id, e.pipeline, e.status, e.created, e.completed, e.json, e.deleted, e.executionid, e.workflow, e.results FROM Pipelines p
+SELECT p.id, p.organization, p.created, p.uuid, p.hash, p.json, p.deployed, p.deleted, p.merkle, e.id, e.pipeline, e.status, e.created, e.completed, e.json, e.deleted, e.executionid, e.workflow, e.results FROM Pipelines p
 INNER JOIN Executions e on e.pipeline = p.id
 WHERE p.deleted = FALSE AND p.organization = ?
 ORDER BY e.created DESC
@@ -213,6 +219,7 @@ type FilterPipelinesRow struct {
 	Json         string
 	Deployed     int64
 	Deleted      int64
+	Merkle       sql.NullString
 	ID_2         int64
 	Pipeline     int64
 	Status       interface{}
@@ -243,6 +250,7 @@ func (q *Queries) FilterPipelines(ctx context.Context, arg FilterPipelinesParams
 			&i.Json,
 			&i.Deployed,
 			&i.Deleted,
+			&i.Merkle,
 			&i.ID_2,
 			&i.Pipeline,
 			&i.Status,
@@ -268,7 +276,7 @@ func (q *Queries) FilterPipelines(ctx context.Context, arg FilterPipelinesParams
 }
 
 const getPipeline = `-- name: GetPipeline :one
-SELECT id, organization, created, uuid, hash, json, deployed, deleted FROM Pipelines
+SELECT id, organization, created, uuid, hash, json, deployed, deleted, merkle FROM Pipelines
 WHERE organization = ? AND uuid = ? AND hash = ? AND deleted = FALSE
 `
 
@@ -290,12 +298,13 @@ func (q *Queries) GetPipeline(ctx context.Context, arg GetPipelineParams) (Pipel
 		&i.Json,
 		&i.Deployed,
 		&i.Deleted,
+		&i.Merkle,
 	)
 	return i, err
 }
 
 const getPipelineById = `-- name: GetPipelineById :one
-SELECT id, organization, created, uuid, hash, json, deployed, deleted FROM Pipelines
+SELECT id, organization, created, uuid, hash, json, deployed, deleted, merkle FROM Pipelines
 WHERE id = ?
 `
 
@@ -311,12 +320,56 @@ func (q *Queries) GetPipelineById(ctx context.Context, id int64) (Pipeline, erro
 		&i.Json,
 		&i.Deployed,
 		&i.Deleted,
+		&i.Merkle,
 	)
 	return i, err
 }
 
+const getPipelinesByUuid = `-- name: GetPipelinesByUuid :many
+SELECT id, organization, created, uuid, hash, json, deployed, deleted, merkle FROM Pipelines
+WHERE organization = ? AND uuid = ?
+`
+
+type GetPipelinesByUuidParams struct {
+	Organization string
+	Uuid         string
+}
+
+func (q *Queries) GetPipelinesByUuid(ctx context.Context, arg GetPipelinesByUuidParams) ([]Pipeline, error) {
+	rows, err := q.db.QueryContext(ctx, getPipelinesByUuid, arg.Organization, arg.Uuid)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Pipeline
+	for rows.Next() {
+		var i Pipeline
+		if err := rows.Scan(
+			&i.ID,
+			&i.Organization,
+			&i.Created,
+			&i.Uuid,
+			&i.Hash,
+			&i.Json,
+			&i.Deployed,
+			&i.Deleted,
+			&i.Merkle,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listAllPipelines = `-- name: ListAllPipelines :many
-SELECT id, organization, created, uuid, hash, json, deployed, deleted FROM Pipelines
+SELECT id, organization, created, uuid, hash, json, deployed, deleted, merkle FROM Pipelines
 WHERE organization = ? AND deleted = FALSE
 ORDER BY deployed DESC, created DESC
 `
@@ -339,6 +392,7 @@ func (q *Queries) ListAllPipelines(ctx context.Context, organization string) ([]
 			&i.Json,
 			&i.Deployed,
 			&i.Deleted,
+			&i.Merkle,
 		); err != nil {
 			return nil, err
 		}
@@ -354,7 +408,7 @@ func (q *Queries) ListAllPipelines(ctx context.Context, organization string) ([]
 }
 
 const listPipelines = `-- name: ListPipelines :many
-SELECT id, organization, created, uuid, hash, json, deployed, deleted FROM Pipelines
+SELECT id, organization, created, uuid, hash, json, deployed, deleted, merkle FROM Pipelines
 WHERE organization = ? AND uuid = ? AND deleted = FALSE
 ORDER BY deployed DESC, created DESC
 `
@@ -382,6 +436,7 @@ func (q *Queries) ListPipelines(ctx context.Context, arg ListPipelinesParams) ([
 			&i.Json,
 			&i.Deployed,
 			&i.Deleted,
+			&i.Merkle,
 		); err != nil {
 			return nil, err
 		}
@@ -400,7 +455,7 @@ const softDeletePipeline = `-- name: SoftDeletePipeline :one
 UPDATE Pipelines
 SET deleted = TRUE, deployed = FALSE
 WHERE organization = ? AND uuid = ? AND hash = ?
-RETURNING id, organization, created, uuid, hash, json, deployed, deleted
+RETURNING id, organization, created, uuid, hash, json, deployed, deleted, merkle
 `
 
 type SoftDeletePipelineParams struct {
@@ -421,6 +476,7 @@ func (q *Queries) SoftDeletePipeline(ctx context.Context, arg SoftDeletePipeline
 		&i.Json,
 		&i.Deployed,
 		&i.Deleted,
+		&i.Merkle,
 	)
 	return i, err
 }
@@ -429,7 +485,7 @@ const undeployPipeline = `-- name: UndeployPipeline :one
 UPDATE Pipelines
 SET deployed = FALSE
 WHERE organization = ? AND uuid = ? AND deployed = TRUE
-RETURNING id, organization, created, uuid, hash, json, deployed, deleted
+RETURNING id, organization, created, uuid, hash, json, deployed, deleted, merkle
 `
 
 type UndeployPipelineParams struct {
@@ -449,6 +505,7 @@ func (q *Queries) UndeployPipeline(ctx context.Context, arg UndeployPipelinePara
 		&i.Json,
 		&i.Deployed,
 		&i.Deleted,
+		&i.Merkle,
 	)
 	return i, err
 }
