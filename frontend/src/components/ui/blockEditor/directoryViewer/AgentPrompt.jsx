@@ -11,7 +11,7 @@ import { SelectedPromptContext } from "./DirectoryViewer";
 import { FileBufferContext } from "./DirectoryViewer";
 import { FileHandleContext } from "./DirectoryViewer";
 import { useCompileComputation } from "@/hooks/useCompileSpecs";
-import useDebounce from "@/hooks/useDebounce";
+import { useDebouncedCallback } from "use-debounce";
 
 export default function AgentPrompt() {
   const [pipeline] = useAtom(pipelineAtom);
@@ -19,7 +19,7 @@ export default function AgentPrompt() {
   const [isLoading, setIsLoading] = useState(false);
   const [openAIApiKey] = useAtom(openAIApiKeyAtom);
   const [textArea, setTextArea] = useState("");
-  const setTextAreaDebounced = useDebounce(setTextArea);
+  const setTextAreaDebounced = useDebouncedCallback(setTextArea, 100);
   const callAgent = trpc.block.callAgent.useMutation();
   const chatHistory = useContext(ChatHistoryContext);
   const selectedPrompt = useContext(SelectedPromptContext);
@@ -74,7 +74,6 @@ export default function AgentPrompt() {
           className="block-editor-prompt-input relative"
           placeholder="Ask to generate new code or modify the latest version"
           onKeyDown={handleKeyDown}
-          value={textArea}
           onChange={handleTextAreaChange}
         ></textarea>
         <div className="absolute bottom-3 right-4">
