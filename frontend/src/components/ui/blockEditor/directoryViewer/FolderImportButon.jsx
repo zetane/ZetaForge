@@ -12,8 +12,8 @@ export default function FolderImportButton({ pipelineId, blockId }) {
     inputRef.current.click();
   };
 
-  const habdleInputChange = async (event) => {
-    uploadFolders(pipelineId, blockId, event.target.files);
+  const handleInputChange = async (event) => {
+    await uploadFolders(pipelineId, blockId, event.target.files);
     trpcUtils.block.file.get.invalidate({
       pipelineId: pipelineId,
       blockId: blockId,
@@ -35,7 +35,7 @@ export default function FolderImportButton({ pipelineId, blockId }) {
       <input
         type="file"
         ref={inputRef}
-        onChange={habdleInputChange}
+        onChange={handleInputChange}
         webkitdirectory="true"
         multiple
         hidden

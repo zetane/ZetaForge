@@ -3,7 +3,7 @@ import { buildUrl } from "../../utils/urlBuilder";
 
 export async function uploadFiles(pipelineId, blockId, files) {
   const formData = buildFormData(pipelineId, blockId, files);
-  handleRequest(
+  return await handleRequest(
     buildUrl(
       config.express.scheme,
       config.express.host,
@@ -16,7 +16,7 @@ export async function uploadFiles(pipelineId, blockId, files) {
 
 export async function uploadFolders(pipelineId, blockId, files) {
   const formData = buildFormData(pipelineId, blockId, files);
-  handleRequest(
+  return await handleRequest(
     buildUrl(
       config.express.scheme,
       config.express.host,
