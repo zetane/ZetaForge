@@ -10,7 +10,7 @@ export const PipelineDeployButton = ({
   hash,
   configuration,
 }) => {
-  const queryClient = useQueryClient();
+  // const queryClient = useQueryClient();
 
   const deploy = useMutation({
     mutationFn: async () => {
@@ -29,7 +29,6 @@ export const PipelineDeployButton = ({
               ...pipeline,
               Deployed: true,
             };
-            console.log("hello: ", newPipeline);
             return newPipeline;
           }
           return pipeline;
