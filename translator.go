@@ -218,9 +218,26 @@ func blockTemplate(block *zjson.Block, blockKey string, key string, organization
 					corev1.ResourceEphemeralStorage: resource.MustParse("80Gi"),
 				},
 			},
+			VolumeMounts: []corev1.VolumeMount{
+				{
+					Name:      "dshm",
+					MountPath: "/dev/shm",
+				},
+			},
 		},
 		Inputs:   inputs,
 		Metadata: wfv1.Metadata{Annotations: idMap},
+		Volumes: []corev1.Volume{
+			{
+				//https://stackoverflow.com/questions/46085748/define-size-for-dev-shm-on-container-engine
+				Name: "dshm",
+				VolumeSource: corev1.VolumeSource{
+					EmptyDir: &corev1.EmptyDirVolumeSource{
+						Medium: "Memory",
+					},
+				},
+			},
+		},
 	}
 }
 
