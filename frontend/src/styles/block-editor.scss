@@ -1,29 +1,61 @@
 @mixin light {
-  --beHeader: #e8e8e8;
-  --bePromptInputText: #000000;
-  --bePromptBackground: #c6c6c6;
-  --bePromptInputBackground: #f9f9f9;
-  --beCodeViewerBackground: #f8f8f8;
-  --beCodeEditorBackground: #ffffff;
-  --bePromptPlaceholderText: #bebebe;
+  --beHeader: var(--cds-background);
+  --bePromptInputText: var(--ztn-black-0);
+  --bePromptInputBackground: var(--ztn-white-0);
+  --beCodeViewerBackground: var(--ztn-gray-2);
+  --beCodeEditorBackground: var(--ztn-white-0);
+  --bePromptPlaceholderText: var(--ztn-gray-0);
+  --bePrompt: var(--ztn-white-1);
+  --bePromptText: var(--ztn-black-0);
+  --bePromptActive: var(--ztn-white-0);
+  --bePromptSelectedStroke: var(--ztn-gray-0);
+  --bePromptFileHeader: var(--ztn-gray-0);
+  --beViewOnlyTag: var(--ztn-gray-0);
+  --beLeftPanelBackground: var(--ztn-gray-2);
+  --beFileExplorerBackground: vat(--ztn-gray-2);
 }
 
 @mixin dark {
-  --beHeader: #141414;
-  --bePromptInputText: #ffffff;
-  --bePromptBackground: #393939;
-  --bePromptInputBackground: #454545;
-  --beCodeViewerBackground: #1e1e1e;
-  --beCodeEditorBackground: #080808;
-  --bePromptPlaceholderText: #989898;
+  --beHeader: var(--cds-background);
+  --bePromptInputText: var(--ztn-white-0);
+  --bePromptInputBackground: var(--ztn-black-0);
+  --beCodeViewerBackground: var(--ztn-gray-1);
+  --beCodeEditorBackground: var(--ztn-black-0);
+  --bePromptPlaceholderText: var(--ztn-gray-0);
+  --bePrompt: var(--ztn-black-1);
+  --bePromptText: var(--ztn-white-0);
+  --bePromptActive: var(--ztn-black-0);
+  --bePromptSelectedStroke: var(--ztn-gray-0);
+  --bePromptFileHeader: var(--ztn-gray-0);
+  --beViewOnlyTag: var(--ztn-gray-0);
+  --beLeftPanelBackground: var(--ztn-gray-1);
+  --beFileExplorerBackground: var(--ztn-gray-1);
 }
 
 .editor-block {
   position: relative;
   background-color: var(--cds-background) !important;
-  height: calc(100vh - 55px);
   border: 1px solid var(--cds-border-subtle);
-  top: 50px !important;
+  right: 0;
+}
+
+.editor-block.maximized {
+  top: 47px;
+  height: calc(100vh - 47px);
+  width: 100%;
+}
+
+.editor-block.minimized {
+  top: 50px;
+  height: calc(100vh - 55px);
+  width: 50%;
+}
+
+.editor-block {
+  position: relative;
+  background-color: var(--cds-background) !important;
+  border: 1px solid var(--cds-border-subtle);
+  right: 0;
 }
 
 .block-editor-header {
@@ -31,19 +63,15 @@
   background-color: var(--beHeader);
 }
 
-.block-editor-prompt {
-  @apply rounded-lg p-4;
-  background-color: var(--bePromptBackground);
-}
-
 .block-editor-prompt-input {
-  @apply min-h-20 w-full rounded-lg border-gray-300 p-2 text-base placeholder-[var(--bePromptPlaceholderText)];
+  @apply min-h-16 w-full resize-none rounded-lg p-2 text-base placeholder-[var(--bePromptPlaceholderText)];
   background-color: var(--bePromptInputBackground);
+  border-color: var(--beCodeViewerBackground);
   color: var(--bePromptInputText);
 }
 
 .cm-theme .cm-content {
-  font-size: 16px;
+  font-size: 14px;
   font-family: "Menlo", "Consolas", "Courier New", monospace;
 }
 
@@ -72,4 +100,36 @@
 .icon-button:focus {
   outline: none;
   background-color: rgba(0, 0, 0, 0.1);
+}
+
+.prompt-file-header {
+  color: var(--bePromptFileHeader);
+}
+
+.prompt {
+  background-color: var(--bePrompt);
+}
+
+.prompt-text {
+  color: var(--bePromptText);
+}
+
+.prompt-active {
+  background-color: var(--bePromptActive);
+}
+
+.prompt-selected {
+  border: 1px solid var(--bePromptSelectedStroke);
+}
+
+.view-only-tag {
+  color: var(--beViewOnlyTag);
+}
+
+.left-panel {
+  background: var(--beLeftPanelBackground);
+}
+
+.file-explorer-node {
+  background: var(--beFileExplorerBackground);
 }

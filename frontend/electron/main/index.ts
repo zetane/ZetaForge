@@ -17,6 +17,7 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
 import { appRouter } from "../../server/router";
+import { absoluteCachePath } from '../../server/cache';
 
 sourcemap.install()
 // The built directory structure
@@ -136,8 +137,8 @@ async function createWindow() {
   const menu = Menu.buildFromTemplate(menuTemplate);
   Menu.setApplicationMenu(menu);
 
-  ipcMain.handle('get-path', (_, arg) => {
-    return app.getPath(arg)
+  ipcMain.handle('get-cache', () => {
+    return absoluteCachePath;
   })
 
   if (url) { // electron-vite-vue#298

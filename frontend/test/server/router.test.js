@@ -2,9 +2,17 @@ import { describe, test, vi, expect, beforeAll } from "vitest";
 import { initTRPC } from "@trpc/server";
 import { compileComputation } from "../../server/blockSerialization";
 import { appRouter } from "../../server/router";
+import * as pipelineFixture from "../fixture/pipelineFixture";
+import * as blockFixture from "../fixture/blockFixture";
 
 vi.mock("../../server/blockSerialization", () => ({
   compileComputation: vi.fn(),
+}));
+
+vi.mock("electron", () => ({
+  app: {
+    getPath: vi.fn().mockReturnValue(""),
+  },
 }));
 
 describe("router", () => {
@@ -33,7 +41,10 @@ describe("router", () => {
 
       compileComputation.mockResolvedValueOnce(expectedSpecs);
 
-      const result = await caller.compileComputation({ blockPath: "" });
+      const result = await caller.compileComputation({
+        pipelineId: pipelineFixture.getId(),
+        blockId: blockFixture.getId(),
+      });
 
       expect(result).toEqual(expectedSpecs);
     });

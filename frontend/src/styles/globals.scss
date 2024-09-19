@@ -51,9 +51,11 @@ main {
   @include drawflow-dark-theme.drawflow-dark;
   @include block-editor.dark;
 }
+
 .cds--header__global {
   justify-content: center;
 }
+
 .cds--header__action.cds--btn--icon-only {
   background: none;
   border: none;
@@ -128,8 +130,28 @@ main {
     transparent;
 }
 
+.cds--btn--ghost:focus.disable-focus {
+  border-width: 0;
+  box-shadow: none;
+}
+
+.cds--overflow-menu:focus.disable-focus {
+  outline: none;
+  outline-offset: 0;
+}
+
+.cds--overflow-menu-options__btn:focus.disable-focus {
+  outline: none;
+  outline-offset: 0;
+}
+
+.cds--btn--ghost:hover.disable-hover-color {
+  color: unset;
+}
+
 .cm-editor {
   content-visibility: auto;
+  height: 100%;
 }
 
 ::-webkit-scrollbar {
@@ -150,4 +172,8 @@ main {
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--cds-layer) var(--cds-background);
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--cds-background);
 }
