@@ -1,4 +1,5 @@
 import axios from 'axios';
+import cliSpinners from 'cli-spinners';
 
 class Zetaforge {
   constructor(baseUrl = 'http://localhost:8080', token = null) {
@@ -29,16 +30,29 @@ class Zetaforge {
       const executeId = executeResponse.data.Execution;
       const statusUrl = `${this.baseUrl}/execution/${executeId}`;
       let response;
+      let prev_status = '' , frameIndex = 0;
+      const spinner = cliSpinners.dots;
 
-      do {
+      do {        
         response = await axios.get(statusUrl, { headers });
-        console.log("Current status:", response.data.Status);
-
+        if (prev_status == response.data.Status){ // print the cli-dots
+          process.stdout.clearLine(0);
+          process.stdout.cursorTo(0);
+          process.stdout.write(`${spinner.frames[frameIndex]} `);
+          frameIndex = (frameIndex + 1) % spinner.frames.length;
+        }
+        else {
+          process.stdout.clearLine(0);
+          process.stdout.cursorTo(0);
+          console.log(`\n\nCurrent status: ${response.data.Status}`);
+          prev_status = response.data.Status;
+        }
+        
         if (response.data.Status === 'Failed') {
           throw new Error('Execution failed.');
         }
 
-        await new Promise(resolve => setTimeout(resolve, 1500)); // Wait 1.5 seconds
+        await new Promise(resolve => setTimeout(resolve, 400));
 
       } while (response.data.Status === 'Pending' || response.data.Status === 'Running');
 
