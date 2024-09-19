@@ -1,13 +1,13 @@
 {
   "information": {
-    "id": "pailgamma-postprocess",
+    "id": "pailgemma-postprocess",
     "name": "Paligemma Result",
     "description": "Process the image for detection and segmentation using PaliGemma.",
     "system_versions": [
       "0.1"
     ],
     "block_version": "block version number",
-    "block_source": "core/blocks/pailgamma-postprocess",
+    "block_source": "core/blocks/pailgemma-postprocess",
     "block_type": "view"
   },
   "inputs": {
@@ -38,7 +38,7 @@
   },
   "action": {
     "container": {
-      "image": "pailgamma-postprocess",
+      "image": "pailgemma-postprocess",
       "version": "latest",
       "command_line": [
         "python",

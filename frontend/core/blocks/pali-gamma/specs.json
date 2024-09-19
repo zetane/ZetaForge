@@ -1,13 +1,13 @@
 {
   "information": {
-    "id": "pali-gamma",
+    "id": "pali-gemma",
     "name": "PaliGemma",
     "description": "Paligamma",
     "system_versions": [
       "0.1"
     ],
     "block_version": "block version number",
-    "block_source": "core/blocks/pali-gamma",
+    "block_source": "core/blocks/pali-gemma",
     "block_type": "compute"
   },
   "inputs": {
@@ -40,7 +40,7 @@
   },
   "action": {
     "container": {
-      "image": "pali-gamma-gpu",
+      "image": "pali-gemma-gpu",
       "version": "latest",
       "command_line": [
         "python",
