@@ -1,18 +1,16 @@
-import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
-import { pipelineAtom } from "@/atoms/pipelineAtom";
-import { Code, View, CloudLogging } from "@carbon/icons-react";
-import { useImmerAtom } from "jotai-immer";
-import { useEffect, useRef, useState, useMemo } from "react";
-import { FileBlock } from "./FileBlock";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
-import { modalContentAtom } from "@/atoms/modalAtom";
-import { useAtom } from "jotai";
-import ClosableModal from "@/components/ui/modal/ClosableModal";
-import { trimQuotes } from "@/utils/blockUtils";
-import React from "react";
+import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
 import { logsAtom } from "@/atoms/logsAtom";
-import { LogsCodeMirror } from "@/components/ui/blockEditor/CodeMirrorComponents";
+import { modalContentAtom } from "@/atoms/modalAtom";
+import { pipelineAtom } from "@/atoms/pipelineAtom";
+import ClosableModal from "@/components/ui/modal/ClosableModal";
 import { isEmpty, PipelineLogs } from "@/components/ui/PipelineLogs";
+import { trimQuotes } from "@/utils/blockUtils";
+import { CloudLogging, Code, View } from "@carbon/icons-react";
+import { useAtom } from "jotai";
+import { useImmerAtom } from "jotai-immer";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { FileBlock } from "./FileBlock";
 
 const isTypeDisabled = (action) => {
   if (!action.parameters) {

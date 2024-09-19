@@ -7,7 +7,7 @@ Sentry.init({ dsn: "https://7fb18e8e487455a950298625457264f3@o1096443.ingest.us.
 
 // --------- Expose API to the Renderer process ---------
 contextBridge.exposeInMainWorld('cache', {
-  local: async () => path.join(await ipcRenderer.invoke('get-path', 'appData'), 'zetaforge', '.cache') + path.sep,
+  local: async () => path.join(await ipcRenderer.invoke('get-cache') + path.sep),
 })
 
 // --------- Preload scripts loading ---------

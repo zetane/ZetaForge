@@ -46,10 +46,10 @@ const flattenSpecs = (data, prefix = "", path = []) => {
   return fields;
 };
 
-export default function SpecsInterface({ blockPath, blockKey }) {
+export default function SpecsInterface({ blockId }) {
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const [blockSpecsBuffer, setBlockSpecsBuffer] = useImmer(
-    pipeline.data[blockKey],
+    pipeline.data[blockId],
   );
   const flattenedSpecs = useMemo(
     () => flattenSpecs(blockSpecsBuffer),
@@ -57,7 +57,7 @@ export default function SpecsInterface({ blockPath, blockKey }) {
   );
 
   useEffect(() => {
-    setBlockSpecsBuffer(pipeline.data[blockKey]);
+    setBlockSpecsBuffer(pipeline.data[blockId]);
   }, [pipeline]);
 
   const saveBlockSpecs = trpc.saveBlockSpecs.useMutation();
@@ -75,11 +75,12 @@ export default function SpecsInterface({ blockPath, blockKey }) {
 
   const saveSpecs = () => {
     saveBlockSpecs.mutate({
-      blockPath: blockPath,
+      pipelineId: pipeline.id,
+      blockId: blockId,
       blockSpecs: blockSpecsBuffer,
     });
     setPipeline((draft) => {
-      draft.data[blockKey] = blockSpecsBuffer;
+      draft.data[blockId] = blockSpecsBuffer;
     });
   };
 

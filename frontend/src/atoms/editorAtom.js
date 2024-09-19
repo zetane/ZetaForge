@@ -1,6 +1,5 @@
 import { atom } from "jotai";
 
 const isBlockEditorOpenAtom = atom(false);
-const blockEditorRootAtom = atom(null);
-
-export { blockEditorRootAtom, isBlockEditorOpenAtom };
+const blockEditorIdAtom = atom(null);
+export { blockEditorIdAtom, isBlockEditorOpenAtom };

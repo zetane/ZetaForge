@@ -47,7 +47,7 @@ export default function PipelinesButton() {
     <Button
       style={styles}
       size="sm"
-      kind="secondary"
+      kind="tertiary"
       onClick={() => modalPopper(grid)}
     >
       Pipelines ({count})
