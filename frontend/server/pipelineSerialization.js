@@ -178,7 +178,7 @@ export async function executePipeline(
   id,
   executionId,
   specs,
-  path,
+  pipelinePath,
   name,
   rebuild,
   anvilHostConfiguration,
@@ -187,18 +187,23 @@ export async function executePipeline(
     id,
     executionId,
     specs,
-    path,
+    pipelinePath,
     anvilHostConfiguration,
   );
-  specs["sink"] = path;
-  specs["build"] = path;
+  specs["sink"] = pipelinePath;
+  specs["build"] = pipelinePath;
   specs["name"] = name;
   specs["id"] = id;
 
   //const merkle = await computeMerkleTreeForDirectory(path);
   //const pipelines = await getPipelinesByUuid(anvilHostConfiguration, id);
 
-  await uploadBuildContexts(anvilHostConfiguration, specs, path, rebuild);
+  await uploadBuildContexts(
+    anvilHostConfiguration,
+    specs,
+    pipelinePath,
+    rebuild,
+  );
 
   return await createExecution(
     anvilHostConfiguration,
@@ -262,7 +267,7 @@ async function uploadBlocks(
 async function uploadBuildContexts(
   configuration,
   pipelineSpecs,
-  path,
+  buildPath,
   rebuild,
 ) {
   const buildContextStatuses = await getBuildContextStatus(
@@ -270,11 +275,10 @@ async function uploadBuildContexts(
     pipelineSpecs,
     rebuild,
   );
-  console.log(buildContextStatuses);
   await Promise.all(
     buildContextStatuses
       .filter((status) => !status.isUploaded)
-      .map((status) => [path.join(path, status.blockKey), status.s3Key])
+      .map((status) => [path.join(buildPath, status.blockKey), status.s3Key])
       .map(([blockPath, s3Key]) =>
         uploadDirectory(s3Key, blockPath, configuration),
       ),
