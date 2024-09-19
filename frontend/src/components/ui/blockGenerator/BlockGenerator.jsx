@@ -13,7 +13,6 @@ import ClosableModal from "@/components/ui/modal/ClosableModal";
 import { trimQuotes } from "@/utils/blockUtils";
 import React from "react";
 import { logsAtom } from "@/atoms/logsAtom";
-import { LogsCodeMirror } from "@/components/ui/blockEditor/CodeMirrorComponents";
 import { isEmpty, PipelineLogs } from "@/components/ui/PipelineLogs";
 
 const isTypeDisabled = (action) => {
