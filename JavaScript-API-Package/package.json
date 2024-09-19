@@ -1,7 +1,7 @@
 {
   "name": "zetaforge",
   "version": "1.0.0",
-  "description": "A Node.js package to interact with Zetaforge APIs",
+  "description": "A Node.js package to interact with Zetaforge, enabling seamless execution of AI pipelines and retrieval of results via the Zetaforge API",
   "main": "index.js",
   "type": "module",
   "scripts": {
@@ -9,19 +9,18 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/TeerthaDeb/ZetaForge-Package.git"
+    "url": "git+https://github.com/zetane/ZetaForge.git"
   },
   "keywords": [
     "ZetaForge",
     "pipeline",
     "API"
   ],
-  "author": "Maharaj Teertha Deb",
-  "license": "ISC",
+  "author": "Zetane",
   "bugs": {
-    "url": "https://github.com/TeerthaDeb/ZetaForge-Package/issues"
+    "url": "git+https://github.com/zetane/ZetaForge.git/issues"
   },
-  "homepage": "https://github.com/TeerthaDeb/ZetaForge-Package#readme",
+  "homepage": "https://zetaforge.com",
   "dependencies": {
     "axios": "^1.7.7"
   }
