@@ -32,6 +32,8 @@ export default function Editor({ blockId, isMaximized, onToggleMaximize }) {
   return (
     <div
       className={`editor-block absolute z-[8000] flex flex-col ${sizeStyle}`}
+      id="block-editor"
+      data-floating-menu-container
     >
       <Tabs>
         <div className="block-editor-header">

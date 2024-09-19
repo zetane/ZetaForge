@@ -50,7 +50,6 @@ export default function ActivePrompt({ children, index }) {
         <OverflowMenu
           className="disable-focus rounded-lg"
           aria-label="overflow-menu"
-          data-floating-menu-container="cds--header-panel"
           flipped
         >
           <OverflowMenuIconItem
