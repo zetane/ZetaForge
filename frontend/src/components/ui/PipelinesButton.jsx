@@ -34,8 +34,8 @@ export default function PipelinesButton() {
     <Button
       style={styles}
       size="sm"
-      kind="secondary"
       disabled={!workspace.connected}
+      kind="tertiary"
       onClick={() => modalPopper(grid)}
     >
       Pipelines ({lineage?.size ?? 0})

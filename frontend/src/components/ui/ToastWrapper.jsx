@@ -1,6 +1,6 @@
 import { compilationErrorToastAtom } from "@/atoms/compilationErrorToast";
 import { useAtom } from "jotai";
-import CompilationErrorToast from "./blockEditor/CompliationErrorToast";
+import CompilationErrorToast from "./blockEditor/directoryViewer/CompliationErrorToast";
 
 export default function ToastWrapper() {
   const [compilationErrorToast, setCompilationErrorToast] = useAtom(

@@ -1,5 +1,5 @@
 import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
-import { blockEditorRootAtom, isBlockEditorOpenAtom } from "@/atoms/editorAtom";
+import { blockEditorIdAtom, isBlockEditorOpenAtom } from "@/atoms/editorAtom";
 import { pipelineAtom, workspaceAtom } from "@/atoms/pipelineAtom";
 import { pipelineConnectionsAtom } from "@/atoms/pipelineConnectionsAtom";
 import Drawflow from "@/components/ZetaneDrawflowEditor";
@@ -52,7 +52,7 @@ export default function DrawflowWrapper() {
   const [pipelineConnections, setPipelineConnections] = useImmerAtom(
     pipelineConnectionsAtom,
   );
-  const setBlockEditorRoot = useSetAtom(blockEditorRootAtom);
+  const setBlockEditorRoot = useSetAtom(blockEditorIdAtom);
   const setEditorOpen = useSetAtom(isBlockEditorOpenAtom);
   const [renderNodes, setRenderNodes] = useState([]);
   const drawflowCanvas = useRef(null);
@@ -234,11 +234,15 @@ export default function DrawflowWrapper() {
   };
 
   const openView = async (id) => {
+<<<<<<< HEAD
     const root = await getBlockPath.mutateAsync({
       blockId: id,
       pipelinePath: pipeline.path,
     });
     setBlockEditorRoot(root);
+=======
+    setBlockEditorRoot(id);
+>>>>>>> main
     setEditorOpen(true);
   };
 
