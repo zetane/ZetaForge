@@ -234,15 +234,7 @@ export default function DrawflowWrapper() {
   };
 
   const openView = async (id) => {
-<<<<<<< HEAD
-    const root = await getBlockPath.mutateAsync({
-      blockId: id,
-      pipelinePath: pipeline.path,
-    });
-    setBlockEditorRoot(root);
-=======
     setBlockEditorRoot(id);
->>>>>>> main
     setEditorOpen(true);
   };
 
