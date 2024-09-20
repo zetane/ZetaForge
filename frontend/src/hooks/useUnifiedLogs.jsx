@@ -22,6 +22,7 @@ function splitLogPath(input) {
 }
 
 async function fetchLogData(logPath, configuration) {
+  console.log("logPath: ", logPath);
   const { pipelineId, executionId, file } = splitLogPath(logPath);
 
   const localFileKey = `${pipelineId}/history/${executionId}/files/${file}`;

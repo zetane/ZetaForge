@@ -40,7 +40,6 @@ export const useLoadPipeline = () => {
     data["build"] = saveFolder;
 
     let name = data?.name ? data.name : getLastFolder(saveFolder);
-    console.log("NAME: ", name);
 
     const loadedPipeline = {
       name: name,
@@ -54,6 +53,7 @@ export const useLoadPipeline = () => {
       await window.cache.local(),
       loadedPipeline,
     );
+    console.log("new: ", newPipeline);
     const key = pipelineKey(newPipeline.id, null);
 
     setWorkspace((draft) => {

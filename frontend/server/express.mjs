@@ -9,7 +9,6 @@ import multer from "multer";
 import path from "path";
 import sha256 from "sha256";
 import getMAC from "getmac";
-import { cacheJoin } from "./cache";
 
 function startExpressServer() {
   const app = express();
@@ -75,10 +74,10 @@ function startExpressServer() {
 
   app.post("/import-files", upload.array("files"), (req, res) => {
     const files = req.files;
-    const { pipelineId, blockId } = req.body;
+    const { pipelinePath, blockId } = req.body;
 
     files.forEach((file) => {
-      const targetPath = cacheJoin(pipelineId, blockId, file.originalname);
+      const targetPath = path.join(pipelinePath, blockId, file.originalname);
 
       // Move file from temporary location to target directory
       fs.renameSync(file.path, targetPath);
@@ -89,7 +88,7 @@ function startExpressServer() {
 
   app.post("/import-folder", upload.array("files"), (req, res) => {
     const files = req.files;
-    const { pipelineId, blockId, paths } = req.body;
+    const { pipelinePath, blockId, paths } = req.body;
 
     if (!Array.isArray(paths) || paths.length !== files.length) {
       return res.status(400).send("Mismatch between files and paths data.");
@@ -97,7 +96,7 @@ function startExpressServer() {
 
     files.forEach((file, index) => {
       const relativePath = paths[index];
-      const targetPath = cacheJoin(pipelineId, blockId, relativePath);
+      const targetPath = path.join(pipelinePath, blockId, relativePath);
 
       const directory = path.dirname(targetPath);
       if (!fs.existsSync(directory)) {

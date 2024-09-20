@@ -21,8 +21,8 @@ export const SelectedPromptContext = createContext();
 export default function DirectoryViewer({ blockId }) {
   const pipeline = useAtomValue(pipelineAtom);
   const openAIApiKey = useAtomValue(openAIApiKeyAtom);
-  const fileHandle = useFileHandle(pipeline.id, blockId);
-  const chatHistory = useChatHistory(pipeline.id, blockId);
+  const fileHandle = useFileHandle(pipeline.path, blockId);
+  const chatHistory = useChatHistory(pipeline.path, blockId);
   const selectedPrompt = useSelectPrompt();
 
   const displayAgentPrompt = fileHandle.isComputation && openAIApiKey;
@@ -43,7 +43,10 @@ export default function DirectoryViewer({ blockId }) {
                     initialSize={[50, 50]}
                     vertical
                   >
-                    <FileExplorer pipelineId={pipeline.id} blockId={blockId} />
+                    <FileExplorer
+                      pipelinePath={pipeline.path}
+                      blockId={blockId}
+                    />
                     <Allotment.Pane visible={fileHandle.isComputation}>
                       <PromptList />
                     </Allotment.Pane>

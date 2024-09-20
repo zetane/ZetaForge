@@ -41,7 +41,7 @@ export default function CodeManualEditor() {
     await fileBuffer.save();
     if (fileHandle.isComputation) {
       await chatHistory.addPrompt(MANUAL_EDIT_PROMPT, fileBuffer.content);
-      compile(pipeline.id, blockId);
+      compile(pipeline.path, blockId);
     }
     setIsLoading(false);
   };

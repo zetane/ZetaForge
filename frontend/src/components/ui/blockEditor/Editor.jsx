@@ -71,7 +71,7 @@ export default function Editor({ blockId, isMaximized, onToggleMaximize }) {
             <SpecsInterface key={blockId} blockId={blockId} />
           </TabPanel>
           <TabPanel className="overflow-hidden">
-            <TestLogs pipelineId={pipeline.id} blockId={blockId} />
+            <TestLogs pipelinePath={pipeline.path} blockId={blockId} />
           </TabPanel>
         </TabPanels>
       </Tabs>
