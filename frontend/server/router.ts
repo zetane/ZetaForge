@@ -266,7 +266,7 @@ export const appRouter = router({
       blockId: z.string(),
     }),
     async ({ pipelinePath, blockId }) =>
-      compileComputation(pipelinePath, blockId),
+      await compileComputation(pipelinePath, blockId),
   ),
   saveBlockSpecs: createProcedure(
     z.object({

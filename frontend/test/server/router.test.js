@@ -4,6 +4,7 @@ import { compileComputation } from "../../server/blockSerialization";
 import { appRouter } from "../../server/router";
 import * as pipelineFixture from "../fixture/pipelineFixture";
 import * as blockFixture from "../fixture/blockFixture";
+import { TRPCError } from "@trpc/server";
 
 vi.mock("../../server/blockSerialization", () => ({
   compileComputation: vi.fn(),
@@ -42,7 +43,7 @@ describe("router", () => {
       compileComputation.mockResolvedValueOnce(expectedSpecs);
 
       const result = await caller.compileComputation({
-        pipelineId: pipelineFixture.getId(),
+        pipelinePath: pipelineFixture.getPath(),
         blockId: blockFixture.getId(),
       });
 
@@ -52,8 +53,8 @@ describe("router", () => {
     test("throws BAD_REQUEST on failure", async () => {
       compileComputation.mockRejectedValueOnce(new Error("failure"));
 
-      expect(caller.compileComputation({ blockPath: "" })).rejects.toThrowError(
-        "An unexpected error occured, please try again later.",
+      await expect(caller.compileComputation({ blockId: "" })).rejects.toThrow(
+        TRPCError,
       );
     });
   });

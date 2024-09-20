@@ -35,6 +35,7 @@ export async function compileComputation(pipelinePath, blockId) {
       encoding: "utf8",
     });
     const io = JSON.parse(stdout);
+    console.log(io);
     return io;
   } catch (error) {
     const message = `Compilation failed for block \nblock path: ${blockPath} \nscript path: ${scriptPath}`;
@@ -42,6 +43,7 @@ export async function compileComputation(pipelinePath, blockId) {
     throw new ServerError(message, HttpStatus.INTERNAL_SERVER_ERROR, error);
   }
 }
+
 export async function saveBlockSpecs(pipelinePath, blockId, specs) {
   const specsPath = path.join(pipelinePath, blockId, BLOCK_SPECS_FILE_NAME);
 
