@@ -32,12 +32,13 @@ export const ViewerCodeMirror = ({ currentIndex, code }) => {
   const extensions = [loadLanguage("python"), viewerBackgroundTheme];
   return (
     <CodeMirror
-      key={currentIndex + "code"}
+      key={currentIndex}
       value={code}
+      style={{ height: "100%" }}
+      height="100%"
       theme={theme}
       extensions={extensions}
       readOnly={true}
-      maxWidth="100%"
       basicSetup={{
         lineNumbers: true,
         highlightActiveLineGutter: false,
@@ -69,15 +70,16 @@ export const ViewerCodeMirror = ({ currentIndex, code }) => {
   );
 };
 
-export const EditorCodeMirror = ({ code, onChange }) => {
+export const EditorCodeMirror = ({ code, onChange, keymap }) => {
   const [theme] = useAtom(themeAtom);
-  const extensions = [loadLanguage("python"), backgroundTheme];
+  const extensions = [loadLanguage("python"), backgroundTheme, keymap];
 
   return (
     <CodeMirror
       value={code}
+      style={{ height: "100%" }}
+      height="100%"
       extensions={extensions}
-      width="100%"
       basicSetup={{
         lineNumbers: true,
         highlightActiveLineGutter: false,

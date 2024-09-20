@@ -4,6 +4,8 @@ import { Code, View, CloudLogging } from "@carbon/icons-react";
 import { useImmerAtom } from "jotai-immer";
 import { useEffect, useRef, useState, useMemo } from "react";
 import { FileBlock } from "./FileBlock";
+import { FolderBlock } from "./Folder-uploadBlock";
+import { MultiFileBlock } from "./MultiFileBlock";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { modalContentAtom } from "@/atoms/modalAtom";
 import { useAtom } from "jotai";
@@ -11,7 +13,6 @@ import ClosableModal from "@/components/ui/modal/ClosableModal";
 import { trimQuotes } from "@/utils/blockUtils";
 import React from "react";
 import { logsAtom } from "@/atoms/logsAtom";
-import { LogsCodeMirror } from "@/components/ui/blockEditor/CodeMirrorComponents";
 import { isEmpty, PipelineLogs } from "@/components/ui/PipelineLogs";
 
 const isTypeDisabled = (action) => {
@@ -119,13 +120,28 @@ const BlockGenerator = ({
       nodeRefs={nodeRefs}
     />
   );
-  const type = block?.action?.parameters?.path?.type;
-  if (
-    type == "folder" ||
-    type == "file" ||
-    type == "blob" ||
-    type == "fileLoad"
-  ) {
+  const type =
+    block?.action?.parameters?.path?.type ||
+    block?.action?.parameters?.files?.type;
+  if (type == "folder" || block.information.id == "folder-upload") {
+    content = (
+      <FolderBlock
+        blockId={id}
+        block={block}
+        setFocusAction={setFocusAction}
+        history={history}
+      />
+    );
+  } else if (type == "file[]" || type == "multiFile") {
+    content = (
+      <MultiFileBlock
+        blockId={id}
+        block={block}
+        setFocusAction={setFocusAction}
+        history={history}
+      />
+    );
+  } else if (type == "file" || type == "blob" || type == "fileLoad") {
     content = (
       <FileBlock
         blockId={id}

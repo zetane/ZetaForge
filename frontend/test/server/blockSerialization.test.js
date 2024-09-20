@@ -2,9 +2,12 @@ import { describe, test, expect, vi, afterEach } from "vitest";
 import { compileComputation } from "../../server/blockSerialization";
 import fs from "fs/promises";
 import { fileExists } from "../../server/fileSystem";
+import { cacheJoin } from "../../server/cache";
 import { app } from "electron";
-import { spawnSync } from "child_process";
+import { spawnAsync } from "../../server/spawnAsync";
 import { getCompuationsSourceCode } from "../fixture/blockFixture";
+import * as pipelineFixture from "../fixture/pipelineFixture";
+import * as blockFixture from "../fixture/blockFixture";
 
 vi.mock("fs/promises", () => ({
   default: {
@@ -15,6 +18,7 @@ vi.mock("fs/promises", () => ({
 vi.mock("electron", () => ({
   app: {
     isPackaged: vi.fn(),
+    getPath: vi.fn(),
   },
 }));
 
@@ -22,11 +26,15 @@ vi.mock("../../server/fileSystem", () => ({
   fileExists: vi.fn(),
 }));
 
-vi.mock("child_process", () => ({
-  spawnSync: vi.fn(),
+vi.mock("../../server/spawnAsync", () => ({
+  spawnAsync: vi.fn(),
 }));
 
-describe("blockSerialization", () => {
+vi.mock("../../server/cache", () => ({
+  cacheJoin: vi.fn(),
+}));
+
+describe("", () => {
   const blockComputationsSourceCode = getCompuationsSourceCode();
 
   afterEach(() => {
@@ -50,15 +58,20 @@ describe("blockSerialization", () => {
 
       fs.readFile.mockResolvedValueOnce(blockComputationsSourceCode);
       app.isPackaged = false;
+      app.getPath.mockReturnValue("");
+      cacheJoin.mockReturnValue(
+        `${pipelineFixture.getId()}/${blockFixture.getId()}`,
+      );
+      cacheJoin.mockReturnValue(
+        `${pipelineFixture.getId()}/${blockFixture.getId()}/computations.py`,
+      );
       fileExists.mockResolvedValueOnce(true);
-      spawnSync.mockReturnValueOnce({
-        stdout: JSON.stringify(expectedSpecs),
-        stderr: undefined,
-        status: 0,
-        error: undefined,
-      });
+      spawnAsync.mockReturnValueOnce(JSON.stringify(expectedSpecs));
 
-      const result = await compileComputation("new-python-123");
+      const result = await compileComputation(
+        pipelineFixture.getId(),
+        blockFixture.getId(),
+      );
 
       expect(result).toHaveProperty("inputs.in1");
       expect(result).toHaveProperty("inputs.in2");
@@ -71,28 +84,32 @@ describe("blockSerialization", () => {
       fs.readFile.mockResolvedValueOnce(blockComputationsSourceCode);
       app.isPackaged = false;
       fileExists.mockResolvedValueOnce(true);
-      spawnSync.mockReturnValueOnce({
+      spawnAsync.mockReturnValueOnce({
         stdout: undefined,
         stderr: "something bad happened",
         status: 1,
         error: undefined,
       });
 
-      expect(() => compileComputation("new-python-123")).rejects.toThrowError();
+      expect(() =>
+        compileComputation(pipelineFixture.getId(), blockFixture.getId()),
+      ).rejects.toThrowError();
     });
 
     test("throws error when script invocation fails", async () => {
       fs.readFile.mockResolvedValueOnce(blockComputationsSourceCode);
       app.isPackaged = false;
       fileExists.mockResolvedValueOnce(true);
-      spawnSync.mockReturnValueOnce({
+      spawnAsync.mockReturnValueOnce({
         stdout: undefined,
         stderr: undefined,
         status: undefined,
         error: {},
       });
 
-      expect(() => compileComputation("new-python-123")).rejects.toThrowError();
+      expect(() =>
+        compileComputation(pipelineFixture.getId(), blockFixture.getId()),
+      ).rejects.toThrowError();
     });
 
     test("throws when script file doesn't exist", async () => {
@@ -100,16 +117,18 @@ describe("blockSerialization", () => {
 
       app.isPackaged = false;
       fileExists.mockResolvedValueOnce(false);
-      spawnSync.mockReturnValueOnce({ stdout: scriptStdout });
+      spawnAsync.mockReturnValueOnce({ stdout: scriptStdout });
 
-      expect(() => compileComputation("new-python-123")).rejects.toThrowError(
-        "Could not find script for compilation",
-      );
+      expect(() =>
+        compileComputation(pipelineFixture.getId(), blockFixture.getId()),
+      ).rejects.toThrowError("Could not find script for compilation");
     });
 
     test("throws when reading the file fails", () => {
       fs.readFile.mockRejectedValueOnce(new Error("could not read file"));
-      expect(() => compileComputation("new-python-123")).rejects.toThrowError();
+      expect(() =>
+        compileComputation(pipelineFixture.getId(), blockFixture.getId()),
+      ).rejects.toThrowError();
     });
   });
 });
