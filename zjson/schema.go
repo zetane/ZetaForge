@@ -12,7 +12,7 @@ type BlockInformation struct {
 
 type PipelineInformation struct {
 	Name           string `json:"name"`
-	Description    string `json:"description"`
+	Description    string `json:"description,omitempty"`
 	SystemVersions string `json:"system_versions"`
 	Source         string `json:"source"`
 	Type           string `json:"type"`

@@ -30,7 +30,7 @@ export default function PromptMenu({ index, prompt }) {
     chatHistory.addPrompt(prompt.prompt, prompt.response);
     await fileBuffer.updateSave(prompt.response);
     if (fileHandle.isComputation) {
-      compile(pipeline.id, blockId);
+      compile(pipeline.path, blockId);
     }
     selectedPrompt.unselect();
   };

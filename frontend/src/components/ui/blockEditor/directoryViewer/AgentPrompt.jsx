@@ -51,7 +51,7 @@ export default function AgentPrompt() {
     chatHistory.addPrompt(newPrompt, response);
     await fileBuffer.updateSave(response);
     if (fileHandle.isComputation) {
-      compile(pipeline.id, blockId);
+      compile(pipeline.path, blockId);
     }
 
     selectedPrompt.unselect();

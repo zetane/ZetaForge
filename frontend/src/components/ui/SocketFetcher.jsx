@@ -1,23 +1,23 @@
 import { parseLogLine } from "@/atoms/logsAtom";
-import { pipelineAtom } from "@/atoms/pipelineAtom";
+import { socketUrlAtom, pipelineAtom } from "@/atoms/pipelineAtom";
 import { useSyncExecutionResults } from "@/hooks/useExecutionResults";
 import { useStableWebSocket } from "@/hooks/useStableWebsocket";
 import { useUnifiedLogs } from "@/hooks/useUnifiedLogs";
 import { enableMapSet } from "immer";
 import { useAtom } from "jotai";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 
 enableMapSet();
 
 export default function SocketFetcher() {
+  const [socketUrl] = useAtom(socketUrlAtom);
   const [pipeline, setPipeline] = useAtom(pipelineAtom);
-  const { lastMessage, readyState, wsError } = useStableWebSocket(
-    pipeline?.socketUrl,
-  );
+  //const { lastMessage, readyState, wsError } = useStableWebSocket(socketUrl);
   const syncResults = useSyncExecutionResults();
 
   const { updateLogs } = useUnifiedLogs();
 
+  /*
   const updateNodes = useCallback(async (parsedLogEntry) => {
     setPipeline((draft) => {
       if (draft?.data[parsedLogEntry?.blockId.slice(6)]) {
@@ -37,7 +37,11 @@ export default function SocketFetcher() {
 
     if (parsedLogEntry?.event?.tag === "outputs") {
       const key = `${pipeline.record.Uuid}.${pipeline.record.Execution}`;
-      await syncResults(key);
+      try {
+        await syncResults(key);
+      } catch (err) {
+        console.error("Failed to sync: ", err);
+      }
     }
   });
 
@@ -56,6 +60,7 @@ export default function SocketFetcher() {
       }
     }
   }, [lastMessage, updateLogs, setPipeline]);
+  */
 
   return null;
 }

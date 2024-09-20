@@ -54,7 +54,6 @@ export default function WorkspaceTabs() {
       return;
     }
     // TODO: Pop modal for deleting last tab
-    console.log(workspace.tabs);
     if (Object.keys(workspace.tabs).length > 1) {
       const deleteTab = renderedTabs[deleteIndex];
       const selectedTab = renderedTabs[selectedIndex];
@@ -89,7 +88,7 @@ export default function WorkspaceTabs() {
           dismissable
           onTabCloseRequest={handleCloseTabRequest}
         >
-          <TabList aria-label="List of tabs" contained>
+          <TabList aria-label="List of tabs">
             {renderedTabs.map((tab, index) => (
               <Tab key={index} disabled={tab?.disabled}>
                 {tab.label}

@@ -1,0 +1,38 @@
+.execution-card {
+  height: 158px;
+  border-radius: 7px;
+  background: var(--dfNodeBackgroundColor);
+  padding: 0px;
+  margin: 5px;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+
+  /* Prevent background color leak outs */
+  -webkit-background-clip: padding-box;
+  -moz-background-clip: padding;
+  background-clip: padding-box;
+}
+
+.execution-card-title {
+  height: var(--title-height);
+  color: var(--ztn-white-0);
+  padding-left: 10px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  border-radius: 7px 7px 0px 0px;
+}
+
+.execution-card-body {
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+}
+
+.execution-data-body {
+  padding: 0.5rem;
+}
+
+.execution-group {
+}

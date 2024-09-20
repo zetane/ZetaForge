@@ -1,4 +1,3 @@
-import ProviderInjector from "@/components/ProviderInjector";
 import BlockEditorPanel from "@/components/ui/BlockEditorPanel";
 import DrawflowWrapper from "@/components/ui/DrawflowWrapper";
 import ForgeTheme from "@/components/ui/ForgeTheme";
@@ -11,12 +10,13 @@ import ToastWrapper from "@/components/ui/ToastWrapper";
 import WorkspaceTabs from "@/components/ui/WorkspaceTabs";
 import WorkspaceFetcher from "@/components/ui/WorkspaceFetcher";
 import SocketFetcher from "@/components/ui/SocketFetcher";
+import ServiceInitializer from "@/components/ServiceInitializer";
 
 import "./styles/globals.scss";
 
 export default function App() {
   return (
-    <ProviderInjector>
+    <ServiceInitializer>
       <ForgeTheme>
         <Navbar>
           <WorkspaceTabs />
@@ -32,6 +32,6 @@ export default function App() {
         <SocketFetcher />
         <WorkspaceFetcher />
       </ForgeTheme>
-    </ProviderInjector>
+    </ServiceInitializer>
   );
 }

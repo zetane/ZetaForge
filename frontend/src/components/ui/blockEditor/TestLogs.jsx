@@ -5,18 +5,18 @@ import { useState } from "react";
 import { LogsCodeMirror } from "./directoryViewer/CodeMirrorComponents";
 import ScrollToBottom from "react-scroll-to-bottom";
 
-const LogsViewer = ({ blockId, pipelineId }) => {
+const LogsViewer = ({ blockId, pipelinePath }) => {
   const [isRunButtonPressed, setIsRunButtonPressed] = useState(false);
 
   const logs = trpc.block.log.get.useQuery(
-    { pipelineId, blockId },
+    { pipelinePath, blockId },
     { enabled: isRunButtonPressed, refetchInterval: 1000 },
   );
   const runTest = trpc.runTest.useMutation();
 
   const handleDockerCommands = async () => {
     setIsRunButtonPressed(true);
-    await runTest.mutateAsync({ pipelineId, blockId });
+    await runTest.mutateAsync({ pipelinePath, blockId });
   };
 
   return (

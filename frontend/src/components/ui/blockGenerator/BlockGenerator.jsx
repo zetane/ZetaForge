@@ -22,25 +22,6 @@ const isTypeDisabled = (action) => {
   return true;
 };
 
-const checkPath = async (path, count, setIframeSrc) => {
-  fetch(path)
-    .then((response) => {
-      if (response.status === 404) {
-        console.log("Path not found. Retrying in 1 second...");
-        if (count < 15) {
-          setTimeout(() => {
-            checkPath(path, count + 1, setIframeSrc);
-          }, 1000);
-        }
-      } else {
-        setIframeSrc(path);
-      }
-    })
-    .catch((error) => {
-      console.log("Error:", error);
-    });
-};
-
 const BlockGenerator = ({
   block,
   openView,
@@ -93,13 +74,41 @@ const BlockGenerator = ({
 
   const [iframeSrc, setIframeSrc] = useState("");
   useEffect(() => {
+    let isMounted = true;
+    let timeoutId = null;
+
+    const checkPath = async (path, count) => {
+      try {
+        const response = await fetch(path);
+        if (!isMounted) return; // Stop if component unmounted
+
+        if (response.status === 404) {
+          console.log("Path not found. Retrying in 1 second...");
+          if (count < 15) {
+            timeoutId = setTimeout(() => {
+              checkPath(path, count + 1);
+            }, 1000);
+          }
+        } else {
+          if (isMounted) setIframeSrc(path);
+        }
+      } catch (error) {
+        if (isMounted) console.log("Error:", error);
+      }
+    };
+
     if (block.events.outputs?.html) {
-      // these outputs are a special case
       const html = trimQuotes(block.events.outputs.html);
       const fileUrl = `http://localhost:3330/result/${pipelineId}/history/${executionId}/files/${html}`;
-      checkPath(fileUrl, 0, setIframeSrc);
+      checkPath(fileUrl, 0);
     }
-  }, [block.events.outputs]);
+
+    // Cleanup function
+    return () => {
+      isMounted = false;
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [block.events.outputs, pipelineId, executionId]);
 
   const disabled = isTypeDisabled(block.action);
   const preview = block.views.node.preview?.active == "true";

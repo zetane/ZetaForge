@@ -4,7 +4,7 @@ import { FolderOpen } from "@carbon/icons-react";
 import { uploadFolders } from "@/client/express";
 import { trpc } from "@/utils/trpc";
 
-export default function FolderImportButton({ pipelineId, blockId }) {
+export default function FolderImportButton({ pipelinePath, blockId }) {
   const trpcUtils = trpc.useUtils();
   const inputRef = useRef(null);
 
@@ -13,9 +13,9 @@ export default function FolderImportButton({ pipelineId, blockId }) {
   };
 
   const handleInputChange = async (event) => {
-    await uploadFolders(pipelineId, blockId, event.target.files);
+    await uploadFolders(pipelinePath, blockId, event.target.files);
     trpcUtils.block.file.get.invalidate({
-      pipelineId: pipelineId,
+      pipelinePath: pipelinePath,
       blockId: blockId,
     });
   };

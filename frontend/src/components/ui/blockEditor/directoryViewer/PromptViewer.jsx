@@ -24,7 +24,7 @@ export default function PromptViewer() {
     chatHistory.addPrompt(selectedPrompt.prompt, selectedPrompt.response);
     await fileBuffer.updateSave(selectedPrompt.response);
     if (fileHandle.isComputation) {
-      compile(pipeline.id, blockId);
+      compile(pipeline.path, blockId);
     }
     selectedPrompt.unselect();
   };

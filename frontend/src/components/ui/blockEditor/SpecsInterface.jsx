@@ -75,7 +75,7 @@ export default function SpecsInterface({ blockId }) {
 
   const saveSpecs = () => {
     saveBlockSpecs.mutate({
-      pipelineId: pipeline.id,
+      pipelinePath: pipeline.path,
       blockId: blockId,
       blockSpecs: blockSpecsBuffer,
     });

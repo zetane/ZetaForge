@@ -10,12 +10,17 @@
   }
 
   .cds--tabs .cds--tabs__nav-link {
-    border-right: 1px solid var(--cds-border-subtle);
-    border-bottom: 1px solid var(--cds-border-subtle);
+    border-right: 2px solid var(--cds-border-subtle);
   }
 
   .cds--tabs.cds--tabs--contained
     .cds--tabs__nav-item.cds--tabs__nav-item--selected {
     height: 2.2rem;
+  }
+
+  .cds--tabs__nav-item--selected {
+    background-color: var(--dfBackgroundColor);
+    border-bottom: 1px solid var(--dfBackgroundColor) !important;
+    border-top: 1px solid var(--ztn-purple-0);
   }
 }

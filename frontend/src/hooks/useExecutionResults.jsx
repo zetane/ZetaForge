@@ -11,7 +11,7 @@ export const useSyncExecutionResults = () => {
   const syncExecutionResults = async (key) => {
     const pipeline = workspace.pipelines[key];
     await downloadExecutionResults.mutateAsync({
-      buffer: pipeline.buffer,
+      pipelinePath: pipeline.path,
       pipelineUuid: pipeline.record.Uuid,
       executionUuid: pipeline.record.Execution,
       anvilConfiguration: configuration,

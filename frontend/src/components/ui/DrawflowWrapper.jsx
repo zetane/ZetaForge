@@ -76,7 +76,8 @@ export default function DrawflowWrapper() {
 
   pipelineRef.current = pipeline;
 
-  const savePipeline = trpc.savePipeline.useMutation();
+  const copyPipeline = trpc.copyPipeline.useMutation();
+  const getBlockPath = trpc.getBlockPath.useMutation();
 
   const handleDrawflow = useCallback((node) => {
     if (!node) {
@@ -119,7 +120,7 @@ export default function DrawflowWrapper() {
   }, [pipeline?.data]);
 
   useEffect(() => {
-    if (editor) {
+    if (editor && pipeline?.data) {
       editor.pipeline = pipeline;
       editor.connection_list = pipelineConnections;
       editor.nodeRefs = nodeRefs.current;
@@ -129,6 +130,9 @@ export default function DrawflowWrapper() {
   }, [pipelineConnections]);
 
   useEffect(() => {
+    if (!pipeline?.data) {
+      return;
+    }
     const newConnections = createConnections(
       pipeline?.data,
       pipelineConnections,
@@ -145,18 +149,19 @@ export default function DrawflowWrapper() {
             pipeline.name,
             pipeline.data,
           );
-          // note that we are writing to the buffer, not the load path
-          pipelineSpecs["sink"] = pipeline.buffer;
-          pipelineSpecs["build"] = pipeline.buffer;
+          pipelineSpecs["sink"] = pipeline.path;
+          pipelineSpecs["build"] = pipeline.path;
+          pipelineSpecs["name"] = pipeline.name;
+          pipelineSpecs["id"] = pipeline.id;
 
           const saveData = {
             specs: pipelineSpecs,
             name: pipeline?.name,
-            buffer: pipeline?.buffer,
-            writePath: pipeline?.buffer,
+            writeFromDir: pipeline?.path,
+            writeToDir: pipeline?.path,
           };
 
-          await savePipeline.mutateAsync(saveData);
+          await copyPipeline.mutateAsync(saveData);
         }
       } catch (error) {
         console.error("Error saving pipeline:", error);

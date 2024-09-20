@@ -1,11 +1,15 @@
 import { useState } from "react";
 import useFileBuffer from "./useFileBuffer";
 
-export default function useFileHandle(pipelineId, blockId) {
+export default function useFileHandle(pipelinePath, blockId) {
   const [currentFile, setCurrentFile] = useState();
   const isComputation = currentFile?.name === "computations.py";
   const isSelected = Boolean(currentFile);
-  const buffer = useFileBuffer(pipelineId, blockId, currentFile?.relativePath);
+  const buffer = useFileBuffer(
+    pipelinePath,
+    blockId,
+    currentFile?.relativePath,
+  );
 
   const set = async (file) => {
     setCurrentFile(file);

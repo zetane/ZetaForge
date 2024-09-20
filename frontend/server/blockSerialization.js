@@ -8,16 +8,15 @@ import {
   SUPPORTED_FILE_NAMES,
   CHAT_HISTORY_FILE_NAME,
 } from "../src/utils/constants";
-import { cacheJoin } from "./cache";
 import { fileExists, getDirectoryTree } from "./fileSystem";
 import { logger } from "./logger";
 import { HttpStatus, ServerError } from "./serverError";
 
 const READ_ONLY_FILES = [BLOCK_SPECS_FILE_NAME, CHAT_HISTORY_FILE_NAME];
 
-export async function compileComputation(pipelineId, blockId) {
-  const blockPath = cacheJoin(pipelineId, blockId);
-  const sourcePath = cacheJoin(pipelineId, blockId, "computations.py");
+export async function compileComputation(pipelinePath, blockId) {
+  const blockPath = path.join(pipelinePath, blockId);
+  const sourcePath = path.join(pipelinePath, blockId, "computations.py");
   const source = await fs.readFile(sourcePath, { encoding: "utf8" });
 
   const scriptPath = app.isPackaged
@@ -36,6 +35,7 @@ export async function compileComputation(pipelineId, blockId) {
       encoding: "utf8",
     });
     const io = JSON.parse(stdout);
+    console.log(io);
     return io;
   } catch (error) {
     const message = `Compilation failed for block \nblock path: ${blockPath} \nscript path: ${scriptPath}`;
@@ -44,8 +44,8 @@ export async function compileComputation(pipelineId, blockId) {
   }
 }
 
-export async function saveBlockSpecs(pipelineId, blockId, specs) {
-  const specsPath = cacheJoin(pipelineId, blockId, BLOCK_SPECS_FILE_NAME);
+export async function saveBlockSpecs(pipelinePath, blockId, specs) {
+  const specsPath = path.join(pipelinePath, blockId, BLOCK_SPECS_FILE_NAME);
 
   removeConnections(specs.inputs);
   removeConnections(specs.outputs);
@@ -64,8 +64,8 @@ function removeConnections(io) {
   return io;
 }
 
-export async function runTest(pipelineId, blockId) {
-  const blockPath = cacheJoin(pipelineId, blockId);
+export async function runTest(pipelinePath, blockId) {
+  const blockPath = path.join(pipelinePath, blockId);
   const scriptPath = app.isPackaged
     ? path.join(process.resourcesPath, "resources", "run_test.py")
     : path.join("resources", "run_test.py");
@@ -85,8 +85,8 @@ export async function runTest(pipelineId, blockId) {
   }
 }
 
-export async function getBlockDirectory(pipelineId, blockId) {
-  const blockDirectory = cacheJoin(pipelineId, blockId);
+export async function getBlockDirectory(pipelinePath, blockId) {
+  const blockDirectory = path.join(pipelinePath, blockId);
 
   const tree = await getDirectoryTree(blockDirectory, filePermissionVisitor);
   return tree;
@@ -104,8 +104,8 @@ function filePermissionVisitor(name, absolutePath, relativePath, isDirectory) {
   }
 }
 
-export async function getBlockFile(pipelineId, blockId, relativeFilePath) {
-  const absoluteFilePath = cacheJoin(pipelineId, blockId, relativeFilePath);
+export async function getBlockFile(pipelinePath, blockId, relativeFilePath) {
+  const absoluteFilePath = path.join(pipelinePath, blockId, relativeFilePath);
   const fileName = path.basename(absoluteFilePath);
   const { read } = getFilePermissions(fileName);
 
@@ -119,12 +119,12 @@ export async function getBlockFile(pipelineId, blockId, relativeFilePath) {
 }
 
 export async function updateBlockFile(
-  pipelineId,
+  pipelinePath,
   blockId,
   relativeFilePath,
   content,
 ) {
-  const absoluteFilePath = cacheJoin(pipelineId, blockId, relativeFilePath);
+  const absoluteFilePath = path.join(pipelinePath, blockId, relativeFilePath);
   const fileName = path.basename(absoluteFilePath);
   const { write } = getFilePermissions(fileName);
 
@@ -192,8 +192,8 @@ export async function callAgent(
   }
 }
 
-export async function getLogs(pipelineId, blockId) {
-  const logsPath = cacheJoin(pipelineId, blockId, "logs.txt");
+export async function getLogs(pipelinePath, blockId) {
+  const logsPath = path.join(pipelinePath, blockId, "logs.txt");
 
   if (!(await fileExists(logsPath))) {
     return "Logs not yet available";

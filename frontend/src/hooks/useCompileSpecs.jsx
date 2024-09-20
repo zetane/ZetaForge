@@ -13,10 +13,10 @@ export const useCompileComputation = () => {
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const [, setCompilationErrorToast] = useAtom(compilationErrorToastAtom);
 
-  const compile = async (pipelineId, blockId) => {
+  const compile = async (pipelinePath, blockId) => {
     try {
       const newSpecsIO = await compileComputation.mutateAsync({
-        pipelineId: pipelineId,
+        pipelinePath: pipelinePath,
         blockId: blockId,
       });
       const newSpecs = await updateSpecs(
@@ -29,7 +29,7 @@ export const useCompileComputation = () => {
         draft.data[blockId] = newSpecs;
       });
       await saveBlockSpecs.mutateAsync({
-        pipelineId: pipelineId,
+        pipelinePath: pipeline?.path,
         blockId: blockId,
         blockSpecs: newSpecs,
       });

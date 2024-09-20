@@ -21,7 +21,7 @@ export const errorHandling = middleware(async (opts) => {
 
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
-      message: "An unexpected error occured, please try again later.",
+      message: innerError?.message,
     });
   }
 

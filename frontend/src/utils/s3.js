@@ -48,7 +48,7 @@ async function fileExists(key, anvilConfiguration) {
   }
 }
 
-export async function getFileData(key, anvilConfiguration) {
+export async function getS3FileData(key, anvilConfiguration) {
   const exists = await fileExists(key, anvilConfiguration);
   const client = getClient(anvilConfiguration);
 
@@ -70,6 +70,30 @@ export async function getFileData(key, anvilConfiguration) {
     }
   } else {
     const message = `File with key ${key} does not exist in S3`;
+    throw new Error(message);
+  }
+}
+
+export async function getLocalFileData(key) {
+  const baseUrl = "http://localhost:3330/result";
+  const fullPath = `${baseUrl}/${key}`;
+
+  try {
+    const response = await fetch(fullPath);
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        const message = `File with key ${key} does not exist on localhost:3330`;
+        throw new Error(message);
+      }
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const fileData = await response.text();
+    return fileData;
+  } catch (err) {
+    const message = "Could not retrieve file from localhost:3330";
+    console.error(message, err);
     throw new Error(message);
   }
 }

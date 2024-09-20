@@ -1,133 +1,163 @@
+import React, { useState, useMemo } from "react";
 import ClosableModal from "./modal/ClosableModal";
-import { workspaceAtom } from "@/atoms/pipelineAtom";
+import { lineageAtom, workspaceAtom } from "@/atoms/pipelineAtom";
 import { useImmerAtom } from "jotai-immer";
 import { useAtom } from "jotai";
 import {
   DataTable,
+  Pagination,
   Table,
   TableHead,
   TableRow,
   TableHeader,
   TableBody,
   TableCell,
-  Link,
+  TableExpandRow,
+  TableExpandedRow,
+  TableExpandHeader,
+  Tag,
 } from "@carbon/react";
-import { PipelineStopButton } from "./PipelineStopButton";
-import { useState, useEffect } from "react";
-import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
+import { ExecutionCardGrid } from "./ExecutionCardGrid";
+import { DeployedPipelineActions } from "./DeployedPipelineActions";
+import { PipelineDeployButton } from "./PipelineDeployButton";
 import { useSyncExecutionResults } from "@/hooks/useExecutionResults";
+import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
+import { useLoadExecution } from "@/hooks/useLoadPipeline";
 
-export const ExecutionDataGrid = ({ executions, closeModal }) => {
+export const PipelineTableRow = ({ row, getRowProps }) => {
+  return (
+    <TableExpandRow {...getRowProps({ row })} expandHeader="Executions">
+      {row.cells.map((cell) => (
+        <TableCell key={cell.id}>{cell.value}</TableCell>
+      ))}
+    </TableExpandRow>
+  );
+};
+
+export const ExecutionDataGrid = ({ closeModal }) => {
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
-  const [pipelineList, setPipelineList] = useState([]);
-  const [configuration] = useAtom(activeConfigurationAtom);
+  const [lineage] = useAtom(lineageAtom);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(15);
   const syncResults = useSyncExecutionResults();
+  const [configuration] = useAtom(activeConfigurationAtom);
+  const loadExecution = useLoadExecution();
 
-  const selectPipeline = async (pipeline) => {
-    const key = pipeline.id + "." + pipeline.record.Execution;
+  const setPagination = ({ page, pageSize }) => {
+    setCurrentPage(page);
+    setPageSize(pageSize);
+  };
 
+  const selectExecution = async (execution, configuration) => {
+    const key = execution.Uuid + "." + execution.Execution;
+
+    const serverExec = await loadExecution(execution, configuration);
     setWorkspace((draft) => {
+      draft.pipelines[key] = serverExec;
       draft.tabs[key] = {};
       draft.active = key;
     });
-    await syncResults(key);
+    try {
+      await syncResults(key);
+    } catch (error) {
+      console.error("Sync failed: ", error);
+    }
 
     closeModal();
   };
 
-  useEffect(() => {
-    const items = [];
-    for (const pipeline of executions) {
-      const record = pipeline.record;
-      const pipelineData = JSON.parse(record.PipelineJson);
-      const friendlyName = pipelineData.name;
-      const executionId = record?.Execution;
-      let stopAction = null;
-      if (record.Status == "Running" || record.Status == "Pending") {
-        stopAction = (
-          <PipelineStopButton
-            executionId={executionId}
-            configuration={configuration}
-          />
-        );
-      }
-
-      items.push({
-        id: executionId,
-        pipeline: friendlyName,
-        name: (
-          <Link
-            href="#"
-            onClick={() => {
-              selectPipeline(pipeline);
-            }}
-          >
-            {executionId}
-          </Link>
-        ),
-        created: new Date(record?.ExecutionTime * 1000).toLocaleString(),
-        status: record?.Status,
-        deployed: record?.Deployed ? "True" : "False",
-        actions: stopAction,
-      });
-    }
-    setPipelineList(items);
-  }, [executions]);
-
   const headers = [
-    {
-      key: "name",
-      header: "ExecutionId",
-    },
-    {
-      key: "pipeline",
-      header: "Pipeline",
-    },
-    {
-      key: "created",
-      header: "Created",
-    },
-    {
-      key: "status",
-      header: "Status",
-    },
-    {
-      key: "deployed",
-      header: "Deployed",
-    },
-    {
-      key: "actions",
-      header: "Actions",
-    },
+    { key: "name", header: "Pipeline Name" },
+    { key: "uuid", header: "ID" },
+    { key: "created", header: "Created" },
+    { key: "lastExecution", header: "Last Execution" },
+    { key: "host", header: "Host" },
+    { key: "hash", header: "Hash" },
+    { key: "deployed", header: "Deployed" },
+    { key: "executionCount", header: "Executions" },
   ];
+
+  const allRows = useMemo(() => {
+    return Array.from(lineage.entries()).map(([hash, pipeline]) => {
+      const deployedAction = pipeline?.deployed ? (
+        <DeployedPipelineActions
+          uuid={pipeline.id}
+          hash={hash}
+          configuration={configuration}
+          pipelineData={pipeline.pipelineData}
+        />
+      ) : (
+        <PipelineDeployButton
+          uuid={pipeline.id}
+          hash={hash}
+          configuration={configuration}
+        />
+      );
+      return {
+        id: hash,
+        uuid: pipeline.id,
+        created: pipeline.created,
+        lastExecution: pipeline.lastExecution,
+        name: pipeline.name,
+        host: pipeline.host,
+        hash: hash.substring(28, 8),
+        deployed: deployedAction,
+        executionCount: pipeline.executions?.size,
+      };
+    });
+  }, [lineage]);
+
+  const paginatedRows = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return allRows.slice(startIndex, startIndex + pageSize);
+  }, [allRows, currentPage, pageSize]);
+
   return (
     <ClosableModal
-      modalHeading="Running Pipelines"
+      modalHeading="Pipeline Executions"
       passiveModal={true}
       modalClass="custom-modal-size"
     >
-      <DataTable rows={pipelineList} headers={headers}>
-        {({ rows, headers, getTableProps, getHeaderProps, getRowProps }) => (
-          <Table {...getTableProps()}>
-            <TableHead>
-              <TableRow>
-                {headers.map((header) => (
-                  <TableHeader {...getHeaderProps({ header })}>
-                    {header.header}
-                  </TableHeader>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {rows.map((row) => (
-                <TableRow {...getRowProps({ row })}>
-                  {row.cells.map((cell) => {
-                    return <TableCell key={cell.id}>{cell.value}</TableCell>;
-                  })}
+      <DataTable rows={paginatedRows} headers={headers}>
+        {({ rows, headers, getHeaderProps, getRowProps, getTableProps }) => (
+          <>
+            <Table {...getTableProps()}>
+              <TableHead>
+                <TableRow>
+                  <TableExpandHeader />
+                  {headers.map((header) => (
+                    <TableHeader {...getHeaderProps({ header })}>
+                      {header.header}
+                    </TableHeader>
+                  ))}
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHead>
+              <TableBody>
+                {rows.map((row) => (
+                  <React.Fragment key={row.id}>
+                    <PipelineTableRow row={row} getRowProps={getRowProps} />
+                    <TableExpandedRow colSpan={10} className="execution-group">
+                      <ExecutionCardGrid
+                        executions={lineage.get(row.id).executions}
+                        selectExecution={selectExecution}
+                      />
+                    </TableExpandedRow>
+                  </React.Fragment>
+                ))}
+              </TableBody>
+            </Table>
+            <Pagination
+              backwardText="Previous page"
+              forwardText="Next page"
+              itemsPerPageText="Items per page:"
+              page={currentPage}
+              pageNumberText="Page Number"
+              pageSize={pageSize}
+              pageSizes={[15, 30, 45]}
+              totalItems={allRows.length}
+              onChange={setPagination}
+            />
+          </>
         )}
       </DataTable>
     </ClosableModal>
