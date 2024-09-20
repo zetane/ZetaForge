@@ -60,6 +60,7 @@ For any inquiries, support, or contributions related to this project, please con
 
 **Zetane**  
 Email: [info@zetane.com](info@zetane.com)  
-GitHub: [Zetnane](https://github.com/zetane)
+GitHub: [Zetane](https://github.com/zetane)
+
 
 Feel free to reach out for any questions or issues you may have regarding the `zetaforge` package.
