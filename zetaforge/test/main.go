@@ -9,6 +9,7 @@ import (
 	"log"
 	"math/big"
 	"flag"
+	"sort"
 
 )
 
@@ -81,6 +82,10 @@ func getMACAddress(ifaceName ...string) (string, *big.Int, error) {
 	if err != nil {
 		return "", nil, err
 	}
+	
+	sort.Slice(interfaces, func(i, j int) bool {
+		return interfaces[i].Name < interfaces[j].Name
+	})
 
 	// Find the first non-loopback interface with a hardware address
 	for _, iface := range interfaces {

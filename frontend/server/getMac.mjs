@@ -3,8 +3,10 @@
 
 
 import { networkInterfaces } from 'os'
+import { exec } from 'child_process' 
 const macRegex = /(?:[a-z0-9]{1,2}[:-]){5}[a-z0-9]{1,2}/i
 const zeroRegex = /(?:[0]{1,2}[:-]){5}[0]{1,2}/
+
 
 /**
  * Get the first proper MAC address
@@ -24,10 +26,12 @@ export default function getMAC(iface) {
 		}
 		throw new Error(`interface ${iface} had no valid mac addresses`)
 	} else {
-		for (const [key, parts] of Object.entries(list)) {
+		const sortedList = Object.entries(list).sort( ([keyA, keyB]) => keyA.localeCompare(keyB))
+		console.log(sortedList[0])
+		for (const [key, parts] of sortedList) {
 			// for some reason beyond me, this is needed to satisfy typescript
 			// fix https://github.com/bevry/getmac/issues/100
-			
+			console.log(key)
 			if (!parts) continue
 			for (const part of parts) {
 				if (zeroRegex.test(part.mac) === false) {
@@ -38,8 +42,21 @@ export default function getMAC(iface) {
 	}
 	throw new Error('failed to get the MAC address')
 }
+// const list = networkInterfaces()
+
+// const sortedList = Object.entries(list).sort( ([keyA], [keyB]) => keyA.localeCompare(keyB))
+
+
+// for (const [key, parts] of sortedList) {
+// 	console.log(key)
+// 	for(const part of parts) {
+// 		console.log(part)
+// 	}
+// }
 
 /** Check if the input is a valid MAC address */
 export function isMAC(macAddress) {
 	return macRegex.test(macAddress)
 }
+
+getMAC()

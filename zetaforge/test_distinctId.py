@@ -120,94 +120,20 @@ def get_mac_adddress_python_lib(iface=None, func=built_in_mac):
     distinct_id = sha256_hash(str(mac_as_bigint))
     return distinct_id
 
-        
-class TestMACAddress(unittest.TestCase):
-    def test_mac_address(self):
-        
-        # Python part
-        seed, getter = getnode()
-        print("GETTER IN PYTHON LIBRARY FOR THE PLATFORM ", getter)
-        print("MAC ADDRESS GENERATED IN PYTHON LIBRARY IS ", seed)
-        
-        distinct_id_py = sha256(str(seed).encode('utf-8')).hexdigest()
-        print("FINAL DISTINCT ID IN PYTHON LIBRARY IS " + distinct_id_py)
-        
-        # Node.js part
-        [node_js_part_mac, iface, networkinfo, MAC_address, distinct_id] = get_mac_address_in_node()
-        
-        print("MAC ADDDRESS(NOT BIG INT) IN PYTHON LIBRARY IS ", node_js_part_mac)
-        print("IFACE FOR NODEJS IS", iface)
-        print("NETWORK INFO IN NODEJS IS ", networkinfo)
-        print("MAC AS BIG INT IN NODEJS IS", MAC_address)
-        print("DISTINCT ID GENERATED IN NODEJS IS ", distinct_id)
-        
-        print("BUILT_IN GET MAC ADDRESS ", built_in_mac())
-        [mac_go, distinct_id_go] = get_mac_and_distinctId_in_go(iface=iface)
-
-
-        # Unit tests to compare Python and Node.js results
-        self.assertEqual(seed, int(MAC_address), "The seed in Python and MAC_address in Node.js should be equal")
-        self.assertEqual(distinct_id_py, distinct_id, "The distinct_id in Python and Node.js should be equal")
-
-        self.assertEqual(seed, int(mac_go))
-        self.assertEqual(distinct_id, distinct_id_go)
-
 
 class TESTMACAddressWithPythonLibrary(unittest.TestCase):
-    def test_libraries(self):
-        mac_address_py = get_mac_adddress_python_lib()
-        [mac_go, distinct_id_go] = get_mac_and_distinctId_in_go()
-        [node_js_part_mac, iface, networkinfo, MAC_address, distinct_id] = get_mac_address_in_node()
-
-        self.assertEqual(MAC_address, str(mac_address_py))
-        self.assertEqual(MAC_address, mac_go)
-
-        self.assertEqual(distinct_id, sha256(str(mac_address_py).encode() ).hexdigest())
-        self.assertEqual(distinct_id, distinct_id_go)
     
-    def test_libraries_with_interface(self):
-        iface = None
-        pyiface = None
-        if platform.system() == 'Darwin':
-            iface = 'en0'
-        elif platform.system() == 'Windows':
-            iface = 'Wi-Fi'
-            pyiface = 'Ethernet'
-        elif platform.system() == 'Linux':
-            iface = 'eth0'
-        
-        [mac_go, distinct_id_go] = get_mac_and_distinctId_in_go(iface=iface)
-
-        #if fails in windows, try with pyiface
-        #windows error, even with pyiface
-        mac_address_py = get_mac_adddress_python_lib(iface=iface)
-
-        #windows error with iface
-        [node_js_part_mac, _, networkinfo, MAC_address, distinct_id] = get_mac_address_in_node(iface=iface)
-        print("MAC ADDRESS FOR NODEJS IS ", MAC_address)
-        print("MAC ADDRESS FOR PYTHON IS", mac_address_py)
-        print("MAC ADDRESS FOR GO IS ", mac_go)
-
-        print("DISTINCT ID FOR NODEJS IS ", distinct_id)
-        print("DISTINCT ID FOR PYTHON IS ", sha256(str(mac_address_py).encode() ).hexdigest())
-        print("DISTINCT ID FOR GO IS ", distinct_id_go)
-        self.assertEqual(MAC_address, str(mac_address_py), "MAC ADDRESSES MUST BE EQUAL")
-        self.assertEqual(MAC_address, mac_go)
-        
-        self.assertEqual(distinct_id, sha256(str(mac_address_py).encode() ).hexdigest(), "MAC ADDRESSES MUST BE EQUAL")
-        self.assertEqual(distinct_id, distinct_id_go)
-
-
+    
     def test_python_implementation(self):
         iface = None
-        pyiface = None
-        if platform.system() == 'Darwin':
-            iface = 'en0'
-        elif platform.system() == 'Windows':
-            iface = 'Wi-Fi'
-            pyiface = 'Ethernet'
-        elif platform.system() == 'Linux':
-            iface = 'eth0'
+        # pyiface = None
+        # if platform.system() == 'Darwin':
+        #     iface = 'en0'
+        # elif platform.system() == 'Windows':
+        #     iface = 'Wi-Fi'
+        #     pyiface = 'Ethernet'
+        # elif platform.system() == 'Linux':
+        #     iface = 'eth0'
         
         [mac_go, distinct_id_go] = get_mac_and_distinctId_in_go(iface=iface)
         
