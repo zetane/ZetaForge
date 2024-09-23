@@ -48,9 +48,9 @@ export default function WorkspaceFetcher() {
     },
     refetchInterval: 2000,
     retry: false,
-    onSuccess: () =>
+    onSuccess: (data) =>
       setWorkspace((d) => {
-        d.connected = true;
+        d.connected = data;
       }),
   });
 
