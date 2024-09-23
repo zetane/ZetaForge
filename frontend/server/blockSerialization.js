@@ -12,6 +12,9 @@ import { fileExists } from "./fileSystem";
 import { HttpStatus, ServerError } from "./serverError";
 import { compileComputationFunction } from "../resources/compileComputation.mjs";
 import { runTestContainer } from "../resources/runTest.mjs";
+import { computeAgent } from "../agents/gpt-4_python_compute/generate/computations.mjs";
+import { computeViewAgent } from "../agents/gpt-4_python_view/generate/computations.mjs";
+
 
 const READ_ONLY_FILES = [BLOCK_SPECS_FILE_NAME, CHAT_HISTORY_FILE_NAME];
 
@@ -144,6 +147,10 @@ export async function callAgent(
   conversationHistory,
   apiKey,
 ) {
+  console.log("AM I COMPULING AGENT")
+  console.log("AM I COMPULING AGENT")
+  console.log("AM I COMPULING AGENT")
+  console.log("AM I COMPULING AGENT")
   let agents = "agents";
   if (app.isPackaged) {
     agents = path.join(process.resourcesPath, "agents");
