@@ -74,7 +74,7 @@ describe("", () => {
       fileExists.mockResolvedValueOnce(true);
       spawnAsync.mockReturnValueOnce(JSON.stringify(expectedSpecs));
 
-      compileComputationFunction.mockReturnValueOnce(JSON.stringify(expectedSpecs))
+      compileComputationFunction.mockReturnValueOnce(expectedSpecs)
 
       const result = await compileComputation(
         pipelineFixture.getId(),
