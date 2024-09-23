@@ -36,14 +36,14 @@ export async function compileComputation(pipelinePath, blockId) {
   let io;
   try {
     io = await compileComputationFunction(source);
-    
+    return io
   } catch (error) {
     const message = `Compilation failed for block \nblock path: ${blockPath} \nscript path: ${scriptPath}`;
     logger.error(error, message);
     throw new ServerError(message, HttpStatus.INTERNAL_SERVER_ERROR, error);
 
   }
-  return io
+  
 }
 
 export async function getBlockDirectory(pipelinePath, blockId) {
