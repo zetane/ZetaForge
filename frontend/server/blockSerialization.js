@@ -36,6 +36,7 @@ export async function compileComputation(pipelinePath, blockId) {
   let io;
   try {
     io = await compileComputationFunction(source);
+    return JSON.parse(io)
   } catch (err) {
     logger.error(err.message, buildCompilationErrorLog(blockPath, scriptPath));
     throw buildCompilationServerError();
