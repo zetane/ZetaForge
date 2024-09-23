@@ -70,18 +70,26 @@ async function extractIO(source) {
                   cursor.firstChild();
                   cursor.nextSibling();
                   while (cursor.node.name !== "}") {
-                    cursor.nextSibling();
-                    if (cursor.node.name === "VariableName") {
-                      const outputName = source.slice(
-                        cursor.node.from,
-                        cursor.node.to,
-                      );
-                      outputs[outputName] = {
-                        type: "Any",
-                        connections: [],
-                        relays: [],
-                      };
+                    
+                    if (cursor.node.name === "String") {
+                      cursor.nextSibling()
+                      if(cursor.node.name === ":")
+                      {
+                        cursor.prevSibling()
+                        const outputName = source.slice(
+                          cursor.node.from + 1,
+                          cursor.node.to - 1,
+                        );
+                        outputs[outputName] = {
+                          type: "Any",
+                          connections: [],
+                          relays: [],
+                        };
+
+                      }
+                      
                     }
+                    cursor.nextSibling();
                   }
                 }
               }
