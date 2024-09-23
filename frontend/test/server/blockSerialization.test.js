@@ -98,6 +98,10 @@ describe("", () => {
         status: 1,
         error: undefined,
       });
+      compileComputationFunction.mockImplementationOnce(() => {
+        throw new Error("Mocked Exception");
+      });
+
 
       expect(() =>
         compileComputation(pipelineFixture.getId(), blockFixture.getId()),
@@ -114,7 +118,10 @@ describe("", () => {
         status: undefined,
         error: {},
       });
-
+      compileComputationFunction.mockImplementationOnce(() => {
+        throw new Error("Mocked Exception");
+      });
+      
       expect(() =>
         compileComputation(pipelineFixture.getId(), blockFixture.getId()),
       ).rejects.toThrowError();
