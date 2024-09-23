@@ -8,7 +8,7 @@ import {
   SUPPORTED_FILE_NAMES,
   CHAT_HISTORY_FILE_NAME,
 } from "../src/utils/constants";
-import { fileExist, getDirectoryTree } from "./fileSystem";
+import { fileExists, getDirectoryTree } from "./fileSystem";
 import { HttpStatus, ServerError } from "./serverError";
 import { compileComputationFunction } from "../resources/compileComputation.mjs";
 import { runTestContainer } from "../resources/runTest.mjs";
@@ -157,32 +157,41 @@ export async function callAgent(
   conversationHistory,
   apiKey,
 ) {
-  console.log("AM I COMPULING AGENT")
-  console.log("AM I COMPULING AGENT")
-  console.log("AM I COMPULING AGENT")
-  console.log("AM I COMPULING AGENT")
+
   let agents = "agents";
   if (app.isPackaged) {
     agents = path.join(process.resourcesPath, "agents");
   }
-  const scriptPath = path.join(
-    agents,
-    agentName,
-    "generate",
-    "computations.py",
-  );
+  // const scriptPath = path.join(
+  //   agents,
+  //   agentName,
+  //   "generate",
+  //   "computations.py",
+  // );
 
   try {
-    const stdout = await spawnAsync("python", [scriptPath], {
-      input: JSON.stringify({
-        apiKey,
-        userMessage,
-        conversationHistory,
-      }),
-      encoding: "utf8",
-    });
-    const response = JSON.parse(stdout).response;
-    return response;
+    //KEEPING THOSE FOR REFERENCE, IF WE EVER DECIDE TO MIGRATE BACK TO PYTHON AGENTS
+
+    // const stdout = await spawnAsync("python", [scriptPath], {
+    //   input: JSON.stringify({
+    //     apiKey,
+    //     userMessage,
+    //     conversationHistory,
+    //   }),
+    //   encoding: "utf8",
+    // });
+    // const response = JSON.parse(stdout).response;
+    // return response;
+
+
+    if(agentName === "gpt-4_python_compute") {
+      
+      const result = await computeAgent(userMessage, "gpt-4o", conversationHistory, apiKey)
+      return result.response
+    } else {
+      const result = await computeViewAgent(userMessage, "gpt-4o", conversationHistory, apiKey)
+      return result.response
+    }
   } catch (error) {
     const message = `Unable to call agent ${agentName} with message ${userMessage}`;
     logger.error(error, message);
