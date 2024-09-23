@@ -35,7 +35,7 @@ type TagList struct {
 func checkImage(ctx context.Context, image string, cfg Config) (bool, bool, error) {
 	if cfg.IsLocal {
 		if cfg.Local.Driver == "minikube" {
-			minikubeImage := cmd.NewCmd("minikube", "-p", "zetaforge", "image", "ls")
+			minikubeImage := cmd.NewCmd("minikube", "-p", cfg.KubeContext, "image", "ls")
 			<-minikubeImage.Start()
 			for _, line := range minikubeImage.Status().Stdout {
 				if "docker.io/zetaforge/"+image == line {

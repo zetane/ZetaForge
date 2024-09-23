@@ -9,3 +9,4 @@ declare namespace NodeJS {
     VITE_PUBLIC: string
   }
 }
+

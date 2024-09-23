@@ -1,16 +1,17 @@
-import { spawnAsync } from "./spawnAsync";
 import { app } from "electron";
 import fs from "fs/promises";
 import path from "path";
+import { logger } from "./logger";
 import {
   BLOCK_SPECS_FILE_NAME,
   SUPPORTED_FILE_EXTENSIONS,
   SUPPORTED_FILE_NAMES,
   CHAT_HISTORY_FILE_NAME,
 } from "../src/utils/constants";
-import { fileExists, getDirectoryTree } from "./fileSystem";
-import { logger } from "./logger";
+import { fileExists } from "./fileSystem";
 import { HttpStatus, ServerError } from "./serverError";
+import { compileComputationFunction } from "../resources/compileComputation.mjs";
+import { runTestContainer } from "../resources/runTest.mjs";
 
 const READ_ONLY_FILES = [BLOCK_SPECS_FILE_NAME, CHAT_HISTORY_FILE_NAME];
 
@@ -20,8 +21,8 @@ export async function compileComputation(pipelinePath, blockId) {
   const source = await fs.readFile(sourcePath, { encoding: "utf8" });
 
   const scriptPath = app.isPackaged
-    ? path.join(process.resourcesPath, "resources", "compileComputation.py")
-    : path.join("resources", "compileComputation.py");
+    ? path.join(process.resourcesPath, "resources", "compileComputation.mjs")
+    : path.join("resources", "compileComputation.mjs");
   if (!(await fileExists(scriptPath))) {
     throw new ServerError(
       `Could not find script for compilation: ${scriptPath}`,
@@ -29,19 +30,14 @@ export async function compileComputation(pipelinePath, blockId) {
     );
   }
 
+  let io;
   try {
-    const stdout = await spawnAsync("python", [scriptPath], {
-      input: source,
-      encoding: "utf8",
-    });
-    const io = JSON.parse(stdout);
-    console.log(io);
-    return io;
-  } catch (error) {
-    const message = `Compilation failed for block \nblock path: ${blockPath} \nscript path: ${scriptPath}`;
-    logger.error(error, message);
-    throw new ServerError(message, HttpStatus.INTERNAL_SERVER_ERROR, error);
+    io = await compileComputationFunction(source);
+  } catch (err) {
+    logger.error(err.message, buildCompilationErrorLog(blockPath, scriptPath));
+    throw buildCompilationServerError();
   }
+  return io;
 }
 
 export async function saveBlockSpecs(pipelinePath, blockId, specs) {
@@ -67,8 +63,8 @@ function removeConnections(io) {
 export async function runTest(pipelinePath, blockId) {
   const blockPath = path.join(pipelinePath, blockId);
   const scriptPath = app.isPackaged
-    ? path.join(process.resourcesPath, "resources", "run_test.py")
-    : path.join("resources", "run_test.py");
+    ? path.join(process.resourcesPath, "resources", "runTest.mjs")
+    : path.join("resources", "runTest.mjs");
   if (!(await fileExists(scriptPath))) {
     throw new ServerError(
       `Could not find script for running tests: ${scriptPath}`,
@@ -76,75 +72,7 @@ export async function runTest(pipelinePath, blockId) {
     );
   }
 
-  try {
-    await spawnAsync("python", [scriptPath, blockPath, blockId]);
-  } catch (error) {
-    const message = `Failed to run tests for block \nblock path: ${blockPath} \nscript path: ${scriptPath}`;
-    logger.error(error, message);
-    throw new ServerError(message, HttpStatus.INTERNAL_SERVER_ERROR, error);
-  }
-}
-
-export async function getBlockDirectory(pipelinePath, blockId) {
-  const blockDirectory = path.join(pipelinePath, blockId);
-
-  const tree = await getDirectoryTree(blockDirectory, filePermissionVisitor);
-  return tree;
-}
-
-function filePermissionVisitor(name, absolutePath, relativePath, isDirectory) {
-  if (isDirectory) {
-    logger.debug(name);
-    return {
-      read: true,
-      write: true,
-    };
-  } else {
-    return getFilePermissions(name);
-  }
-}
-
-export async function getBlockFile(pipelinePath, blockId, relativeFilePath) {
-  const absoluteFilePath = path.join(pipelinePath, blockId, relativeFilePath);
-  const fileName = path.basename(absoluteFilePath);
-  const { read } = getFilePermissions(fileName);
-
-  if (!read) {
-    const message = `Reading file: ${absoluteFilePath}, is not permitted`;
-    logger.error(message);
-    throw new ServerError(message, HttpStatus.BAD_REQUEST);
-  }
-
-  return await fs.readFile(absoluteFilePath, { encoding: "utf8" });
-}
-
-export async function updateBlockFile(
-  pipelinePath,
-  blockId,
-  relativeFilePath,
-  content,
-) {
-  const absoluteFilePath = path.join(pipelinePath, blockId, relativeFilePath);
-  const fileName = path.basename(absoluteFilePath);
-  const { write } = getFilePermissions(fileName);
-
-  if (!write) {
-    const message = `Writing file: ${absoluteFilePath}, is not permitted`;
-    logger.error(message);
-    throw new ServerError(message, HttpStatus.BAD_REQUEST);
-  }
-
-  await fs.writeFile(absoluteFilePath, content);
-}
-
-function getFilePermissions(name) {
-  const readOnly = READ_ONLY_FILES.includes(name);
-  const supported = isFileSupported(name);
-
-  const read = supported;
-  const write = supported && !readOnly;
-
-  return { read, write };
+  return await runTestContainer(blockPath, blockKey);
 }
 
 function isFileSupported(filePath) {

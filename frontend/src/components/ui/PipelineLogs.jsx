@@ -4,6 +4,8 @@ import { useAtom } from "jotai";
 import { useMemo } from "react";
 import ScrollToBottom from "react-scroll-to-bottom";
 import ClosableModal from "./modal/ClosableModal";
+import SystemLogViewer from "./SystemLogViewer";
+import { Tab, Tabs, TabList, TabPanel, TabPanels } from "@carbon/react";
 
 export const isEmpty = (obj) => {
   for (var i in obj) return false;
@@ -38,16 +40,32 @@ export const PipelineLogs = ({ title, filter }) => {
   });
 
   return (
-    <ClosableModal
-      modalHeading={title}
-      passiveModal={true}
-      modalClass="custom-modal-size"
-    >
-      <ScrollToBottom className="viewer-container">
-        <div className="logs-viewer">
-          <LogsCodeMirror code={formattedLogs.join("\n")} />
-        </div>
-      </ScrollToBottom>
-    </ClosableModal>
+    <>
+      <ClosableModal
+        modalHeading={title}
+        passiveModal={true}
+        modalClass="custom-modal-size"
+      >
+        <Tabs>
+          <TabList>
+            <Tab>PipelineLogs</Tab>
+            <Tab> System Logs </Tab>
+          </TabList>
+          <TabPanels>
+            <TabPanel>
+              <ScrollToBottom className="viewer-container">
+                <div className="logs-viewer">
+                  <LogsCodeMirror code={formattedLogs.join("\n")} />
+                </div>
+              </ScrollToBottom>
+            </TabPanel>
+
+            <TabPanel>
+              <SystemLogViewer />
+            </TabPanel>
+          </TabPanels>
+        </Tabs>
+      </ClosableModal>
+    </>
   );
 };

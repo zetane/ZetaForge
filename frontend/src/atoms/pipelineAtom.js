@@ -40,6 +40,7 @@ const defaultWorkspace = {
   fetchInterval: 5 * 1000,
   offset: 0,
   limit: 15,
+  //executions: {},
   connected: false,
 };
 

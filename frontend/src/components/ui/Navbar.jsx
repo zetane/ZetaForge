@@ -25,12 +25,14 @@ import SavePipelineButton from "./SavePipelineButton";
 import AnvilConfigurationsModal from "./modal/AnvilConfigurationsModal";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { PipelineStopButton } from "./PipelineStopButton";
+import { useState } from "react";
 
 export default function Navbar({ children }) {
   const [darkMode, setDarkMode] = useAtom(darkModeAtom);
   const [modalContent, setModalContent] = useAtom(modalContentAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const [configuration] = useAtom(activeConfigurationAtom);
+  const [disable, setDisable] = useState(false);
 
   const modalPopper = (content) => {
     setModalContent({
@@ -111,7 +113,11 @@ export default function Navbar({ children }) {
       </HeaderNavigation>
       <HeaderGlobalBar>
         {runButton}
-        <RunPipelineButton modalPopper={modalPopper} action="Rebuild">
+        <RunPipelineButton
+          modalPopper={modalPopper}
+          action="Rebuild"
+          disabled={disable}
+        >
           <Renew size={20} style={svgOverride} />
         </RunPipelineButton>
         <LogsButton />

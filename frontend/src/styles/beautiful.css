@@ -471,6 +471,47 @@ header a {
 .view-btn:hover .mySvg {
   stroke: lightgreen;
 }
-/* #view-btn:hover {
-  box-shadow: 0 0 10px 5px rgba(255, 255, 255, 0.6);
+
+.err-modal .cds--modal-container {
+  position: absolute;
+  left: 30px;
+  right: 30px;
+}
+
+.anvil-config-container .cds--modal-container {
+  min-height: 380.5px;
+}
+
+/* .anvil-config-table {
+  width: 10px !important;
+} */
+
+.anvil-config-table .cds--data-table-content {
+  /* overflow-y: visible !important; */
+  /* overflow-x: scroll !important; */
+  overflow-x: visible !important;
+  /* overflow-y: scroll !important; */
+}
+
+.anvil-config-table .context-cell .cds--dropdown__wrapper {
+  min-width: 150px;
+  max-width: 180px;
+}
+
+.anvil-config-table .driver-cell .cds--dropdown__wrapper {
+  min-width: 123px;
+  max-width: 100px;
+}
+
+.cds--data-table {
+  min-width: 100%;
+  overflow-x: scroll;
+}
+
+/* .anvil-config-modal .cds--modal-content {
+  overflow-y: visible !important;
+} */
+
+/* .anvil-config-table .cds--dropdown {
+  position: relative;
 } */

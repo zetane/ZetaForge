@@ -12,7 +12,7 @@
 	"BucketName":"zetaforge",
 	"Database":"./zetaforge.db",
 	"SetupVersion":"1",
-
+	"KubeContext": "docker-desktop",
 	"Local": {
 		"BucketPort": 8333,
 		"Driver": "docker-desktop"

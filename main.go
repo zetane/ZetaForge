@@ -48,6 +48,7 @@ type Config struct {
 	BucketName      string
 	Database        string
 	SetupVersion    string
+	KubeContext		string
 	Local           Local `json:"Local,omitempty"`
 	Cloud           Cloud `json:"Cloud,omitempty"`
 }
