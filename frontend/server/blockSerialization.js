@@ -8,7 +8,7 @@ import {
   SUPPORTED_FILE_NAMES,
   CHAT_HISTORY_FILE_NAME,
 } from "../src/utils/constants";
-import { fileExists } from "./fileSystem";
+import { fileExist, getDirectoryTree } from "./fileSystem";
 import { HttpStatus, ServerError } from "./serverError";
 import { compileComputationFunction } from "../resources/compileComputation.mjs";
 import { runTestContainer } from "../resources/runTest.mjs";
@@ -129,6 +129,16 @@ export async function runTest(pipelinePath, blockId) {
   }
 
   return await runTestContainer(blockPath, blockKey);
+}
+
+function getFilePermissions(name) {
+  const readOnly = READ_ONLY_FILES.includes(name);
+  const supported = isFileSupported(name);
+
+  const read = supported;
+  const write = supported && !readOnly;
+
+  return { read, write };
 }
 
 function isFileSupported(filePath) {
