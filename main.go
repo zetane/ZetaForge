@@ -75,6 +75,15 @@ type LogWriter struct {
 	// mutex for any potential multithread writing
 }
 
+type MinikubeProfile struct {
+	Name   string `json:"Name"`
+	Status string `json:"Status"`
+}
+
+type MinikubeProfiles struct {
+	Valid []MinikubeProfile `json:"valid"`
+}
+
 func (w *LogWriter) Write(p []byte) (n int, err error) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
