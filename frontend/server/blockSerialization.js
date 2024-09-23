@@ -40,6 +40,59 @@ export async function compileComputation(pipelinePath, blockId) {
   return io;
 }
 
+export async function getBlockDirectory(pipelinePath, blockId) {
+  const blockDirectory = path.join(pipelinePath, blockId);
+
+  const tree = await getDirectoryTree(blockDirectory, filePermissionVisitor);
+  return tree;
+}
+
+function filePermissionVisitor(name, absolutePath, relativePath, isDirectory) {
+  if (isDirectory) {
+    logger.debug(name);
+    return {
+      read: true,
+      write: true,
+    };
+  } else {
+    return getFilePermissions(name);
+  }
+}
+
+export async function getBlockFile(pipelinePath, blockId, relativeFilePath) {
+  const absoluteFilePath = path.join(pipelinePath, blockId, relativeFilePath);
+  const fileName = path.basename(absoluteFilePath);
+  const { read } = getFilePermissions(fileName);
+
+  if (!read) {
+    const message = `Reading file: ${absoluteFilePath}, is not permitted`;
+    logger.error(message);
+    throw new ServerError(message, HttpStatus.BAD_REQUEST);
+  }
+
+  return await fs.readFile(absoluteFilePath, { encoding: "utf8" });
+}
+
+export async function updateBlockFile(
+  pipelinePath,
+  blockId,
+  relativeFilePath,
+  content,
+) {
+  const absoluteFilePath = path.join(pipelinePath, blockId, relativeFilePath);
+  const fileName = path.basename(absoluteFilePath);
+  const { write } = getFilePermissions(fileName);
+
+  if (!write) {
+    const message = `Writing file: ${absoluteFilePath}, is not permitted`;
+    logger.error(message);
+    throw new ServerError(message, HttpStatus.BAD_REQUEST);
+  }
+
+  await fs.writeFile(absoluteFilePath, content);
+}
+
+
 export async function saveBlockSpecs(pipelinePath, blockId, specs) {
   const specsPath = path.join(pipelinePath, blockId, BLOCK_SPECS_FILE_NAME);
 
