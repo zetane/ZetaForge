@@ -8,6 +8,8 @@ import { spawnAsync } from "../../server/spawnAsync";
 import { getCompuationsSourceCode } from "../fixture/blockFixture";
 import * as pipelineFixture from "../fixture/pipelineFixture";
 import * as blockFixture from "../fixture/blockFixture";
+import { compileComputationFunction } from "../../resources/compileComputation.mjs"
+
 
 vi.mock("fs/promises", () => ({
   default: {
@@ -34,6 +36,10 @@ vi.mock("../../server/cache", () => ({
   cacheJoin: vi.fn(),
 }));
 
+vi.mock("../../resources/compileComputation.mjs", () => ({
+  compileComputationFunction: vi.fn(),
+}));
+
 describe("", () => {
   const blockComputationsSourceCode = getCompuationsSourceCode();
 
@@ -43,18 +49,18 @@ describe("", () => {
 
   describe("compileComputation", () => {
     test("returns code IO and description", async () => {
-      // const expectedSpecs = {
-      //   description:
-      //     "A textual description of the compute function.:in1 (all): Textual description of in1in2 (all): Textual description of in2:out1 (all): Textual description of out1out2 (all): Textual description of out2:",
-      //   inputs: {
-      //     in1: { type: "Any", connections: [], relays: [] },
-      //     in2: { type: "Any", connections: [], relays: [] },
-      //   },
-      //   outputs: {
-      //     out1: { type: "Any", connections: [], relays: [] },
-      //     out2: { type: "Any", connections: [], relays: [] },
-      //   },
-      // };
+      const expectedSpecs = {
+        description:
+          "A textual description of the compute function.:in1 (all): Textual description of in1in2 (all): Textual description of in2:out1 (all): Textual description of out1out2 (all): Textual description of out2:",
+        inputs: {
+          in1: { type: "Any", connections: [], relays: [] },
+          in2: { type: "Any", connections: [], relays: [] },
+        },
+        outputs: {
+          out1: { type: "Any", connections: [], relays: [] },
+          out2: { type: "Any", connections: [], relays: [] },
+        },
+      };
 
       fs.readFile.mockResolvedValueOnce(blockComputationsSourceCode);
       app.isPackaged = false;
@@ -67,6 +73,8 @@ describe("", () => {
       );
       fileExists.mockResolvedValueOnce(true);
       spawnAsync.mockReturnValueOnce(JSON.stringify(expectedSpecs));
+
+      compileComputationFunction.mockReturnValueOnce(JSON.stringify(expectedSpecs))
 
       const result = await compileComputation(
         pipelineFixture.getId(),
