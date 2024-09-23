@@ -43,7 +43,7 @@ export async function compileComputation(pipelinePath, blockId) {
     throw new ServerError(message, HttpStatus.INTERNAL_SERVER_ERROR, error);
 
   }
-  return io
+  return JSON.parse(io)
 }
 
 export async function getBlockDirectory(pipelinePath, blockId) {
