@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import ScrollToBottom from "react-scroll-to-bottom";
-import { LogsCodeMirror } from "@/components/ui/blockEditor/CodeMirrorComponents";
+import { LogsCodeMirror } from "@/components/ui/blockEditor/directoryViewer/CodeMirrorComponents";
 
 const useLogsPolling = (interval = 5000) => {
   const [logs, setLogs] = useState([]);
