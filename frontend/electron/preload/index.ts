@@ -3,12 +3,32 @@ import { exposeElectronTRPC } from 'electron-trpc/main';
 import path from "path";
 import * as Sentry from "@sentry/electron";
 
+
 Sentry.init({ dsn: "https://7fb18e8e487455a950298625457264f3@o1096443.ingest.us.sentry.io/4507031960223744" });
+
+
+
+
 
 // --------- Expose API to the Renderer process ---------
 contextBridge.exposeInMainWorld('cache', {
   local: async () => path.join(await ipcRenderer.invoke('get-cache') + path.sep),
 })
+
+
+contextBridge.exposeInMainWorld('systemLogs', {
+  onUpdateLogs: (callback: any) => {
+    // Safely expose the event listener
+    const handler = (_:any, logs: any) => callback(logs);
+    ipcRenderer.on('update-logs', handler);
+
+    // Return a function to remove the listener, which can be called later
+    return () => ipcRenderer.removeListener('update-logs', handler);
+  },
+  requestLatestLogs: () => ipcRenderer.invoke('request-latest-logs'),
+
+});
+
 
 // --------- Preload scripts loading ---------
 function domReady(condition: DocumentReadyState[] = ['complete', 'interactive']) {

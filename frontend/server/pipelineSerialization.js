@@ -226,7 +226,6 @@ async function uploadBlocks(
 
     const parameters = node.action?.parameters;
     const container = node.action?.container;
-
     if (parameters) {
       for (const paramKey in parameters) {
         const param = parameters[paramKey];
@@ -238,6 +237,7 @@ async function uploadBlocks(
 
           if (filePath && filePath.trim()) {
             await checkAndUpload(awsKey, filePath, anvilConfiguration);
+
             param.value = `"${fileName}"`;
             param.type = "blob";
           }
@@ -275,6 +275,7 @@ async function uploadBuildContexts(
     pipelineSpecs,
     rebuild,
   );
+
   await Promise.all(
     buildContextStatuses
       .filter((status) => !status.isUploaded)

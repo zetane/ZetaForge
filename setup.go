@@ -15,6 +15,7 @@ import (
 	"os/signal"
 	"strings"
 	"time"
+	"os/exec"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -282,7 +283,52 @@ func migrate(ctx context.Context, resources map[string]string, config Config, cl
 	return nil
 }
 
+func checkMinikube(KubeContext string) {
+		cmd := exec.Command("minikube", "profile", "list", "-o", "json")
+		output, err := cmd.Output()
+		if err != nil {
+		log.Fatalf("failed to check for minikube profile; err=%v", err)
+		}
+
+		var profiles MinikubeProfiles
+		if err := json.Unmarshal(output, &profiles); err != nil {
+		log.Fatalf("failed to marshall minikube profile; err=%v", err)
+		}
+		profileExists := false
+		for _, profile := range profiles.Valid {
+			if profile.Name == KubeContext {
+				profileExists = true
+				break
+			}
+		}
+		if !profileExists {
+			log.Fatalf("failed to find the profile; err=%v", err)
+		}
+
+		minikubeCmd := exec.Command("minikube", "status", "-p", KubeContext, "-o", "json")
+		output, err = minikubeCmd.Output()
+		if err != nil {
+			log.Fatalf("failed to check minikube status; err=%v", err)
+		}
+
+		// Parse the JSON output
+		var status map[string]interface{}
+		if err := json.Unmarshal(output, &status); err != nil {
+			log.Fatalf("failed to parse profile status; err=%v", err)
+		}
+
+		// Check if the profile is running
+		if status["Host"] != "Running" {
+			log.Fatalf("failed to check for minikube profile; err=%v", err)
+		}
+
+}
+
 func setup(ctx context.Context, config Config, db *sql.DB) {
+	if config.Local.Driver == "minikube" {
+		checkMinikube(config.KubeContext)
+	}
+
 	client, err := kubernetesClient(config)
 	if err != nil {
 		log.Fatalf("Failed to access kubernetes; err=%v", err)

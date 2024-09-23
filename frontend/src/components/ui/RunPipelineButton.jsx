@@ -1,13 +1,13 @@
 import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { mixpanelAtom } from "@/atoms/mixpanelAtom";
 import generateSchema from "@/utils/schemaValidation";
 import { trpc } from "@/utils/trpc";
-import { Button } from "@carbon/react";
+import { Button, Tooltip } from "@carbon/react";
 import { useAtom } from "jotai";
 import { useImmerAtom } from "jotai-immer";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { uuidv7 } from "uuidv7";
 import ClosableModal from "./modal/ClosableModal";
 import { workspaceAtom } from "@/atoms/pipelineAtom";

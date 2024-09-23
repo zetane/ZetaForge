@@ -37,16 +37,7 @@ def get_download_file(client_version, system, arch):
         bucket_key += ".tar.gz"
         return bucket_key
 
-def upload_to_s3(file_path, object_key):
-    s3_client = boto3.client('s3')
-    bucket_name = 'forge-executables-test'
 
-    try:
-        with open(file_path, 'rb') as file:
-            s3_client.upload_fileobj(file, bucket_name, object_key)
-        print(f"File {file_path} uploaded to S3 bucket {bucket_name} as {object_key}")
-    except Exception as e:
-        print(f"Error uploading file to S3: {str(e)}")
 
 def get_package_version():
     # Specify the path to the package.json file
@@ -82,7 +73,8 @@ def main():
     frontend = os.path.join("frontend", "server2")
     os.makedirs(frontend, exist_ok=True)
     res = subprocess.run('npm install', cwd="frontend", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-
+    
+    
     for os_ in os_list:
         print(f"Compiling {version} for {os_}..")
         for goarch in args.arch:

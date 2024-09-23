@@ -34,7 +34,14 @@ export default defineConfig(({ command }) => {
             }
           },
           vite: {
+            esbuild: {
+              supported: {
+                "top-level-await": true, //browsers can handle top-level-await features
+              },
+            },
             build: {
+              target: "esnext",
+              //browsers can handle the latest ES features
               sourcemap,
               minify: isBuild,
               outDir: "dist-electron/main",
@@ -51,7 +58,14 @@ export default defineConfig(({ command }) => {
           // Preload scripts may contain Web assets, so use the `build.rollupOptions.input` instead `build.lib.entry`.
           input: "electron/preload/index.ts",
           vite: {
+            esbuild: {
+              supported: {
+                "top-level-await": true, //browsers can handle top-level-await features
+              },
+            },
             build: {
+              target: "esnext",
+
               sourcemap: sourcemap ? "inline" : undefined, // #332
               minify: isBuild,
               outDir: "dist-electron/preload",
@@ -81,13 +95,26 @@ export default defineConfig(({ command }) => {
     clearScreen: false,
     // Fixes a bug with s3 and nodejs
     // see https://github.com/aws/aws-sdk-js-v3/discussions/3950
+
+    esbuild: {
+      supported: {
+        "top-level-await": true, //browsers can handle top-level-await features
+      },
+    },
     build: {
+      target: "esnext",
+
       sourcemap: true,
       rollupOptions: {
         output: {
-          globals: { crypto: "crypto" },
+          globals: { crypto: "crypto", express: "express" },
         },
-        external: ["crypto"],
+        external: ["crypto", "express"],
+      },
+      resolve: {
+        alias: {
+          "@server": path.resolve(__dirname, "./server"),
+        },
       },
     },
   };

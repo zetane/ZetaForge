@@ -13,9 +13,10 @@ import { release } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import "../../polyfill/crypto";
-import { startExpressServer } from "../../server/express.mjs";
-import { update } from "./update";
-import sourcemap from "source-map-support";
+import {gracefullyStopAnvil, startExpressServer } from "../../server/express.mjs";
+import sourcemap from 'source-map-support';
+import path from "path";
+import fs from 'fs';
 
 Sentry.init({
   dsn: "https://7fb18e8e487455a950298625457264f3@o1096443.ingest.us.sentry.io/4507031960223744",
@@ -38,8 +39,38 @@ sourcemap.install();
 // ├─┬ dist
 // │ └── index.html    > Electron-Renderer
 //
-process.env.DIST_ELECTRON = join(__dirname, "../");
-process.env.DIST = join(process.env.DIST_ELECTRON, "../dist");
+
+
+
+
+
+ipcMain.handle('request-latest-logs', async () => {
+  try {
+    const logContent = fs.readFileSync(path.join(logFilePath, 'app.log'), 'utf-8');
+    const logEntries = logContent.split('\n').filter(Boolean).map(line => JSON.parse(line));
+    return logEntries;
+  } catch (error) {
+    console.error('Error reading log file:', error);
+    return [];
+  }
+});
+
+
+const logFilePath = app.isPackaged 
+  ? path.join(process.resourcesPath, 'logs') 
+  : path.join(process.cwd(), 'logs');
+
+fs.mkdirSync(path.dirname(logFilePath), { recursive: true });
+
+const appLogs = path.join(logFilePath, 'app.log')
+fs.writeFileSync(appLogs, "") //reset log file
+
+
+
+
+
+process.env.DIST_ELECTRON = join(__dirname, '../')
+process.env.DIST = join(process.env.DIST_ELECTRON, '../dist')
 process.env.VITE_PUBLIC = process.env.VITE_DEV_SERVER_URL
   ? join(process.env.DIST_ELECTRON, "../public")
   : process.env.DIST;
@@ -51,6 +82,16 @@ if (targetIndex !== -1) {
   process.env.VITE_ZETAFORGE_IS_DEV = "True";
 } else {
   process.env.VITE_ZETAFORGE_IS_DEV = "False";
+}
+
+const isPip = '--is_pip'
+
+const targetPipIndex = process.argv.indexOf(isPip)
+
+if(targetPipIndex !== -1) {
+  process.env.VITE_IS_PIP = 'True'
+} else {
+  process.env.VITE_IS_PIP = 'False'
 }
 
 // Disable GPU Acceleration for Windows 7
@@ -142,6 +183,18 @@ async function createWindow() {
   ipcMain.handle("get-cache", () => {
     return absoluteCachePath;
   });
+  
+  try{
+    ipcMain.handle('get-path', (_, arg) => {
+      return app.getPath(arg)
+    })
+  } catch(err) {
+    ipcMain.removeHandler('get-path')
+    ipcMain.handle('get-path', (_, arg) => {
+      return app.getPath(arg)
+    })
+  }
+  
 
   if (url) {
     // electron-vite-vue#298
@@ -189,7 +242,15 @@ app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
 });
 
-app.on("second-instance", () => {
+app.on('will-quit', async () => {
+  await gracefullyStopAnvil()
+})
+
+
+
+
+
+app.on('second-instance', () => {
   if (win) {
     // Focus on the main window if the user tried to open another
     if (win.isMinimized()) win.restore();
