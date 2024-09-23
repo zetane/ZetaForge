@@ -10,7 +10,6 @@ async function validateSource(source) {
     const cursor = tree.cursor();
 
     do {
-      console.log(cursor.type.name);
       if (cursor.type.name === "⚠") {
         throw new Error("Syntax error found at: ", cursor.type.name);
       }
@@ -133,7 +132,6 @@ function getDocstring(source) {
       while (cursor.nextSibling()) {
         if (cursor.node.name === "Body") {
           cursor.firstChild(); // Enter the body
-          console.log("HERE");
           // Check if the first statement is a docstring
           if (cursor.node.name === "ExpressionStatement") {
             cursor.firstChild(); // Move to the string
