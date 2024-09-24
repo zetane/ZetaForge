@@ -151,8 +151,6 @@ function startExpressServer() {
     res.send("Folder imported successfully");
   });
 
-  
-
   app.get("/get-kube-contexts", async (req, res) => {
     exec("kubectl version --client", (error, stdout, stderr) => {
       if (error) {
@@ -208,8 +206,6 @@ function startExpressServer() {
       res.status(500).send({ kubeErr: err.message });
     }
   });
-
-  
 
   app.get("/get-anvil-config", (req, res) => {
     if (!electronApp.isPackaged) {
@@ -520,7 +516,6 @@ function startExpressServer() {
     const isPip = process.env.VITE_IS_PIP === "True" ? true : false;
     return res.status(200).json(electronApp.isPackaged && !isPip);
   });
-
 
   app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
