@@ -6,7 +6,6 @@ import {
   BLOCK_SPECS_FILE_NAME,
   PIPELINE_SPECS_FILE_NAME,
 } from "../src/utils/constants";
-import { setDifference } from "../utils/set.js";
 import {
   fileExists,
   filterDirectories,
@@ -16,10 +15,8 @@ import { checkAndUpload, checkAndCopy, uploadDirectory } from "./s3.js";
 import {
   createExecution,
   getBuildContextStatus,
-  getPipelinesByUuid,
 } from "./anvil";
 import { logger } from "./logger";
-import { computeMerkleTreeForDirectory } from "./merkle.js";
 
 export async function saveSpec(spec, writePath) {
   const pipelineSpecsPath = path.join(writePath, PIPELINE_SPECS_FILE_NAME);
@@ -60,9 +57,9 @@ export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
 
   const fromBlockIndex = await getBlockIndex([bufferPath]);
 
-  let toBlockIndex = {};
+  
   if (await fileExists(writePipelineDirectory)) {
-    toBlockIndex = await getBlockIndex([writePipelineDirectory]);
+    await getBlockIndex([writePipelineDirectory]);
   } else {
     await fs.mkdir(writePipelineDirectory, { recursive: true });
   }
@@ -70,6 +67,8 @@ export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
   // Gets pipeline specs from the specs coming from the graph
   // Submitted by the client
   const newPipelineBlocks = getPipelineBlocks(pipelineSpecs);
+
+  //gives an error on lint format check, but keeping it as it's also on the master: f/client-launch-anvil
   const existingPipelineBlocks = (await fileExists(pipelineSpecsPath))
     ? await readPipelineBlocks(pipelineSpecsPath)
     : new Set();
@@ -195,8 +194,7 @@ export async function executePipeline(
   specs["name"] = name;
   specs["id"] = id;
 
-  //const merkle = await computeMerkleTreeForDirectory(path);
-  //const pipelines = await getPipelinesByUuid(anvilHostConfiguration, id);
+
 
   await uploadBuildContexts(
     anvilHostConfiguration,
