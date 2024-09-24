@@ -1,45 +1,3 @@
-class TransformMatrix {
-  constructor() {
-    this.a = 1;
-    this.c = 0;
-    this.e = 0;
-    this.b = 0;
-    this.d = 1;
-    this.f = 0;
-  }
-
-  translate(x, y) {
-    this.e += x;
-    this.f += y;
-    return this;
-  }
-
-  scale(s) {
-    this.a *= s;
-    this.d *= s;
-    return this;
-  }
-
-  invert() {
-    const det = this.a * this.d - this.b * this.c;
-    return new TransformMatrix(
-      this.d / det,
-      -this.c / det,
-      (this.c * this.f - this.e * this.d) / det,
-      -this.b / det,
-      this.a / det,
-      (this.e * this.b - this.a * this.f) / det,
-    );
-  }
-
-  transformPoint(x, y) {
-    return {
-      x: x * this.a + y * this.c + this.e,
-      y: x * this.b + y * this.d + this.f,
-    };
-  }
-}
-
 export default class Drawflow {
   constructor(
     container,
@@ -82,8 +40,6 @@ export default class Drawflow {
     this.pos_y_start = 0;
     this.mouse_x = 0;
     this.mouse_y = 0;
-    this.lastMouseX = null;
-    this.lastMouseY = null;
     this.line_path = 5;
     this.first_click = null;
     this.force_first_input = false;
@@ -98,7 +54,6 @@ export default class Drawflow {
     this.module = "Home";
     this.editor_mode = "edit";
     this.zoom = 1;
-    this.offset = { x: 0, y: 0 };
     this.zoom_max = 5.6;
     this.zoom_min = 0.15;
     this.zoom_value = 0.03;
@@ -375,12 +330,6 @@ export default class Drawflow {
     }
   }
 
-  updateMousePosition(event) {
-    const rect = this.precanvas.getBoundingClientRect();
-    this.lastMouseX = event.clientX - rect.left;
-    this.lastMouseY = event.clientY - rect.top;
-  }
-
   position(e) {
     var pos_y;
     var pos_x;
@@ -459,7 +408,6 @@ export default class Drawflow {
       this.mouse_x = e_pos_x;
       this.mouse_y = e_pos_y;
     }
-    this.updateMousePosition(e);
   }
 
   dragEnd(e) {
