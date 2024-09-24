@@ -108,6 +108,17 @@ export default function App() {
             ]);
             setErrModalOpen(true);
           }
+        } else {
+          //this is in case, in any point user wishes to change an already pinging config.
+          try {
+            const kubeResponse = await axios.get(
+              `${serverAddress}/get-kube-contexts`,
+            );
+            setAvailableKubeContexts(kubeResponse.data);
+          } catch (err) {
+          
+          }
+
         }
       }
     }
