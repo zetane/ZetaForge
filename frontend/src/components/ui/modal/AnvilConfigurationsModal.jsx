@@ -11,7 +11,7 @@ import {
   isPackaged,
   choosenKubeContexts,
   chosenDriver,
-  availableKubeContexts
+  availableKubeContexts,
 } from "@/atoms/kubecontextAtom";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import axios from "axios";
@@ -58,12 +58,10 @@ export default function AnvilConfigurationsModal(props) {
     const res = axios.get(`${serverAddress}/isPackaged`).then((response) => {
       setAppIsPackaged(response.data);
     });
-  
-    axios.get(
-        `${serverAddress}/get-kube-contexts`,
-      ).then((res) => {
-        setAvailableKubeContexts(res.data)
-      })
+
+    axios.get(`${serverAddress}/get-kube-contexts`).then((res) => {
+      setAvailableKubeContexts(res.data);
+    });
   }, []);
 
   function handleEdit(userConfigurationIndex, configuration) {

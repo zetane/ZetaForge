@@ -15,7 +15,6 @@ import { runTestContainer } from "../resources/runTest.mjs";
 import { computeAgent } from "../agents/gpt-4_python_compute/generate/computations.mjs";
 import { computeViewAgent } from "../agents/gpt-4_python_view/generate/computations.mjs";
 
-
 const READ_ONLY_FILES = [BLOCK_SPECS_FILE_NAME, CHAT_HISTORY_FILE_NAME];
 
 export async function compileComputation(pipelinePath, blockId) {
@@ -36,14 +35,12 @@ export async function compileComputation(pipelinePath, blockId) {
   let io;
   try {
     io = await compileComputationFunction(source);
-    return io
+    return io;
   } catch (error) {
     const message = `Compilation failed for block \nblock path: ${blockPath} \nscript path: ${scriptPath}`;
     logger.error(error, message);
     throw new ServerError(message, HttpStatus.INTERNAL_SERVER_ERROR, error);
-
   }
-  
 }
 
 export async function getBlockDirectory(pipelinePath, blockId) {
@@ -97,7 +94,6 @@ export async function updateBlockFile(
 
   await fs.writeFile(absoluteFilePath, content);
 }
-
 
 export async function saveBlockSpecs(pipelinePath, blockId, specs) {
   const specsPath = path.join(pipelinePath, blockId, BLOCK_SPECS_FILE_NAME);
@@ -160,7 +156,6 @@ export async function callAgent(
   conversationHistory,
   apiKey,
 ) {
-
   let agents = "agents";
   if (app.isPackaged) {
     agents = path.join(process.resourcesPath, "agents");
@@ -186,14 +181,22 @@ export async function callAgent(
     // const response = JSON.parse(stdout).response;
     // return response;
 
-
-    if(agentName === "gpt-4_python_compute") {
-      
-      const result = await computeAgent(userMessage, "gpt-4o", conversationHistory, apiKey)
-      return result.response
+    if (agentName === "gpt-4_python_compute") {
+      const result = await computeAgent(
+        userMessage,
+        "gpt-4o",
+        conversationHistory,
+        apiKey,
+      );
+      return result.response;
     } else {
-      const result = await computeViewAgent(userMessage, "gpt-4o", conversationHistory, apiKey)
-      return result.response
+      const result = await computeViewAgent(
+        userMessage,
+        "gpt-4o",
+        conversationHistory,
+        apiKey,
+      );
+      return result.response;
     }
   } catch (error) {
     const message = `Unable to call agent ${agentName} with message ${userMessage}`;
