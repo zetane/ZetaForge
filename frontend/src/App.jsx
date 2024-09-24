@@ -77,7 +77,7 @@ export default function App() {
               const serverPort = config.ServerPort;
               const context = config.KubeContext;
               //check this, in case user might've manually changed something, which could potentially cause bugs
-              
+
               const openConfig =
                 currentConfig?.anvil?.port === serverPort.toString();
               if (config.IsLocal === true && openConfig === true) {
@@ -115,10 +115,7 @@ export default function App() {
               `${serverAddress}/get-kube-contexts`,
             );
             setAvailableKubeContexts(kubeResponse.data);
-          } catch (err) {
-          
-          }
-
+          } catch (err) {}
         }
       }
     }

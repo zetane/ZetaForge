@@ -70,12 +70,10 @@ async function extractIO(source) {
                   cursor.firstChild();
                   cursor.nextSibling();
                   while (cursor.node.name !== "}") {
-                    
                     if (cursor.node.name === "String") {
-                      cursor.nextSibling()
-                      if(cursor.node.name === ":")
-                      {
-                        cursor.prevSibling()
+                      cursor.nextSibling();
+                      if (cursor.node.name === ":") {
+                        cursor.prevSibling();
                         const outputName = source.slice(
                           cursor.node.from + 1,
                           cursor.node.to - 1,
@@ -85,9 +83,7 @@ async function extractIO(source) {
                           connections: [],
                           relays: [],
                         };
-
                       }
-                      
                     }
                     cursor.nextSibling();
                   }

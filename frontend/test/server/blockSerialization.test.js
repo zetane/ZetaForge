@@ -8,8 +8,7 @@ import { spawnAsync } from "../../server/spawnAsync";
 import { getCompuationsSourceCode } from "../fixture/blockFixture";
 import * as pipelineFixture from "../fixture/pipelineFixture";
 import * as blockFixture from "../fixture/blockFixture";
-import { compileComputationFunction } from "../../resources/compileComputation.mjs"
-
+import { compileComputationFunction } from "../../resources/compileComputation.mjs";
 
 vi.mock("fs/promises", () => ({
   default: {
@@ -74,7 +73,7 @@ describe("", () => {
       fileExists.mockResolvedValueOnce(true);
       spawnAsync.mockReturnValueOnce(JSON.stringify(expectedSpecs));
 
-      compileComputationFunction.mockReturnValueOnce(expectedSpecs)
+      compileComputationFunction.mockReturnValueOnce(expectedSpecs);
 
       const result = await compileComputation(
         pipelineFixture.getId(),
@@ -102,7 +101,6 @@ describe("", () => {
         throw new Error("Mocked Exception");
       });
 
-
       expect(() =>
         compileComputation(pipelineFixture.getId(), blockFixture.getId()),
       ).rejects.toThrowError();
@@ -121,7 +119,7 @@ describe("", () => {
       compileComputationFunction.mockImplementationOnce(() => {
         throw new Error("Mocked Exception");
       });
-      
+
       expect(() =>
         compileComputation(pipelineFixture.getId(), blockFixture.getId()),
       ).rejects.toThrowError();

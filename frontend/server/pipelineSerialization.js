@@ -111,7 +111,6 @@ export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
   return { specs: PIPELINE_SPECS_FILE_NAME, dirPath: writePipelineDirectory };
 }
 
-
 async function getBlockIndex(blockDirectories) {
   const blockIndex = {};
   for (const directory of blockDirectories) {
