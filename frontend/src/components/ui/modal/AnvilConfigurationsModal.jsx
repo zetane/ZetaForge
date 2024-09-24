@@ -11,6 +11,7 @@ import {
   isPackaged,
   choosenKubeContexts,
   chosenDriver,
+  availableKubeContexts
 } from "@/atoms/kubecontextAtom";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import axios from "axios";
@@ -39,6 +40,7 @@ export default function AnvilConfigurationsModal(props) {
   const [userDriver] = useAtom(chosenDriver);
   const [logViewerOpen, SystemLogViewerOpen] = useState(false);
   const [loading, setIsLoading] = useState(false);
+  const [_, setAvailableKubeContexts] = useAtom(availableKubeContexts);
 
   function handleNew() {
     setInitialConfiguration(undefined);
@@ -56,6 +58,12 @@ export default function AnvilConfigurationsModal(props) {
     const res = axios.get(`${serverAddress}/isPackaged`).then((response) => {
       setAppIsPackaged(response.data);
     });
+  
+    axios.get(
+        `${serverAddress}/get-kube-contexts`,
+      ).then((res) => {
+        setAvailableKubeContexts(res.data)
+      })
   }, []);
 
   function handleEdit(userConfigurationIndex, configuration) {
