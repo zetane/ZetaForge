@@ -177,6 +177,7 @@ export const appRouter = router({
       }
 
       if (writeToDir) {
+        console.log("I AM CALLING FROM HERE")
         const savePaths = await copyPipeline(specs, writeFromDir, writeToDir);
         return { name: name, ...savePaths };
       }

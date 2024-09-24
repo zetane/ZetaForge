@@ -80,6 +80,7 @@ export async function fileExists(filePath) {
     await fs.access(filePath);
     return true;
   } catch {
+    
     return false;
   }
 }

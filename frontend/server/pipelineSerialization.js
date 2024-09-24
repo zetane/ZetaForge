@@ -47,7 +47,7 @@ function hasContainer(blockSpec) {
 
 export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
   const bufferPath = path.resolve(process.cwd(), fromDir);
-
+  
   // Takes existing pipeline + spec
   const writePipelineDirectory = toDir;
   const pipelineSpecsPath = path.join(
@@ -58,14 +58,19 @@ export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
   const fromBlockIndex = await getBlockIndex([bufferPath]);
 
   
+  
   if (await fileExists(writePipelineDirectory)) {
+    
+    console.log(writePipelineDirectory)
     await getBlockIndex([writePipelineDirectory]);
   } else {
+    
     await fs.mkdir(writePipelineDirectory, { recursive: true });
   }
 
   // Gets pipeline specs from the specs coming from the graph
   // Submitted by the client
+  
   const newPipelineBlocks = getPipelineBlocks(pipelineSpecs);
 
   //gives an error on lint format check, but keeping it as it's also on the master: f/client-launch-anvil
@@ -104,13 +109,13 @@ export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
       );
     }
   }
-
   await fs.writeFile(pipelineSpecsPath, JSON.stringify(pipelineSpecs, null, 2));
 
   return { specs: PIPELINE_SPECS_FILE_NAME, dirPath: writePipelineDirectory };
 }
 
 async function getBlockIndex(blockDirectories) {
+
   const blockIndex = {};
   for (const directory of blockDirectories) {
     try {

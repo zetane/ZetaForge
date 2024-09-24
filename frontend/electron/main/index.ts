@@ -27,6 +27,8 @@ const __dirname = dirname(__filename);
 
 import { appRouter } from "../../server/router";
 import { absoluteCachePath } from "../../server/cache";
+let router_created = false
+
 
 sourcemap.install();
 // The built directory structure
@@ -174,15 +176,28 @@ async function createWindow() {
     },
   });
 
-  createIPCHandler({ router: appRouter, windows: [win] });
+  //Creating multiple IPCHandlers causes errors on darwin, when closing and opening windows
+  if(!router_created) {
+
+    createIPCHandler({ router: appRouter, windows: [win] });
+    router_created = true
+  }
 
   // Pass the menuTemplate
   const menu = Menu.buildFromTemplate(menuTemplate);
   Menu.setApplicationMenu(menu);
 
-  ipcMain.handle("get-cache", () => {
-    return absoluteCachePath;
-  });
+  try{
+    ipcMain.handle("get-cache", () => {
+      return absoluteCachePath;
+    });
+  } catch {
+    ipcMain.removeHandler("get-cache")
+    ipcMain.handle("get-cache", () => {
+      return absoluteCachePath
+    })
+  }
+  
   
   try{
     ipcMain.handle('get-path', (_, arg) => {
