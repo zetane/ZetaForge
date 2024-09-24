@@ -127,7 +127,7 @@ export async function runTest(pipelinePath, blockId) {
     );
   }
 
-  return await runTestContainer(blockPath, blockKey);
+  return await runTestContainer(blockPath, blockId);
 }
 
 function getFilePermissions(name) {
