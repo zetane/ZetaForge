@@ -1,3 +1,45 @@
+class TransformMatrix {
+  constructor() {
+    this.a = 1;
+    this.c = 0;
+    this.e = 0;
+    this.b = 0;
+    this.d = 1;
+    this.f = 0;
+  }
+
+  translate(x, y) {
+    this.e += x;
+    this.f += y;
+    return this;
+  }
+
+  scale(s) {
+    this.a *= s;
+    this.d *= s;
+    return this;
+  }
+
+  invert() {
+    const det = this.a * this.d - this.b * this.c;
+    return new TransformMatrix(
+      this.d / det,
+      -this.c / det,
+      (this.c * this.f - this.e * this.d) / det,
+      -this.b / det,
+      this.a / det,
+      (this.e * this.b - this.a * this.f) / det,
+    );
+  }
+
+  transformPoint(x, y) {
+    return {
+      x: x * this.a + y * this.c + this.e,
+      y: x * this.b + y * this.d + this.f,
+    };
+  }
+}
+
 export default class Drawflow {
   constructor(
     container,
@@ -40,6 +82,8 @@ export default class Drawflow {
     this.pos_y_start = 0;
     this.mouse_x = 0;
     this.mouse_y = 0;
+    this.lastMouseX = null;
+    this.lastMouseY = null;
     this.line_path = 5;
     this.first_click = null;
     this.force_first_input = false;
@@ -54,6 +98,7 @@ export default class Drawflow {
     this.module = "Home";
     this.editor_mode = "edit";
     this.zoom = 1;
+    this.offset = { x: 0, y: 0 };
     this.zoom_max = 5.6;
     this.zoom_min = 0.15;
     this.zoom_value = 0.03;
@@ -78,6 +123,9 @@ export default class Drawflow {
     this.container.addEventListener("mouseup", this.dragEnd.bind(this));
     this.container.addEventListener("mousemove", this.position.bind(this));
     this.container.addEventListener("mousedown", this.click.bind(this));
+    this.container.addEventListener("mouseleave", (_) => {
+      this.editor_selected = false;
+    });
 
     this.container.addEventListener("touchend", this.dragEnd.bind(this));
     this.container.addEventListener("touchmove", this.position.bind(this));
@@ -89,7 +137,7 @@ export default class Drawflow {
     this.container.addEventListener("keydown", this.key.bind(this));
 
     /* Zoom Mouse */
-    this.container.addEventListener("wheel", this.zoom_enter.bind(this));
+    this.container.addEventListener("wheel", this.handleZoom.bind(this));
     /* Update data Nodes */
     this.container.addEventListener("dblclick", this.dblclick.bind(this));
     /* Mobile zoom */
@@ -121,12 +169,11 @@ export default class Drawflow {
       if (this.prevDiff > 100) {
         if (curDiff > this.prevDiff) {
           // The distance between the two pointers has increased
-
-          this.zoom_in();
+          //this.zoom_in();
         }
         if (curDiff < this.prevDiff) {
           // The distance between the two pointers has decreased
-          this.zoom_out();
+          //this.zoom_out();
         }
       }
       this.prevDiff = curDiff;
@@ -328,6 +375,12 @@ export default class Drawflow {
     }
   }
 
+  updateMousePosition(event) {
+    const rect = this.precanvas.getBoundingClientRect();
+    this.lastMouseX = event.clientX - rect.left;
+    this.lastMouseY = event.clientY - rect.top;
+  }
+
   position(e) {
     var pos_y;
     var pos_x;
@@ -406,6 +459,7 @@ export default class Drawflow {
       this.mouse_x = e_pos_x;
       this.mouse_y = e_pos_y;
     }
+    this.updateMousePosition(e);
   }
 
   dragEnd(e) {
@@ -625,21 +679,8 @@ export default class Drawflow {
     }
   }
 
-  zoom_enter(event) {
-    event.preventDefault();
-    if (event.deltaY > 0) {
-      // Zoom Out
-      this.zoom_out(event);
-    } else {
-      // Zoom In
-      this.zoom_in(event);
-    }
-  }
-
   zoom_refresh() {
-    this.canvas_x = (this.canvas_x / this.zoom_last_value) * this.zoom;
-    this.canvas_y = (this.canvas_y / this.zoom_last_value) * this.zoom;
-    this.zoom_last_value = this.zoom;
+    this.precanvas.style.transformOrigin = "0 0";
     this.precanvas.style.transform =
       "translate(" +
       this.canvas_x +
@@ -650,59 +691,53 @@ export default class Drawflow {
       ")";
   }
 
-  zoom_in(event) {
-    if (this.zoom < this.zoom_max) {
-      const rect = this.precanvas.getBoundingClientRect();
-      const pointerX = (event.clientX - rect.left) / this.zoom;
-      const pointerY = (event.clientY - rect.top) / this.zoom;
-
-      const centerPoint = { x: pointerX, y: pointerY };
-      let newZoom = this.zoom + this.zoom_value;
-
-      if (newZoom > this.zoom_max) newZoom = this.zoom_max;
-      if (newZoom < this.zoom_min) newZoom = this.zoom_min;
-
-      const deltaZoom = newZoom - this.zoom;
-
-      const offsetX = 33; // keeps the zoom - left
-      const offsetY = 13; // keeps the zoom - top
-
-      this.canvas_x -= deltaZoom * centerPoint.x - offsetX;
-      this.canvas_y -= deltaZoom * centerPoint.y - offsetY;
-
-      this.zoom = newZoom;
-      this.zoom_refresh();
-    }
+  applyTransform() {
+    this.precanvas.style.transformOrigin = "0 0";
+    this.precanvas.style.transform = `translate(${this.canvas_x}px, ${this.canvas_y}px) scale(${this.zoom})`;
   }
 
-  zoom_out(event) {
-    if (this.zoom > this.zoom_min) {
-      const rect = this.precanvas.getBoundingClientRect();
-      const pointerX = (event.clientX - rect.left) / this.zoom;
-      const pointerY = (event.clientY - rect.top) / this.zoom;
+  handleZoom(event) {
+    event.preventDefault();
 
-      const centerPoint = { x: pointerX, y: pointerY };
-      let newZoom = this.zoom - this.zoom_value;
+    const mouseX = event.clientX;
+    const mouseY = event.clientY;
 
-      if (newZoom > this.zoom_max) newZoom = this.zoom_max;
-      if (newZoom < this.zoom_min) newZoom = this.zoom_min;
+    // Calculate new zoom level
+    const delta = event.deltaY;
+    let newZoom = this.zoom * 0.999 ** delta;
+    // Limit zoom level
+    newZoom = Math.min(Math.max(newZoom, 0.01), 20);
 
-      const deltaZoom = this.zoom - newZoom;
+    // Calculate the point in canvas coordinates
+    const pointX = (mouseX - this.canvas_x) / this.zoom;
+    const pointY = (mouseY - this.canvas_y) / this.zoom;
 
-      const offsetX = 33;
-      const offsetY = 13;
+    // Calculate new canvas position to keep the point fixed
+    this.canvas_x = mouseX - pointX * newZoom;
+    this.canvas_y = mouseY - pointY * newZoom;
 
-      this.canvas_x += deltaZoom * centerPoint.x - offsetX;
-      this.canvas_y += deltaZoom * centerPoint.y - offsetY;
+    // Update zoom
+    this.zoom = newZoom;
 
-      this.zoom = newZoom;
-      this.zoom_refresh();
-    }
+    this.applyTransform();
+
+    console.log(
+      "Zoom:",
+      this.zoom,
+      "Canvas Position:",
+      { x: this.canvas_x, y: this.canvas_y },
+      "Mouse:",
+      { x: mouseX, y: mouseY },
+      "Fixed Point:",
+      { x: pointX, y: pointY },
+    );
   }
 
   zoom_reset() {
     if (this.zoom != 1) {
       this.zoom = 1;
+      this.canvas_x = 0;
+      this.canvas_y = 0;
       this.zoom_refresh();
     }
   }
