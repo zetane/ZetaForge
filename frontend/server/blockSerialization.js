@@ -156,10 +156,14 @@ export async function callAgent(
   conversationHistory,
   apiKey,
 ) {
-  let agents = "agents";
-  if (app.isPackaged) {
-    agents = path.join(process.resourcesPath, "agents");
-  }
+
+  //KEEPING THOSE FOR REFERENCE, IF WE EVER DECIDE TO MIGRATE BACK TO PYTHON AGENTS
+
+
+  // let agents = "agents";
+  // if (app.isPackaged) {
+  //   agents = path.join(process.resourcesPath, "agents");
+  // }
   // const scriptPath = path.join(
   //   agents,
   //   agentName,
