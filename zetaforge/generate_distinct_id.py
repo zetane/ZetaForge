@@ -1,6 +1,6 @@
 import re
 import psutil
-
+import socket
 
 # Regex patterns to filter MAC addresses
 mac_regex = re.compile(r"(?:[a-zA-Z0-9]{1,2}[:-]){5}[a-zA-Z0-9]{1,2}")
@@ -19,8 +19,26 @@ interfaces = psutil.net_if_addrs()
 
 def get_mac(iface=None):
     interfaces = psutil.net_if_addrs()
-    sorted_interfaces = dict(sorted(interfaces.items(), key=lambda item: item[0]))
+    interfaces_with_addresses = dict()
 
+# Iterate through the interfaces
+    for iface_name, iface_addresses in interfaces.items():
+        # Check if there are any addresses assigned to the interface
+        # print(len(iface_addresses))
+        for add in iface_addresses:
+            print(add.address)
+
+        has_address = any(addr.family in (socket.AF_INET, socket.AF_INET6) and addr.address for addr in iface_addresses)
+
+        if has_address:
+            interfaces_with_addresses[iface_name] = iface_addresses
+    
+    print("CHECK LEN")
+    print(len(interfaces_with_addresses))
+    
+    sorted_interfaces = dict(sorted(interfaces_with_addresses.items(), key=lambda item: item[0]))
+    # print("CHECK LEN")
+    # print(len(sorted_interfaces))
     # print(interfaces)
     # If a specific interface is provided
     if iface:
