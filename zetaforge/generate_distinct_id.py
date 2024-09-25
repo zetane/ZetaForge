@@ -24,7 +24,6 @@ def get_mac(iface=None):
     # print(interfaces)
     # If a specific interface is provided
     if iface:
-        print("SHOULDNT BE HERE")
         if iface not in interfaces:
             raise ValueError(f"Interface {iface} was not found")
         
@@ -34,7 +33,6 @@ def get_mac(iface=None):
         raise ValueError(f"Interface {iface} had no valid MAC addresses")
     
     # If no interface is provided, iterate over all interfaces
-    print(sorted_interfaces.items())
     for key, addrs in sorted_interfaces.items():
         
         for addr in addrs:
@@ -51,4 +49,3 @@ def get_mac(iface=None):
 
 
 
-get_mac()

@@ -37,20 +37,24 @@ func generateDistinctID(iface ...string) string {
 }
 
 func macAddressToDecimal(mac string) (*big.Int, error) {
+	// Remove colons from the MAC address
 	macWithoutColons := strings.ReplaceAll(mac, ":", "")
-	interimMac := strings.ReplaceAll(macWithoutColons, ":", "-")
-	macLower := strings.ToLower(interimMac)
-	
 
-	// Convert the byte slice to a BigInt
-    macAsBigInt, success := new(big.Int).SetString(macLower, 16)
-
+	// Convert MAC address string to big.Int
+	macAsBigInt, success := new(big.Int).SetString(macWithoutColons, 16)
 	if !success {
-        return nil, fmt.Errorf("failed to convert MAC to big.Int")
-    }
+		return nil, fmt.Errorf("failed to convert MAC to big.Int")
+	}
+
+	// Check if the MAC address is universally administered (bit 1 of first byte is 0)
+	universallyAdministered := new(big.Int).And(macAsBigInt, big.NewInt(0x020000000000)).Cmp(big.NewInt(0)) == 0
+
+	// If not universally administered, set the multicast bit
+	if !universallyAdministered {
+		macAsBigInt.Or(macAsBigInt, big.NewInt(0x010000000000))
+	}
 
 	return macAsBigInt, nil
-
 }
 
 
@@ -86,9 +90,29 @@ func getMACAddress(ifaceName ...string) (string, *big.Int, error) {
 	sort.Slice(interfaces, func(i, j int) bool {
 		return interfaces[i].Name < interfaces[j].Name
 	})
+    var interfacesWithAddresses []net.Interface
+
+
+	for _, iface := range interfaces {
+        // Retrieve addresses associated with the interface
+        addrs, err := iface.Addrs()
+        if err != nil {
+            fmt.Println("Error fetching addresses for", iface.Name, ":", err)
+            continue
+        }
+
+        // If the interface has addresses, add it to the list
+        if len(addrs) > 0 {
+            interfacesWithAddresses = append(interfacesWithAddresses, iface)
+        }
+    }
+
+	sort.Slice(interfacesWithAddresses, func(i, j int) bool {
+		return interfacesWithAddresses[i].Name < interfacesWithAddresses[j].Name
+	})
 
 	// Find the first non-loopback interface with a hardware address
-	for _, iface := range interfaces {
+	for _, iface := range interfacesWithAddresses {
 		if iface.Flags&net.FlagLoopback == 0 && len(iface.HardwareAddr) > 0 {
 			macAddress := iface.HardwareAddr.String()
 			macInt, err := macAddressToDecimal(macAddress)

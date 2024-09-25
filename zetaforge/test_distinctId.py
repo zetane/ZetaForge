@@ -68,7 +68,6 @@ def get_mac_address_in_node(iface=None):
         
         # print(result.stdout)
         # Parse the JSON output from the Node.js script
-        print("CHECK MAC DATA")
         print(result.stdout)
         mac_data = json.loads(result.stdout)
         
@@ -135,10 +134,10 @@ class TESTMACAddressWithPythonLibrary(unittest.TestCase):
         # elif platform.system() == 'Linux':
         #     iface = 'eth0'
         
-        [mac_go, distinct_id_go] = get_mac_and_distinctId_in_go(iface=iface)
+        [mac_go, distinct_id_go] = get_mac_and_distinctId_in_go()
         
         mac_address_py = get_mac_adddress_python_lib(iface=iface, func=get_mac_py)
-        [node_js_part_mac, _, networkinfo, MAC_address, distinct_id] = get_mac_address_in_node(iface=iface)
+        [node_js_part_mac, _, networkinfo, MAC_address, distinct_id] = get_mac_address_in_node()
 
         print("MAC ADDRESS FOR NODEJS IS ", MAC_address)
         print("MAC ADDRESS FOR PYTHON IS", mac_address_py)

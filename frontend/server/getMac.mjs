@@ -26,15 +26,15 @@ export default function getMAC(iface) {
 		}
 		throw new Error(`interface ${iface} had no valid mac addresses`)
 	} else {
-		const sortedList = Object.entries(list).sort( ([keyA, keyB]) => keyA.localeCompare(keyB))
-		console.log(sortedList[0])
+		const sortedList = Object.entries(list).sort( ([keyA], [keyB]) => keyA.localeCompare(keyB))
+		
 		for (const [key, parts] of sortedList) {
 			// for some reason beyond me, this is needed to satisfy typescript
 			// fix https://github.com/bevry/getmac/issues/100
-			console.log(key)
 			if (!parts) continue
 			for (const part of parts) {
 				if (zeroRegex.test(part.mac) === false) {
+					
 					return [part.mac, key, part]
 				}
 			}
@@ -59,4 +59,4 @@ export function isMAC(macAddress) {
 	return macRegex.test(macAddress)
 }
 
-getMAC()
+// getMAC()
