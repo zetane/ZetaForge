@@ -15,6 +15,8 @@ go_path = Path(__file__).parent / "test"
 print("RUNNING FOR THE PLATFORM ", platform.system(), " WITH THE ARCHITECTURE ", platform.architecture())
 
 
+#CHECK THIS FOR COMMIT
+
 
 def get_mac_and_distinctId_in_go(iface=None):
 
