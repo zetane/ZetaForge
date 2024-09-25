@@ -37,27 +37,27 @@ class MixpanelService {
   }
 
   async trackEvent(eventName, eventData = {}) {
-    if (this.disabled) {
-      return;
-    }
     if (this.distinctId == null) {
       await this.initializeDistinctId();
+      try {
+        if (this.distinctId) {
+          mixpanel.identify(this.distinctId);
+          mixpanel.people.set_once();
+        }
+      } catch (e) {
+        console.log("Failed to set id");
+      }
     }
     if (this.disabled) {
       return;
     }
     try {
-      mixpanel.identify(this.distinctId);
-      mixpanel.people.set_once();
-
       mixpanel.track(eventName, {
         ...eventData,
         distinct_id: this.distinctId,
         is_dev: this.isDev,
       });
-    } catch (err) {
-      this.disabled = true;
-    }
+    } catch (err) {}
   }
 }
 

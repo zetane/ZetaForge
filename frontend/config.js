@@ -13,6 +13,11 @@ export default {
     port: import.meta.env.VITE_ANVIL_PORT,
     token: "",
   },
+  express: {
+    scheme: "http",
+    host: "localhost",
+    port: "3330",
+  },
   logger: {
     level: import.meta.env.VITE_LOG_LEVEL,
     pretty: import.meta.env.VITE_LOG_PRETTY,

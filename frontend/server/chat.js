@@ -1,7 +1,7 @@
 import fs from "fs/promises";
-import path from "path";
 import { fileExists, readJsonToObject } from "./fileSystem";
 import z from "zod";
+import path from "path";
 
 const CHAT_HISTORY_FILE_NAME = "chatHistory.json";
 const COMPUTATIONS_FILE_NAME = "computations.py";
@@ -26,35 +26,55 @@ const legacySchema = z.array(
   }),
 );
 
-export async function getHistory(blockPath) {
-  const chat = await getChat(blockPath);
+export async function getHistory(pipelinePath, blockId) {
+  const chatPath = path.join(pipelinePath, blockId, CHAT_HISTORY_FILE_NAME);
+  const codeTemplatePath = path.join(
+    pipelinePath,
+    blockId,
+    COMPUTATIONS_FILE_NAME,
+  );
+  const chat = await getChat(chatPath, codeTemplatePath);
   return chat.history;
 }
 
-export async function updateHistory(blockPath, newHistory) {
-  const chatPath = path.join(blockPath, CHAT_HISTORY_FILE_NAME);
-  const chat = await getChat(blockPath);
+export async function updateHistory(pipelinePath, blockId, newHistory) {
+  const chatPath = path.join(pipelinePath, blockId, CHAT_HISTORY_FILE_NAME);
+  const codeTemplatePath = path.join(
+    pipelinePath,
+    blockId,
+    COMPUTATIONS_FILE_NAME,
+  );
+  const chat = await getChat(chatPath, codeTemplatePath);
   chat.history = newHistory;
   await fs.writeFile(chatPath, JSON.stringify(chat, null, 2));
 }
 
-export async function getIndex(blockPath) {
-  const chat = await getChat(blockPath);
+export async function getIndex(pipelinePath, blockId) {
+  const chatPath = path.join(pipelinePath, blockId, CHAT_HISTORY_FILE_NAME);
+  const codeTemplatePath = path.join(
+    pipelinePath,
+    blockId,
+    COMPUTATIONS_FILE_NAME,
+  );
+  const chat = await getChat(chatPath, codeTemplatePath);
   return chat.index;
 }
 
-export async function updateIndex(blockPath, newIndex) {
-  const chatPath = path.join(blockPath, CHAT_HISTORY_FILE_NAME);
-  const chat = await getChat(blockPath);
+export async function updateIndex(pipelinePath, blockId, newIndex) {
+  const chatPath = path.join(pipelinePath, blockId, CHAT_HISTORY_FILE_NAME);
+  const codeTemplatePath = path.join(
+    pipelinePath,
+    blockId,
+    COMPUTATIONS_FILE_NAME,
+  );
+  const chat = await getChat(chatPath, codeTemplatePath);
   chat.index = newIndex;
   await fs.writeFile(chatPath, JSON.stringify(chat, null, 2));
 }
 
-async function getChat(blockPath) {
-  const chatPath = path.join(blockPath, CHAT_HISTORY_FILE_NAME);
-
+async function getChat(chatPath, codeTemplatePath) {
   if (!(await fileExists(chatPath))) {
-    const chat = await createDefaultChat(blockPath);
+    const chat = await createDefaultChat(codeTemplatePath);
     await fs.writeFile(chatPath, JSON.stringify(chat, null, 2));
     return chat;
   }
@@ -63,14 +83,14 @@ async function getChat(blockPath) {
   try {
     fileContent = await readJsonToObject(chatPath);
   } catch {
-    const chat = await createDefaultChat(blockPath);
+    const chat = await createDefaultChat(codeTemplatePath);
     await fs.writeFile(chatPath, JSON.stringify(chat, null, 2));
     return chat;
   }
 
   const result = schema.safeParse(fileContent);
   if (!result.success) {
-    const chat = await handleInvalidSchema(fileContent, blockPath);
+    const chat = await handleInvalidSchema(codeTemplatePath);
     await fs.writeFile(chatPath, JSON.stringify(chat, null, 2));
     return chat;
   }
@@ -78,17 +98,16 @@ async function getChat(blockPath) {
   return result.data;
 }
 
-async function handleInvalidSchema(fileContent, blockPath) {
+async function handleInvalidSchema(fileContent, codeTemplatePath) {
   const result = legacySchema.safeParse(fileContent);
   if (result.success) {
-    return await upgradeChatHistory(fileContent, blockPath);
+    return await upgradeChatHistory(fileContent, codeTemplatePath);
   }
 
-  return await createDefaultChat(blockPath);
+  return await createDefaultChat(codeTemplatePath);
 }
 
-async function createDefaultChat(blockPath) {
-  const codeTemplatePath = path.join(blockPath, COMPUTATIONS_FILE_NAME);
+async function createDefaultChat(codeTemplatePath) {
   const codeTemplate = await fs.readFile(codeTemplatePath, "utf8");
   const chatHistory = {
     index: 0,
@@ -103,8 +122,7 @@ async function createDefaultChat(blockPath) {
   return chatHistory;
 }
 
-async function upgradeChatHistory(history, blockPath) {
-  const codeTemplatePath = path.join(blockPath, COMPUTATIONS_FILE_NAME);
+async function upgradeChatHistory(history, codeTemplatePath) {
   const currentCode = await fs.readFile(codeTemplatePath, "utf8");
 
   let codeIndex = -1;

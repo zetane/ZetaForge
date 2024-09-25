@@ -1,9 +1,9 @@
-import { LogsCodeMirror } from "@/components/ui/blockEditor/CodeMirrorComponents";
-import ClosableModal from "./modal/ClosableModal";
-import ScrollToBottom from "react-scroll-to-bottom";
-import { useMemo } from "react";
-import { useAtom } from "jotai";
 import { logsAtom } from "@/atoms/logsAtom";
+import { LogsCodeMirror } from "@/components/ui/blockEditor/directoryViewer/CodeMirrorComponents";
+import { useAtom } from "jotai";
+import { useMemo } from "react";
+import ScrollToBottom from "react-scroll-to-bottom";
+import ClosableModal from "./modal/ClosableModal";
 
 export const isEmpty = (obj) => {
   for (var i in obj) return false;

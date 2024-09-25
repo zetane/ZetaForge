@@ -3,9 +3,42 @@ import { useAtom, useAtomValue } from "jotai";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { useQuery } from "@tanstack/react-query";
-import { getFileData } from "@/utils/s3";
+import { getS3FileData, getLocalFileData } from "@/utils/s3";
 import { useImmerAtom } from "jotai-immer";
 import { logsAtom, parseLogLine } from "@/atoms/logsAtom";
+
+function splitLogPath(input) {
+  const parts = input.split("/");
+
+  if (parts.length < 3) {
+    throw new Error("Input string does not have enough parts");
+  }
+
+  const pipelineId = parts[0];
+  const executionId = parts[1];
+  const file = parts.slice(2).join("/");
+
+  return { pipelineId, executionId, file };
+}
+
+async function fetchLogData(logPath, configuration) {
+  console.log("logPath: ", logPath);
+  const { pipelineId, executionId, file } = splitLogPath(logPath);
+
+  const localFileKey = `${pipelineId}/history/${executionId}/files/${file}`;
+
+  try {
+    // First, try to fetch from localhost
+    const localData = await getLocalFileData(localFileKey);
+    return localData;
+  } catch (error) {
+    console.log("Failed to fetch from localhost, falling back to S3:", error);
+
+    // If local fetch fails, try S3
+    const s3Data = await getS3FileData(logPath, configuration);
+    return s3Data;
+  }
+}
 
 export const useUnifiedLogs = () => {
   const [pipeline, _] = useAtom(pipelineAtom);
@@ -44,7 +77,7 @@ export const useUnifiedLogs = () => {
   const { data: polledData } = useQuery({
     queryKey: ["logs", pipeline?.history],
     queryFn: async () => {
-      const fileData = await getFileData(
+      const fileData = await fetchLogData(
         pipeline?.record?.LogPath,
         configuration,
       );

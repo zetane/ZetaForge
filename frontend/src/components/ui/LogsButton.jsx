@@ -26,7 +26,7 @@ export default function LogsButton() {
     <Button
       style={styles}
       size="sm"
-      kind="secondary"
+      kind="tertiary"
       onClick={() =>
         modalPopper(<PipelineLogs logs={logs} title="Pipeline Logs" />)
       }

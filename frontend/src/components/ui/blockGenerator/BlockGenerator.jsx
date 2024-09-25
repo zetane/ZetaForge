@@ -4,6 +4,8 @@ import { Code, View, CloudLogging } from "@carbon/icons-react";
 import { useImmerAtom } from "jotai-immer";
 import { useEffect, useRef, useState, useMemo } from "react";
 import { FileBlock } from "./FileBlock";
+import { FolderBlock } from "./Folder-uploadBlock";
+import { MultiFileBlock } from "./MultiFileBlock";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { modalContentAtom } from "@/atoms/modalAtom";
 import { useAtom } from "jotai";
@@ -11,7 +13,6 @@ import ClosableModal from "@/components/ui/modal/ClosableModal";
 import { trimQuotes } from "@/utils/blockUtils";
 import React from "react";
 import { logsAtom } from "@/atoms/logsAtom";
-import { LogsCodeMirror } from "@/components/ui/blockEditor/CodeMirrorComponents";
 import { isEmpty, PipelineLogs } from "@/components/ui/PipelineLogs";
 
 const isTypeDisabled = (action) => {
@@ -19,25 +20,6 @@ const isTypeDisabled = (action) => {
     return false;
   }
   return true;
-};
-
-const checkPath = async (path, count, setIframeSrc) => {
-  fetch(path)
-    .then((response) => {
-      if (response.status === 404) {
-        console.log("Path not found. Retrying in 1 second...");
-        if (count < 15) {
-          setTimeout(() => {
-            checkPath(path, count + 1, setIframeSrc);
-          }, 1000);
-        }
-      } else {
-        setIframeSrc(path);
-      }
-    })
-    .catch((error) => {
-      console.log("Error:", error);
-    });
 };
 
 const BlockGenerator = ({
@@ -92,13 +74,41 @@ const BlockGenerator = ({
 
   const [iframeSrc, setIframeSrc] = useState("");
   useEffect(() => {
+    let isMounted = true;
+    let timeoutId = null;
+
+    const checkPath = async (path, count) => {
+      try {
+        const response = await fetch(path);
+        if (!isMounted) return; // Stop if component unmounted
+
+        if (response.status === 404) {
+          console.log("Path not found. Retrying in 1 second...");
+          if (count < 15) {
+            timeoutId = setTimeout(() => {
+              checkPath(path, count + 1);
+            }, 1000);
+          }
+        } else {
+          if (isMounted) setIframeSrc(path);
+        }
+      } catch (error) {
+        if (isMounted) console.log("Error:", error);
+      }
+    };
+
     if (block.events.outputs?.html) {
-      // these outputs are a special case
       const html = trimQuotes(block.events.outputs.html);
       const fileUrl = `http://localhost:3330/result/${pipelineId}/history/${executionId}/files/${html}`;
-      checkPath(fileUrl, 0, setIframeSrc);
+      checkPath(fileUrl, 0);
     }
-  }, [block.events.outputs]);
+
+    // Cleanup function
+    return () => {
+      isMounted = false;
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [block.events.outputs, pipelineId, executionId]);
 
   const disabled = isTypeDisabled(block.action);
   const preview = block.views.node.preview?.active == "true";
@@ -119,13 +129,28 @@ const BlockGenerator = ({
       nodeRefs={nodeRefs}
     />
   );
-  const type = block?.action?.parameters?.path?.type;
-  if (
-    type == "folder" ||
-    type == "file" ||
-    type == "blob" ||
-    type == "fileLoad"
-  ) {
+  const type =
+    block?.action?.parameters?.path?.type ||
+    block?.action?.parameters?.files?.type;
+  if (type == "folder" || block.information.id == "folder-upload") {
+    content = (
+      <FolderBlock
+        blockId={id}
+        block={block}
+        setFocusAction={setFocusAction}
+        history={history}
+      />
+    );
+  } else if (type == "file[]" || type == "multiFile") {
+    content = (
+      <MultiFileBlock
+        blockId={id}
+        block={block}
+        setFocusAction={setFocusAction}
+        history={history}
+      />
+    );
+  } else if (type == "file" || type == "blob" || type == "fileLoad") {
     content = (
       <FileBlock
         blockId={id}
