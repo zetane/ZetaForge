@@ -147,9 +147,7 @@ export default function RunPipelineButton({ children, action }) {
     margin: "5px",
   };
 
-  console.log("CHECK WORKSPACE");
-  console.log(workspace);
-  console.log(workspace.connected);
+  
   return (
     <>
       <Button
