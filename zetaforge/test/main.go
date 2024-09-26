@@ -92,28 +92,36 @@ func getMACAddress(ifaceName ...string) (string, *big.Int, error) {
 	})
     var interfacesWithAddresses []net.Interface
 
-
+	fmt.Println("CHECK BELOW")
+	var i = 0
 	for _, iface := range interfaces {
         // Retrieve addresses associated with the interface
         addrs, err := iface.Addrs()
         if err != nil {
             fmt.Println("Error fetching addresses for", iface.Name, ":", err)
             continue
+			
         }
 
         // If the interface has addresses, add it to the list
         if len(addrs) > 0 {
             interfacesWithAddresses = append(interfacesWithAddresses, iface)
+			i = i + 1
         }
     }
-
+	fmt.Println("TOTAL NETWORKS NUM ", i)
 	sort.Slice(interfacesWithAddresses, func(i, j int) bool {
 		return interfacesWithAddresses[i].Name < interfacesWithAddresses[j].Name
 	})
 
+	for _, iface := range interfacesWithAddresses {
+		fmt.Println("AVAILABLE INTERFACE: ", iface.Name)
+	}
+
 	// Find the first non-loopback interface with a hardware address
 	for _, iface := range interfacesWithAddresses {
 		if iface.Flags&net.FlagLoopback == 0 && len(iface.HardwareAddr) > 0 {
+			fmt.Println("USED NETWORK IS ", iface.Name)
 			macAddress := iface.HardwareAddr.String()
 			macInt, err := macAddressToDecimal(macAddress)
 			if err != nil {
@@ -122,6 +130,8 @@ func getMACAddress(ifaceName ...string) (string, *big.Int, error) {
 			return macAddress, macInt, nil
 		}
 	}
+
+	
 
 	return "", new(big.Int).SetInt64(0), fmt.Errorf("unable to determine distinct_id, using default distinct_id")
 }
