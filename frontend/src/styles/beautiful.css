@@ -508,10 +508,14 @@ header a {
   overflow-x: scroll;
 }
 
-/* .anvil-config-modal .cds--modal-content {
+.anvil-config-modal .cds--modal-content {
   overflow-y: visible !important;
-} */
+}
+
+.anvil-config-modal-formOpen .cds--modal-content {
+  overflow-y: auto;
+}
 
 /* .anvil-config-table .cds--dropdown {
   position: relative;
-} */
+}  */

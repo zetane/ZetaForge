@@ -138,10 +138,11 @@ export default function AnvilConfigurationsModal(props) {
     setConfirmationIsOpen(false);
   };
 
+  const className = formOpen ? "anvil-config-modal-formOpen" : "anvil-config-modal"
   return (
     <>
       <ClosableModal
-        className="anvil-config-modal"
+        className={className}
         modalHeading={title}
         size="lg"
         primaryButtonText={"Save & Relaunch"}
