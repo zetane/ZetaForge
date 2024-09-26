@@ -19,18 +19,24 @@ interfaces = psutil.net_if_addrs()
 
 def get_mac(iface=None):
     interfaces = psutil.net_if_addrs()
+    interface_stats = psutil.net_if_stats()
+
     interfaces_with_addresses = dict()
 
 # Iterate through the interfaces
     for iface_name, iface_addresses in interfaces.items():
         # Check if there are any addresses assigned to the interface
         # print(len(iface_addresses))
+        iface_stat = interface_stats.get(iface_name)
+
+        is_up = iface_stat.isup if iface_stat else False
+        # is_loopback = iface_stat.isloopback if iface_stat else False
         for add in iface_addresses:
             print(add.address)
 
         has_address = any(addr.family in (socket.AF_INET, socket.AF_INET6) and addr.address for addr in iface_addresses)
 
-        if has_address:
+        if has_address and is_up:
             interfaces_with_addresses[iface_name] = iface_addresses
     
     print("CHECK LEN")
@@ -67,3 +73,4 @@ def get_mac(iface=None):
 
 
 
+get_mac()

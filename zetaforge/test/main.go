@@ -86,6 +86,13 @@ func getMACAddress(ifaceName ...string) (string, *big.Int, error) {
 	if err != nil {
 		return "", nil, err
 	}
+
+	var j = 0
+	for _, iface := range interfaces {
+		j = j + 1
+		iface = iface
+	}
+	fmt.Println("INTERFACES NUM BEFORE FILTERING ", j)
 	
 	sort.Slice(interfaces, func(i, j int) bool {
 		return interfaces[i].Name < interfaces[j].Name
@@ -104,11 +111,19 @@ func getMACAddress(ifaceName ...string) (string, *big.Int, error) {
         }
 
         // If the interface has addresses, add it to the list
+		if iface.Flags&net.FlagUp != 0 && iface.Flags&net.FlagLoopback == 0 {
+
         if len(addrs) > 0 {
+			fmt.Println("CHECK ADDRESS")
+			fmt.Println(addrs)
+			fmt.Println(iface.Name)
+
             interfacesWithAddresses = append(interfacesWithAddresses, iface)
 			i = i + 1
         }
     }
+
+	}
 	fmt.Println("TOTAL NETWORKS NUM ", i)
 	sort.Slice(interfacesWithAddresses, func(i, j int) bool {
 		return interfacesWithAddresses[i].Name < interfacesWithAddresses[j].Name
