@@ -61,7 +61,6 @@ export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
   
   if (await fileExists(writePipelineDirectory)) {
     
-    console.log(writePipelineDirectory)
     await getBlockIndex([writePipelineDirectory]);
   } else {
     
