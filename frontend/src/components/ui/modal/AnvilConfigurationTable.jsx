@@ -174,7 +174,7 @@ function ConfigRow({
         <Dropdown
           items={availableKubeContextsAtom}
           onChange={handleSelection}
-          disabled={false}
+          disabled={disable}
           selectedItem={isCloud ? "" : currentKubeContext}
         />
       </TableCell>
