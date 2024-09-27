@@ -139,7 +139,7 @@ class TESTMACAddressWithPythonLibrary(unittest.TestCase):
         [mac_go, distinct_id_go] = get_mac_and_distinctId_in_go()
         
         mac_address_py = get_mac_adddress_python_lib(iface=iface, func=get_mac_py)
-        [node_js_part_mac, _, networkinfo, MAC_address, distinct_id] = get_mac_address_in_node()
+        [node_js_part_mac, networkinfo, MAC_address, distinct_id] = get_mac_address_in_node()
 
         print("MAC ADDRESS FOR NODEJS IS ", MAC_address)
         print("MAC ADDRESS FOR PYTHON IS", mac_address_py)
