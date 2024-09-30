@@ -628,8 +628,6 @@ export default class Drawflow {
   }
 
   zoom_refresh() {
-    console.log(this.canvas_x, this.canvas_y);
-    console.log(this.zoom);
     this.precanvas.style.transformOrigin = "0 0";
     this.precanvas.style.transform =
       "translate(" +
