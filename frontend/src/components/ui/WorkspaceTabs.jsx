@@ -9,7 +9,7 @@ export default function WorkspaceTabs() {
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
   const [renderedTabs, setRenderedTabs] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [zoomLevels, setZoomLevels] = useState({});
+  const [cam, setCam] = useState({});
 
   const [editor] = useAtom(drawflowEditorAtom);
 
@@ -33,17 +33,23 @@ export default function WorkspaceTabs() {
     const index = evt.selectedIndex;
     const key = renderedTabs[index]?.id;
 
-    setZoomLevels((prevZoomLevels) => ({
-      ...prevZoomLevels,
-      [workspace.active]: editor?.zoom,
-    }));
+    setCam((prevCam) => {
+      const pos = { x: editor?.canvas_x, y: editor?.canvas_y };
+      const newCam = {
+        ...prevCam,
+        [workspace.active]: { zoom: editor?.zoom, pos: pos },
+      };
+      return newCam;
+    });
 
     setWorkspace((draft) => {
       draft.active = key;
     });
 
     if (editor) {
-      editor.zoom = zoomLevels[key] ?? 1;
+      editor.zoom = cam[key]?.zoom ?? 1;
+      editor.canvas_x = cam[key]?.pos.x ?? 0;
+      editor.canvas_y = cam[key]?.pos.y ?? 0;
       editor.zoom_refresh(); // Refresh after setting zoom, *required.
     }
   };

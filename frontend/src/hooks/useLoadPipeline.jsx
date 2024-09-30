@@ -53,7 +53,6 @@ export const useLoadPipeline = () => {
       await window.cache.local(),
       loadedPipeline,
     );
-    console.log("new: ", newPipeline);
     const key = pipelineKey(newPipeline.id, null);
 
     setWorkspace((draft) => {
@@ -136,30 +135,44 @@ function sortSpecsKeys(pipeline) {
 }
 
 export const useLoadServerPipeline = () => {
-  const loadPipeline = async (pipeline, configuration) => {
-    if (!pipeline) {
+  const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
+
+  const loadPipeline = async (serverPipeline, configuration) => {
+    if (!serverPipeline) {
       return;
     }
     const host = configuration?.anvil?.host;
     const port = configuration?.anvil?.port;
     const hostString = host + ":" + port;
 
-    const path = `${await window.cache.local()}${pipeline.Uuid}`;
-    const pipelineData = JSON.parse(pipeline.PipelineJson);
-    let data = removeNullInputsOutputs(pipelineData?.pipeline);
-    const executionId = pipeline.Execution;
+    const localKey = serverPipeline.Uuid + ".";
+    let path = `${await window.cache.local()}${serverPipeline.Uuid}`;
+    const local = workspace.pipelines[localKey];
+    // Need to check if we've loaded a local path and use it for the history
+    if (local && local.path) {
+      path = local.path;
+    }
+
+    const serverPipelineData = JSON.parse(serverPipeline.PipelineJson);
+    let data = removeNullInputsOutputs(serverPipelineData?.pipeline);
+    const executionId = serverPipeline.Execution;
     let socketUrl = null;
-    if (pipeline.Status == "Pending" || pipeline.Status == "Running") {
+    if (
+      serverPipeline.Status == "Pending" ||
+      serverPipeline.Status == "Running"
+    ) {
       socketUrl = getWsConnection(configuration, `ws/${executionId}`);
     }
     const loadedPipeline = {
-      name: pipelineData.name ? pipelineData.name : pipelineData.id,
+      name: serverPipelineData.name
+        ? serverPipelineData.name
+        : serverPipelineData.id,
       saveTime: Date.now(),
       path: path,
       data: data,
-      id: pipeline.Uuid,
-      history: pipeline.Uuid + "/" + executionId,
-      record: pipeline,
+      id: serverPipeline.Uuid,
+      history: serverPipeline.Uuid + "/" + executionId,
+      record: serverPipeline,
       host: hostString,
       socketUrl: socketUrl,
     };
@@ -174,8 +187,10 @@ export const useLoadServerPipeline = () => {
 };
 
 export const useLoadExecution = () => {
-  const loadExecution = async (pipeline, configuration) => {
-    if (!pipeline) {
+  const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
+
+  const loadExecution = async (execution, configuration) => {
+    if (!execution) {
       return;
     }
 
@@ -183,29 +198,37 @@ export const useLoadExecution = () => {
     const port = configuration?.anvil?.port;
     const hostString = host + ":" + port;
 
-    let pipelineData = JSON.parse(pipeline.PipelineJson);
-    if (pipeline.Results != "") {
-      pipelineData = JSON.parse(pipeline.Results);
+    let executionData = JSON.parse(execution.PipelineJson);
+    if (execution.Results != "") {
+      executionData = JSON.parse(execution.Results);
     }
-    const path = `${await window.cache.local()}${pipelineData.id}`;
-    const executionId = pipeline.Execution;
+
+    let path = `${await window.cache.local()}${executionData.id}`;
+    const localKey = execution.Uuid + ".";
+    const local = workspace.pipelines[localKey];
+    // Need to check if we've loaded a local path and use it for the history
+    if (local && local.path) {
+      path = local.path;
+    }
+
+    const executionId = execution.Execution;
     let socketUrl = null;
-    if (pipeline.Status == "Pending" || pipeline.Status == "Running") {
+    if (execution.Status == "Pending" || execution.Status == "Running") {
       socketUrl = getWsConnection(configuration, `ws/${executionId}`);
     }
-    let data = removeNullInputsOutputs(pipelineData?.pipeline);
+    let data = removeNullInputsOutputs(executionData?.pipeline);
 
     const loadedPipeline = {
-      name: pipelineData.name ? pipelineData.name : pipelineData.id,
+      name: executionData.name ? executionData.name : executionData.id,
       saveTime: Date.now(),
       path: path,
       data: data,
-      id: pipelineData.id,
-      history: pipelineData.id + "/" + executionId,
-      record: pipeline,
+      id: executionData.id,
+      history: executionData.id + "/" + executionId,
+      record: execution,
       host: hostString,
       socketUrl: socketUrl,
-      logs: pipeline?.Log,
+      logs: execution?.Log,
     };
     let newPipeline = pipelineFactory(
       await window.cache.local(),
