@@ -10,6 +10,7 @@ export const useSyncExecutionResults = () => {
 
   const syncExecutionResults = async (key) => {
     const pipeline = workspace.pipelines[key];
+    console.log("syncing to : ", pipeline.path);
     await downloadExecutionResults.mutateAsync({
       pipelinePath: pipeline.path,
       pipelineUuid: pipeline.record.Uuid,

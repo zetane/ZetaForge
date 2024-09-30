@@ -14,6 +14,7 @@ import { trimQuotes } from "@/utils/blockUtils";
 import React from "react";
 import { logsAtom } from "@/atoms/logsAtom";
 import { isEmpty, PipelineLogs } from "@/components/ui/PipelineLogs";
+import BlockEventsContent from "./BlockEventsContent";
 
 const isTypeDisabled = (action) => {
   if (!action.parameters) {
@@ -240,9 +241,7 @@ const BlockTitle = ({
 
   const eventsModal = (
     <ClosableModal modalHeading="Block Events" passiveModal={true}>
-      <div className="flex flex-col gap-4 p-3">
-        {JSON.stringify(blockEvents, null, 2)}
-      </div>
+      <BlockEventsContent blockEvents={blockEvents} />
     </ClosableModal>
   );
 

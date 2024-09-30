@@ -77,7 +77,6 @@ export default function WorkspaceFetcher() {
       ?.filter((key) => {
         const pipeline = workspace.pipelines[key];
         const existingStatus = pipeline?.record?.Status;
-
         return existingStatus === "Running" || existingStatus === "Pending";
       })
       .map((key) => {

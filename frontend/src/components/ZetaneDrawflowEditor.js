@@ -628,6 +628,8 @@ export default class Drawflow {
   }
 
   zoom_refresh() {
+    console.log(this.canvas_x, this.canvas_y);
+    console.log(this.zoom);
     this.precanvas.style.transformOrigin = "0 0";
     this.precanvas.style.transform =
       "translate(" +
@@ -637,11 +639,6 @@ export default class Drawflow {
       "px) scale(" +
       this.zoom +
       ")";
-  }
-
-  applyTransform() {
-    this.precanvas.style.transformOrigin = "0 0";
-    this.precanvas.style.transform = `translate(${this.canvas_x}px, ${this.canvas_y}px) scale(${this.zoom})`;
   }
 
   handleZoom(event) {
@@ -667,18 +664,7 @@ export default class Drawflow {
     // Update zoom
     this.zoom = newZoom;
 
-    this.applyTransform();
-
-    console.log(
-      "Zoom:",
-      this.zoom,
-      "Canvas Position:",
-      { x: this.canvas_x, y: this.canvas_y },
-      "Mouse:",
-      { x: mouseX, y: mouseY },
-      "Fixed Point:",
-      { x: pointX, y: pointY },
-    );
+    this.zoom_refresh();
   }
 
   zoom_reset() {
