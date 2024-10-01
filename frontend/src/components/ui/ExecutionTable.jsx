@@ -11,9 +11,12 @@ import {
 import { PipelineStopButton } from "./PipelineStopButton";
 import { useAtom } from "jotai";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
+import { useImmerAtom } from "jotai-immer";
+import { workspaceAtom } from "@/atoms/pipelineAtom";
 
 export const ExecutionTable = ({ executions, closeModal }) => {
   const [configuration] = useAtom(activeConfigurationAtom);
+  const [,setWorkspace] = useImmerAtom(workspaceAtom);
   const selectExecution = (execution) => {
     const key = execution.pipeline + "." + execution.id;
 
