@@ -8,7 +8,7 @@ import { workspaceAtom } from "@/atoms/pipelineAtom";
 import { useImmerAtom } from "jotai-immer";
 import { useAtom } from "jotai";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
-import { fetchExecutionDetails, getAllPipelines } from "@/client/anvil";
+import { fetchExecutionDetails, getAllPipelines, ping } from "@/client/anvil";
 import { useSyncExecutionResults } from "@/hooks/useExecutionResults";
 
 export default function WorkspaceFetcher() {
@@ -31,6 +31,25 @@ export default function WorkspaceFetcher() {
     refetchInterval: workspace.fetchInterval,
   });
 
+  useQuery({
+    queryKey: ["ping"],
+    queryFn: async () => {
+      try {
+        return await ping(configuration);
+      } catch (err) {
+        setWorkspace((d) => {
+          d.connected = false;
+        });
+        throw new Error(err);
+      }
+    },
+    refetchInterval: 2000,
+    retry: false,
+    onSuccess: () =>
+      setWorkspace((d) => {
+        d.connected = true;
+      }),
+  });
   const getDetails = async (key, existing, configuration, execution) => {
     const fetchedExec = await fetchExecutionDetails(configuration, execution);
     const loadedExecution = await loadExecution(fetchedExec, configuration);
