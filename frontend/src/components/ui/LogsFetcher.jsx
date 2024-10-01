@@ -3,7 +3,7 @@ import { useSyncExecutionResults } from "@/hooks/useExecutionResults";
 import { enableMapSet } from "immer";
 import { useAtomValue } from "jotai";
 import { useImmerAtom } from "jotai-immer";
-import { useCallback, useEffect, } from "react";
+import { useCallback, useEffect } from "react";
 import { logsAtom, parseLogLine } from "@/atoms/logsAtom";
 import { useQuery } from "@tanstack/react-query";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";

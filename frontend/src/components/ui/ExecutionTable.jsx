@@ -16,7 +16,7 @@ import { workspaceAtom } from "@/atoms/pipelineAtom";
 
 export const ExecutionTable = ({ executions, closeModal }) => {
   const [configuration] = useAtom(activeConfigurationAtom);
-  const [,setWorkspace] = useImmerAtom(workspaceAtom);
+  const [, setWorkspace] = useImmerAtom(workspaceAtom);
   const selectExecution = (execution) => {
     const key = execution.pipeline + "." + execution.id;
 
