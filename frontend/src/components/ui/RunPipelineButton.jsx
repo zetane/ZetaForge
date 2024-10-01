@@ -12,11 +12,7 @@ import { uuidv7 } from "uuidv7";
 import ClosableModal from "./modal/ClosableModal";
 import { workspaceAtom } from "@/atoms/pipelineAtom";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
-import {
-  useLoadExecution,
-  useLoadServerPipeline,
-} from "@/hooks/useLoadPipeline";
-import { ping } from "@/client/anvil";
+import { useLoadExecution } from "@/hooks/useLoadPipeline";
 
 export default function RunPipelineButton({ children, action }) {
   const [editor] = useAtom(drawflowEditorAtom);

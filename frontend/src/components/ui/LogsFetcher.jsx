@@ -1,10 +1,9 @@
-import { socketUrlAtom, pipelineAtom } from "@/atoms/pipelineAtom";
+import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { useSyncExecutionResults } from "@/hooks/useExecutionResults";
-import { useStableWebSocket } from "@/hooks/useStableWebsocket";
 import { enableMapSet } from "immer";
-import { useAtom, useAtomValue } from "jotai";
+import { useAtomValue } from "jotai";
 import { useImmerAtom } from "jotai-immer";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect } from "react";
 import { logsAtom, parseLogLine } from "@/atoms/logsAtom";
 import { useQuery } from "@tanstack/react-query";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
@@ -44,11 +43,9 @@ async function fetchLogData(logPath, configuration) {
 }
 
 export default function LogsFetcher() {
-  const [socketUrl] = useAtom(socketUrlAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
-  //const { lastMessage, readyState, wsError } = useStableWebSocket(socketUrl);
   const syncResults = useSyncExecutionResults();
-  const [logs, setLogs] = useImmerAtom(logsAtom);
+  const [, setLogs] = useImmerAtom(logsAtom);
   const configuration = useAtomValue(activeConfigurationAtom);
 
   const updateLogs = useCallback((newEntries) => {

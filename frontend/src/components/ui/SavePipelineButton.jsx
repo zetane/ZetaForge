@@ -16,7 +16,9 @@ export default function SavePipelineButton() {
   const handleClick = async (editor, pipeline) => {
     try {
       mixpanelService.trackEvent("Save Pipeline");
-    } catch (err) {}
+    } catch (err) {
+      console.error(err);
+    }
     const pipelineSpecs = editor.convert_drawflow_to_block(
       pipeline.name,
       pipeline.data,
@@ -46,7 +48,7 @@ export default function SavePipelineButton() {
 
     const response = await copyPipeline.mutateAsync(saveData);
     console.log(response);
-    const { name, dirPath, specs } = response;
+    const { name, dirPath } = response;
 
     setPipeline((draft) => {
       draft.saveTime = Date.now();

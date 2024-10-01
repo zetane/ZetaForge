@@ -57,7 +57,9 @@ class MixpanelService {
         distinct_id: this.distinctId,
         is_dev: this.isDev,
       });
-    } catch (err) {}
+    } catch (err) {
+      console.error(err);
+    }
   }
 }
 

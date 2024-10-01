@@ -63,7 +63,7 @@ export async function terminateExecution(configuration, executionId) {
   return body;
 }
 
-export async function getAllPipelines(configuration, limit, offset) {
+export async function getAllPipelines(configuration) {
   const response = await handleRequest(
     buildUrl(
       getScheme(configuration.anvil.host),

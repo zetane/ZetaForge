@@ -10,7 +10,7 @@ export const PipelineStopButton = ({ executionId, configuration }) => {
     mutationFn: async () => {
       return await terminateExecution(configuration, executionId);
     },
-    onSuccess: (res) => {
+    onSuccess: () => {
       // Hasta la vista, baby
       setIsTerminating(true);
     },
