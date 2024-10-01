@@ -14,9 +14,7 @@ import { workspaceAtom } from "@/atoms/pipelineAtom";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import {
   useLoadExecution,
-  useLoadServerPipeline,
 } from "@/hooks/useLoadPipeline";
-import { ping } from "@/client/anvil";
 
 export default function RunPipelineButton({ children, action }) {
   const [editor] = useAtom(drawflowEditorAtom);

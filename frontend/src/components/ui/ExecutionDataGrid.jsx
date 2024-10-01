@@ -15,7 +15,6 @@ import {
   TableExpandRow,
   TableExpandedRow,
   TableExpandHeader,
-  Tag,
 } from "@carbon/react";
 import { ExecutionCardGrid } from "./ExecutionCardGrid";
 import { DeployedPipelineActions } from "./DeployedPipelineActions";

@@ -41,7 +41,7 @@ export const FolderBlock = ({ blockId, block, setFocusAction, history }) => {
     return filePaths;
   };
 
-  const loadFiles = (e) => {
+  const loadFiles = () => {
     const files = Array.from(fileInput.current.files);
     const filePaths = processFiles(files);
     const value = filePaths.join(", ");

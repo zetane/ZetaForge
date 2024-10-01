@@ -47,7 +47,6 @@ export const PipelineDeployButton = ({
   };
 
   const svgOverride = { position: "absolute", right: "15px", top: "5px" };
-  const buttonStyles = { margin: "5px" };
   const zIndex = { zIndex: 1 };
 
   let deployButton = (

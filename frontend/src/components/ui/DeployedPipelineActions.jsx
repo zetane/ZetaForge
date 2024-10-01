@@ -1,6 +1,5 @@
-import { useState } from "react";
-import { ComboButton, MenuItem, Modal, CodeSnippet } from "@carbon/react";
-import { Application, TrashCan } from "@carbon/icons-react";
+import { ComboButton, MenuItem, CodeSnippet } from "@carbon/react";
+import { TrashCan } from "@carbon/icons-react";
 import { modalContentAtom } from "@/atoms/modalAtom";
 import { useAtom } from "jotai";
 import ClosableModal from "./modal/ClosableModal";
@@ -16,7 +15,7 @@ export const DeployedPipelineActions = ({
   const generatePostPayload = () => {
     // Generate input structure based on the pipeline graph
     const inputs = {};
-    Object.entries(pipelineData.pipeline).forEach(([nodeId, node]) => {
+    Object.entries(pipelineData.pipeline).forEach(([, node]) => {
       if (node.inputs) {
         Object.entries(node.inputs).forEach(([inputName, input]) => {
           if (input.connections && input.connections.length > 0) {
@@ -74,22 +73,6 @@ print('Pipeline execution result:', result)
     // Here you would typically call an API endpoint to undeploy the pipeline
     // For now, we'll just log the action
   };
-
-  const items = [
-    {
-      id: "get-payload",
-      text: "Get POST Payload",
-      onClick: generatePostPayload,
-      icon: Application,
-    },
-    {
-      id: "undeploy",
-      text: "Undeploy",
-      onClick: handleUndeploy,
-      icon: TrashCan,
-      isDanger: true,
-    },
-  ];
 
   return (
     <ComboButton size="sm" label="Payload" onClick={generatePostPayload}>

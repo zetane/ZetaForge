@@ -32,7 +32,7 @@ export const ExecutionTable = ({ executions, closeModal }) => {
     { key: "actions", header: "Actions" },
   ];
 
-  const rows = Array.from(executions.entries()).map(([id, execution]) => ({
+  const rows = Array.from(executions.entries()).map(([, execution]) => ({
     id: execution.id,
     created: execution.created,
     status: execution.status,

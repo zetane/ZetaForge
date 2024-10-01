@@ -1,11 +1,11 @@
-import React, { useEffect } from "react";
 import { useSetAtom } from "jotai";
 import { mixpanelAtom } from "@/atoms/mixpanelAtom";
-import { initializeWorkspaceAtom, pipelineFactory } from "@/atoms/pipelineAtom";
+import { initializeWorkspaceAtom } from "@/atoms/pipelineAtom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ipcLink } from "electron-trpc/renderer";
 import { trpc } from "@/utils/trpc";
 import MixpanelService from "@/components/ui/MixpanelService";
+import { useEffect } from "react";
 
 export const trpcClient = trpc.createClient({
   links: [ipcLink()],
