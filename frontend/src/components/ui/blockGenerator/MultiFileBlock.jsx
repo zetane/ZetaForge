@@ -22,7 +22,7 @@ export const MultiFileBlock = ({ blockId, block, setFocusAction, history }) => {
     }
   }, [block]);
 
-  const loadFiles = (e) => {
+  const loadFiles = () => {
     const files = Array.from(fileInput.current.files);
     const filePaths = files.map((file) => file.name);
     const value = filePaths.join(", ");

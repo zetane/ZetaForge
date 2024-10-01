@@ -6,12 +6,19 @@ import { FileBufferContext } from "./DirectoryViewer";
 import { FileHandleContext } from "./DirectoryViewer";
 import OverflowMenuIconItem from "../../OverflowMenuIconItem";
 import { TrashCan } from "@carbon/icons-react";
+import { useAtom } from "jotai";
+import { pipelineAtom } from "@/atoms/pipelineAtom";
+import { blockEditorIdAtom } from "@/atoms/editorAtom";
+import { useCompileComputation } from "@/hooks/useCompileSpecs";
 
 export default function ActivePrompt({ children, index }) {
   const selectedPrompt = useContext(SelectedPromptContext);
   const chatHistory = useContext(ChatHistoryContext);
   const fileBuffer = useContext(FileBufferContext);
   const fileHandle = useContext(FileHandleContext);
+  const [pipeline] = useAtom(pipelineAtom);
+  const [blockId] = useAtom(blockEditorIdAtom);
+  const compile = useCompileComputation();
 
   const isLast = index === 0;
   const borderStyle = !selectedPrompt.selected ? " prompt-selected" : "";

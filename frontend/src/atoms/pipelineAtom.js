@@ -106,7 +106,7 @@ export const lineageAtom = atom((get) => {
 
   // Filter out pipelines with empty .record fields
   const validPipelines = Object.entries(workspace?.pipelines).filter(
-    ([_, pipeline]) =>
+    ([, pipeline]) =>
       pipeline.record && Object.keys(pipeline.record).length > 0,
   );
 

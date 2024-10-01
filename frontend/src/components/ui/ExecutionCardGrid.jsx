@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import { Grid, Column, Pagination, Tag, Button } from "@carbon/react";
-import { Launch, Code, View, CloudLogging } from "@carbon/icons-react";
+import { useState } from "react";
+import { Grid, Column, Tag, Button } from "@carbon/react";
+import { Launch} from "@carbon/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchExecutionDetails } from "@/client/anvil";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
@@ -10,9 +10,7 @@ const ExecutionCard = ({ execution, onSelect }) => {
   const [configuration] = useAtom(activeConfigurationAtom);
 
   const {
-    data: executionDetails,
     refetch,
-    isLoading,
     isError,
   } = useQuery({
     queryKey: ["execution", execution.id],
@@ -75,7 +73,7 @@ const ExecutionCard = ({ execution, onSelect }) => {
 };
 
 export const ExecutionCardGrid = ({ executions, selectExecution }) => {
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, ] = useState(1);
   const itemsPerPage = 36;
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;

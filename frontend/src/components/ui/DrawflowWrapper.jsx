@@ -77,7 +77,6 @@ export default function DrawflowWrapper() {
   pipelineRef.current = pipeline;
 
   const copyPipeline = trpc.copyPipeline.useMutation();
-  const getBlockPath = trpc.getBlockPath.useMutation();
 
   const handleDrawflow = useCallback((node) => {
     if (!node) {
