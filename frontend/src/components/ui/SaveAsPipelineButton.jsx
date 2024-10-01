@@ -9,7 +9,7 @@ export default function SaveAsPipelineButton() {
   const [editor] = useAtom(drawflowEditorAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
 
-  const savePipeline = trpc.savePipeline.useMutation();
+  const copyPipeline = trpc.copyPipeline.useMutation();
 
   const handleClick = async (editor, pipeline) => {
     try {
@@ -32,7 +32,7 @@ export default function SaveAsPipelineButton() {
       writeFromDir: pipeline.path,
       writeToDir: undefined,
     };
-    const response = await savePipeline.mutateAsync(saveData);
+    const response = await copyPipeline.mutateAsync(saveData);
     const { name, dirPath, specs } = response;
 
     setPipeline((draft) => {
