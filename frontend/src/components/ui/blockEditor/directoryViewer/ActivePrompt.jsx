@@ -32,7 +32,7 @@ export default function ActivePrompt({ children, index }) {
     chatHistory.deletePrompt(index);
     await fileBuffer.updateSave(newPrompt.response);
     if (fileHandle.isComputation) {
-      compile(pipeline.id, blockId);
+      compile(pipeline.path, blockId);
     }
     selectedPrompt.unselect();
   };
