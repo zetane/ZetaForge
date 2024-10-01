@@ -3,12 +3,7 @@ import { Deploy } from "@carbon/icons-react";
 import { Button } from "@carbon/react";
 import { deployPipeline } from "@/client/anvil";
 
-export const PipelineDeployButton = ({
-  uuid,
-  hash,
-  configuration,
-}) => {
-
+export const PipelineDeployButton = ({ uuid, hash, configuration }) => {
   const deploy = useMutation({
     mutationFn: async () => {
       return await deployPipeline(configuration, uuid, hash);

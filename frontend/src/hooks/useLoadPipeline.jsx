@@ -132,7 +132,7 @@ function sortSpecsKeys(pipeline) {
 }
 
 export const useLoadServerPipeline = () => {
-  const [workspace, ] = useImmerAtom(workspaceAtom);
+  const [workspace] = useImmerAtom(workspaceAtom);
 
   const loadPipeline = async (serverPipeline, configuration) => {
     if (!serverPipeline) {
@@ -184,7 +184,7 @@ export const useLoadServerPipeline = () => {
 };
 
 export const useLoadExecution = () => {
-  const [workspace, ] = useImmerAtom(workspaceAtom);
+  const [workspace] = useImmerAtom(workspaceAtom);
 
   const loadExecution = async (execution, configuration) => {
     if (!execution) {

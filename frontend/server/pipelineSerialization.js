@@ -6,15 +6,9 @@ import {
   BLOCK_SPECS_FILE_NAME,
   PIPELINE_SPECS_FILE_NAME,
 } from "../src/utils/constants";
-import {
-  fileExists,
-  filterDirectories,
-} from "./fileSystem.js";
+import { fileExists, filterDirectories } from "./fileSystem.js";
 import { checkAndUpload, checkAndCopy, uploadDirectory } from "./s3.js";
-import {
-  createExecution,
-  getBuildContextStatus,
-} from "./anvil";
+import { createExecution, getBuildContextStatus } from "./anvil";
 import { logger } from "./logger";
 
 export async function saveSpec(spec, writePath) {
@@ -56,7 +50,7 @@ export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
 
   const fromBlockIndex = await getBlockIndex([bufferPath]);
 
-  if (! await fileExists(writePipelineDirectory)) {
+  if (!(await fileExists(writePipelineDirectory))) {
     await fs.mkdir(writePipelineDirectory, { recursive: true });
   }
 
