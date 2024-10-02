@@ -3,12 +3,62 @@ import inspect
 import json
 import sys
 import shutil
-# from computations import compute
+import subprocess
+
+def setup_uv_environment(script_dir):
+    # Path to the UV environment
+    uv_env_path = os.path.join(script_dir, ".venv")
+    
+    # Create UV environment if it does not exist
+    if not os.path.exists(uv_env_path):
+        print("Setting up UV environment...")
+
+        try:
+            subprocess.run(["uv", "venv", uv_env_path], check=True)
+        except subprocess.CalledProcessError as e:
+            print(f"Failed to create UV environment: {e}")
+            sys.exit(1)
+
+    # Install dependencies from requirements.txt inside the UV environment
+    requirements_file = os.path.join(script_dir, "requirements.txt")
+    if os.path.exists(requirements_file):
+        print("Installing dependencies inside UV environment...")
+        try:
+            subprocess.run(["uv", "pip", "install", "-r", requirements_file], check=True, cwd=script_dir)
+        except subprocess.CalledProcessError as e:
+            print(f"Failed to install dependencies: {e}")
+            sys.exit(1)
+    else:
+        print("No requirements.txt found. Skipping dependency installation.")
+
+def rerun_with_uv_environment(script_dir):
+    # Path to the Python interpreter in the UV environment
+    uv_python = os.path.join(script_dir, ".venv", "Scripts", "python.exe")
+
+    # Check if the current Python interpreter is already the one in the UV environment
+    if sys.executable == uv_python:
+        return  # Continue with the script
+
+    if os.path.exists(uv_python):
+        print(f"Re-running the script with the UV environment's Python interpreter: {uv_python}")
+        # Re-run the current script with the UV environment's Python interpreter
+        subprocess.run([uv_python, __file__] + sys.argv[1:], check=True)
+        sys.exit(0)  # Exit the original process
+    else:
+        print("Could not find the Python interpreter in the UV environment.")
+        sys.exit(1)
 
 def main():
+    print("ARGUMENTS: " , sys.argv)
     # Get the directory of the script (block folder)
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    
+
+    # Set up the UV environment if uv in argument:
+    if(sys.argv[3] == "uv"):
+        setup_uv_environment(script_dir)
+        #Activate the environment:
+        rerun_with_uv_environment(script_dir)
+
     # Get the history subfolder from the arguments
     compute_dir = sys.argv[1]  # Directory with compute logic (block folder)
     history_subfolder = os.path.abspath(sys.argv[2])
@@ -20,7 +70,6 @@ def main():
 
     # Add the block folder (compute_dir) to the Python path to import 'computations'
     sys.path.insert(0, compute_dir)
-    
 
     # Store the initial list of existing files in the current block folder
     initial_files = set(os.listdir(script_dir))
@@ -36,7 +85,6 @@ def main():
             shutil.copytree(src_path, dst_path, dirs_exist_ok=True)
         else:
             shutil.copy2(src_path, dst_path)
-        # print(f">>>Copied {item} from 'history' to {script_dir}")
 
     # Get block ID from the compute directory
     block_id = compute_dir
@@ -46,9 +94,8 @@ def main():
 
     # Collect arguments passed to the script
     args_dict = {}
-    for arg in sys.argv[3:]:
+    for arg in sys.argv[4:]:
         key, value = arg.split('=')
-        # Try to convert value to int or float, if applicable
         if value.isdigit():
             args_dict[key] = int(value)
         else:
@@ -57,9 +104,16 @@ def main():
             except ValueError:
                 args_dict[key] = value  # Leave as string if conversion fails
 
+    if(sys.argv[3] == "docker"):
+        
+        for key, value in args_dict.items():
+            if "\\" in str(value):  # Check if value is an absolute path
+                print("CHECKED")
+                args_dict[key] = value.split("\\")[-1]  # Extract the last part of the path (the file name)
+        print("DICTS: " , args_dict)
+
     # Ensure images parameter is a Python list (if it's passed as a string)
     if 'images' in args_dict and isinstance(args_dict['images'], str):
-        # Convert string to a Python list
         args_dict['images'] = json.loads(args_dict['images'])
 
     # Fetch outputs from pipeline.json and get the corresponding parameters
@@ -68,16 +122,16 @@ def main():
         debug_inputs[key] = value
 
         if value is not None:
-            params.append(value)  # Append the value directly
+            params.append(value)
         else:
             print(f"Warning: No value found for {key} in pipeline.json")
 
-    # print("debug|||", debug_inputs)
-
     # Call the compute function
+    # print(">>>>>>>>>PAssing parameters: " , params)
     outputs = compute(*params)
 
     # Store the final state of files in the block folder (after compute is executed)
+    
     final_files = set(os.listdir(script_dir))
 
     # Identify new files created during computation (those not in the initial list)
@@ -89,12 +143,11 @@ def main():
         dst_path = os.path.join(history_subfolder, new_file)
         if os.path.exists(dst_path):
             if os.path.isfile(dst_path):
-                os.remove(dst_path)  # Remove the existing file if it exists
+                os.remove(dst_path)
             elif os.path.isdir(dst_path):
-                shutil.rmtree(dst_path)  # Remove the directory if it exists
+                shutil.rmtree(dst_path)
         
-        shutil.move(src_path, dst_path)  # Move new files to the history subfolder
-        
+        shutil.move(src_path, dst_path)
 
     # Output results to files in the 'history' folder
     for key, value in outputs.items():
@@ -108,10 +161,6 @@ def main():
     
         with open(output_file_path, "w") as file:
             file.write(json.dumps(value))
-
-    # Optionally log outputs
-    json_outputs = json.dumps(outputs)
-    print(">> outputs: ", json_outputs)
 
 if __name__ == "__main__":
     main()
