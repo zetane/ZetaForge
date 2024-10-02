@@ -24,6 +24,7 @@ def setup_uv_environment(script_dir):
     if os.path.exists(requirements_file):
         print("Installing dependencies inside UV environment...")
         try:
+            print("HERE>>>")
             subprocess.run(["uv", "pip", "install", "-r", requirements_file], check=True, cwd=script_dir)
         except subprocess.CalledProcessError as e:
             print(f"Failed to install dependencies: {e}")
@@ -58,6 +59,7 @@ def main():
         setup_uv_environment(script_dir)
         #Activate the environment:
         rerun_with_uv_environment(script_dir)
+
 
     # Get the history subfolder from the arguments
     compute_dir = sys.argv[1]  # Directory with compute logic (block folder)
@@ -104,21 +106,22 @@ def main():
             except ValueError:
                 args_dict[key] = value  # Leave as string if conversion fails
 
+    args_dict_copy = args_dict.copy()
+
     if(sys.argv[3] == "docker"):
-        
-        for key, value in args_dict.items():
+        for key, value in args_dict_copy.items():
             if "\\" in str(value):  # Check if value is an absolute path
                 print("CHECKED")
-                args_dict[key] = value.split("\\")[-1]  # Extract the last part of the path (the file name)
-        print("DICTS: " , args_dict)
+                args_dict_copy[key] = value.split("\\")[-1]  # Extract the last part of the path (the file name)
+        print("DICTS: " , args_dict_copy)
 
     # Ensure images parameter is a Python list (if it's passed as a string)
-    if 'images' in args_dict and isinstance(args_dict['images'], str):
-        args_dict['images'] = json.loads(args_dict['images'])
+    if 'images' in args_dict_copy and isinstance(args_dict_copy['images'], str):
+        args_dict_copy['images'] = json.loads(args_dict_copy['images'])
 
     # Fetch outputs from pipeline.json and get the corresponding parameters
     for key in inspect.signature(compute).parameters.keys():
-        value = args_dict.get(key)
+        value = args_dict_copy.get(key)
         debug_inputs[key] = value
 
         if value is not None:
@@ -150,14 +153,21 @@ def main():
         shutil.move(src_path, dst_path)
 
     # Output results to files in the 'history' folder
+    
     for key, value in outputs.items():
-        result = block_id.rsplit('-', 1)[0].split('\\')[-1]
+        if sys.argv[3] == "docker":
+            result = sys.argv[1]
+        else:
+            result = block_id.rsplit('-', 1)[0].split('\\')[-1]
+
         if ("background-removal" in block_id):
             output_file_path = os.path.join(history_subfolder, f"{result}-output_path.txt")
         elif ("openai-agent" in block_id):
             output_file_path = os.path.join(history_subfolder, f"{result}-response.txt")
         else:
             output_file_path = os.path.join(history_subfolder, f"{result}-image_paths.txt")
+
+        # print("output file path:" , output_file_path)
     
         with open(output_file_path, "w") as file:
             file.write(json.dumps(value))

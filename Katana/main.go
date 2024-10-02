@@ -5,14 +5,13 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"maps"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"time"
 )
 
@@ -35,24 +34,27 @@ func execCommand(cmd string, dir string, id string, args Dict, historySubfolder 
 	}
 
 	// Convert the paths to absolute paths
-	absDir, err := filepath.Abs(dir)
+	absDir, err := filepath.Abs(dir) // this should point to the block folder where computations.py is located
 	if err != nil {
 		log.Fatalf("Failed to get absolute path for dir: %v", err)
 	}
-
-	// Ensure that the historySubfolder is an absolute path, pointing to the parent directory
+	// Convert Windows paths to forward slashes for Docker compatibility
+	absDir = filepath.ToSlash(absDir)
+	// Ensure that the historySubfolder is an absolute path
 	absHistorySubfolder, err := filepath.Abs(historySubfolder)
 	if err != nil {
 		log.Fatalf("Failed to get absolute path for history subfolder: %v", err)
 	}
+	absHistorySubfolder = filepath.ToSlash(absHistorySubfolder)
 
 	if mode == "docker" {
+		// Mount the block folder to ensure Docker has access to computations.py
 		command = exec.Command("docker", "run", "--rm",
-			"-v", absDir+":/app", // Mount the block directory as /app in the container
-			"-v", absHistorySubfolder+":/app/history", // Mount the history subfolder in the container
-			"pipeline_image",               // Docker image
-			"python", "/app/entrypoint.py", // Run entrypoint.py inside the container
-			"/app", "/app/history", mode) // Pass arguments to entrypoint.py (use /app/history in the container)
+			"-v", absDir+":/app", // Mount the block folder where computations.py is located
+			"-v", absHistorySubfolder+":/app/history/", // Mount the history folder
+			"pipeline_image_2",             // Docker image -- hardcoded
+			"python", "/app/entrypoint.py", // Execute entrypoint.py inside Docker
+			id, "/app/history", mode) // Pass arguments to entrypoint.py (inside Docker paths)
 	} else {
 		// Local execution
 		if runtime.GOOS == "windows" {
@@ -71,7 +73,7 @@ func execCommand(cmd string, dir string, id string, args Dict, historySubfolder 
 
 	// Execute the command and capture output
 	output, err := command.CombinedOutput()
-	log.Println("Output: ", string(output), "Error from line 45: ", err)
+	log.Println("Output: ", string(output))
 	return err
 }
 
@@ -107,9 +109,15 @@ func (t *Task) Execute(args Dict) (Dict, error) {
 	for key, value := range t.MapOut {
 
 		data, err := os.ReadFile(filepath.Join(TMPPATH, t.Name, value) + ".txt") // wants to read from the block floder
+
 		if err != nil {
-			var new_histrory_subfolder = historySubfolder[len(filepath.Base(TMPPATH)):]
-			data, err = os.ReadFile(filepath.Join(TMPPATH, new_histrory_subfolder, value) + ".txt") // wants to read from the 'history' floder
+			if mode != "docker" {
+				var new_histrory_subfolder = historySubfolder[len(filepath.Base(TMPPATH)):]
+				data, err = os.ReadFile(filepath.Join(TMPPATH, new_histrory_subfolder, value) + ".txt") // wants to read from the 'history' floder
+			} else {
+				println("From line:199. value: ", value, ", TMPPATH:", TMPPATH)
+				data, err = os.ReadFile(filepath.Join(historySubfolder, value) + ".txt")
+			}
 		}
 		// fmt.Println("## Trying to readfile for the task:", t.Name, ". And the file to read: ", data, ", error while reading: ", err)
 		if err != nil {
@@ -148,7 +156,7 @@ func deployTask(pipeline *Pipeline, historySubfolder string) (Execution, func())
 
 			} else {
 				os.WriteFile(filepath.Join(block.Action.Command.Dir, "entrypoint.py"), entrypoint, 0644)
-				fmt.Println("Written from 108")
+				// fmt.Println("Written from 108")
 			}
 
 			tasks[name] = &Task{Name: name, Exec: func(args Dict) error { // without that entrypoint won't run
@@ -248,19 +256,16 @@ func runTask(task *Task) {
 
 	for {
 		var executionError error // initially (0x0 , 0x0)
-
 		for i := 0; i < len(task.In); i++ {
 			// fmt.Print("\nin run task for task: ", task.Name, "\tCurrent Task.in: ", task.In[i])
 			arg, ok := <-task.In[i]
 			// fmt.Println("\t>>ARG , OK: ", arg, ok)
 			if !ok {
-				// fmt.Println("NOT OKAY for : ", task.Name)
 				for _, next := range task.Out {
 					close(next)
 				}
 				return
 			}
-
 			maps.Copy(args, arg.Dict)
 
 			if arg.Err != nil {
@@ -270,7 +275,6 @@ func runTask(task *Task) {
 		}
 
 		if executionError != nil {
-			// fmt.Println("\n\t\t\t\tERROR FOUND IN LINE: 213")
 			for _, next := range task.Out {
 				next <- Message{Err: executionError}
 			}
@@ -305,40 +309,149 @@ func main() {
 	pipelineName := os.Args[2]
 	pipelinePath := filepath.Join(".", pipelineName)
 
-	if mode == "docker" { // if mood = docker
-		// for docker file:
-		mainDockerFile := filepath.Join(pipelinePath, "main-docker")
-		// Check if 'main-docker' already exists
-		if _, err := os.Stat(mainDockerFile); err == nil {
-			fmt.Println("main-docker already exists, using existing image...")
-			runExistingImage("C:\\Users\\Teertha\\Pictures\\ai-generated-colored-water-drops-on-abstract-background-water-drops-on-colorful-background-colored-wallpaper-ultra-hd-colorful-wallpaper-background-with-colored-bubbles-photo.jpg")
-		}
-		// Gather Dockerfiles from each block folder
-		dockerContent := gatherDockerDependencies(pipelinePath)
-		requirementsContent := gatherRequirements(pipelinePath)
-
-		// Combine dockerContent and requirements.txt and requirementsContent
-		dockerContent += "\n# Installing Python requirements\n"
-		dockerContent += "COPY requirements.txt .\n"
-		dockerContent += "RUN pip install --no-cache-dir -r requirements.txt\n"
-
-		// Create the main-docker file in the pipeline folder
-		err := os.WriteFile(mainDockerFile, []byte(dockerContent), 0644)
-		if err != nil {
-			fmt.Println("Error writing main-docker:", err)
-			return
-		}
-
-		err = os.WriteFile(filepath.Join(pipelinePath, "requirements.txt"), []byte(requirementsContent), 0644)
-		if err != nil {
-			fmt.Println("Error writing requirements.txt:", err)
-			return
-		}
-
-		// Build the Docker image for the entire pipeline
-		buildPipelineImage(pipelinePath)
+	if mode == "docker" {
+		fmt.Println("Docker mode running")
+		buildAndRunDockerImage(pipelinePath)
+		return
+	} else {
+		fmt.Println("Running in non-docker mode")
+		runLocalPipeline(pipelinePath)
 	}
 
+}
+
+// TRYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY
+
+func buildAndRunDockerImage(pipelinePath string) {
+	// Step 1: Check if Docker image already exists
+	imageName := "pipeline_image_2"
+	checkCmd := exec.Command("docker", "images", "-q", imageName)
+	checkOutput, err := checkCmd.Output()
+	if err != nil {
+		log.Fatalf("Error checking Docker image: %v", err)
+	}
+
+	// If the image does not exist, build it
+	if len(checkOutput) == 0 {
+		log.Println("Docker image not found, building...")
+		dockerFile := filepath.Join(pipelinePath, "Dockerfile")
+
+		// Check if Dockerfile exists
+		if _, err := os.Stat(dockerFile); os.IsNotExist(err) {
+			log.Fatalf("Dockerfile not found in %s", pipelinePath)
+		}
+
+		// Build the Docker image
+		buildCmd := exec.Command("docker", "build", "-t", imageName, "-f", dockerFile, pipelinePath)
+		buildCmd.Stdout = os.Stdout
+		buildCmd.Stderr = os.Stderr
+
+		log.Println("Building Docker image...")
+		err := buildCmd.Run()
+		if err != nil {
+			log.Fatalf("Error building Docker image: %v", err)
+		}
+	} else {
+		log.Println("Using existing Docker image...")
+	}
+
+	// Convert paths to absolute paths with forward slashes
+	absPipelinePath, err := filepath.Abs(pipelinePath)
+	if err != nil {
+		log.Fatalf("Failed to get absolute path: %v", err)
+	}
+	absPipelinePath = filepath.ToSlash(absPipelinePath)
+
+	// Step 2: Prepare history folder
+	historySubfolder = prepareHistoryFolder(absPipelinePath)
+
+	// Step 3: Copy files to history folder
+	copyToHistoryFolder(historySubfolder)
+
+	// Step 4: Run the local pipeline using the Docker environment
+	runLocalPipelineInDocker(absPipelinePath, historySubfolder)
+}
+
+func copyToHistoryFolder(historySubfolder string) {
+	// Hardcoded source file path
+	srcFile := "C:\\Users\\Teertha\\Pictures\\img.jpg" // HARDCODE
+
+	// Destination path in the history folder
+	destFile := filepath.Join(historySubfolder, filepath.Base(srcFile))
+
+	// Copy the file
+	source, err := os.Open(srcFile)
+	if err != nil {
+		log.Fatalf("Failed to open source file: %v", err)
+	}
+	defer source.Close()
+
+	destination, err := os.Create(destFile)
+	if err != nil {
+		log.Fatalf("Failed to create destination file: %v", err)
+	}
+	defer destination.Close()
+
+	_, err = io.Copy(destination, source)
+	if err != nil {
+		log.Fatalf("Failed to copy file: %v", err)
+	}
+
+	log.Println("Copied file to", destFile)
+}
+
+func prepareHistoryFolder(pipelinePath string) string {
+	// Create the history folder path
+	historyDir := filepath.Join(pipelinePath, "history")
+
+	// Create the timestamped subfolder inside history folder
+	timestamp := time.Now().Format("2006-01-02_15-04-05")
+	historySubfolder := filepath.Join(historyDir, timestamp)
+
+	// Ensure the history subfolder exists
+	err := os.MkdirAll(historySubfolder, os.ModePerm)
+	if err != nil {
+		log.Fatalf("Failed to create history folder: %v", err)
+	}
+
+	log.Println("Prepared history folder at", historySubfolder)
+
+	// Return the path of the history subfolder for further use
+	return historySubfolder
+}
+
+func runLocalPipelineInDocker(pipelinePath string, historySubfolder string) {
+	data, err := os.ReadFile(filepath.Join(pipelinePath, "pipeline.json"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var pipeline Pipeline
+	err = json.Unmarshal(data, &pipeline)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if pipeline.Sink != "" {
+		TMPPATH = pipeline.Sink
+	}
+
+	// Skip history subfolder creation since it is already done
+
+	// Deploy the task and execute it
+	execution, release := deployTask(&pipeline, historySubfolder)
+
+	result, err := execution(make(Dict))
+	if err != nil {
+		log.Println("Error from line 282:", err)
+	} else {
+		log.Println("COMPLETED:", result)
+	}
+
+	release()
+}
+
+func runLocalPipeline(pipelinePath string) {
 	data, err := os.ReadFile(filepath.Join(pipelinePath, "pipeline.json"))
 	if err != nil {
 		log.Fatal(err)
@@ -364,92 +477,10 @@ func main() {
 
 	result, err := execution(make(Dict))
 	if err != nil {
-		log.Println("Error from line 282:", err)
+		log.Println("Error from line 481:", err)
 	} else {
 		log.Println("COMPLETED:", result)
 	}
 
 	release()
-
-}
-
-// Function to gather Docker dependencies from block folders
-func gatherDockerDependencies(pipelineDir string) string {
-	uniqueDockerLines := map[string]bool{}
-	var dockerfileContent strings.Builder
-
-	filepath.Walk(pipelineDir, func(path string, info os.FileInfo, err error) error {
-		if info != nil && info.Name() == "Dockerfile" {
-			content, _ := os.ReadFile(path)
-			dockerLines := strings.Split(string(content), "\n")
-			for _, line := range dockerLines {
-				trimmed := strings.TrimSpace(line)
-				// Skip lines containing "computations.py"
-				if trimmed != "" && !uniqueDockerLines[trimmed] && !strings.Contains(trimmed, "computations.py") {
-					dockerfileContent.WriteString(trimmed + "\n")
-					uniqueDockerLines[trimmed] = true
-				}
-			}
-		}
-		return nil
-	})
-
-	return dockerfileContent.String()
-}
-
-// Function to gather requirements.txt content from block folders
-func gatherRequirements(pipelineDir string) string {
-	uniqueRequirements := map[string]bool{}
-	var requirementsContent strings.Builder
-
-	filepath.Walk(pipelineDir, func(path string, info os.FileInfo, err error) error {
-		if info != nil && info.Name() == "requirements.txt" {
-			content, _ := ioutil.ReadFile(path)
-			requirementsLines := strings.Split(string(content), "\n")
-			for _, line := range requirementsLines {
-				trimmed := strings.TrimSpace(line)
-				if trimmed != "" && !uniqueRequirements[trimmed] {
-					requirementsContent.WriteString(trimmed + "\n")
-					uniqueRequirements[trimmed] = true
-				}
-			}
-		}
-		return nil
-	})
-
-	return requirementsContent.String()
-}
-
-// Function to build the Docker image from main-docker
-func buildPipelineImage(pipelineDir string) {
-	cmd := exec.Command("docker", "build", "-t", "pipeline_image", "-f", filepath.Join(pipelineDir, "main-docker"), pipelineDir)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-	if err != nil {
-		fmt.Println("Error building Docker image:", err)
-	} else {
-		fmt.Println("Docker image built successfully.")
-	}
-}
-
-// Function to use the existing Docker image if 'main-docker' already exists
-func runExistingImage(imagePath string) {
-	// Extract just the filename from the imagePath
-	imageFile := filepath.Base(imagePath)
-
-	// Set the command to mount the image and history folder
-	cmd := exec.Command("docker", "run", "--rm",
-		"-v", imagePath+":/app/"+imageFile, // Mount the image file to /app/image.jpg inside the container
-		"-v", "/history", // Mount the history folder to /history inside the container
-		"pipeline_image",                       // Docker image
-		"bash", "-c", "ls /app && ls /history") // List the contents of /app and /history to check mounts
-
-	// Execute the command
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-	if err != nil {
-		log.Println("Error running Docker image:", err)
-	}
 }
