@@ -12,7 +12,6 @@
   user-select: none;
   perspective: 0;
   transform-origin: 0 0;
-  background: transparent;
 }
 
 .drawflow .fa {
@@ -65,6 +64,7 @@
   z-index: 0;
   position: absolute;
   overflow: visible !important;
+  background: transparent;
 }
 .drawflow .connection {
   position: absolute;
