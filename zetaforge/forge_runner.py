@@ -147,13 +147,15 @@ def setup(server_version, client_version, driver, build_flag = True, install_fla
     mixpanel_client.track_event('Setup Initiated')
 
     if driver == "minikube":
-        context = "zetaforge"
+        context = select_kubectl_context()
+        
+
         if not check_minikube():
             mixpanel_client.track_event("Setup Failure - Minikube Not Found")
             time.sleep(0.5)
             print("Minikube not found. Please install minikube.")
             raise Exception("Minikube not found!")
-        minikube = subprocess.run(["minikube", "-p", "zetaforge", "start"], capture_output=True, text=True)
+        minikube = subprocess.run(["minikube", "-p", context, "start"], capture_output=True, text=True)
         if minikube.returncode != 0:
             mixpanel_client.track_event("Setup Failure - Cannot Start Minikube")
             time.sleep(0.5)
@@ -249,7 +251,7 @@ def run_forge(server_version=None, client_version=None, server_path=None, client
         print(f"Launching client {client_path}..")
         client_executable = os.path.basename(client_path)
         if platform.system() == 'Darwin':
-            client_executable = [f"./{client_executable}"]
+            client_executable = [f"./{client_executable}", "--is_pip"]
         elif platform.system() == 'Windows':
             client_executable = [client_path, '--no-sandbox']
         else:
@@ -310,14 +312,6 @@ def purge():
     shutil.rmtree(EXECUTABLES_PATH)
     os.makedirs(EXECUTABLES_PATH)
 
-def teardown(driver):
-    if driver == "minikube":
-        minikube = subprocess.run(["minikube", "-p", "zetaforge", "stop"], capture_output=True, text=True)
-        if minikube.returncode != 0:
-            print(minikube.stderr)
-            raise Exception("Error while starting minikube")
-
-    print("Completed teardown!")
 
 def uninstall(server_version=None, server_path=None):
     if server_path is None:
@@ -376,6 +370,7 @@ def create_config_json(s2_path, context, driver, is_dev):
         "EntrypointFile":"entrypoint.py",
         "ServiceAccount":"executor",
         "Bucket":"forge-bucket",
+        "BucketName": "zetaforge",
         "Database":"./zetaforge.db",
         "KubeContext": context,
         "SetupVersion":"1",

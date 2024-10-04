@@ -3,7 +3,9 @@ import {
   userAnvilConfigurationsAtom,
   removeConfigurationAtom,
   activeIndexAtom,
+  activeConfigurationAtom,
 } from "@/atoms/anvilConfigurationsAtom";
+import axios from "axios";
 import { useAtom } from "jotai";
 import {
   Table,
@@ -14,9 +16,18 @@ import {
   TableCell,
   TableSelectRow,
   Button,
+  Dropdown,
 } from "@carbon/react";
+import {
+  choosenKubeContexts,
+  availableKubeContexts,
+  drivers,
+  chosenDriver,
+  isPackaged,
+} from "@/atoms/kubecontextAtom";
 import { Add, TrashCan, Edit } from "@carbon/icons-react";
 import { workspaceAtom } from "@/atoms/pipelineAtom";
+import { useState, useEffect } from "react";
 
 export default function AnvilConfigurationTable({ onNew, onEdit }) {
   const [defaultAnvilConfiguration] = useAtom(defaultAnvilConfigurationAtom);
@@ -45,6 +56,8 @@ export default function AnvilConfigurationTable({ onNew, onEdit }) {
             <TableHeader>Name</TableHeader>
             <TableHeader>Anvil</TableHeader>
             <TableHeader>S3</TableHeader>
+            <TableHeader>Context</TableHeader>
+            <TableHeader>Driver</TableHeader>
             <TableHeader />
           </TableRow>
         </TableHead>
@@ -68,7 +81,38 @@ export default function AnvilConfigurationTable({ onNew, onEdit }) {
 }
 
 function ConfigRows({ rows, onEdit }) {
-  return rows.map((r, i) => <ConfigRow key={i} onEdit={onEdit} {...r} />);
+  const [currentConfigAtom, setCurrentConfig] = useAtom(
+    activeConfigurationAtom,
+  );
+  const [isPackaged, setIsPackaged] = useState(false);
+  const serverAddress = import.meta.env.VITE_EXPRESS;
+
+  useEffect(() => {
+    async function checkIfPackaged() {
+      try {
+        const res = await axios.get(`${serverAddress}/isPackaged`);
+        setIsPackaged(res.data);
+      } catch (err) {
+        console.log(err.message);
+      }
+    }
+    checkIfPackaged();
+  }, []);
+  return rows.map((r, i) => (
+    <ConfigRow
+      key={i}
+      onEdit={onEdit}
+      {...r}
+      isSelected={r.configuration === currentConfigAtom}
+      isCloud={
+        !(
+          r.configuration.anvil.host === "localhost" ||
+          r.configuration.anvil.host === "127.0.0.1"
+        )
+      }
+      isPackaged={isPackaged}
+    />
+  ));
 }
 
 function ConfigRow({
@@ -77,7 +121,18 @@ function ConfigRow({
   removeIndex,
   selectIndex,
   onEdit,
+  isSelected,
+  isCloud,
+  isPackaged,
 }) {
+  const [availableKubeContextsAtom, setAvailableKubeContexts] = useAtom(
+    availableKubeContexts,
+  );
+  const [currentKubeContext, setCurrentKubeContext] =
+    useAtom(choosenKubeContexts);
+  const [availableDrivers] = useAtom(drivers);
+
+  const [currentChosenDriver, setChosenDriver] = useAtom(chosenDriver);
   const [, removeConfiguration] = useAtom(removeConfigurationAtom);
   const [active, setActive] = useAtom(activeIndexAtom);
   const [workspace, setWorkspace] = useAtom(workspaceAtom);
@@ -93,7 +148,19 @@ function ConfigRow({
   function handleRemoveConfiguration() {
     removeConfiguration(removeIndex);
   }
+  const handleSelection = async (e) => {
+    try {
+      setCurrentKubeContext(e.selectedItem);
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
+  const handleDriverSelection = async (e) => {
+    setChosenDriver(e.selectedItem);
+  };
+
+  const disable = !isPackaged || !isSelected || isCloud;
   return (
     <TableRow>
       <TableSelectRow
@@ -102,6 +169,23 @@ function ConfigRow({
         onSelect={handleSelectConfiguration}
       />
       <ConfigCells configuration={configuration} />
+
+      <TableCell className="context-cell">
+        <Dropdown
+          items={availableKubeContextsAtom}
+          onChange={handleSelection}
+          disabled={disable}
+          selectedItem={isCloud ? "" : currentKubeContext}
+        />
+      </TableCell>
+      <TableCell className="driver-cell">
+        <Dropdown
+          items={availableDrivers}
+          onChange={handleDriverSelection}
+          disabled={disable}
+          selectedItem={isCloud ? "" : currentChosenDriver}
+        />
+      </TableCell>
       {removeable ? (
         <TableCell>
           <div className="flex justify-end gap-2">

@@ -2,19 +2,21 @@
  * @see https://www.electron.build/configuration/configuration
  */
 {
+  afterPack: "./macPacker.cjs",
   appId: "com.zetane.zetaforge",
   productName: "ZetaForge",
   asar: true,
   directories: {
     output: "release/${version}",
   },
-  files: ["dist-electron", "dist"],
+  files: ["dist-electron", "dist", "server"],
   mac: {
     artifactName: "${productName}-${version}-darwin-${arch}.${ext}",
     target: ["tar.gz"],
+    binaries: ["launch.command"],
   },
   win: {
-    target: ["tar.gz"],
+    target: ["tar.gz", "zip"],
     artifactName: "${productName}-${version}-windows-${arch}.${ext}",
   },
   linux: {
@@ -45,6 +47,11 @@
     {
       from: "./resources",
       to: "resources",
+      filter: ["**/*"],
+    },
+    {
+      from: "./logs",
+      to: "logs",
       filter: ["**/*"],
     },
   ],

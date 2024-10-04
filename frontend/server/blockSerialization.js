@@ -1,7 +1,7 @@
-import { spawnAsync } from "./spawnAsync";
 import { app } from "electron";
 import fs from "fs/promises";
 import path from "path";
+import { logger } from "./logger";
 import {
   BLOCK_SPECS_FILE_NAME,
   SUPPORTED_FILE_EXTENSIONS,
@@ -9,8 +9,11 @@ import {
   CHAT_HISTORY_FILE_NAME,
 } from "../src/utils/constants";
 import { fileExists, getDirectoryTree } from "./fileSystem";
-import { logger } from "./logger";
 import { HttpStatus, ServerError } from "./serverError";
+import { compileComputationFunction } from "../resources/compileComputation.mjs";
+import { runTestContainer } from "../resources/runTest.mjs";
+import { computeAgent } from "../agents/gpt-4_python_compute/generate/computations.mjs";
+import { computeViewAgent } from "../agents/gpt-4_python_view/generate/computations.mjs";
 
 const READ_ONLY_FILES = [BLOCK_SPECS_FILE_NAME, CHAT_HISTORY_FILE_NAME];
 
@@ -20,8 +23,8 @@ export async function compileComputation(pipelinePath, blockId) {
   const source = await fs.readFile(sourcePath, { encoding: "utf8" });
 
   const scriptPath = app.isPackaged
-    ? path.join(process.resourcesPath, "resources", "compileComputation.py")
-    : path.join("resources", "compileComputation.py");
+    ? path.join(process.resourcesPath, "resources", "compileComputation.mjs")
+    : path.join("resources", "compileComputation.mjs");
   if (!(await fileExists(scriptPath))) {
     throw new ServerError(
       `Could not find script for compilation: ${scriptPath}`,
@@ -29,57 +32,12 @@ export async function compileComputation(pipelinePath, blockId) {
     );
   }
 
+  let io;
   try {
-    const stdout = await spawnAsync("python", [scriptPath], {
-      input: source,
-      encoding: "utf8",
-    });
-    const io = JSON.parse(stdout);
-    console.log(io);
+    io = await compileComputationFunction(source);
     return io;
   } catch (error) {
     const message = `Compilation failed for block \nblock path: ${blockPath} \nscript path: ${scriptPath}`;
-    logger.error(error, message);
-    throw new ServerError(message, HttpStatus.INTERNAL_SERVER_ERROR, error);
-  }
-}
-
-export async function saveBlockSpecs(pipelinePath, blockId, specs) {
-  const specsPath = path.join(pipelinePath, blockId, BLOCK_SPECS_FILE_NAME);
-
-  removeConnections(specs.inputs);
-  removeConnections(specs.outputs);
-
-  specs.views.node.pos_x = 0;
-  specs.views.node.pos_y = 0;
-
-  await fs.writeFile(specsPath, JSON.stringify(specs, null, 2));
-}
-
-function removeConnections(io) {
-  for (const key in io) {
-    io[key].connections = [];
-  }
-
-  return io;
-}
-
-export async function runTest(pipelinePath, blockId) {
-  const blockPath = path.join(pipelinePath, blockId);
-  const scriptPath = app.isPackaged
-    ? path.join(process.resourcesPath, "resources", "run_test.py")
-    : path.join("resources", "run_test.py");
-  if (!(await fileExists(scriptPath))) {
-    throw new ServerError(
-      `Could not find script for running tests: ${scriptPath}`,
-      HttpStatus.INTERNAL_SERVER_ERROR,
-    );
-  }
-
-  try {
-    await spawnAsync("python", [scriptPath, blockPath, blockId]);
-  } catch (error) {
-    const message = `Failed to run tests for block \nblock path: ${blockPath} \nscript path: ${scriptPath}`;
     logger.error(error, message);
     throw new ServerError(message, HttpStatus.INTERNAL_SERVER_ERROR, error);
   }
@@ -137,6 +95,41 @@ export async function updateBlockFile(
   await fs.writeFile(absoluteFilePath, content);
 }
 
+export async function saveBlockSpecs(pipelinePath, blockId, specs) {
+  const specsPath = path.join(pipelinePath, blockId, BLOCK_SPECS_FILE_NAME);
+
+  removeConnections(specs.inputs);
+  removeConnections(specs.outputs);
+
+  specs.views.node.pos_x = 0;
+  specs.views.node.pos_y = 0;
+
+  await fs.writeFile(specsPath, JSON.stringify(specs, null, 2));
+}
+
+function removeConnections(io) {
+  for (const key in io) {
+    io[key].connections = [];
+  }
+
+  return io;
+}
+
+export async function runTest(pipelinePath, blockId) {
+  const blockPath = path.join(pipelinePath, blockId);
+  const scriptPath = app.isPackaged
+    ? path.join(process.resourcesPath, "resources", "runTest.mjs")
+    : path.join("resources", "runTest.mjs");
+  if (!(await fileExists(scriptPath))) {
+    throw new ServerError(
+      `Could not find script for running tests: ${scriptPath}`,
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
+  }
+
+  return await runTestContainer(blockPath, blockId);
+}
+
 function getFilePermissions(name) {
   const readOnly = READ_ONLY_FILES.includes(name);
   const supported = isFileSupported(name);
@@ -163,28 +156,52 @@ export async function callAgent(
   conversationHistory,
   apiKey,
 ) {
-  let agents = "agents";
-  if (app.isPackaged) {
-    agents = path.join(process.resourcesPath, "agents");
-  }
-  const scriptPath = path.join(
-    agents,
-    agentName,
-    "generate",
-    "computations.py",
-  );
+
+  //KEEPING THOSE FOR REFERENCE, IF WE EVER DECIDE TO MIGRATE BACK TO PYTHON AGENTS
+
+
+  // let agents = "agents";
+  // if (app.isPackaged) {
+  //   agents = path.join(process.resourcesPath, "agents");
+  // }
+  // const scriptPath = path.join(
+  //   agents,
+  //   agentName,
+  //   "generate",
+  //   "computations.py",
+  // );
 
   try {
-    const stdout = await spawnAsync("python", [scriptPath], {
-      input: JSON.stringify({
-        apiKey,
+    //KEEPING THOSE FOR REFERENCE, IF WE EVER DECIDE TO MIGRATE BACK TO PYTHON AGENTS
+
+    // const stdout = await spawnAsync("python", [scriptPath], {
+    //   input: JSON.stringify({
+    //     apiKey,
+    //     userMessage,
+    //     conversationHistory,
+    //   }),
+    //   encoding: "utf8",
+    // });
+    // const response = JSON.parse(stdout).response;
+    // return response;
+
+    if (agentName === "gpt-4_python_compute") {
+      const result = await computeAgent(
         userMessage,
+        "gpt-4o",
         conversationHistory,
-      }),
-      encoding: "utf8",
-    });
-    const response = JSON.parse(stdout).response;
-    return response;
+        apiKey,
+      );
+      return result.response;
+    } else {
+      const result = await computeViewAgent(
+        userMessage,
+        "gpt-4o",
+        conversationHistory,
+        apiKey,
+      );
+      return result.response;
+    }
   } catch (error) {
     const message = `Unable to call agent ${agentName} with message ${userMessage}`;
     logger.error(error, message);

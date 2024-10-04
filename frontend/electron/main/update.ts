@@ -26,6 +26,7 @@ export function update(win: Electron.BrowserWindow) {
     win.webContents.send('update-can-available', { update: false, version: app.getVersion(), newVersion: arg?.version })
   })
 
+
   // Checking for updates
   ipcMain.handle('check-update', async () => {
     if (!app.isPackaged) {
@@ -39,6 +40,7 @@ export function update(win: Electron.BrowserWindow) {
       return { message: 'Network error', error }
     }
   })
+  
 
   // Start downloading and feedback on progress
   ipcMain.handle('start-download', (event: Electron.IpcMainInvokeEvent) => {

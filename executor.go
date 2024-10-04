@@ -512,7 +512,7 @@ func terminateArgo(ctx context.Context, cfg Config, db *sql.DB, name string, id 
 
 func buildImage(ctx context.Context, source string, tag string, logger *log.Logger, cfg Config) error {
 	if cfg.Local.Driver == "minikube" {
-		minikubeBuild := cmd.NewCmd("minikube", "-p", "zetaforge", "image", "build", "-t", tag, source)
+		minikubeBuild := cmd.NewCmd("minikube", "-p", cfg.KubeContext, "image", "build", "-t", tag, source)
 		minikubeChan := minikubeBuild.Start()
 		lineCount := 0
 		done := false
@@ -542,7 +542,7 @@ func buildImage(ctx context.Context, source string, tag string, logger *log.Logg
 			}
 		}
 
-		minikubeImage := cmd.NewCmd("minikube", "-p", "zetaforge", "image", "ls")
+		minikubeImage := cmd.NewCmd("minikube", "-p", cfg.KubeContext, "image", "ls")
 		<-minikubeImage.Start()
 		for _, line := range minikubeImage.Status().Stdout {
 			if "docker.io/"+tag == line {
