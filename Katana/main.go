@@ -24,6 +24,8 @@ var TMPPATH = "/tmp/katana"
 
 var historySubfolder = ""
 
+var docker_image_name = ""
+
 func execCommand(cmd string, dir string, id string, args Dict, historySubfolder string) error {
 	var command *exec.Cmd
 	var commandArgs []string
@@ -52,7 +54,7 @@ func execCommand(cmd string, dir string, id string, args Dict, historySubfolder 
 		command = exec.Command("docker", "run", "--rm",
 			"-v", absDir+":/app", // Mount the block folder where computations.py is located
 			"-v", absHistorySubfolder+":/app/history/", // Mount the history folder
-			"pipeline_image_2",             // Docker image -- hardcoded
+			docker_image_name,              // Docker image -- hardcoded
 			"python", "/app/entrypoint.py", // Execute entrypoint.py inside Docker
 			id, "/app/history", mode) // Pass arguments to entrypoint.py (inside Docker paths)
 	} else {
@@ -299,6 +301,24 @@ func runTask(task *Task) {
 
 func main() {
 
+	pipelineName := os.Args[2]
+	pipelinePath := filepath.Join(".", pipelineName)
+
+	data, err := os.ReadFile(filepath.Join(pipelinePath, "pipeline.json"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var pipeline Pipeline
+	err = json.Unmarshal(data, &pipeline)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if pipeline.Sink != "" {
+		TMPPATH = pipeline.Sink
+	}
+
 	flag.StringVar(&mode, "mode", "uv", "Execution mode: uv, no-uv, docker")
 	flag.Parse()
 
@@ -306,25 +326,34 @@ func main() {
 		log.Fatal("Pipeline name or path must be provided as an argument.")
 	}
 
-	pipelineName := os.Args[2]
-	pipelinePath := filepath.Join(".", pipelineName)
+	var filePaths []string // extracting files for the pipelines.
+	for _, block := range pipeline.Pipeline {
+		for paramName, param := range block.Action.Parameters {
+			if paramName == "path" {
+				filePaths = append(filePaths, param.Value) // Assuming 'Value' contains the file path
+			}
+		}
+	}
+
+	// fmt.Println("File Paths:", filePaths)
 
 	if mode == "docker" {
 		fmt.Println("Docker mode running")
-		buildAndRunDockerImage(pipelinePath)
+		docker_image_name = "katana-" + pipeline.Id
+		// fmt.Print("docker_image_name : ", docker_image_name)
+		buildAndRunDockerImage(pipelinePath, docker_image_name, filePaths)
 		return
 	} else {
 		fmt.Println("Running in non-docker mode")
-		runLocalPipeline(pipelinePath)
+		runLocalPipeline(pipeline, pipelinePath)
 	}
 
 }
 
 // TRYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY
 
-func buildAndRunDockerImage(pipelinePath string) {
+func buildAndRunDockerImage(pipelinePath string, imageName string, filepaths []string) {
 	// Step 1: Check if Docker image already exists
-	imageName := "pipeline_image_2"
 	checkCmd := exec.Command("docker", "images", "-q", imageName)
 	checkOutput, err := checkCmd.Output()
 	if err != nil {
@@ -366,38 +395,37 @@ func buildAndRunDockerImage(pipelinePath string) {
 	historySubfolder = prepareHistoryFolder(absPipelinePath)
 
 	// Step 3: Copy files to history folder
-	copyToHistoryFolder(historySubfolder)
+	copyToHistoryFolder(historySubfolder, filepaths)
 
 	// Step 4: Run the local pipeline using the Docker environment
 	runLocalPipelineInDocker(absPipelinePath, historySubfolder)
 }
 
-func copyToHistoryFolder(historySubfolder string) {
-	// Hardcoded source file path
-	srcFile := "C:\\Users\\Teertha\\Pictures\\img.jpg" // HARDCODE
+func copyToHistoryFolder(historySubfolder string, filePaths []string) {
+	for _, srcFile := range filePaths {
+		// Destination path in the history folder
+		destFile := filepath.Join(historySubfolder, filepath.Base(srcFile))
 
-	// Destination path in the history folder
-	destFile := filepath.Join(historySubfolder, filepath.Base(srcFile))
+		// Copy the file
+		source, err := os.Open(srcFile)
+		if err != nil {
+			log.Fatalf("Failed to open source file: %v", err)
+		}
+		defer source.Close()
 
-	// Copy the file
-	source, err := os.Open(srcFile)
-	if err != nil {
-		log.Fatalf("Failed to open source file: %v", err)
+		destination, err := os.Create(destFile)
+		if err != nil {
+			log.Fatalf("Failed to create destination file: %v", err)
+		}
+		defer destination.Close()
+
+		_, err = io.Copy(destination, source)
+		if err != nil {
+			log.Fatalf("Failed to copy file: %v", err)
+		}
+
+		log.Println("Copied file to", destFile)
 	}
-	defer source.Close()
-
-	destination, err := os.Create(destFile)
-	if err != nil {
-		log.Fatalf("Failed to create destination file: %v", err)
-	}
-	defer destination.Close()
-
-	_, err = io.Copy(destination, source)
-	if err != nil {
-		log.Fatalf("Failed to copy file: %v", err)
-	}
-
-	log.Println("Copied file to", destFile)
 }
 
 func prepareHistoryFolder(pipelinePath string) string {
@@ -451,21 +479,7 @@ func runLocalPipelineInDocker(pipelinePath string, historySubfolder string) {
 	release()
 }
 
-func runLocalPipeline(pipelinePath string) {
-	data, err := os.ReadFile(filepath.Join(pipelinePath, "pipeline.json"))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var pipeline Pipeline
-	err = json.Unmarshal(data, &pipeline)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if pipeline.Sink != "" {
-		TMPPATH = pipeline.Sink
-	}
+func runLocalPipeline(pipeline Pipeline, pipelinePath string) {
 
 	// Create the history subfolder using the current timestamp
 	historyDir := filepath.Join(pipelinePath, "history")

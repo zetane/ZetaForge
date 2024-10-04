@@ -164,10 +164,12 @@ def main():
             output_file_path = os.path.join(history_subfolder, f"{result}-output_path.txt")
         elif ("openai-agent" in block_id):
             output_file_path = os.path.join(history_subfolder, f"{result}-response.txt")
+        elif ("images-to-video" in block_id):
+            output_file_path = os.path.join(history_subfolder, f"{result}-video_path.txt")
         else:
             output_file_path = os.path.join(history_subfolder, f"{result}-image_paths.txt")
 
-        # print("output file path:" , output_file_path)
+        print("output file path:" , output_file_path)
     
         with open(output_file_path, "w") as file:
             file.write(json.dumps(value))

@@ -36,13 +36,13 @@ type Container struct {
 }
 
 type Command struct {
-  Exec       string             `json:"exec"`
-  Dir        string             `json:"dir,omitempty"`
+	Exec string `json:"exec"`
+	Dir  string `json:"dir,omitempty"`
 }
 
 type Action struct {
 	Container  Container            `json:"container,omitempty"`
-  Command    Command              `json:"command,omitempty"` // commmand replaces docker, actual command,deer paremeter: if the command is empty, i
+	Command    Command              `json:"command,omitempty"` // commmand replaces docker, actual command,deer paremeter: if the command is empty, i
 	Pipeline   map[string]Block     `json:"pipeline,omitempty"`
 	Parameters map[string]Parameter `json:"parameters,omitempty"`
 }
