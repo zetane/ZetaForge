@@ -59,7 +59,7 @@ describe("merkle", () => {
       );
 
       const expected = {
-        hash: "A.B.D.E....",
+        hash: "A.B.D.E...",
         [blockFixture.getId()]: {
           hash: "A.B.D.E...",
           files: {
@@ -121,12 +121,12 @@ describe("merkle", () => {
       const result = await computePipelineMerkleTree(specs, specs.id);
 
       const expected = {
-        hash: "A..B..C...",
+        hash: "A.B.C..",
         [blockIds[0]]: {
-          hash: "A..",
+          hash: "A.",
           files: {
             path: "",
-            hash: "A..",
+            hash: "A.",
             children: [
               {
                 path: "file",
@@ -136,10 +136,10 @@ describe("merkle", () => {
           },
         },
         [blockIds[1]]: {
-          hash: "B..",
+          hash: "B.",
           files: {
             path: "",
-            hash: "B..",
+            hash: "B.",
             children: [
               {
                 path: "file",
@@ -149,10 +149,10 @@ describe("merkle", () => {
           },
         },
         [blockIds[2]]: {
-          hash: "C..",
+          hash: "C.",
           files: {
             path: "",
-            hash: "C..",
+            hash: "C.",
             children: [
               {
                 path: "file",
@@ -216,16 +216,16 @@ describe("merkle", () => {
       const result = await computePipelineMerkleTree(specs, specs.id);
 
       const expected = {
-        hash: "A.....",
+        hash: "A.",
         [blockIds[0]]: {
-          hash: "A....",
+          hash: "A.",
           [blockIds[1]]: {
-            hash: "A...",
+            hash: "A.",
             [blockIds[2]]: {
-              hash: "A..",
+              hash: "A.",
               files: {
                 path: "",
-                hash: "A..",
+                hash: "A.",
                 children: [
                   {
                     path: "file",
@@ -254,10 +254,10 @@ describe("merkle", () => {
       const expected = {
         hash: ".",
         [block.information.id]: {
-          hash: null,
+          hash: ".",
           files: {
             path: "",
-            hash: null,
+            hash: ".",
             children: [],
           },
         },
@@ -279,7 +279,7 @@ describe("merkle", () => {
       const result = await computePipelineMerkleTree(specs, specs.id);
 
       const expected = {
-        hash: "..",
+        hash: ".",
         [block.information.id]: {
           hash: ".",
           files: {
@@ -288,7 +288,7 @@ describe("merkle", () => {
             children: [
               {
                 path: "A",
-                hash: null,
+                hash: ".",
                 children: [],
               },
             ],
@@ -308,7 +308,7 @@ describe("merkle", () => {
       const result = await computePipelineMerkleTree(specs, specs.id);
 
       const expected = {
-        hash: null,
+        hash: ".",
       };
       expect(result).toEqual(expected);
     });
