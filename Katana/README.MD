@@ -56,8 +56,8 @@ or
 go run . --mode=no-uv <pipeline-name>
 ```
 
-- This will execute the pipeline directly on your local machine without Docker.
-- UV mode will create a virtual environment inside block folders, install requirements and then run each block. All the subsequent runs will use the existing environment to run. no installataion will be there after the 1st run.
+- No-UV : This will execute the pipeline directly on your local machine without Docker.
+- UV mode : This will create a virtual environment inside block folders, install requirements and then run each block. All the subsequent runs will use the existing environment to run. no installataion will be there after the 1st run.
 
 ## Pipeline Structure
 
