@@ -26,11 +26,17 @@ export const genJSON = (block, id) => {
   };
 };
 
-export function generateId(block) {
-  const nanoid = customAlphabet("1234567890abcedfghijklmnopqrstuvwxyz", 12);
+export function generateId(prefix) {
+  const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyz0123456789", 12);
   const newNanoid = nanoid();
-  const id = `${block.information.id}-${newNanoid}`;
-  return id;
+
+  if (prefix) {
+    const [basePrefix] = prefix.split("-");
+    const finalPrefix = basePrefix === "pipeline" ? basePrefix : prefix;
+    return `${finalPrefix}-${newNanoid}`;
+  }
+
+  return `pipeline-${newNanoid}`;
 }
 
 export function replaceIds(block, id) {

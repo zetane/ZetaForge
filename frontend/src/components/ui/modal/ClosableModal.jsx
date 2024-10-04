@@ -9,7 +9,7 @@ export default function ClosableModal(props) {
 
   const closeModal = () => {
     setModalContent({
-      ...modalContent.content,
+      content: null,
       show: false,
     });
   };

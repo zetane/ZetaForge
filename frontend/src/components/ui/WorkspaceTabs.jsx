@@ -2,11 +2,16 @@ import { useEffect, useState } from "react";
 import { Tabs, TabList, Tab, TabPanels, TabPanel } from "@carbon/react";
 import { workspaceAtom } from "@/atoms/pipelineAtom";
 import { useImmerAtom } from "jotai-immer";
+import { useAtom } from "jotai";
+import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
 
 export default function WorkspaceTabs() {
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
   const [renderedTabs, setRenderedTabs] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [cam, setCam] = useState({});
+
+  const [editor] = useAtom(drawflowEditorAtom);
 
   useEffect(() => {
     const pipelineTabs = [];
@@ -27,9 +32,26 @@ export default function WorkspaceTabs() {
   const handleTabChange = (evt) => {
     const index = evt.selectedIndex;
     const key = renderedTabs[index]?.id;
+
+    setCam((prevCam) => {
+      const pos = { x: editor?.canvas_x, y: editor?.canvas_y };
+      const newCam = {
+        ...prevCam,
+        [workspace.active]: { zoom: editor?.zoom, pos: pos },
+      };
+      return newCam;
+    });
+
     setWorkspace((draft) => {
       draft.active = key;
     });
+
+    if (editor) {
+      editor.zoom = cam[key]?.zoom ?? 1;
+      editor.canvas_x = cam[key]?.pos.x ?? 0;
+      editor.canvas_y = cam[key]?.pos.y ?? 0;
+      editor.zoom_refresh(); // Refresh after setting zoom, *required.
+    }
   };
 
   const handleCloseTabRequest = (deleteIndex) => {
@@ -38,7 +60,6 @@ export default function WorkspaceTabs() {
       return;
     }
     // TODO: Pop modal for deleting last tab
-    console.log(workspace.tabs);
     if (Object.keys(workspace.tabs).length > 1) {
       const deleteTab = renderedTabs[deleteIndex];
       const selectedTab = renderedTabs[selectedIndex];
@@ -73,7 +94,7 @@ export default function WorkspaceTabs() {
           dismissable
           onTabCloseRequest={handleCloseTabRequest}
         >
-          <TabList aria-label="List of tabs" contained>
+          <TabList aria-label="List of tabs">
             {renderedTabs.map((tab, index) => (
               <Tab key={index} disabled={tab?.disabled}>
                 {tab.label}

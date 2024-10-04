@@ -1,0 +1,73 @@
+{
+  "information": {
+    "id": "snowflake-api",
+    "name": "Snowflake Api",
+    "description": "This is the snowflake api integration block",
+    "system_versions": [
+      "0.1"
+    ],
+    "block_version": "block version number",
+    "block_source": "core/blocks/snowflake-api",
+    "block_type": "compute"
+  },
+  "inputs": {
+    "user": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    },
+    "password": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    },
+    "database": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    },
+    "schema": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    },
+    "query": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    }
+  },
+  "outputs": {
+    "result": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    }
+  },
+  "action": {
+    "container": {
+      "image": "snowflake-api",
+      "version": "snowflake-api-m0cbe3nptd3e",
+      "command_line": [
+        "python",
+        "-u",
+        "entrypoint.py"
+      ]
+    }
+  },
+  "views": {
+    "node": {
+      "behavior": "modal",
+      "active": "True",
+      "title_bar": {
+        "background_color": "#6b2be0"
+      },
+      "preview": {},
+      "html": "",
+      "pos_x": "1283",
+      "pos_y": "280.609375",
+      "pos_z": "999"
+    }
+  },
+  "events": {}
+}

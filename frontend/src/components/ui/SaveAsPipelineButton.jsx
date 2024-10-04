@@ -9,7 +9,7 @@ export default function SaveAsPipelineButton() {
   const [editor] = useAtom(drawflowEditorAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
 
-  const savePipeline = trpc.savePipeline.useMutation();
+  const copyPipeline = trpc.copyPipeline.useMutation();
 
   const handleClick = async (editor, pipeline) => {
     try {
@@ -22,17 +22,17 @@ export default function SaveAsPipelineButton() {
     // If a pipeline is loaded, pipeline.path will be set to the load path
     // If it isn't set, electron will pop a file picker window
     // The response from the server after saving will contain that new path
-    pipelineSpecs["sink"] = pipeline.path ? pipeline.path : pipeline.buffer;
-    pipelineSpecs["build"] = pipeline.buffer;
+    pipelineSpecs["sink"] = pipeline.path;
+    pipelineSpecs["build"] = pipeline.path;
     pipelineSpecs["name"] = pipeline.name;
     pipelineSpecs["id"] = pipeline.id;
     const saveData = {
       specs: pipelineSpecs,
       name: pipeline.name,
-      buffer: pipeline.buffer,
-      writePath: undefined,
+      writeFromDir: pipeline.path,
+      writeToDir: undefined,
     };
-    const response = await savePipeline.mutateAsync(saveData);
+    const response = await copyPipeline.mutateAsync(saveData);
     const { name, dirPath, specs } = response;
 
     setPipeline((draft) => {

@@ -14,6 +14,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"fmt"
@@ -64,25 +65,106 @@ type Cloud struct {
 	Debug    `json:"Debug,omitempty"`
 }
 
-type WebSocketWriter struct {
-	Id          string
-	MessageFunc func(string, string)
-	// Add other fields as needed
+type LogWriter struct {
+	File        *os.File
+	ExecutionID string
+	MessageFunc func(string, string) ([]byte, error)
+	Hub         *Hub
+	mu          sync.Mutex
+	// mutex for any potential multithread writing
 }
 
-func (w *WebSocketWriter) Write(p []byte) (n int, err error) {
-	message := string(p)
-	w.MessageFunc(message, w.Id)
-	return len(p), nil
-}
+func (w *LogWriter) Write(p []byte) (n int, err error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
 
-func createLogger(id string, messageFunc func(string, string)) io.Writer {
-	wsWriter := &WebSocketWriter{
-		Id:          id,
-		MessageFunc: messageFunc,
+	jsonData, err := w.MessageFunc(string(p), w.ExecutionID)
+	jsonData = ensureNewline(jsonData)
+	if err != nil {
+		return n, fmt.Errorf("failed to parse message into log line: %v", err)
+	}
+	// Write to file
+	n, err = w.File.Write(jsonData)
+	if err != nil {
+		return n, fmt.Errorf("failed to write to file: %v", err)
 	}
 
-	return io.MultiWriter(os.Stdout, wsWriter)
+	w.Hub.Broadcast <- Message{Room: w.ExecutionID, Content: fmt.Sprintf("%s", jsonData)}
+
+	return n, nil
+}
+
+func (w *LogWriter) Close() error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return w.File.Close()
+}
+
+func ensureNewline(p []byte) []byte {
+	if len(p) > 0 && p[len(p)-1] != '\n' {
+		return append(p, '\n')
+	}
+	return p
+}
+
+// createLogger creates a new logger for the given execution ID
+func createLogger(executionID string, messageFunc func(string, string) ([]byte, error), hub *Hub) (*log.Logger, io.Closer, error) {
+	logDir, exists := os.LookupEnv("ZETAFORGE_LOGS")
+	if !exists {
+		logDir = os.TempDir()
+	}
+
+	tempLog := filepath.Join(logDir, executionID+".log")
+	fileWriter, err := os.OpenFile(tempLog, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create log file: %v", err)
+	}
+
+	writer := &LogWriter{
+		File:        fileWriter,
+		ExecutionID: executionID,
+		MessageFunc: messageFunc,
+		Hub:         hub,
+	}
+	logger := log.New(writer, "", log.LstdFlags)
+	return logger, writer, nil
+}
+
+func processLogMessage(message string, executionUUID string) ([]byte, error) {
+	parts := strings.SplitN(message, " ", 3)
+	timestamp := ""
+	if len(parts) == 3 {
+		timestamp = parts[0] + " " + parts[1]
+		message = parts[2]
+	}
+	content := map[string]interface{}{
+		"executionId": executionUUID,
+		"time":        timestamp,
+	}
+	if strings.HasPrefix(message, "{") && strings.HasSuffix(message, "}\n") {
+		message = strings.TrimSuffix(message, "\n")
+		var jsonObj map[string]interface{}
+		err := json.Unmarshal([]byte(message), &jsonObj)
+		if err != nil {
+			fmt.Printf("Failed to log: %s", message)
+			return nil, err
+		}
+		for key, value := range jsonObj {
+			content[key] = value
+		}
+	} else {
+		content["message"] = strings.TrimSuffix(message, "\n")
+	}
+	jsonData, err := json.Marshal(content)
+	if err != nil {
+		fmt.Printf("Failed to log: %s", message)
+		return nil, err
+	}
+
+	// Logs to stdout
+	fmt.Printf("%s\n", jsonData)
+
+	return jsonData, nil
 }
 
 func readTempLog(tempLog string) ([]string, error) {
@@ -97,6 +179,8 @@ func readTempLog(tempLog string) ([]string, error) {
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
+	buf := make([]byte, 0, 64*1024)
+	scanner.Buffer(buf, 1024*1024)
 	var logData []string
 	for scanner.Scan() {
 		logData = append(logData, scanner.Text())
@@ -197,7 +281,60 @@ func initializeNils(v reflect.Value, visited map[uintptr]bool) {
 			initializeNils(field, visited)
 		}
 	}
+}
 
+func removeParameterValuesFromPipeline(pipeline zjson.Pipeline) zjson.Pipeline {
+	for _, block := range pipeline.Pipeline {
+		if block.Action.Parameters == nil {
+			continue
+		}
+
+		for paramName, param := range block.Action.Parameters {
+			param.Value = ""
+			block.Action.Parameters[paramName] = param
+		}
+	}
+
+	return pipeline
+}
+
+func mergeInputsIntoPipeline(pipeline *zjson.Pipeline, inputBody map[string]interface{}) {
+	inputs, ok := inputBody["inputs"].(map[string]interface{})
+	if !ok {
+		log.Printf("Warning: 'inputs' not found in input body or is not a map")
+		return
+	}
+	log.Printf("inputs: %v", inputs)
+
+	for blockID, block := range pipeline.Pipeline {
+		if block.Action.Parameters == nil {
+			continue
+		}
+
+		for paramName, param := range block.Action.Parameters {
+			// Find the output connection for this parameter
+			if block.Outputs == nil {
+				continue
+			}
+
+			outputConnection, found := block.Outputs[paramName]
+			if !found {
+				continue
+			}
+
+			// Construct the key for the input body
+			inputKey := fmt.Sprintf("%s", outputConnection.Connections[0].Variable)
+
+			if value, exists := inputs[inputKey]; exists {
+				// Update the parameter value
+				param.Value = fmt.Sprintf("%v", value)
+				block.Action.Parameters[paramName] = param
+				log.Printf("Updated parameter %s with value from input %s", paramName, inputKey)
+			}
+		}
+
+		pipeline.Pipeline[blockID] = block
+	}
 }
 
 func checkVisited(v reflect.Value, visited map[uintptr]bool) bool {
@@ -414,9 +551,9 @@ func main() {
 			return
 		}
 		if config.IsLocal || config.Cloud.Provider == "Debug" {
-			go localExecute(&execution.Pipeline, newExecution.ID, execution.Id, prefix, execution.Build, config, db, hub)
+			go localExecute(&execution.Pipeline, newExecution.ID, execution.Id, prefix, execution.Build, false, config, db, hub)
 		} else {
-			go cloudExecute(&execution.Pipeline, newExecution.ID, execution.Id, prefix, execution.Build, config, db, hub)
+			go cloudExecute(&execution.Pipeline, newExecution.ID, execution.Id, prefix, execution.Build, false, config, db, hub)
 		}
 
 		retData, err := filterPipeline(ctx, db, execution.Id)
@@ -425,7 +562,7 @@ func main() {
 			ctx.String(err.Status(), err.Error())
 			return
 		}
-		response, err := newResponsePipelineExecution(retData, []string{})
+		response, err := newResponsePipelineExecution(retData, []string{}, "")
 		if err != nil {
 			log.Printf("failed to create response payload; err=%v", err)
 			ctx.String(err.Status(), err.Error())
@@ -519,25 +656,44 @@ func main() {
 
 		ctx.JSON(http.StatusOK, response)
 	})
-	execution.GET("/:executionId/log", func(ctx *gin.Context) {
-		executionId := ctx.Param("executionId")
-		res, err := getExecutionById(ctx.Request.Context(), db, executionId)
-		if err != nil {
+	execution.GET("/:executionUuid", func(ctx *gin.Context) {
+		executionUuid := ctx.Param("executionUuid")
+		execution, httpErr := filterPipeline(ctx, db, executionUuid)
+		if httpErr != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to retrieve execution"})
 			return
 		}
 
-		tempLog := filepath.Join(os.TempDir(), executionId+".log")
-		if res.Status == "Running" {
-			logData, err := readTempLog(tempLog)
-			if err != nil {
-				ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to read temporary log"})
-				return
-			}
-			ctx.JSON(http.StatusOK, logData)
-		} else {
-			ctx.JSON(http.StatusOK, []string{})
+		logOutput := []string{}
+		logDir, exists := os.LookupEnv("ZETAFORGE_LOGS")
+		if !exists {
+			logDir = os.TempDir()
 		}
+		tempLog := filepath.Join(logDir, execution.Executionid+".log")
+
+		var s3key string
+		if execution.Status == "Running" || execution.Status == "Pending" {
+			logOutput, err = readTempLog(tempLog)
+			if err != nil {
+				fmt.Printf("failed to retrieve writing log; err=%v", err)
+			}
+		} else {
+			s3key = execution.Uuid + "/" + execution.Executionid + "/" + execution.Executionid + ".log"
+			// in certain cases the pipeline has succeeded or failed but
+			// has not yet uploaded to s3, so still attempt to send the tempLog
+			logOutput, err = readTempLog(tempLog)
+
+			if err != nil {
+				fmt.Printf("no temp log on the server; err=%v\n", err)
+			}
+		}
+		response, err := newResponsePipelineExecution(execution, logOutput, s3key)
+		if err != nil {
+			ctx.String(err.Status(), err.Error())
+			return
+		}
+
+		ctx.JSON(http.StatusOK, response)
 	})
 	execution.POST("/:executionId/terminate", func(ctx *gin.Context) {
 		executionId := ctx.Param("executionId")
@@ -558,7 +714,6 @@ func main() {
 
 		ctx.JSON(http.StatusOK, response)
 	})
-
 	pipeline := router.Group("/pipeline")
 	pipeline.POST("", func(ctx *gin.Context) {
 		prefix := getPrefix(ctx)
@@ -608,56 +763,17 @@ func main() {
 	})
 	pipeline.GET("/filter", func(ctx *gin.Context) {
 		// TODO: Figure out how to get SQLC to emit the same struct for two different queries
-		limitStr := ctx.DefaultQuery("limit", "0")
-		offsetStr := ctx.DefaultQuery("offset", "0")
-
-		limit, err := strconv.Atoi(limitStr)
-		if err != nil {
-			log.Printf("Invalid limit parameter: %s", limitStr)
-			ctx.String(http.StatusBadRequest, "Invalid limit parameter")
-			return
-		}
-
-		offset, err := strconv.Atoi(offsetStr)
-		if err != nil {
-			log.Printf("Invalid offset parameter: %s", offsetStr)
-			ctx.String(http.StatusBadRequest, "Invalid offset parameter")
-			return
-		}
-
-		res, httpErr := filterPipelines(ctx, db, int64(limit), int64(offset))
+		prefix := getPrefix(ctx)
+		res, httpErr := allFilterPipelines(ctx, db, prefix)
 		if httpErr != nil {
 			log.Printf("failed to get filter pipelines; err=%v", httpErr)
 			ctx.String(httpErr.Status(), httpErr.Error())
 			return
 		}
 
-		var response []ResponsePipelineExecution
+		var response []AllPipelineExecution
 		for _, execution := range res {
-			logOutput := []string{}
-			logDir, exists := os.LookupEnv("ZETAFORGE_LOGS")
-			if !exists {
-				logDir = os.TempDir()
-			}
-			tempLog := filepath.Join(logDir, execution.Executionid+".log")
-
-			var s3key string
-			if execution.Status == "Running" || execution.Status == "Pending" {
-				logOutput, err = readTempLog(tempLog)
-				if err != nil {
-					fmt.Printf("failed to retrieve writing log; err=%v", err)
-				}
-			} else {
-				s3key = execution.Uuid + "/" + execution.Executionid + "/" + execution.Executionid + ".log"
-				// in certain cases the pipeline has succeeded or failed but
-				// has not yet uploaded to s3, so still attempt to send the tempLog
-				logOutput, err = readTempLog(tempLog)
-
-				if err != nil {
-					fmt.Printf("no temp log on the server; err=%v\n", err)
-				}
-			}
-			newRes, err := newResponsePipelinesExecution(execution, logOutput, s3key)
+			newRes, err := newResponseAllFilterPipelines(execution)
 			if err != nil {
 				ctx.String(err.Status(), err.Error())
 				return
@@ -683,27 +799,39 @@ func main() {
 		uuid := ctx.Param("uuid")
 		hash := ctx.Param("hash")
 
-		if err := deployPipeline(ctx.Request.Context(), db, prefix, uuid, hash); err != nil {
+		pipeline, err := deployPipeline(ctx.Request.Context(), db, prefix, uuid, hash)
+		if err != nil {
 			log.Printf("failed to deploy pipeline; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
+		pipelineRes, err := newResponsePipeline(pipeline)
+		if err != nil {
+			ctx.String(err.Status(), err.Error())
+			return
+		}
+		ctx.JSON(http.StatusOK, pipelineRes)
 	})
 	pipeline.GET("/:uuid/list", func(ctx *gin.Context) {
 		prefix := getPrefix(ctx)
 		uuid := ctx.Param("uuid")
 
-		res, err := listAllExecutions(ctx.Request.Context(), db, prefix, uuid)
+		res, err := getPipelinesByUuid(ctx, db, prefix, uuid)
 
 		if err != nil {
-			log.Printf("failed to list executions; err=%v", err)
+			log.Printf("failed to get pipeline; err=%v", err)
 			ctx.String(err.Status(), err.Error())
 			return
 		}
 
-		var response []ResponseExecution
-		for _, execution := range res {
-			response = append(response, newResponseExecutionRow(execution))
+		var response []ResponsePipeline
+		for _, pipeline := range res {
+			newRes, err := newResponsePipeline(pipeline)
+			if err != nil {
+				ctx.String(err.Status(), err.Error())
+				return
+			}
+			response = append(response, newRes)
 		}
 
 		ctx.JSON(http.StatusOK, response)
@@ -768,6 +896,15 @@ func main() {
 		prefix := getPrefix(ctx)
 		paramUuid := ctx.Param("uuid")
 		hash := ctx.Param("hash")
+
+		// Decode the POST body
+		var postBody map[string]interface{}
+		if err := ctx.BindJSON(&postBody); err != nil {
+			log.Printf("Failed to decode POST body: %v", err)
+			ctx.String(http.StatusBadRequest, "Invalid request body")
+			return
+		}
+
 		res, err := getPipeline(ctx.Request.Context(), db, prefix, paramUuid, hash)
 		if err != nil {
 			log.Printf("failed to get pipeline; err=%v", err)
@@ -777,7 +914,23 @@ func main() {
 
 		var pipeline zjson.Pipeline
 		if err := json.Unmarshal([]byte(res.Json), &pipeline); err != nil {
-			ctx.String(http.StatusInternalServerError, err.Error())
+			log.Printf("failed to unmarshal pipeline JSON; err=%v", err)
+			ctx.String(http.StatusInternalServerError, "Failed to parse pipeline data")
+			return
+		}
+
+		// Merge inputs from POST into the pipeline graph
+		mergeInputsIntoPipeline(&pipeline, postBody)
+
+		pipelineJSON, merr := json.Marshal(pipeline)
+		if merr != nil {
+			ctx.String(http.StatusInternalServerError, "Failed to serialize pipeline")
+			return
+		}
+
+		validatedPipeline, httpErr := validateJson[zjson.Pipeline](io.NopCloser(bytes.NewReader(pipelineJSON)))
+		if httpErr != nil {
+			ctx.String(httpErr.Status(), httpErr.Error())
 			return
 		}
 
@@ -789,7 +942,6 @@ func main() {
 		}
 
 		newExecution, err := createExecution(ctx, db, res.ID, executionId.String())
-
 		if err != nil {
 			log.Printf("failed to write execution to database; err=%v", err)
 			ctx.String(err.Status(), err.Error())
@@ -797,15 +949,26 @@ func main() {
 		}
 
 		if config.IsLocal || config.Cloud.Provider == "Debug" {
-			go localExecute(&pipeline, res.ID, executionId.String(), prefix, false, config, db, hub)
+			go localExecute(&validatedPipeline, newExecution.ID, executionId.String(), prefix, false, true, config, db, hub)
 		} else {
-			go cloudExecute(&pipeline, newExecution.ID, executionId.String(), prefix, false, config, db, hub)
+			go cloudExecute(&validatedPipeline, newExecution.ID, executionId.String(), prefix, false, true, config, db, hub)
 		}
 
-		newRes := make(map[string]any)
-		newRes["pipeline"] = res
-		newRes["executionId"] = executionId.String()
-		ctx.JSON(http.StatusCreated, newRes)
+		retData, err := filterPipeline(ctx, db, executionId.String())
+		if err != nil {
+			log.Printf("failed to get pipeline record; err=%v", err)
+			ctx.String(err.Status(), err.Error())
+			return
+		}
+
+		response, err := newResponsePipelineExecution(retData, []string{}, "")
+		if err != nil {
+			log.Printf("failed to create response payload; err=%v", err)
+			ctx.String(err.Status(), err.Error())
+			return
+		}
+
+		ctx.JSON(http.StatusCreated, response)
 	})
 
 	pipeline.DELETE("/:uuid/:hash/:index", func(ctx *gin.Context) {

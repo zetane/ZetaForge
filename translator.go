@@ -19,6 +19,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -58,7 +59,7 @@ func checkImage(ctx context.Context, image string, cfg Config) (bool, bool, erro
 
 			for _, images := range imageList {
 				for _, tag := range images.RepoTags {
-					if image == tag {
+					if "zetaforge/"+image == tag {
 						return true, false, nil
 					}
 				}
@@ -125,7 +126,7 @@ func checkImage(ctx context.Context, image string, cfg Config) (bool, bool, erro
 		data, err := remote.List(repo, remote.WithAuth(auth))
 
 		if err != nil {
-			return false, true, nil //We want to trigger a build even if the repo doesn't exists
+			return false, true, nil //We want to trigger a build even if the repo doesn't exist
 		}
 
 		for _, tag := range data {
@@ -162,7 +163,7 @@ func createRepository(ctx context.Context, image string, cfg Config) error {
 	return nil
 }
 
-func blockTemplate(block *zjson.Block, blockKey string, key string, organization string, cfg Config) *wfv1.Template {
+func blockTemplate(block *zjson.Block, blockKey string, key string, organization string, deployed bool, cfg Config) *wfv1.Template {
 	image := getImage(block, organization)
 	if cfg.IsLocal {
 		image = "zetaforge/" + image
@@ -198,15 +199,45 @@ func blockTemplate(block *zjson.Block, blockKey string, key string, organization
 	}
 	idMap := make(map[string]string)
 	idMap["key"] = blockKey
+
+	inputs := wfv1.Inputs{Artifacts: []wfv1.Artifact{entrypoint, computations}}
+	if deployed {
+		inputs = wfv1.Inputs{Artifacts: []wfv1.Artifact{entrypoint}}
+	}
 	return &wfv1.Template{
 		Name: blockKey,
 		Container: &corev1.Container{
 			Image:           image,
 			Command:         block.Action.Container.CommandLine,
 			ImagePullPolicy: "IfNotPresent",
+			Resources: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceEphemeralStorage: resource.MustParse("10Gi"),
+				},
+				Limits: corev1.ResourceList{
+					corev1.ResourceEphemeralStorage: resource.MustParse("80Gi"),
+				},
+			},
+			VolumeMounts: []corev1.VolumeMount{
+				{
+					Name:      "dshm",
+					MountPath: "/dev/shm",
+				},
+			},
 		},
-		Inputs:   wfv1.Inputs{Artifacts: []wfv1.Artifact{entrypoint, computations}},
+		Inputs:   inputs,
 		Metadata: wfv1.Metadata{Annotations: idMap},
+		Volumes: []corev1.Volume{
+			{
+				//https://stackoverflow.com/questions/46085748/define-size-for-dev-shm-on-container-engine
+				Name: "dshm",
+				VolumeSource: corev1.VolumeSource{
+					EmptyDir: &corev1.EmptyDirVolumeSource{
+						Medium: "Memory",
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -259,6 +290,9 @@ func kanikoTemplate(block *zjson.Block, organization string, cfg Config) *wfv1.T
 			"--compressed-caching=false",
 			"--snapshot-mode=redo",
 			"--use-new-run",
+			"--cleanup", // Add this to clean up after build
+			"--cache=true",
+			"--single-snapshot", // Can help reduce layers and save space
 		}
 		var volumes []corev1.Volume
 		var volumeMounts []corev1.VolumeMount
@@ -332,6 +366,14 @@ func kanikoTemplate(block *zjson.Block, organization string, cfg Config) *wfv1.T
 				Image:        cfg.KanikoImage,
 				Command:      cmd,
 				VolumeMounts: volumeMounts,
+				Resources: corev1.ResourceRequirements{
+					Requests: corev1.ResourceList{
+						corev1.ResourceEphemeralStorage: resource.MustParse("20Gi"),
+					},
+					Limits: corev1.ResourceList{
+						corev1.ResourceEphemeralStorage: resource.MustParse("90Gi"),
+					},
+				},
 			},
 			Inputs:  wfv1.Inputs{Artifacts: []wfv1.Artifact{artifact}},
 			Volumes: volumes,
@@ -340,7 +382,7 @@ func kanikoTemplate(block *zjson.Block, organization string, cfg Config) *wfv1.T
 
 }
 
-func translate(ctx context.Context, pipeline *zjson.Pipeline, organization string, key string, build bool, cfg Config) (*wfv1.Workflow, map[string]string, error) {
+func translate(ctx context.Context, pipeline *zjson.Pipeline, organization string, key string, executionUuid string, build bool, deployed bool, cfg Config) (*wfv1.Workflow, map[string]string, error) {
 	workflow := wfv1.Workflow{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Workflow",
@@ -365,7 +407,7 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 	templates := make(map[string]*wfv1.Template)
 	for id, block := range pipeline.Pipeline {
 		blockKey := id
-		template := blockTemplate(&block, blockKey, key, organization, cfg)
+		template := blockTemplate(&block, blockKey, key, organization, deployed, cfg)
 		task := wfv1.DAGTask{Name: template.Name, Template: template.Name}
 
 		if len(block.Action.Container.Image) > 0 {
@@ -398,6 +440,9 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, organization strin
 			template.Container.Env = append(template.Container.Env, corev1.EnvVar{
 				Name:  "_blockid_",
 				Value: blockKey,
+			}, corev1.EnvVar{
+				Name:  "EXECUTION_UUID",
+				Value: executionUuid,
 			})
 		}
 

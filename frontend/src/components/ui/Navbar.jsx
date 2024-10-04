@@ -42,8 +42,11 @@ export default function Navbar({ children }) {
 
   const svgOverride = { position: "absolute", right: "15px", top: "5px" };
 
+  let hostString = `@${configuration?.anvil?.host}`;
+  let runAction = `Run ${hostString}`;
+
   let runButton = (
-    <RunPipelineButton modalPopper={modalPopper} action="Run">
+    <RunPipelineButton modalPopper={modalPopper} action={runAction}>
       <Play size={20} style={svgOverride} />
     </RunPipelineButton>
   );

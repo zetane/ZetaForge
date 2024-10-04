@@ -4,13 +4,17 @@ export function getId() {
   return "pipeline-a1b2c3";
 }
 
+export function getPath() {
+  return "test-path";
+}
+
 export function getSpecs() {
   return {
     pipeline: {
       [blockFixture.getId()]: blockFixture.getSpecs(),
     },
-    sink: "",
-    build: "",
+    sink: getPath(),
+    build: getPath(),
     name: "Automated test pipeline",
     id: getId(),
   };

@@ -17,19 +17,27 @@ ORDER BY e.created DESC;
 -- name: FilterPipelines :many
 SELECT p.*, e.* FROM Pipelines p
 INNER JOIN Executions e on e.pipeline = p.id
-WHERE p.deleted = FALSE
+WHERE p.deleted = FALSE AND p.organization = ?
 ORDER BY e.created DESC
 LIMIT ? OFFSET ?;
 
 -- name: AllFilterPipelines :many
-SELECT p.*, e.* FROM Pipelines p
+SELECT p.*, e.id, e.status, e.created, e.completed, e.executionid FROM Pipelines p
 INNER JOIN Executions e on e.pipeline = p.id
-WHERE p.deleted = FALSE
+WHERE p.deleted = FALSE AND p.organization = ?
 ORDER BY e.created DESC;
 
 -- name: GetPipeline :one
 SELECT * FROM Pipelines
 WHERE organization = ? AND uuid = ? AND hash = ? AND deleted = FALSE;
+
+-- name: GetPipelineById :one
+SELECT * FROM Pipelines
+WHERE id = ?;
+
+-- name: GetPipelinesByUuid :many
+SELECT * FROM Pipelines
+WHERE organization = ? AND uuid = ?;
 
 -- name: CreatePipeline :one
 INSERT INTO Pipelines(

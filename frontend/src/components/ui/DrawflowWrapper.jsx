@@ -1,5 +1,5 @@
 import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
-import { blockEditorRootAtom, isBlockEditorOpenAtom } from "@/atoms/editorAtom";
+import { blockEditorIdAtom, isBlockEditorOpenAtom } from "@/atoms/editorAtom";
 import { pipelineAtom, workspaceAtom } from "@/atoms/pipelineAtom";
 import { pipelineConnectionsAtom } from "@/atoms/pipelineConnectionsAtom";
 import Drawflow from "@/components/ZetaneDrawflowEditor";
@@ -52,7 +52,7 @@ export default function DrawflowWrapper() {
   const [pipelineConnections, setPipelineConnections] = useImmerAtom(
     pipelineConnectionsAtom,
   );
-  const setBlockEditorRoot = useSetAtom(blockEditorRootAtom);
+  const setBlockEditorRoot = useSetAtom(blockEditorIdAtom);
   const setEditorOpen = useSetAtom(isBlockEditorOpenAtom);
   const [renderNodes, setRenderNodes] = useState([]);
   const drawflowCanvas = useRef(null);
@@ -76,7 +76,7 @@ export default function DrawflowWrapper() {
 
   pipelineRef.current = pipeline;
 
-  const savePipeline = trpc.savePipeline.useMutation();
+  const copyPipeline = trpc.copyPipeline.useMutation();
   const getBlockPath = trpc.getBlockPath.useMutation();
 
   const handleDrawflow = useCallback((node) => {
@@ -120,7 +120,7 @@ export default function DrawflowWrapper() {
   }, [pipeline?.data]);
 
   useEffect(() => {
-    if (editor) {
+    if (editor && pipeline?.data) {
       editor.pipeline = pipeline;
       editor.connection_list = pipelineConnections;
       editor.nodeRefs = nodeRefs.current;
@@ -130,6 +130,9 @@ export default function DrawflowWrapper() {
   }, [pipelineConnections]);
 
   useEffect(() => {
+    if (!pipeline?.data) {
+      return;
+    }
     const newConnections = createConnections(
       pipeline?.data,
       pipelineConnections,
@@ -146,18 +149,19 @@ export default function DrawflowWrapper() {
             pipeline.name,
             pipeline.data,
           );
-          // note that we are writing to the buffer, not the load path
-          pipelineSpecs["sink"] = pipeline.buffer;
-          pipelineSpecs["build"] = pipeline.buffer;
+          pipelineSpecs["sink"] = pipeline.path;
+          pipelineSpecs["build"] = pipeline.path;
+          pipelineSpecs["name"] = pipeline.name;
+          pipelineSpecs["id"] = pipeline.id;
 
           const saveData = {
             specs: pipelineSpecs,
             name: pipeline?.name,
-            buffer: pipeline?.buffer,
-            writePath: pipeline?.buffer,
+            writeFromDir: pipeline?.path,
+            writeToDir: pipeline?.path,
           };
 
-          await savePipeline.mutateAsync(saveData);
+          await copyPipeline.mutateAsync(saveData);
         }
       } catch (error) {
         console.error("Error saving pipeline:", error);
@@ -168,7 +172,7 @@ export default function DrawflowWrapper() {
   }, [renderNodes]);
 
   const addBlockToPipeline = (block) => {
-    const id = generateId(block);
+    const id = generateId(block.information.id);
     block = replaceIds(block, id);
     setPipeline((draft) => {
       draft.data[id] = block;
@@ -202,6 +206,8 @@ export default function DrawflowWrapper() {
   const dropPipeline = (pipelineData) => {
     const pipelineJson = JSON.parse(pipelineData);
     const { specs, path } = pipelineJson;
+    const newId = generateId(pipeline.id);
+    specs.id = newId;
     loadPipeline(specs, path);
   };
 
@@ -228,11 +234,7 @@ export default function DrawflowWrapper() {
   };
 
   const openView = async (id) => {
-    const root = await getBlockPath.mutateAsync({
-      blockId: id,
-      pipelinePath: pipeline.buffer,
-    });
-    setBlockEditorRoot(root);
+    setBlockEditorRoot(id);
     setEditorOpen(true);
   };
 

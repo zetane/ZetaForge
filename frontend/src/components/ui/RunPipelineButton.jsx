@@ -12,24 +12,27 @@ import { uuidv7 } from "uuidv7";
 import ClosableModal from "./modal/ClosableModal";
 import { workspaceAtom } from "@/atoms/pipelineAtom";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
-import { useLoadServerPipeline } from "@/hooks/useLoadPipeline";
+import {
+  useLoadExecution,
+  useLoadServerPipeline,
+} from "@/hooks/useLoadPipeline";
 import { ping } from "@/client/anvil";
 
 export default function RunPipelineButton({ children, action }) {
   const [editor] = useAtom(drawflowEditorAtom);
   const [pipeline] = useImmerAtom(pipelineAtom);
-  const [, setWorkspace] = useImmerAtom(workspaceAtom);
+  const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
   const [validationErrorMsg, setValidationErrorMsg] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [mixpanelService] = useAtom(mixpanelAtom);
   const [configuration] = useAtom(activeConfigurationAtom);
+  const [clickedRun, setClickedRun] = useState(false);
   const executePipeline = trpc.executePipeline.useMutation();
   const queryClient = useQueryClient();
-  const loadServerPipeline = useLoadServerPipeline();
+  const loadExecution = useLoadExecution();
 
   const runPipeline = async () => {
     if (!validatePipelineExists()) return;
-
     setValidationErrorMsg([]);
 
     const pipelineSpecs = editor.convert_drawflow_to_block(
@@ -38,9 +41,10 @@ export default function RunPipelineButton({ children, action }) {
     );
     const executionId = uuidv7();
 
-    if (!(await validateAnvilOnline())) return;
     if (!validateSchema()) return;
+    setClickedRun(true);
     const newExecution = await execute(pipelineSpecs, executionId);
+    setClickedRun(false);
     if (!newExecution) {
       return;
     }
@@ -72,7 +76,7 @@ export default function RunPipelineButton({ children, action }) {
       return updatedPipelines;
     });
 
-    const loaded = await loadServerPipeline(newExecution, configuration);
+    const loaded = await loadExecution(newExecution, configuration);
     setWorkspace((draft) => {
       const currentTab = draft.active;
       const newKey = newExecution.Uuid + "." + newExecution.Execution;
@@ -80,7 +84,6 @@ export default function RunPipelineButton({ children, action }) {
       if (!pipeline) {
         // key hasn't updated yet
         draft.pipelines[newKey] = loaded;
-        draft.executions[loaded.record.Execution] = loaded;
       }
       draft.tabs[newKey] = {};
       draft.active = newKey;
@@ -94,18 +97,6 @@ export default function RunPipelineButton({ children, action }) {
     return pipeline.data && Object.keys(pipeline.data).length;
   };
 
-  const validateAnvilOnline = async () => {
-    if (await ping(configuration)) {
-      return true;
-    } else {
-      setValidationErrorMsg([
-        "Seaweed ping did not return ok. Please wait a few seconds and retry.",
-      ]);
-      setIsOpen(true);
-      return false;
-    }
-  };
-
   const execute = async (pipelineSpecs, executionId) => {
     try {
       const rebuild = action == "Rebuild";
@@ -114,13 +105,13 @@ export default function RunPipelineButton({ children, action }) {
         executionId: executionId,
         specs: pipelineSpecs,
         path: pipeline.path,
-        buffer: pipeline.buffer,
         name: pipeline.name,
         rebuild: rebuild,
         anvilConfiguration: configuration,
       });
       return newExecution;
     } catch (error) {
+      console.log(error);
       setValidationErrorMsg([error?.message]);
       setIsOpen(true);
       return false;
@@ -158,7 +149,12 @@ export default function RunPipelineButton({ children, action }) {
 
   return (
     <>
-      <Button style={styles} size="sm" onClick={() => runPipeline()}>
+      <Button
+        style={styles}
+        size="sm"
+        onClick={() => runPipeline()}
+        disabled={!workspace?.connected || clickedRun}
+      >
         <span>{action}</span>
         {children}
       </Button>

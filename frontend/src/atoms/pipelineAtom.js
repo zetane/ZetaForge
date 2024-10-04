@@ -1,8 +1,8 @@
 import { atom } from "jotai";
 import { withImmer } from "jotai-immer";
-import { customAlphabet } from "nanoid";
 import rfdc from "rfdc";
 import { sha1 } from "js-sha1";
+import { generateId } from "@/utils/blockUtils";
 
 export const pipelineKey = (id, data) => {
   let hash = "";
@@ -13,16 +13,13 @@ export const pipelineKey = (id, data) => {
 };
 
 export const pipelineFactory = (cachePath, pipeline = null) => {
-  const nanoid = customAlphabet("1234567890abcedfghijklmnopqrstuvwxyz", 12);
-  const newNanoid = nanoid();
-  const id = `pipeline-${newNanoid}`;
-  const buffer = `${cachePath}${id}`;
+  const id = generateId("pipeline");
+  const tempFile = `${cachePath}${id}`;
   let defaultPipeline = {
     id: id,
     name: id,
     saveTime: null,
-    buffer: buffer,
-    path: undefined,
+    path: tempFile,
     data: {},
     logs: [],
     history: null,
@@ -35,29 +32,34 @@ export const pipelineFactory = (cachePath, pipeline = null) => {
   return defaultPipeline;
 };
 
-const initPipeline = pipelineFactory(await window.cache.local());
-const emptyKey = `${initPipeline.id}.`;
-const tabMap = {
-  [emptyKey]: {},
+// Initialize with a default value synchronously
+const defaultWorkspace = {
+  tabs: {},
+  pipelines: {},
+  active: null,
+  fetchInterval: 5 * 1000,
+  offset: 0,
+  limit: 15,
+  connected: false,
 };
 
-export const workspaceAtom = atom({
-  tabs: tabMap,
-  pipelines: { [emptyKey]: initPipeline },
-  executions: {},
-  active: emptyKey,
-  fetchInterval: 10 * 1000,
-});
+export const workspaceAtom = atom(defaultWorkspace);
 
-export const getPipelines = (workspace) => {
-  const running = [];
-  for (const [, pipeline] of Object.entries(workspace.executions)) {
-    running.push(pipeline);
-  }
-  return running.sort((a, b) =>
-    b?.record?.Execution.localeCompare(a?.record?.Execution),
-  );
-};
+export const initializeWorkspaceAtom = atom(
+  null,
+  async (get, set, { cachePath }) => {
+    const initPipeline = pipelineFactory(cachePath);
+    const emptyKey = `${initPipeline.id}.`;
+    const tabMap = { [emptyKey]: {} };
+
+    set(workspaceAtom, {
+      ...defaultWorkspace,
+      tabs: tabMap,
+      pipelines: { [emptyKey]: initPipeline },
+      active: emptyKey,
+    });
+  },
+);
 
 const pipelineAtomWithImmer = atom(
   (get) => {
@@ -76,14 +78,92 @@ const pipelineAtomWithImmer = atom(
   },
 );
 
+export const socketUrlAtom = atom(
+  (get) => get(pipelineAtom)?.socketUrl,
+  null,
+  (prev, next) => prev === next,
+);
+
 export const pipelineAtom = withImmer(pipelineAtomWithImmer);
 
 export const getPipelineFormat = (pipeline) => {
   return {
-    sink: pipeline.path ? pipeline.path : pipeline.buffer,
-    build: pipeline.buffer,
+    sink: pipeline.path,
+    build: pipeline.path,
     name: pipeline.name,
     id: pipeline.id,
     pipeline: pipeline.data,
   };
 };
+
+export const lineageAtom = atom((get) => {
+  const workspace = get(workspaceAtom);
+  const lineage = new Map();
+
+  if (!workspace?.pipelines) {
+    return lineage;
+  }
+
+  // Filter out pipelines with empty .record fields
+  const validPipelines = Object.entries(workspace?.pipelines).filter(
+    ([_, pipeline]) =>
+      pipeline.record && Object.keys(pipeline.record).length > 0,
+  );
+
+  const sortedPipelines = validPipelines.sort(([, a], [, b]) =>
+    b.record.Execution.localeCompare(a.record.Execution),
+  );
+
+  sortedPipelines.forEach((entry) => {
+    const pipeline = entry[1];
+    const record = pipeline?.record;
+    const sha1Hash = record?.Hash;
+    if (!record || !sha1Hash) {
+      return;
+    }
+    const pipelineData = JSON.parse(record.PipelineJson);
+    const friendlyName = pipelineData.name;
+    if (!lineage.has(sha1Hash)) {
+      const createDate = new Date(record.Created * 1000);
+      lineage.set(sha1Hash, {
+        id: pipeline.id,
+        name: friendlyName,
+        hash: sha1Hash,
+        deployed: record.Deployed,
+        pipelineData: pipelineData,
+        created: createDate.toLocaleString(),
+        lastExecution: createDate.toLocaleString(),
+        host: pipeline.host,
+        executions: new Map(),
+      });
+    }
+
+    const lineageEntry = lineage.get(sha1Hash);
+    const existingExecution = lineageEntry.executions.get(record.Execution);
+
+    if (!existingExecution) {
+      const execDate = new Date(record.ExecutionTime * 1000);
+      lineageEntry.executions.set(record.Execution, {
+        id: record.Execution,
+        hash: sha1Hash,
+        pipeline: pipeline.id,
+        created: execDate.toLocaleString(),
+        status: record.Status,
+      });
+    } else {
+      Object.assign(existingExecution, {
+        status: pipeline.record.Status,
+        created: new Date(
+          pipeline.record.ExecutionTime * 1000,
+        ).toLocaleString(),
+      });
+    }
+
+    const mostRecent = Array.from(lineageEntry.executions.values())[0]?.created;
+    if (mostRecent) {
+      lineageEntry.lastExecution = mostRecent;
+    }
+  });
+
+  return lineage;
+});
