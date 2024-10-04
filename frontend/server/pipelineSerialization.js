@@ -19,7 +19,6 @@ import {
   getPipelinesByUuid,
 } from "./anvil";
 import { logger } from "./logger";
-import { computeMerkleTreeForDirectory } from "./merkle.js";
 
 export async function saveSpec(spec, writePath) {
   const pipelineSpecsPath = path.join(writePath, PIPELINE_SPECS_FILE_NAME);
