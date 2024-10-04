@@ -60,35 +60,37 @@ describe("merkle", () => {
 
       const expected = {
         hash: "A.B.D.E...",
-        [blockFixture.getId()]: {
-          hash: "A.B.D.E...",
-          files: {
-            path: "",
+        blocks: {
+          [blockFixture.getId()]: {
             hash: "A.B.D.E...",
-            children: [
-              {
-                path: "A",
-                hash: "A.",
-              },
-              {
-                path: "B",
-                hash: "B.",
-              },
-              {
-                path: "C",
-                hash: "D.E..",
-                children: [
-                  {
-                    path: "C/D",
-                    hash: "D.",
-                  },
-                  {
-                    path: "C/E",
-                    hash: "E.",
-                  },
-                ],
-              },
-            ],
+            files: {
+              path: "",
+              hash: "A.B.D.E...",
+              children: [
+                {
+                  path: "A",
+                  hash: "A.",
+                },
+                {
+                  path: "B",
+                  hash: "B.",
+                },
+                {
+                  path: "C",
+                  hash: "D.E..",
+                  children: [
+                    {
+                      path: "C/D",
+                      hash: "D.",
+                    },
+                    {
+                      path: "C/E",
+                      hash: "E.",
+                    },
+                  ],
+                },
+              ],
+            },
           },
         },
       };
@@ -122,43 +124,45 @@ describe("merkle", () => {
 
       const expected = {
         hash: "A.B.C..",
-        [blockIds[0]]: {
-          hash: "A.",
-          files: {
-            path: "",
+        blocks: {
+          [blockIds[0]]: {
             hash: "A.",
-            children: [
-              {
-                path: "file",
-                hash: "A.",
-              },
-            ],
+            files: {
+              path: "",
+              hash: "A.",
+              children: [
+                {
+                  path: "file",
+                  hash: "A.",
+                },
+              ],
+            },
           },
-        },
-        [blockIds[1]]: {
-          hash: "B.",
-          files: {
-            path: "",
+          [blockIds[1]]: {
             hash: "B.",
-            children: [
-              {
-                path: "file",
-                hash: "B.",
-              },
-            ],
+            files: {
+              path: "",
+              hash: "B.",
+              children: [
+                {
+                  path: "file",
+                  hash: "B.",
+                },
+              ],
+            },
           },
-        },
-        [blockIds[2]]: {
-          hash: "C.",
-          files: {
-            path: "",
+          [blockIds[2]]: {
             hash: "C.",
-            children: [
-              {
-                path: "file",
-                hash: "C.",
-              },
-            ],
+            files: {
+              path: "",
+              hash: "C.",
+              children: [
+                {
+                  path: "file",
+                  hash: "C.",
+                },
+              ],
+            },
           },
         },
       };
@@ -193,7 +197,7 @@ describe("merkle", () => {
                   pipeline: {
                     [blockIds[2]]: {
                       ...blocks[2],
-                      container: blockFixture.getSpecs().action.container
+                      container: blockFixture.getSpecs().action.container,
                     },
                   },
                 },
@@ -217,21 +221,27 @@ describe("merkle", () => {
 
       const expected = {
         hash: "A.",
-        [blockIds[0]]: {
-          hash: "A.",
-          [blockIds[1]]: {
+        blocks: {
+          [blockIds[0]]: {
             hash: "A.",
-            [blockIds[2]]: {
-              hash: "A.",
-              files: {
-                path: "",
+            blocks: {
+              [blockIds[1]]: {
                 hash: "A.",
-                children: [
-                  {
-                    path: "file",
+                blocks: {
+                  [blockIds[2]]: {
                     hash: "A.",
+                    files: {
+                      path: "",
+                      hash: "A.",
+                      children: [
+                        {
+                          path: "file",
+                          hash: "A.",
+                        },
+                      ],
+                    },
                   },
-                ],
+                },
               },
             },
           },
@@ -253,6 +263,7 @@ describe("merkle", () => {
 
       const expected = {
         hash: ".",
+        blocks: {
         [block.information.id]: {
           hash: ".",
           files: {
@@ -261,6 +272,7 @@ describe("merkle", () => {
             children: [],
           },
         },
+        }
       };
       expect(result).toEqual(expected);
     });
@@ -280,6 +292,7 @@ describe("merkle", () => {
 
       const expected = {
         hash: ".",
+        blocks: {
         [block.information.id]: {
           hash: ".",
           files: {
@@ -293,6 +306,7 @@ describe("merkle", () => {
               },
             ],
           },
+        },
         },
       };
       expect(result).toEqual(expected);
@@ -309,6 +323,7 @@ describe("merkle", () => {
 
       const expected = {
         hash: ".",
+        blocks: {}
       };
       expect(result).toEqual(expected);
     });

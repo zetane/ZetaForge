@@ -5,23 +5,35 @@ import path from "path";
 export async function computePipelineMerkleTree(specs, pipelinePath) {
   const tree = {};
 
-  for (let key in specs.pipeline) {
-    tree[key] = await merklePipeline(specs.pipeline[key], pipelinePath, key);
+  if (specs.pipeline) {
+    tree.blocks = {};
+    for (let key in specs.pipeline) {
+      tree.blocks[key] = await merklePipeline(
+        specs.pipeline[key],
+        pipelinePath,
+        key,
+      );
+    }
+    tree.hash = combineChildrenHashes(Object.values(tree.blocks));
   }
-  tree.hash = combineChildrenHashes(Object.values(tree));
 
   return tree;
 }
 
 async function merklePipeline(block, pipelinePath, blockKey) {
-  const node = {}
+  const node = {};
 
   if (block.action.pipeline) {
+    node.blocks = {};
     for (let key in block.action.pipeline) {
-      node[key] = await merklePipeline(block.action.pipeline[key], pipelinePath, key);
+      node.blocks[key] = await merklePipeline(
+        block.action.pipeline[key],
+        pipelinePath,
+        key,
+      );
     }
-    node.hash = combineChildrenHashes(Object.values(node));
-    return node
+    node.hash = combineChildrenHashes(Object.values(node.blocks));
+    return node;
   } else if (block.action.container) {
     const blockPath = path.join(pipelinePath, blockKey);
     node.files = await computeDirectoryMerkleTree(blockPath);
@@ -53,8 +65,8 @@ async function merkleDirectory(dirPath, parentRelativePath) {
     }
   }
 
-  const merkle = combineChildrenHashes(children);
-  return { path: parentRelativePath, hash: merkle, children: children };
+  const hash = combineChildrenHashes(children);
+  return { path: parentRelativePath, hash: hash, children: children };
 }
 
 async function computeFileHash(filePath) {
@@ -63,11 +75,11 @@ async function computeFileHash(filePath) {
 }
 
 function combineChildrenHashes(nodes) {
-  return combineHashes(nodes.map((e) => e.hash))
+  return combineHashes(nodes.map((e) => e.hash));
 }
 
 function combineHashes(hashes) {
-  if (hashes.length === 1) return hashes[0];//TODO remove this edge case
+  if (hashes.length === 1) return hashes[0]; //TODO remove this edge case
 
   const concatenatedHashes = hashes.join("");
   const combinedHash = crypto
@@ -76,4 +88,3 @@ function combineHashes(hashes) {
     .digest("hex");
   return combinedHash;
 }
-
