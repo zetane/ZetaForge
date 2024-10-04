@@ -2,12 +2,41 @@ import crypto from "crypto";
 import { promises as fs } from "fs";
 import path from "path";
 
-async function computeFileHash(filePath) {
-  const fileBuffer = await fs.readFile(filePath);
-  return crypto.createHash("sha256").update(fileBuffer).digest("hex");
+export async function computePipelineMerkleTree(specs, pipelinePath) {
+  const tree = {};
+
+  for (let key in specs.pipeline) {
+    tree[key] = await merklePipeline(specs.pipeline[key], pipelinePath, key);
+  }
+  tree.hash = combineChildrenHashes(Object.values(tree));
+
+  return tree;
 }
 
-async function readDirectoryRecursively(dirPath, parentRelativePath) {
+async function merklePipeline(block, pipelinePath, blockKey) {
+  const node = {}
+
+  if (block.action.pipeline) {
+    for (let key in block.action.pipeline) {
+      node[key] = await merklePipeline(block.action.pipeline[key], pipelinePath, key);
+    }
+    node.hash = combineChildrenHashes(Object.values(node));
+    return node
+  } else if (block.action.container) {
+    const blockPath = path.join(pipelinePath, blockKey);
+    node.files = await computeDirectoryMerkleTree(blockPath);
+    node.hash = node.files.hash;
+  }
+
+  return node;
+}
+
+async function computeDirectoryMerkleTree(dirPath) {
+  const files = await merkleDirectory(dirPath, "");
+  return files;
+}
+
+async function merkleDirectory(dirPath, parentRelativePath) {
   const entries = await fs.readdir(dirPath, { withFileTypes: true });
   const children = [];
 
@@ -16,7 +45,7 @@ async function readDirectoryRecursively(dirPath, parentRelativePath) {
     const nodeRelativePath = path.join(parentRelativePath, entry.name);
 
     if (entry.isDirectory()) {
-      const subDirNode = await readDirectoryRecursively(fullPath, nodeRelativePath);
+      const subDirNode = await merkleDirectory(fullPath, nodeRelativePath);
       children.push(subDirNode);
     } else {
       const fileHash = await computeFileHash(fullPath);
@@ -24,31 +53,19 @@ async function readDirectoryRecursively(dirPath, parentRelativePath) {
     }
   }
 
-  const merkle = computeMerkleTree(children);
+  const merkle = combineChildrenHashes(children);
   return { path: parentRelativePath, hash: merkle, children: children };
 }
 
-function computeMerkleTree(nodes) {
-  if (nodes.length === 0) return null;
-  if (nodes.length === 1) return nodes[0].hash;
-
-  const parentNodes = [];
-  for (let i = 0; i < nodes.length; i += 2) {
-    const leftChild = nodes[i];
-    const rightChild = i + 1 < nodes.length ? nodes[i + 1] : leftChild;
-    const combinedHash = crypto
-      .createHash("sha256")
-      .update(leftChild.hash + rightChild.hash)
-      .digest("hex");
-    parentNodes.push({ hash: combinedHash });
-  }
-
-  return computeMerkleTree(parentNodes);
+async function computeFileHash(filePath) {
+  const fileBuffer = await fs.readFile(filePath);
+  return crypto.createHash("sha256").update(fileBuffer).digest("hex");
 }
 
-function combineChildrenHashes(node) {
-  return combineHashes(Object.entries(node).map((e) => e.hash))
+function combineChildrenHashes(nodes) {
+  return combineHashes(nodes.map((e) => e.hash))
 }
+
 function combineHashes(hashes) {
   if (hashes.length === 0) return null;
   const concatenatedHashes = hashes.join("");
@@ -59,33 +76,3 @@ function combineHashes(hashes) {
   return combinedHash;
 }
 
-async function computeMerkleTreeForDirectory(dirPath) {
-  const files = await readDirectoryRecursively(dirPath, "");
-  return files;
-}
-
-export async function getPipelineMerkleTree(specs, pipelinePath) {
-  const tree = {};
-
-  for (let key in specs.pipeline) {
-    tree[key] = {};
-    await merkleHash(tree[key], specs.pipeline[key], pipelinePath, key);
-  }
-  tree.hash = combineChildrenHashes(tree);
-
-  return tree;
-}
-
-async function merkleHash(node, block, pipelinePath, blockKey) {
-  if (block.action.pipeline) {
-    for (let key in block.action.pipeline) {
-      node[key] = {};
-      await merkleHash(node[key], block.action.pipeline[key], pipelinePath, key);
-    }
-    node.hash = combineChildrenHashes(node);
-  } else if (block.action.container) {
-    const blockPath = path.join(pipelinePath, blockKey);
-    node.files = await computeMerkleTreeForDirectory(blockPath);
-    node.hash = node.files.hash;
-  }
-}
