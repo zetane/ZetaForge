@@ -19,7 +19,7 @@ export const FolderBlock = ({ blockId, block, setFocusAction, history }) => {
         draft.data[blockId].action.parameters["path"].value = s3Url;
         draft.data[blockId].action.parameters["path"].type = "blob";
       });
-      setRenderPath(fileName);
+      setRenderPath("Default Name");
     }
   }, [block]);
 
@@ -28,7 +28,7 @@ export const FolderBlock = ({ blockId, block, setFocusAction, history }) => {
     const readDirectory = (dir, path = "") => {
       for (let i = 0; i < dir.length; i++) {
         const file = dir[i];
-        const fullPath = path ? `${path}/${file.name}` : file.name;
+        const fullPath = path ? `${path}/${file.path}` : file.path;
         if (file.webkitDirectory) {
           readDirectory(file.children, fullPath);
         } else {
@@ -36,7 +36,6 @@ export const FolderBlock = ({ blockId, block, setFocusAction, history }) => {
         }
       }
     };
-
     readDirectory(files, "");
     return filePaths;
   };
@@ -44,12 +43,13 @@ export const FolderBlock = ({ blockId, block, setFocusAction, history }) => {
   const loadFiles = (e) => {
     const files = Array.from(fileInput.current.files);
     const filePaths = processFiles(files);
-    const value = filePaths.join(", ");
+    const formattedValue = `[${filePaths.map((file) => `"${file}"`).join(", ")}]`;
+
     setFocusAction((draft) => {
-      draft.data[blockId].action.parameters["path"].value = value;
+      draft.data[blockId].action.parameters["path"].value = formattedValue;
       draft.data[blockId].action.parameters["path"].type = "folder";
     });
-    setRenderPath(value);
+    setRenderPath("Default Name");
   };
 
   return (
