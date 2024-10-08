@@ -27,6 +27,26 @@ import {
 import { anvilConfigurationSchema } from "./schema";
 import { publicProcedure, router } from "./trpc";
 
+function createProcedure<TInput extends z.ZodTypeAny, TOutput>(
+  schema: TInput,
+  handler: (input: z.infer<TInput>) => Promise<TOutput>,
+) {
+  return publicProcedure
+    .use(errorHandling)
+    .input(schema)
+    .mutation(async ({ input }) => handler(input as z.infer<TInput>));
+}
+
+function createQueryProcedure<TInput extends z.ZodTypeAny, TOutput>(
+  schema: TInput,
+  handler: (input: z.infer<TInput>) => Promise<TOutput>,
+) {
+  return publicProcedure
+    .use(errorHandling)
+    .input(schema)
+    .query(async ({ input }) => handler(input as z.infer<TInput>));
+}
+
 export const appRouter = router({
   getBlocks: publicProcedure.use(errorHandling).query(async () => {
     const resources = process.resourcesPath;
@@ -117,48 +137,47 @@ export const appRouter = router({
         return { coverImagePath: null };
       }
     }),
-  //TODO: load and validate schema
-  savePipeline: publicProcedure
+  copyPipeline: publicProcedure
     .use(errorHandling)
     .input(
       z.object({
         specs: z.any(),
         name: z.optional(z.string()),
-        buffer: z.string(),
-        writePath: z.optional(z.string()),
+        writeFromDir: z.string(),
+        writeToDir: z.string().optional(),
       }),
     )
     .mutation(async (opts) => {
       const { input } = opts;
-      let { name, writePath } = input;
-      const { buffer, specs } = input;
-      if (!writePath) {
+      let { name, writeToDir } = input;
+      const { writeFromDir, specs } = input;
+      if (!writeToDir) {
         const savePath = await dialog.showSaveDialog({
           properties: ["createDirectory"],
         });
         if (!savePath.canceled) {
           const pathArr = savePath.filePath?.split(path.sep);
           name = pathArr ? pathArr[pathArr.length - 1] : name;
-          writePath = savePath.filePath;
-          specs["sink"] = writePath;
-          specs["build"] = writePath;
+          writeToDir = savePath.filePath;
+          specs["sink"] = writeToDir;
+          specs["build"] = writeToDir;
           specs["name"] = name;
 
-          if (writePath) {
+          if (writeToDir) {
             try {
-              const stat = await fs.stat(writePath);
+              const stat = await fs.stat(writeToDir);
               if (stat.isDirectory()) {
-                fs.rm(writePath, { recursive: true, force: true });
+                fs.rm(writeToDir, { recursive: true, force: true });
               }
             } catch {
-              logger.debug("Creating dir: ", writePath);
+              logger.debug("Creating dir: ", writeToDir);
             }
           }
         }
       }
 
-      if (writePath) {
-        const savePaths = await copyPipeline(specs, buffer, writePath);
+      if (writeToDir) {
+        const savePaths = await copyPipeline(specs, writeFromDir, writeToDir);
         return { name: name, ...savePaths };
       }
 
@@ -214,7 +233,6 @@ export const appRouter = router({
         executionId: z.string(),
         specs: z.any(),
         path: z.string().optional(),
-        buffer: z.string(),
         name: z.string(),
         rebuild: z.boolean(),
         anvilConfiguration: anvilConfigurationSchema,
@@ -227,7 +245,6 @@ export const appRouter = router({
         executionId,
         specs,
         path,
-        buffer,
         name,
         rebuild,
         anvilConfiguration,
@@ -238,229 +255,148 @@ export const appRouter = router({
         executionId,
         specs,
         path,
-        buffer,
         name,
         rebuild,
         anvilConfiguration,
       );
     }),
-  compileComputation: publicProcedure
-    .use(errorHandling)
-    .input(
-      z.object({
-        pipelineId: z.string(),
-        blockId: z.string(),
-      }),
-    )
-    .mutation(async (opts) => {
-      const { input } = opts;
-      const { pipelineId, blockId } = input;
-
-      return await compileComputation(pipelineId, blockId);
+  compileComputation: createProcedure(
+    z.object({
+      pipelinePath: z.string(),
+      blockId: z.string(),
     }),
-  saveBlockSpecs: publicProcedure
-    .use(errorHandling)
-    .input(
-      z.object({
-        pipelineId: z.string(),
-        blockId: z.string(),
-        blockSpecs: z.any(),
-      }),
-    )
-    .mutation(async (opts) => {
-      const { input } = opts;
-      const { pipelineId, blockId, blockSpecs } = input;
-
-      return await saveBlockSpecs(pipelineId, blockId, blockSpecs);
+    async ({ pipelinePath, blockId }) =>
+      await compileComputation(pipelinePath, blockId),
+  ),
+  saveBlockSpecs: createProcedure(
+    z.object({
+      pipelinePath: z.string(),
+      blockId: z.string(),
+      blockSpecs: z.any(),
     }),
-  downloadExecutionResults: publicProcedure
-    .use(errorHandling)
-    .input(
-      z.object({
-        buffer: z.string(),
-        pipelineUuid: z.string(),
-        executionUuid: z.string(),
-        anvilConfiguration: anvilConfigurationSchema,
-      }),
-    )
-    .mutation(async (opts) => {
-      const { input } = opts;
-      const { buffer, pipelineUuid, executionUuid, anvilConfiguration } = input;
+    async ({ pipelinePath, blockId, blockSpecs }) =>
+      saveBlockSpecs(pipelinePath, blockId, blockSpecs),
+  ),
 
-      await syncExecutionResults(
-        buffer,
+  downloadExecutionResults: createProcedure(
+    z.object({
+      pipelinePath: z.string(),
+      pipelineUuid: z.string(),
+      executionUuid: z.string(),
+      anvilConfiguration: anvilConfigurationSchema,
+    }),
+    async ({ pipelinePath, pipelineUuid, executionUuid, anvilConfiguration }) =>
+      syncExecutionResults(
+        pipelinePath,
         pipelineUuid,
         executionUuid,
         anvilConfiguration,
-      );
-    }),
-  runTest: publicProcedure
-    .use(errorHandling)
-    .input(
-      z.object({
-        pipelineId: z.string(),
-        blockId: z.string(),
-      }),
-    )
-    .mutation(async (opts) => {
-      const { input } = opts;
-      const { pipelineId, blockId } = input;
+      ),
+  ),
 
-      await runTest(pipelineId, blockId);
+  runTest: createProcedure(
+    z.object({
+      pipelinePath: z.string(),
+      blockId: z.string(),
     }),
+    async ({ pipelinePath, blockId }) => runTest(pipelinePath, blockId),
+  ),
+
   chat: router({
     history: router({
-      get: publicProcedure
-        .use(errorHandling)
-        .input(
-          z.object({
-            pipelineId: z.string(),
-            blockId: z.string(),
-          }),
-        )
-        .query(async (opts) => {
-          const { input } = opts;
-          const { pipelineId, blockId } = input;
-
-          const chatHistory = await getHistory(pipelineId, blockId);
-          return chatHistory;
+      get: createQueryProcedure(
+        z.object({
+          pipelinePath: z.string(),
+          blockId: z.string(),
         }),
-      update: publicProcedure
-        .use(errorHandling)
-        .input(
-          z.object({
-            pipelineId: z.string(),
-            blockId: z.string(),
-            history: z.array(z.any()),
-          }),
-        )
-        .mutation(async (opts) => {
-          const { input } = opts;
-          const { pipelineId, blockId, history } = input;
-
-          await updateHistory(pipelineId, blockId, history);
+        async ({ pipelinePath, blockId }) => getHistory(pipelinePath, blockId),
+      ),
+      update: createProcedure(
+        z.object({
+          pipelinePath: z.string(),
+          blockId: z.string(),
+          history: z.array(z.any()),
         }),
+        async ({ pipelinePath, blockId, history }) =>
+          updateHistory(pipelinePath, blockId, history),
+      ),
     }),
     index: router({
-      get: publicProcedure
-        .use(errorHandling)
-        .input(
-          z.object({
-            pipelineId: z.string(),
-            blockId: z.string(),
-          }),
-        )
-        .query(async (opts) => {
-          const { input } = opts;
-          const { pipelineId, blockId } = input;
-
-          const chatIndex = await getIndex(pipelineId, blockId);
-          return chatIndex;
+      get: createQueryProcedure(
+        z.object({
+          pipelinePath: z.string(),
+          blockId: z.string(),
         }),
-      update: publicProcedure
-        .use(errorHandling)
-        .input(
-          z.object({
-            pipelineId: z.string(),
-            blockId: z.string(),
-            index: z.number(),
-          }),
-        )
-        .mutation(async (opts) => {
-          const { input } = opts;
-          const { pipelineId, blockId, index } = input;
-
-          await updateIndex(pipelineId, blockId, index);
+        async ({ pipelinePath, blockId }) => getIndex(pipelinePath, blockId),
+      ),
+      update: createProcedure(
+        z.object({
+          pipelinePath: z.string(),
+          blockId: z.string(),
+          index: z.number(),
         }),
+        async ({ pipelinePath, blockId, index }) =>
+          updateIndex(pipelinePath, blockId, index),
+      ),
     }),
   }),
+
   block: router({
     file: router({
-      get: publicProcedure
-        .use(errorHandling)
-        .input(
-          z.object({
-            pipelineId: z.string(),
-            blockId: z.string(),
-          }),
-        )
-        .query(async (opts) => {
-          const { input } = opts;
-          const { pipelineId, blockId } = input;
-
-          return await getBlockDirectory(pipelineId, blockId);
+      get: createQueryProcedure(
+        z.object({
+          pipelinePath: z.string(),
+          blockId: z.string(),
         }),
+        async ({ pipelinePath, blockId }) =>
+          getBlockDirectory(pipelinePath, blockId),
+      ),
       byPath: router({
-        get: publicProcedure
-          .use(errorHandling)
-          .input(
-            z.object({
-              pipelineId: z.string(),
-              blockId: z.string(),
-              path: z.string(),
-            }),
-          )
-          .mutation(async (opts) => {
-            const { input } = opts;
-            const { pipelineId, blockId, path } = input;
-
-            return await getBlockFile(pipelineId, blockId, path);
+        get: createProcedure(
+          z.object({
+            pipelinePath: z.string(),
+            blockId: z.string(),
+            relPath: z.string(),
           }),
-        update: publicProcedure
-          .use(errorHandling)
-          .input(
-            z.object({
-              pipelineId: z.string(),
-              blockId: z.string(),
-              path: z.string(),
-              content: z.string(),
-            }),
-          )
-          .mutation(async (opts) => {
-            const { input } = opts;
-            const { pipelineId, blockId, path, content } = input;
-
-            return await updateBlockFile(pipelineId, blockId, path, content);
+          async ({ pipelinePath, blockId, relPath }) =>
+            getBlockFile(pipelinePath, blockId, relPath),
+        ),
+        update: createProcedure(
+          z.object({
+            pipelinePath: z.string(),
+            blockId: z.string(),
+            relPath: z.string(),
+            content: z.string(),
           }),
+          async ({ pipelinePath, blockId, relPath, content }) =>
+            updateBlockFile(pipelinePath, blockId, relPath, content),
+        ),
       }),
     }),
-    callAgent: publicProcedure
-      .use(errorHandling)
-      .input(
-        z.object({
-          userMessage: z.string(),
-          agentName: z.string(),
-          conversationHistory: z.array(
-            z.object({
-              prompt: z.string(),
-              response: z.string(),
-              timestamp: z.number(),
-            }),
-          ),
-          apiKey: z.string(),
-        }),
-      )
-      .mutation(async (opts) => {
-        const { input } = opts;
-        const { userMessage, agentName, conversationHistory, apiKey } = input;
-
-        return callAgent(userMessage, agentName, conversationHistory, apiKey);
-      }),
-    log: router({
-      get: publicProcedure
-        .use(errorHandling)
-        .input(
+    callAgent: createProcedure(
+      z.object({
+        userMessage: z.string(),
+        agentName: z.string(),
+        conversationHistory: z.array(
           z.object({
-            pipelineId: z.string(),
-            blockId: z.string(),
+            prompt: z.string(),
+            response: z.string(),
+            timestamp: z.number(),
           }),
-        )
-        .query(async (opts) => {
-          const { input } = opts;
-          const { pipelineId, blockId } = input;
-
-          return getLogs(pipelineId, blockId);
+        ),
+        apiKey: z.string(),
+      }),
+      async ({ userMessage, agentName, conversationHistory, apiKey }) =>
+        callAgent(userMessage, agentName, conversationHistory, apiKey),
+    ),
+    log: router({
+      get: createQueryProcedure(
+        z.object({
+          pipelinePath: z.string(),
+          blockId: z.string(),
         }),
+        async ({ pipelinePath, blockId }) => getLogs(pipelinePath, blockId),
+      ),
     }),
   }),
 });

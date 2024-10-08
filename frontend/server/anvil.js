@@ -25,8 +25,45 @@ export async function getBuildContextStatus(
     },
   );
 
+  if (!response.ok) {
+    const errorMessage = await response.text();
+    throw new ServerError(
+      `Anvil could not start the execution: ${errorMessage}`,
+      HttpStatus.BAD_REQUEST,
+      null,
+    );
+  }
+
   const body = await response.json();
 
+  return body;
+}
+
+export async function getPipelinesByUuid(configuration, pipelineUuid) {
+  const response = await handleRequest(
+    buildUrl(
+      getScheme(configuration.anvil.host),
+      configuration.anvil.host,
+      configuration.anvil.port,
+      `pipeline/${pipelineUuid}/list`,
+    ),
+    HttpMethod.GET,
+    configuration.anvil.token,
+    {},
+  );
+
+  console.log("res: ", response);
+
+  if (!response.ok) {
+    const errorMessage = await response.text();
+    throw new ServerError(
+      `Could not find pipeline: ${errorMessage}`,
+      HttpStatus.BAD_REQUEST,
+      null,
+    );
+  }
+
+  const body = await response.json();
   return body;
 }
 
@@ -67,7 +104,7 @@ export async function createExecution(
   return body;
 }
 
-function getScheme(host) {
+export function getScheme(host) {
   return LOCAL_DOMAINS.includes(host) ? "http" : "https";
 }
 

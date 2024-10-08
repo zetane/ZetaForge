@@ -1,16 +1,15 @@
 import { trpc } from "@/utils/trpc";
-
-export default function useChatHistory(pipelineId, blockId) {
+export default function useChatHistory(pipelinePath, blockId) {
   const utils = trpc.useUtils();
   const history = trpc.chat.history.get.useQuery({
-    pipelineId: pipelineId,
-    blockId: blockId,
+    pipelinePath,
+    blockId,
   });
   const updateHistory = trpc.chat.history.update.useMutation();
-  const selectedIndex = trpc.chat.index.get.useQuery({ pipelineId, blockId });
+  const selectedIndex = trpc.chat.index.get.useQuery({ pipelinePath, blockId });
   const updateIndex = trpc.chat.index.update.useMutation({
     onSuccess() {
-      utils.chat.index.get.invalidate({ pipelineId, blockId });
+      utils.chat.index.get.invalidate({ pipelinePath, blockId });
     },
   });
 
@@ -23,8 +22,8 @@ export default function useChatHistory(pipelineId, blockId) {
     const newHistory = [...history.data, newEntry];
 
     await updateHistory.mutateAsync({
-      pipelineId: pipelineId,
-      blockId: blockId,
+      pipelinePath,
+      blockId,
       history: newHistory,
     });
 
@@ -35,13 +34,13 @@ export default function useChatHistory(pipelineId, blockId) {
     const newHistory = history.data.filter((_, i) => i !== index);
     const newIndex = computeNewIndex(index, selectedIndex.data);
     await updateHistory.mutateAsync({
-      pipelineId: pipelineId,
-      blockId: blockId,
+      pipelinePath,
+      blockId,
       history: newHistory,
     });
     await updateIndex.mutateAsync({
-      pipelineId: pipelineId,
-      blockId: blockId,
+      pipelinePath,
+      blockId,
       index: newIndex,
     });
     eagerUpdateHistory(newHistory);
@@ -54,15 +53,15 @@ export default function useChatHistory(pipelineId, blockId) {
   const eagerUpdateHistory = (newHistory) => {
     utils.chat.history.get.setData(
       {
-        pipelineId: pipelineId,
-        blockId: blockId,
+        pipelinePath,
+        blockId,
       },
       newHistory,
     );
 
     utils.chat.history.get.invalidate({
-      pipelgneId: pipelineId,
-      blockId: blockId,
+      pipelinePath,
+      blockId,
     });
   };
 

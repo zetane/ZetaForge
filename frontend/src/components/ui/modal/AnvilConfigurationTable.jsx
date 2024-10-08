@@ -16,6 +16,7 @@ import {
   Button,
 } from "@carbon/react";
 import { Add, TrashCan, Edit } from "@carbon/icons-react";
+import { workspaceAtom } from "@/atoms/pipelineAtom";
 
 export default function AnvilConfigurationTable({ onNew, onEdit }) {
   const [defaultAnvilConfiguration] = useAtom(defaultAnvilConfigurationAtom);
@@ -79,6 +80,7 @@ function ConfigRow({
 }) {
   const [, removeConfiguration] = useAtom(removeConfigurationAtom);
   const [active, setActive] = useAtom(activeIndexAtom);
+  const [workspace, setWorkspace] = useAtom(workspaceAtom);
 
   function handleEditConfiguration() {
     onEdit(removeIndex, configuration);

@@ -1,7 +1,7 @@
 import { trpc } from "@/utils/trpc";
 import { useState, useRef } from "react";
 
-export default function useFileBuffer(pipelineId, blockId, relativePath) {
+export default function useFileBuffer(pipelinePath, blockId, relativePath) {
   const getFileContent = trpc.block.file.byPath.get.useMutation();
   const updateFileContent = trpc.block.file.byPath.update.useMutation();
   const fileContentBuffer = useRef("");
@@ -14,9 +14,9 @@ export default function useFileBuffer(pipelineId, blockId, relativePath) {
 
   const save = async () => {
     await updateFileContent.mutateAsync({
-      pipelineId,
+      pipelinePath,
       blockId: blockId,
-      path: relativePath,
+      relPath: relativePath,
       content: fileContentBuffer.current,
     });
     setHasPendingChanges(false);
@@ -25,9 +25,9 @@ export default function useFileBuffer(pipelineId, blockId, relativePath) {
   const updateSave = async (newValue) => {
     fileContentBuffer.current = newValue;
     await updateFileContent.mutateAsync({
-      pipelineId,
+      pipelinePath,
       blockId: blockId,
-      path: relativePath,
+      relPath: relativePath,
       content: newValue,
     });
     setHasPendingChanges(false);
@@ -36,9 +36,9 @@ export default function useFileBuffer(pipelineId, blockId, relativePath) {
   const load = async (relativePath) => {
     fileContentBuffer.current = "";
     const content = await getFileContent.mutateAsync({
-      pipelineId: pipelineId,
+      pipelinePath: pipelinePath,
       blockId: blockId,
-      path: relativePath,
+      relPath: relativePath,
     });
     setHasPendingChanges(false);
     fileContentBuffer.current = content;

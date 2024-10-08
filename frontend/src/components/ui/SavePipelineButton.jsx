@@ -11,7 +11,7 @@ export default function SavePipelineButton() {
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const [mixpanelService] = useAtom(mixpanelAtom);
 
-  const savePipeline = trpc.savePipeline.useMutation();
+  const copyPipeline = trpc.copyPipeline.useMutation();
 
   const handleClick = async (editor, pipeline) => {
     try {
@@ -26,18 +26,26 @@ export default function SavePipelineButton() {
     // The response from the server after saving will contain that new path
     // TODO: the pipelineAtom data and these fields are redundant
     // They should be consolidated
-    pipelineSpecs["sink"] = pipeline.path ? pipeline.path : pipeline.buffer;
-    pipelineSpecs["build"] = pipeline.buffer;
+
+    let writeToDir = pipeline.path;
+    const tempFile = `${await window.cache.local()}${pipeline.id}`;
+    if (pipeline.path == tempFile) {
+      writeToDir = undefined;
+    }
+
+    pipelineSpecs["sink"] = pipeline.path;
+    pipelineSpecs["build"] = pipeline.path;
     pipelineSpecs["name"] = pipeline.name;
     pipelineSpecs["id"] = pipeline.id;
     const saveData = {
       specs: pipelineSpecs,
       name: pipeline.name,
-      buffer: pipeline.buffer,
-      writePath: pipeline.path,
+      writeFromDir: pipeline.path,
+      writeToDir: writeToDir,
     };
 
-    const response = await savePipeline.mutateAsync(saveData);
+    const response = await copyPipeline.mutateAsync(saveData);
+    console.log(response);
     const { name, dirPath, specs } = response;
 
     setPipeline((draft) => {

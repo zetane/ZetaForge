@@ -1,7 +1,7 @@
 import fs from "fs/promises";
 import { fileExists, readJsonToObject } from "./fileSystem";
 import z from "zod";
-import { cacheJoin } from "./cache";
+import path from "path";
 
 const CHAT_HISTORY_FILE_NAME = "chatHistory.json";
 const COMPUTATIONS_FILE_NAME = "computations.py";
@@ -26,10 +26,10 @@ const legacySchema = z.array(
   }),
 );
 
-export async function getHistory(pipelineId, blockId) {
-  const chatPath = cacheJoin(pipelineId, blockId, CHAT_HISTORY_FILE_NAME);
-  const codeTemplatePath = cacheJoin(
-    pipelineId,
+export async function getHistory(pipelinePath, blockId) {
+  const chatPath = path.join(pipelinePath, blockId, CHAT_HISTORY_FILE_NAME);
+  const codeTemplatePath = path.join(
+    pipelinePath,
     blockId,
     COMPUTATIONS_FILE_NAME,
   );
@@ -37,10 +37,10 @@ export async function getHistory(pipelineId, blockId) {
   return chat.history;
 }
 
-export async function updateHistory(pipelineId, blockId, newHistory) {
-  const chatPath = cacheJoin(pipelineId, blockId, CHAT_HISTORY_FILE_NAME);
-  const codeTemplatePath = cacheJoin(
-    pipelineId,
+export async function updateHistory(pipelinePath, blockId, newHistory) {
+  const chatPath = path.join(pipelinePath, blockId, CHAT_HISTORY_FILE_NAME);
+  const codeTemplatePath = path.join(
+    pipelinePath,
     blockId,
     COMPUTATIONS_FILE_NAME,
   );
@@ -49,10 +49,10 @@ export async function updateHistory(pipelineId, blockId, newHistory) {
   await fs.writeFile(chatPath, JSON.stringify(chat, null, 2));
 }
 
-export async function getIndex(pipelineId, blockId) {
-  const chatPath = cacheJoin(pipelineId, blockId, CHAT_HISTORY_FILE_NAME);
-  const codeTemplatePath = cacheJoin(
-    pipelineId,
+export async function getIndex(pipelinePath, blockId) {
+  const chatPath = path.join(pipelinePath, blockId, CHAT_HISTORY_FILE_NAME);
+  const codeTemplatePath = path.join(
+    pipelinePath,
     blockId,
     COMPUTATIONS_FILE_NAME,
   );
@@ -60,10 +60,10 @@ export async function getIndex(pipelineId, blockId) {
   return chat.index;
 }
 
-export async function updateIndex(pipelineId, blockId, newIndex) {
-  const chatPath = cacheJoin(pipelineId, blockId, CHAT_HISTORY_FILE_NAME);
-  const codeTemplatePath = cacheJoin(
-    pipelineId,
+export async function updateIndex(pipelinePath, blockId, newIndex) {
+  const chatPath = path.join(pipelinePath, blockId, CHAT_HISTORY_FILE_NAME);
+  const codeTemplatePath = path.join(
+    pipelinePath,
     blockId,
     COMPUTATIONS_FILE_NAME,
   );

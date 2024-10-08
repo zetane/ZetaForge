@@ -13,8 +13,13 @@ import {
   readJsonToObject,
 } from "./fileSystem.js";
 import { checkAndUpload, checkAndCopy, uploadDirectory } from "./s3.js";
-import { createExecution, getBuildContextStatus } from "./anvil";
+import {
+  createExecution,
+  getBuildContextStatus,
+  getPipelinesByUuid,
+} from "./anvil";
 import { logger } from "./logger";
+import { computeMerkleTreeForDirectory } from "./merkle.js";
 
 export async function saveSpec(spec, writePath) {
   const pipelineSpecsPath = path.join(writePath, PIPELINE_SPECS_FILE_NAME);
@@ -69,11 +74,6 @@ export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
     ? await readPipelineBlocks(pipelineSpecsPath)
     : new Set();
 
-  const blocksToRemove = setDifference(
-    existingPipelineBlocks,
-    newPipelineBlocks,
-  );
-
   for (const key of Array.from(newPipelineBlocks)) {
     const newBlockPath = path.join(writePipelineDirectory, key);
     let existingBlockPath = fromBlockIndex[key];
@@ -104,10 +104,6 @@ export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
         JSON.stringify(blockSpec, null, 2),
       );
     }
-  }
-
-  for (const block of Array.from(blocksToRemove)) {
-    await fs.rm(toBlockIndex[block], { recursive: true });
   }
 
   await fs.writeFile(pipelineSpecsPath, JSON.stringify(pipelineSpecs, null, 2));
@@ -182,8 +178,7 @@ export async function executePipeline(
   id,
   executionId,
   specs,
-  path,
-  buffer,
+  pipelinePath,
   name,
   rebuild,
   anvilHostConfiguration,
@@ -192,22 +187,23 @@ export async function executePipeline(
     id,
     executionId,
     specs,
-    buffer,
+    pipelinePath,
     anvilHostConfiguration,
   );
-  // tries to put history in a user path if it exists, if not
-  // will put it into the buffer path (.cache)
-  specs["sink"] = path ? path : buffer;
-  // Pull containers from the buffer to ensure the most recent ones
-  // In the case where a user has a savePath but a mod has happened since
-  // Last save
-  // TODO: Set a flag (right now it's a timestamp)
-  // and break the cache when user mods the canvas
-  specs["build"] = buffer;
+  specs["sink"] = pipelinePath;
+  specs["build"] = pipelinePath;
   specs["name"] = name;
   specs["id"] = id;
 
-  await uploadBuildContexts(anvilHostConfiguration, specs, buffer, rebuild);
+  //const merkle = await computeMerkleTreeForDirectory(path);
+  //const pipelines = await getPipelinesByUuid(anvilHostConfiguration, id);
+
+  await uploadBuildContexts(
+    anvilHostConfiguration,
+    specs,
+    pipelinePath,
+    rebuild,
+  );
 
   return await createExecution(
     anvilHostConfiguration,
@@ -221,7 +217,7 @@ async function uploadBlocks(
   pipelineId,
   executionId,
   pipelineSpecs,
-  buffer,
+  blockPath,
   anvilConfiguration,
 ) {
   const nodes = pipelineSpecs.pipeline;
@@ -256,7 +252,7 @@ async function uploadBlocks(
       }
     } else if (container) {
       const computationFile = path.join(
-        buffer,
+        blockPath,
         "/",
         nodeId,
         "/computations.py",
@@ -271,7 +267,7 @@ async function uploadBlocks(
 async function uploadBuildContexts(
   configuration,
   pipelineSpecs,
-  buffer,
+  buildPath,
   rebuild,
 ) {
   const buildContextStatuses = await getBuildContextStatus(
@@ -282,7 +278,7 @@ async function uploadBuildContexts(
   await Promise.all(
     buildContextStatuses
       .filter((status) => !status.isUploaded)
-      .map((status) => [path.join(buffer, status.blockKey), status.s3Key])
+      .map((status) => [path.join(buildPath, status.blockKey), status.s3Key])
       .map(([blockPath, s3Key]) =>
         uploadDirectory(s3Key, blockPath, configuration),
       ),

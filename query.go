@@ -39,6 +39,21 @@ type ResponsePipelineExecution struct {
 	Results       string
 }
 
+type AllPipelineExecution struct {
+	Organization  string
+	Created       int64
+	ExecutionTime int64
+	Uuid          string
+	Hash          string
+	Name          string
+	PipelineJson  string
+	Deployed      int64
+	Status        interface{}
+	Completed     int64
+	Workflow      string
+	Execution     string
+}
+
 type ResponseExecution struct {
 	Hash      string
 	Status    string
@@ -47,6 +62,31 @@ type ResponseExecution struct {
 	Json      string
 	Workflow  string
 	Execution string
+}
+
+func newResponseAllFilterPipelines(filterPipeline zdatabase.AllFilterPipelinesRow) (AllPipelineExecution, HTTPError) {
+	var data zjson.Pipeline
+	if err := json.Unmarshal([]byte(filterPipeline.Json), &data); err != nil {
+		return AllPipelineExecution{}, InternalServerError{err.Error()}
+	}
+	name := data.Name
+	jsonData, err := json.Marshal(initialize(&data))
+	if err != nil {
+		return AllPipelineExecution{}, InternalServerError{err.Error()}
+	}
+	return AllPipelineExecution{
+		Organization:  filterPipeline.Organization,
+		Created:       filterPipeline.Created,
+		ExecutionTime: filterPipeline.Created_2,
+		Uuid:          filterPipeline.Uuid,
+		Hash:          filterPipeline.Hash,
+		Name:          name,
+		PipelineJson:  string(jsonData),
+		Deployed:      filterPipeline.Deployed,
+		Status:        filterPipeline.Status,
+		Completed:     filterPipeline.Completed.Int64,
+		Execution:     filterPipeline.Executionid,
+	}, nil
 }
 
 func newResponsePipeline(pipeline zdatabase.Pipeline) (ResponsePipeline, HTTPError) {
@@ -73,7 +113,7 @@ func newResponsePipeline(pipeline zdatabase.Pipeline) (ResponsePipeline, HTTPErr
 // generating the same struct from a join, so there are two identical
 // structs with slightly different names
 // see: https://github.com/sqlc-dev/sqlc/issues/781
-func newResponsePipelineExecution(filterPipeline zdatabase.FilterPipelineRow, execLog []string) (ResponsePipelineExecution, HTTPError) {
+func newResponsePipelineExecution(filterPipeline zdatabase.FilterPipelineRow, execLog []string, s3key string) (ResponsePipelineExecution, HTTPError) {
 	var data zjson.Pipeline
 	if err := json.Unmarshal([]byte(filterPipeline.Json), &data); err != nil {
 		return ResponsePipelineExecution{}, InternalServerError{err.Error()}
@@ -96,6 +136,7 @@ func newResponsePipelineExecution(filterPipeline zdatabase.FilterPipelineRow, ex
 		Workflow:      filterPipeline.Workflow.String,
 		Execution:     filterPipeline.Executionid,
 		Log:           execLog,
+		LogPath:       s3key,
 		Results:       filterPipeline.Results.String,
 	}, nil
 }
@@ -190,7 +231,17 @@ func createPipeline(ctx context.Context, db *sql.DB, organization string, pipeli
 	if err != nil {
 		return zdatabase.Pipeline{}, InternalServerError{err.Error()}
 	}
-	hash := fmt.Sprintf("%x", sha1.Sum([]byte(jsonData)))
+
+	// remove the values from a copy of the pipeline so that
+	// pipelines with the identical structure but different inputs are
+	// not unique hashes
+	var pipelineCopy zjson.Pipeline
+	if err := json.Unmarshal(jsonData, &pipelineCopy); err != nil {
+		log.Printf("failed to unmarshal pipeline JSON; err=%v", err)
+	}
+	strippedPipeline := removeParameterValuesFromPipeline(pipelineCopy)
+	strippedMarshal, err := json.Marshal(initialize(&strippedPipeline))
+	hash := fmt.Sprintf("%x", sha1.Sum([]byte(strippedMarshal)))
 
 	tx, err := db.Begin()
 	if err != nil {
@@ -249,11 +300,12 @@ func filterPipeline(ctx context.Context, db *sql.DB, executionid string) (zdatab
 	return res, nil
 }
 
-func filterPipelines(ctx context.Context, db *sql.DB, limit int64, offset int64) ([]zdatabase.FilterPipelinesRow, HTTPError) {
+func filterPipelines(ctx context.Context, db *sql.DB, org string, limit int64, offset int64) ([]zdatabase.FilterPipelinesRow, HTTPError) {
 	q := zdatabase.New(db)
 	res, err := q.FilterPipelines(ctx, zdatabase.FilterPipelinesParams{
-		Limit:  limit,
-		Offset: offset,
+		Organization: org,
+		Limit:        limit,
+		Offset:       offset,
 	})
 	if err != nil {
 		return []zdatabase.FilterPipelinesRow{}, InternalServerError{err.Error()}
@@ -261,9 +313,9 @@ func filterPipelines(ctx context.Context, db *sql.DB, limit int64, offset int64)
 	return res, nil
 }
 
-func allFilterPipelines(ctx context.Context, db *sql.DB) ([]zdatabase.AllFilterPipelinesRow, HTTPError) {
+func allFilterPipelines(ctx context.Context, db *sql.DB, org string) ([]zdatabase.AllFilterPipelinesRow, HTTPError) {
 	q := zdatabase.New(db)
-	res, err := q.AllFilterPipelines(ctx)
+	res, err := q.AllFilterPipelines(ctx, org)
 	if err != nil {
 		return []zdatabase.AllFilterPipelinesRow{}, InternalServerError{err.Error()}
 	}
@@ -279,7 +331,19 @@ func listAllPipelines(ctx context.Context, db *sql.DB, organization string) ([]z
 	return res, nil
 }
 
-func deployPipeline(ctx context.Context, db *sql.DB, organization string, uuid string, hash string) HTTPError {
+func getPipelinesByUuid(ctx context.Context, db *sql.DB, organization string, uuid string) ([]zdatabase.Pipeline, HTTPError) {
+	q := zdatabase.New(db)
+	res, err := q.GetPipelinesByUuid(ctx, zdatabase.GetPipelinesByUuidParams{
+		Organization: organization,
+		Uuid:         uuid,
+	})
+	if err != nil {
+		return []zdatabase.Pipeline{}, InternalServerError{err.Error()}
+	}
+	return res, nil
+}
+
+func deployPipelineById(ctx context.Context, db *sql.DB, organization string, uuid string, hash string) HTTPError {
 	tx, err := db.Begin()
 	if err != nil {
 		log.Printf("failed to initialize transaction; err=%v", err)
@@ -309,6 +373,45 @@ func deployPipeline(ctx context.Context, db *sql.DB, organization string, uuid s
 	}
 
 	return nil
+}
+
+func deployPipeline(ctx context.Context, db *sql.DB, organization string, uuid string, hash string) (zdatabase.Pipeline, HTTPError) {
+	tx, err := db.Begin()
+	if err != nil {
+		log.Printf("failed to initialize transaction; err=%v", err)
+		return zdatabase.Pipeline{}, InternalServerError{err.Error()}
+	}
+	defer tx.Rollback()
+
+	qtx := zdatabase.New(db).WithTx(tx)
+	pipeline, err := qtx.DeployPipeline(ctx, zdatabase.DeployPipelineParams{
+		Organization: organization,
+		Uuid:         uuid,
+		Hash:         hash,
+	})
+
+	if err != nil {
+		return zdatabase.Pipeline{}, InternalServerError{err.Error()}
+	}
+
+	if err := tx.Commit(); err != nil {
+		log.Printf("failed to commit transaction; err=%v", err)
+		return zdatabase.Pipeline{}, InternalServerError{err.Error()}
+	}
+
+	return pipeline, nil
+}
+
+func getPipelineById(ctx context.Context, db *sql.DB, id int64) (zdatabase.Pipeline, HTTPError) {
+	q := zdatabase.New(db)
+	res, err := q.GetPipelineById(ctx, id)
+	if err == sql.ErrNoRows {
+		return zdatabase.Pipeline{}, BadRequest{err.Error()}
+	} else if err != nil {
+		return zdatabase.Pipeline{}, InternalServerError{err.Error()}
+	}
+
+	return res, nil
 }
 
 func getPipeline(ctx context.Context, db *sql.DB, organization string, uuid string, hash string) (zdatabase.Pipeline, HTTPError) {

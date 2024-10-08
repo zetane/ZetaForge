@@ -28,7 +28,6 @@ export const genJSON = (block, id) => {
 
 export function generateId(prefix) {
   const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyz0123456789", 12);
-
   const newNanoid = nanoid();
 
   if (prefix) {

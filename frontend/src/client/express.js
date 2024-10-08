@@ -1,8 +1,8 @@
 import config from "../../config";
 import { buildUrl } from "../../utils/urlBuilder";
 
-export async function uploadFiles(pipelineId, blockId, files) {
-  const formData = buildFormData(pipelineId, blockId, files);
+export async function uploadFiles(pipelinePath, blockId, files) {
+  const formData = buildFormData(pipelinePath, blockId, files);
   return await handleRequest(
     buildUrl(
       config.express.scheme,
@@ -14,8 +14,8 @@ export async function uploadFiles(pipelineId, blockId, files) {
   );
 }
 
-export async function uploadFolders(pipelineId, blockId, files) {
-  const formData = buildFormData(pipelineId, blockId, files);
+export async function uploadFolders(pipelinePath, blockId, files) {
+  const formData = buildFormData(pipelinePath, blockId, files);
   return await handleRequest(
     buildUrl(
       config.express.scheme,
@@ -27,14 +27,14 @@ export async function uploadFolders(pipelineId, blockId, files) {
   );
 }
 
-function buildFormData(pipelineId, blockId, files) {
+function buildFormData(pipelinePath, blockId, files) {
   const formData = new FormData();
   for (let i = 0; i < files.length; i++) {
     formData.append("files", files[i]);
     formData.append("paths", files[i].webkitRelativePath);
   }
 
-  formData.append("pipelineId", pipelineId);
+  formData.append("pipelinePath", pipelinePath);
   formData.append("blockId", blockId);
 
   return formData;
