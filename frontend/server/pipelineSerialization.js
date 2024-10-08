@@ -187,7 +187,6 @@ export async function executePipeline(
     id,
     executionId,
     specs,
-    pipelinePath,
     anvilHostConfiguration,
   );
   specs["sink"] = pipelinePath;
@@ -218,7 +217,6 @@ async function uploadBlocks(
   pipelineId,
   executionId,
   pipelineSpecs,
-  blockPath,
   anvilConfiguration,
 ) {
   const nodes = pipelineSpecs.pipeline;
@@ -226,7 +224,6 @@ async function uploadBlocks(
     const node = nodes[nodeId];
 
     const parameters = node.action?.parameters;
-    const container = node.action?.container;
 
     if (parameters) {
       for (const paramKey in parameters) {
@@ -251,16 +248,7 @@ async function uploadBlocks(
           param.value = `"${fileName}"`;
         }
       }
-    } else if (container) {
-      const computationFile = path.join(
-        blockPath,
-        "/",
-        nodeId,
-        "/computations.py",
-      );
-      const awsKey = `${pipelineId}/${executionId}/${nodeId}.py`;
-      await checkAndUpload(awsKey, computationFile, anvilConfiguration);
-    }
+    } 
   }
   return pipelineSpecs;
 }

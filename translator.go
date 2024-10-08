@@ -185,22 +185,11 @@ func blockTemplate(block *zjson.Block, hash string, blockKey string, key string,
 			None: &wfv1.NoneStrategy{},
 		},
 	}
-	computations := wfv1.Artifact{
-		Name: "computations",
-		Path: cfg.WorkDir + "/" + cfg.ComputationFile,
-		ArtifactLocation: wfv1.ArtifactLocation{
-			S3: &wfv1.S3Artifact{
-				Key: key + "/" + blockKey + ".py",
-			},
-		},
-		Archive: &wfv1.ArchiveStrategy{
-			None: &wfv1.NoneStrategy{},
-		},
-	}
+
 	idMap := make(map[string]string)
 	idMap["key"] = blockKey
 
-	inputs := wfv1.Inputs{Artifacts: []wfv1.Artifact{entrypoint, computations}}
+	inputs := wfv1.Inputs{Artifacts: []wfv1.Artifact{entrypoint}}
 	if deployed {
 		inputs = wfv1.Inputs{Artifacts: []wfv1.Artifact{entrypoint}}
 	}
