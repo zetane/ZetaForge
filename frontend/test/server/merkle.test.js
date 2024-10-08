@@ -11,6 +11,7 @@ vi.mock("crypto", () => ({
   },
 }));
 
+//TODO improve names
 describe("merkle", () => {
   beforeEach(() => {
     crypto.createHash.mockImplementation(() => {
@@ -97,6 +98,56 @@ describe("merkle", () => {
       expect(result).toEqual(expected);
     });
 
+    test("ignore parameter", async () => {
+      const block = blockFixture.getSpecs();
+      const specs = pipelineFixture.getSpecs();
+      block.information.id = "integer-1";
+      block.action = {
+        parameter: {},
+      };
+      specs.pipeline = {
+        [block.information.id]: block,
+      };
+
+      const result = await computePipelineMerkleTree(
+        specs,
+        pipelineFixture.getId(),
+      );
+
+      const expected = {
+        hash: ".",
+        blocks: {}
+      };
+      expect(result).toEqual(expected);
+    });
+
+    test("ignore empty container", async () => {
+      const block = blockFixture.getSpecs();
+      const specs = pipelineFixture.getSpecs();
+      block.information.id = "integer-1";
+      block.action = {
+        container: {
+          image: "",
+          version: "",
+          command_line: ""
+        }
+      };
+      specs.pipeline = {
+        [block.information.id]: block,
+      };
+
+      const result = await computePipelineMerkleTree(
+        specs,
+        pipelineFixture.getId(),
+      );
+
+      const expected = {
+        hash: ".",
+        blocks: {}
+      };
+      expect(result).toEqual(expected);
+    });
+
     test("multiple blocks", async () => {
       const blockIds = ["block-1", "block-2", "block-3"];
       const blocks = [];
@@ -172,13 +223,13 @@ describe("merkle", () => {
     test("nested pipeline", async () => {
       const specs = pipelineFixture.getSpecs();
       const blockIds = ["block-1", "block-2", "block-3"];
-      const blocks = [];
-      for (let blockId of blockIds) {
+      const blocks = blockIds.map((id) => {
         const block = blockFixture.getSpecs();
-        block.information.id = blockId;
+        block.information.id = id;
         delete block.action.container;
-        blocks.push(block);
-      }
+        return block
+      })
+
       mockFs({
         [specs.id]: {
           [blockIds[2]]: {
@@ -197,7 +248,9 @@ describe("merkle", () => {
                   pipeline: {
                     [blockIds[2]]: {
                       ...blocks[2],
-                      container: blockFixture.getSpecs().action.container,
+                      action: {
+                        container: blockFixture.getSpecs().action.container,
+                      }
                     },
                   },
                 },
@@ -206,16 +259,6 @@ describe("merkle", () => {
           },
         },
       };
-      let parentBlock = specs;
-      for (let blockId of blockIds) {
-        const block = blockFixture.getSpecs();
-        block.information.id = blockId;
-        delete parentBlock.container;
-        parentBlock.pipeline = {
-          [blockId]: block,
-        };
-        parentBlock = block.action;
-      }
 
       const result = await computePipelineMerkleTree(specs, specs.id);
 
@@ -264,15 +307,15 @@ describe("merkle", () => {
       const expected = {
         hash: ".",
         blocks: {
-        [block.information.id]: {
-          hash: ".",
-          files: {
-            path: "",
+          [block.information.id]: {
             hash: ".",
-            children: [],
+            files: {
+              path: "",
+              hash: ".",
+              children: [],
+            },
           },
         },
-        }
       };
       expect(result).toEqual(expected);
     });
@@ -293,20 +336,20 @@ describe("merkle", () => {
       const expected = {
         hash: ".",
         blocks: {
-        [block.information.id]: {
-          hash: ".",
-          files: {
-            path: "",
+          [block.information.id]: {
             hash: ".",
-            children: [
-              {
-                path: "A",
-                hash: ".",
-                children: [],
-              },
-            ],
+            files: {
+              path: "",
+              hash: ".",
+              children: [
+                {
+                  path: "A",
+                  hash: ".",
+                  children: [],
+                },
+              ],
+            },
           },
-        },
         },
       };
       expect(result).toEqual(expected);
@@ -323,7 +366,7 @@ describe("merkle", () => {
 
       const expected = {
         hash: ".",
-        blocks: {}
+        blocks: {},
       };
       expect(result).toEqual(expected);
     });

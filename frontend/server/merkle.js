@@ -2,17 +2,17 @@ import crypto from "crypto";
 import { promises as fs } from "fs";
 import path from "path";
 
+//TODO could use more refactoring
 export async function computePipelineMerkleTree(specs, pipelinePath) {
   const tree = {};
 
   if (specs.pipeline) {
     tree.blocks = {};
     for (let key in specs.pipeline) {
-      tree.blocks[key] = await merklePipeline(
-        specs.pipeline[key],
-        pipelinePath,
-        key,
-      );
+      const childBlock = specs.pipeline[key];
+      if (hasPipeline(childBlock) || hasContainer(childBlock)) {
+        tree.blocks[key] = await merklePipeline(childBlock, pipelinePath, key);
+      }
     }
     tree.hash = combineChildrenHashes(Object.values(tree.blocks));
   }
@@ -26,11 +26,10 @@ async function merklePipeline(block, pipelinePath, blockKey) {
   if (block.action.pipeline) {
     node.blocks = {};
     for (let key in block.action.pipeline) {
-      node.blocks[key] = await merklePipeline(
-        block.action.pipeline[key],
-        pipelinePath,
-        key,
-      );
+      const childBlock = block.action.pipeline[key];
+      if (hasPipeline(childBlock) || hasContainer(childBlock)) {
+        node.blocks[key] = await merklePipeline(childBlock, pipelinePath, key);
+      }
     }
     node.hash = combineChildrenHashes(Object.values(node.blocks));
     return node;
@@ -41,6 +40,14 @@ async function merklePipeline(block, pipelinePath, blockKey) {
   }
 
   return node;
+}
+
+function hasContainer(block) {
+  return block?.action?.container?.image?.length > 0;
+}
+
+function hasPipeline(block) {
+  return Object.keys(block?.action?.pipeline ?? {}).length > 0;
 }
 
 async function computeDirectoryMerkleTree(dirPath) {

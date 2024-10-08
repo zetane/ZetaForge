@@ -94,7 +94,6 @@ export async function getBlockDirectory(pipelinePath, blockId) {
 
 function filePermissionVisitor(name, absolutePath, relativePath, isDirectory) {
   if (isDirectory) {
-    logger.debug(name);
     return {
       read: true,
       write: true,

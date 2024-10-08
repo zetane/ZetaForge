@@ -30,7 +30,7 @@ type Pipeline struct {
 	Json         string
 	Deployed     int64
 	Deleted      int64
-	Merkle       sql.NullString
+	Merkle       string
 }
 
 type SetupVersion struct {

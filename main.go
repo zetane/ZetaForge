@@ -537,7 +537,7 @@ func main() {
 			return
 		}
 
-		res, err := createPipeline(ctx.Request.Context(), db, prefix, execution.Pipeline)
+		res, err := createPipeline(ctx.Request.Context(), db, prefix, execution.Pipeline, execution.MerkleTree)
 		if err != nil {
 			log.Printf("failed to create pipeline; err=%v", err)
 			ctx.String(err.Status(), err.Error())
@@ -551,9 +551,9 @@ func main() {
 			return
 		}
 		if config.IsLocal || config.Cloud.Provider == "Debug" {
-			go localExecute(&execution.Pipeline, newExecution.ID, execution.Id, prefix, execution.Build, false, config, db, hub)
+			go localExecute(&execution.Pipeline, &execution.MerkleTree, newExecution.ID, execution.Id, prefix, execution.Build, false, config, db, hub)
 		} else {
-			go cloudExecute(&execution.Pipeline, newExecution.ID, execution.Id, prefix, execution.Build, false, config, db, hub)
+			go cloudExecute(&execution.Pipeline, &execution.MerkleTree, newExecution.ID, execution.Id, prefix, execution.Build, false, config, db, hub)
 		}
 
 		retData, err := filterPipeline(ctx, db, execution.Id)
@@ -636,7 +636,7 @@ func main() {
 			return
 		}
 
-		buildContextStatus := getBuildContextStatus(ctx.Request.Context(), &request.Pipeline, request.Rebuild, prefix, config)
+		buildContextStatus := getBuildContextStatus(ctx.Request.Context(), &request.Pipeline, &request.MerkleTree, request.Rebuild, prefix, config)
 
 		ctx.JSON(http.StatusOK, buildContextStatus)
 	})
@@ -724,7 +724,11 @@ func main() {
 			return
 		}
 
-		res, err := createPipeline(ctx.Request.Context(), db, prefix, pipeline)
+		merkleTree := zjson.PipelineMerkleTree{
+			Hash: "",
+		}
+
+		res, err := createPipeline(ctx.Request.Context(), db, prefix, pipeline, merkleTree)
 		if err != nil {
 			log.Printf("failed to create pipeline; err=%v", err)
 			ctx.String(err.Status(), err.Error())
@@ -919,6 +923,13 @@ func main() {
 			return
 		}
 
+		var merkleTree zjson.PipelineMerkleTree
+		if err := json.Unmarshal([]byte(res.Merkle), &merkleTree); err != nil {
+			log.Printf("failed to unmarshal merkle tree JSON; err=%v", err)
+			ctx.String(http.StatusInternalServerError, "Failed to parse merkle tree data")
+			return
+		}
+
 		// Merge inputs from POST into the pipeline graph
 		mergeInputsIntoPipeline(&pipeline, postBody)
 
@@ -949,9 +960,9 @@ func main() {
 		}
 
 		if config.IsLocal || config.Cloud.Provider == "Debug" {
-			go localExecute(&validatedPipeline, newExecution.ID, executionId.String(), prefix, false, true, config, db, hub)
+			go localExecute(&validatedPipeline, &merkleTree, newExecution.ID, executionId.String(), prefix, false, true, config, db, hub)
 		} else {
-			go cloudExecute(&validatedPipeline, newExecution.ID, executionId.String(), prefix, false, true, config, db, hub)
+			go cloudExecute(&validatedPipeline, &merkleTree, newExecution.ID, executionId.String(), prefix, false, true, config, db, hub)
 		}
 
 		retData, err := filterPipeline(ctx, db, executionId.String())

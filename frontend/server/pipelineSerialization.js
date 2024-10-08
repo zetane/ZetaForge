@@ -19,6 +19,7 @@ import {
   getPipelinesByUuid,
 } from "./anvil";
 import { logger } from "./logger";
+import { computePipelineMerkleTree } from "./merkle";
 
 export async function saveSpec(spec, writePath) {
   const pipelineSpecsPath = path.join(writePath, PIPELINE_SPECS_FILE_NAME);
@@ -194,12 +195,12 @@ export async function executePipeline(
   specs["name"] = name;
   specs["id"] = id;
 
-  //const merkle = await computeMerkleTreeForDirectory(path);
-  //const pipelines = await getPipelinesByUuid(anvilHostConfiguration, id);
+  const merkleTree = await computePipelineMerkleTree(specs, pipelinePath);
 
   await uploadBuildContexts(
     anvilHostConfiguration,
     specs,
+    merkleTree,
     pipelinePath,
     rebuild,
   );
@@ -208,6 +209,7 @@ export async function executePipeline(
     anvilHostConfiguration,
     executionId,
     specs,
+    merkleTree,
     rebuild,
   );
 }
@@ -266,12 +268,14 @@ async function uploadBlocks(
 async function uploadBuildContexts(
   configuration,
   pipelineSpecs,
+  pipelineMerkleTree,
   buildPath,
   rebuild,
 ) {
   const buildContextStatuses = await getBuildContextStatus(
     configuration,
     pipelineSpecs,
+    pipelineMerkleTree,
     rebuild,
   );
   await Promise.all(
