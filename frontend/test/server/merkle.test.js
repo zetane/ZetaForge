@@ -108,6 +108,8 @@ describe("merkle", () => {
       specs.pipeline = {
         [block.information.id]: block,
       };
+      blocks: {
+      }
 
       const result = await computePipelineMerkleTree(
         specs,
@@ -116,7 +118,7 @@ describe("merkle", () => {
 
       const expected = {
         hash: ".",
-        blocks: {}
+        blocks: {},
       };
       expect(result).toEqual(expected);
     });
@@ -129,8 +131,8 @@ describe("merkle", () => {
         container: {
           image: "",
           version: "",
-          command_line: ""
-        }
+          command_line: "",
+        },
       };
       specs.pipeline = {
         [block.information.id]: block,
@@ -143,7 +145,7 @@ describe("merkle", () => {
 
       const expected = {
         hash: ".",
-        blocks: {}
+        blocks: {},
       };
       expect(result).toEqual(expected);
     });
@@ -227,8 +229,8 @@ describe("merkle", () => {
         const block = blockFixture.getSpecs();
         block.information.id = id;
         delete block.action.container;
-        return block
-      })
+        return block;
+      });
 
       mockFs({
         [specs.id]: {
@@ -250,7 +252,7 @@ describe("merkle", () => {
                       ...blocks[2],
                       action: {
                         container: blockFixture.getSpecs().action.container,
-                      }
+                      },
                     },
                   },
                 },
@@ -358,9 +360,19 @@ describe("merkle", () => {
     test("empty pipeline", async () => {
       const specs = pipelineFixture.getSpecs();
       specs.pipeline = {};
-      mockFs({
-        [specs.id]: {},
-      });
+
+      const result = await computePipelineMerkleTree(specs, specs.id);
+
+      const expected = {
+        hash: ".",
+        blocks: {},
+      };
+      expect(result).toEqual(expected);
+    });
+
+    test("no pipeline", async () => {
+      const specs = pipelineFixture.getSpecs();
+      delete specs.pipeline;
 
       const result = await computePipelineMerkleTree(specs, specs.id);
 

@@ -35,7 +35,6 @@ export async function compileComputation(pipelinePath, blockId) {
       encoding: "utf8",
     });
     const io = JSON.parse(stdout);
-    console.log(io);
     return io;
   } catch (error) {
     const message = `Compilation failed for block \nblock path: ${blockPath} \nscript path: ${scriptPath}`;
