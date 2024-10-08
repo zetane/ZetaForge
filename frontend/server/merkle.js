@@ -4,41 +4,29 @@ import path from "path";
 
 //TODO could use more refactoring
 export async function computePipelineMerkleTree(specs, pipelinePath) {
-  const tree = {};
-
-  if (specs.pipeline) {
-    tree.blocks = {};
-    for (let key in specs.pipeline) {
-      const childBlock = specs.pipeline[key];
-      if (hasPipeline(childBlock) || hasContainer(childBlock)) {
-        tree.blocks[key] = await merklePipeline(childBlock, pipelinePath, key);
-      }
-    }
-    tree.hash = combineChildrenHashes(Object.values(tree.blocks));
-  }
-
-  return tree;
+  return merklePipeline(specs.pipeline, pipelinePath);
 }
 
-async function merklePipeline(block, pipelinePath, blockKey) {
-  const node = {};
+async function merklePipeline(pipeline, pipelinePath) {
+  const node = {
+    blocks: {},
+  };
 
-  if (block.action.pipeline) {
-    node.blocks = {};
-    for (let key in block.action.pipeline) {
-      const childBlock = block.action.pipeline[key];
-      if (hasPipeline(childBlock) || hasContainer(childBlock)) {
-        node.blocks[key] = await merklePipeline(childBlock, pipelinePath, key);
+  for (let key in pipeline) {
+    const childBlock = pipeline[key];
+    if (hasPipeline(childBlock)) {
+      node.blocks[key] = await merklePipeline(childBlock.action.pipeline, pipelinePath);
+    } else if (hasContainer(childBlock)) {
+      const blockPath = path.join(pipelinePath, key);
+      const directoryMerkle = await computeDirectoryMerkleTree(blockPath)
+      node.blocks[key] = {
+        files: directoryMerkle,
+        hash: directoryMerkle.hash
       }
     }
-    node.hash = combineChildrenHashes(Object.values(node.blocks));
-    return node;
-  } else if (block.action.container) {
-    const blockPath = path.join(pipelinePath, blockKey);
-    node.files = await computeDirectoryMerkleTree(blockPath);
-    node.hash = node.files.hash;
   }
 
+  node.hash = combineChildrenHashes(Object.values(node.blocks));
   return node;
 }
 
@@ -86,8 +74,6 @@ function combineChildrenHashes(nodes) {
 }
 
 function combineHashes(hashes) {
-  if (hashes.length === 1) return hashes[0]; //TODO remove this edge case
-
   const concatenatedHashes = hashes.join("");
   const combinedHash = crypto
     .createHash("sha256")
