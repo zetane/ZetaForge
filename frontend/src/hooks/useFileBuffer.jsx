@@ -1,14 +1,16 @@
 import { trpc } from "@/utils/trpc";
-import { useState, useRef } from "react";
+import { useState } from "react";
+import { useDebouncedCallback } from "use-debounce";
 
 export default function useFileBuffer(pipelinePath, blockId, relativePath) {
   const getFileContent = trpc.block.file.byPath.get.useMutation();
   const updateFileContent = trpc.block.file.byPath.update.useMutation();
-  const fileContentBuffer = useRef("");
+  const [content, setContent] = useState("");
+  const setContentDebounced = useDebouncedCallback(setContent, 100);
   const [hasPendingChanges, setHasPendingChanges] = useState(false);
 
   const update = (newValue) => {
-    fileContentBuffer.current = newValue;
+    setContentDebounced(newValue);
     setHasPendingChanges(true);
   };
 
@@ -17,13 +19,13 @@ export default function useFileBuffer(pipelinePath, blockId, relativePath) {
       pipelinePath,
       blockId: blockId,
       relPath: relativePath,
-      content: fileContentBuffer.current,
+      content: content,
     });
     setHasPendingChanges(false);
   };
 
   const updateSave = async (newValue) => {
-    fileContentBuffer.current = newValue;
+    setContent(newValue);
     await updateFileContent.mutateAsync({
       pipelinePath,
       blockId: blockId,
@@ -34,18 +36,17 @@ export default function useFileBuffer(pipelinePath, blockId, relativePath) {
   };
 
   const load = async (relativePath) => {
-    fileContentBuffer.current = "";
     const content = await getFileContent.mutateAsync({
       pipelinePath: pipelinePath,
       blockId: blockId,
       relPath: relativePath,
     });
     setHasPendingChanges(false);
-    fileContentBuffer.current = content;
+    setContent(content);
   };
 
   return {
-    content: fileContentBuffer.current,
+    content,
     hasPendingChanges,
     update,
     load,

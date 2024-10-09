@@ -1,6 +1,6 @@
 import { Button } from "@carbon/react";
 import { EditorCodeMirror } from "./CodeMirrorComponents";
-import { useContext, useState } from "react";
+import { useContext, useState, useRef } from "react";
 import { FileBufferContext } from "./DirectoryViewer";
 import { ChatHistoryContext } from "./DirectoryViewer";
 import { FileHandleContext } from "./DirectoryViewer";
@@ -17,8 +17,15 @@ export default function CodeManualEditor() {
   const fileHandle = useContext(FileHandleContext);
   const fileBuffer = useContext(FileBufferContext);
   const chatHistory = useContext(ChatHistoryContext);
+  const [code, setCode] = useState("");
   const compile = useCompileComputation();
   const [isLoading, setIsLoading] = useState(false);
+
+  console.log(code === "", fileBuffer.content !== "");
+  if (code === "" && fileBuffer.content !== "") {
+    console.log(fileBuffer.content);
+    setCode(fileBuffer.content);
+  }
 
   const editorKeymap = keymap.of([
     {
@@ -49,7 +56,7 @@ export default function CodeManualEditor() {
   return (
     <div className="relative min-h-0 flex-1">
       <EditorCodeMirror
-        code={fileBuffer.content ?? ""}
+        code={code ?? ""}
         onChange={handleChange}
         keymap={editorKeymap}
       />

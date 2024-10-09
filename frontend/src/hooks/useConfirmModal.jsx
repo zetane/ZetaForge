@@ -24,12 +24,12 @@ export default function useConfirmModal() {
 
   const save = async () => {
     fileBuffer.save();
-    fileHandle.set(selectedFile);
+    await fileHandle.set(selectedFile);
     close();
   };
 
   const discard = async () => {
-    fileHandle.set(selectedFile);
+    await fileHandle.set(selectedFile);
     close();
   };
 
