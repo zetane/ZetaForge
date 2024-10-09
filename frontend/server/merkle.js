@@ -74,8 +74,6 @@ function combineChildrenHashes(nodes) {
 }
 
 function combineHashes(hashes) {
-  if (hashes.length === 1) return hashes[0];
-
   const concatenatedHashes = hashes.join("");
   const combinedHash = crypto
     .createHash("sha256")
