@@ -2,7 +2,6 @@ import crypto from "crypto";
 import { promises as fs } from "fs";
 import path from "path";
 
-//TODO could use more refactoring
 export async function computePipelineMerkleTree(specs, pipelinePath) {
   return merklePipeline(specs.pipeline, pipelinePath);
 }
