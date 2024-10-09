@@ -10,7 +10,7 @@ import {
 import {
   // fileExists,
   filterDirectories,
-  readJsonToObject,
+  // readJsonToObject,
 } from "./fileSystem.js";
 import { checkAndUpload, checkAndCopy, uploadDirectory } from "./s3.js";
 import {

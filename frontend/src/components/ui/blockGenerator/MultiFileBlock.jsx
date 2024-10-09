@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { trimQuotes } from "@/utils/blockUtils";
 
 export const MultiFileBlock = ({ blockId, block, setFocusAction, history }) => {
   const fileInput = useRef();
@@ -28,7 +27,7 @@ export const MultiFileBlock = ({ blockId, block, setFocusAction, history }) => {
     const readDirectory = (dir, path = "") => {
       for (let i = 0; i < dir.length; i++) {
         const file = dir[i];
-        const fullPath = path ? `${path}/${file.path}` : file.path; // Use file.name here
+        const fullPath = path ? `${path}/${file.path}` : file.path;
         if (file.webkitDirectory) {
           readDirectory(file.children, fullPath);
         } else {

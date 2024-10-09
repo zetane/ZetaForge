@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { trimQuotes } from "@/utils/blockUtils";
 
 export const FolderBlock = ({ blockId, block, setFocusAction, history }) => {
   const fileInput = useRef();
@@ -8,24 +7,21 @@ export const FolderBlock = ({ blockId, block, setFocusAction, history }) => {
   const [folderName, setFolderName] = useState(
     () => localStorage.getItem(uniqueKey) || null,
   );
+  const [filePaths, setFilePaths] = useState(() => {
+    const storedPaths = localStorage.getItem(`filePaths_${blockId}`);
+    return storedPaths ? JSON.parse(storedPaths) : [];
+  });
 
   useEffect(() => {
-    const type = block?.action?.parameters["path"]?.type;
-    if (history && type !== "fileLoad" && folderName) {
-      let fileName = block?.action?.parameters["path"]?.value;
-      const fileSplit = fileName.split("/");
-      if (fileSplit.length > 1) {
-        fileName = fileSplit.at(-1);
-      }
-      fileName = trimQuotes(fileName);
-      const s3Url = history + "/" + fileName;
+    if (history && filePaths.length > 0 && folderName) {
+      const formattedValue = `[${filePaths.map((file) => `"${file}"`).join(", ")}]`;
       setFocusAction((draft) => {
-        draft.data[blockId].action.parameters["path"].value = s3Url;
-        draft.data[blockId].action.parameters["path"].type = "blob";
+        draft.data[blockId].action.parameters["path"].type = "folder";
+        draft.data[blockId].action.parameters["path"].value = formattedValue;
       });
       setRenderPath(folderName);
     }
-  }, [block, folderName]);
+  }, [block, folderName, filePaths]);
 
   const processFiles = (files) => {
     const filePaths = [];
@@ -52,7 +48,9 @@ export const FolderBlock = ({ blockId, block, setFocusAction, history }) => {
     const pathSegments = firstFilePath.split(/[/\\]/);
     const extractedFolderName = pathSegments[pathSegments.length - 2];
     setFolderName(extractedFolderName);
+    setFilePaths(filePaths);
     localStorage.setItem(uniqueKey, extractedFolderName);
+    localStorage.setItem(`filePaths_${blockId}`, JSON.stringify(filePaths));
     setFocusAction((draft) => {
       draft.data[blockId].action.parameters["path"].value = formattedValue;
       draft.data[blockId].action.parameters["path"].type = "folder";
