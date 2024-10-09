@@ -8,7 +8,7 @@ import {
 } from "../src/utils/constants";
 // import { setDifference } from "../utils/set.js";
 import {
-  fileExists,
+  // fileExists,
   filterDirectories,
   readJsonToObject,
 } from "./fileSystem.js";
@@ -153,10 +153,10 @@ async function getBlocksInDirectory(directory) {
   return directories;
 }
 
-async function readPipelineBlocks(specsPath) {
-  const specs = await readJsonToObject(specsPath);
-  return getPipelineBlocks(specs);
-}
+// async function readPipelineBlocks(specsPath) {
+//   const specs = await readJsonToObject(specsPath);
+//   return getPipelineBlocks(specs);
+// }
 
 export async function removeBlock(blockId, pipelinePath) {
   const blockPath = await getPipelineBlockPath(pipelinePath, blockId);

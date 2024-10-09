@@ -3,11 +3,15 @@ import { trimQuotes } from "@/utils/blockUtils";
 
 export const FolderBlock = ({ blockId, block, setFocusAction, history }) => {
   const fileInput = useRef();
+  const uniqueKey = `folderName_${blockId}`;
   const [renderPath, setRenderPath] = useState(null);
+  const [folderName, setFolderName] = useState(
+    () => localStorage.getItem(uniqueKey) || null,
+  );
 
   useEffect(() => {
     const type = block?.action?.parameters["path"]?.type;
-    if (history && type !== "fileLoad") {
+    if (history && type !== "fileLoad" && folderName) {
       let fileName = block?.action?.parameters["path"]?.value;
       const fileSplit = fileName.split("/");
       if (fileSplit.length > 1) {
@@ -19,9 +23,9 @@ export const FolderBlock = ({ blockId, block, setFocusAction, history }) => {
         draft.data[blockId].action.parameters["path"].value = s3Url;
         draft.data[blockId].action.parameters["path"].type = "blob";
       });
-      setRenderPath("Default Name");
+      setRenderPath(folderName);
     }
-  }, [block]);
+  }, [block, folderName]);
 
   const processFiles = (files) => {
     const filePaths = [];
@@ -44,12 +48,16 @@ export const FolderBlock = ({ blockId, block, setFocusAction, history }) => {
     const files = Array.from(fileInput.current.files);
     const filePaths = processFiles(files);
     const formattedValue = `[${filePaths.map((file) => `"${file}"`).join(", ")}]`;
-
+    const firstFilePath = filePaths[0];
+    const pathSegments = firstFilePath.split(/[/\\]/);
+    const extractedFolderName = pathSegments[pathSegments.length - 2];
+    setFolderName(extractedFolderName);
+    localStorage.setItem(uniqueKey, extractedFolderName);
     setFocusAction((draft) => {
       draft.data[blockId].action.parameters["path"].value = formattedValue;
       draft.data[blockId].action.parameters["path"].type = "folder";
     });
-    setRenderPath("Default Name");
+    setRenderPath(extractedFolderName);
   };
 
   return (
