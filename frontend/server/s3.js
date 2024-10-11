@@ -125,8 +125,7 @@ async function fileExists(key, anvilConfiguration) {
   } catch (err) {
     if (err.name === "NotFound" || err.name === "403") {
       return false;
-    }     logger.debug(err.name);
-    console.log(err.name);
+    }
     const message = "Error checking file existence in S3";
     logger.error(err, message);
     throw new Error(message);
