@@ -8,6 +8,7 @@ import { spawnAsync } from "../../server/spawnAsync";
 import { getCompuationsSourceCode } from "../fixture/blockFixture";
 import * as pipelineFixture from "../fixture/pipelineFixture";
 import * as blockFixture from "../fixture/blockFixture";
+import { compileComputationFunction } from "../../resources/compileComputation.mjs";
 
 vi.mock("fs/promises", () => ({
   default: {
@@ -32,6 +33,10 @@ vi.mock("../../server/spawnAsync", () => ({
 
 vi.mock("../../server/cache", () => ({
   cacheJoin: vi.fn(),
+}));
+
+vi.mock("../../resources/compileComputation.mjs", () => ({
+  compileComputationFunction: vi.fn(),
 }));
 
 describe("", () => {
@@ -68,6 +73,8 @@ describe("", () => {
       fileExists.mockResolvedValueOnce(true);
       spawnAsync.mockReturnValueOnce(JSON.stringify(expectedSpecs));
 
+      compileComputationFunction.mockReturnValueOnce(expectedSpecs);
+
       const result = await compileComputation(
         pipelineFixture.getId(),
         blockFixture.getId(),
@@ -90,6 +97,9 @@ describe("", () => {
         status: 1,
         error: undefined,
       });
+      compileComputationFunction.mockImplementationOnce(() => {
+        throw new Error("Mocked Exception");
+      });
 
       expect(() =>
         compileComputation(pipelineFixture.getId(), blockFixture.getId()),
@@ -105,6 +115,9 @@ describe("", () => {
         stderr: undefined,
         status: undefined,
         error: {},
+      });
+      compileComputationFunction.mockImplementationOnce(() => {
+        throw new Error("Mocked Exception");
       });
 
       expect(() =>

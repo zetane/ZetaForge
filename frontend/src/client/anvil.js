@@ -63,7 +63,7 @@ export async function terminateExecution(configuration, executionId) {
   return body;
 }
 
-export async function getAllPipelines(configuration, limit, offset) {
+export async function getAllPipelines(configuration) {
   const response = await handleRequest(
     buildUrl(
       getScheme(configuration.anvil.host),
@@ -82,19 +82,18 @@ export async function getAllPipelines(configuration, limit, offset) {
 }
 
 export async function ping(configuration) {
-  const response = await handleRequest(
-    buildUrl(
-      getScheme(configuration.anvil.host),
-      configuration.anvil.host,
-      configuration.anvil.port,
-      "ping",
-    ),
-    HttpMethod.GET,
-    configuration.anvil.token,
-    {},
-  );
-
   try {
+    const response = await handleRequest(
+      buildUrl(
+        getScheme(configuration.anvil.host),
+        configuration.anvil.host,
+        configuration.anvil.port,
+        "ping",
+      ),
+      HttpMethod.GET,
+      configuration.anvil.token,
+      {},
+    );
     return response.ok;
   } catch {
     return false;

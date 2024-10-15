@@ -58,3 +58,13 @@ export const editConfigurationAtom = atom(
     set(userAnvilConfigurationsAtom, (prev) => prev.with(index, configuration));
   },
 );
+
+export const updateContextAndDriver = (newConfig) => {
+  return (oldState) => ({
+    ...oldState,
+    anvil: {
+      ...oldState.anvil,
+      ...newConfig,
+    },
+  });
+};

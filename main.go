@@ -48,6 +48,7 @@ type Config struct {
 	BucketName      string
 	Database        string
 	SetupVersion    string
+	KubeContext		string
 	Local           Local `json:"Local,omitempty"`
 	Cloud           Cloud `json:"Cloud,omitempty"`
 }
@@ -72,6 +73,15 @@ type LogWriter struct {
 	Hub         *Hub
 	mu          sync.Mutex
 	// mutex for any potential multithread writing
+}
+
+type MinikubeProfile struct {
+	Name   string `json:"Name"`
+	Status string `json:"Status"`
+}
+
+type MinikubeProfiles struct {
+	Valid []MinikubeProfile `json:"valid"`
 }
 
 func (w *LogWriter) Write(p []byte) (n int, err error) {

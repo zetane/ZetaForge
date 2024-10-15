@@ -80,6 +80,7 @@ export async function checkAndUpload(key, filePath, anvilConfiguration) {
 
 export async function uploadDirectory(key, diretoryPath, anvilConfiguration) {
   const files = await getDirectoryFilesRecursive(diretoryPath);
+
   await Promise.all(
     files.map((f) =>
       upload(

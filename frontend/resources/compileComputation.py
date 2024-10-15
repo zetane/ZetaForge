@@ -2,11 +2,9 @@ import ast
 import json
 import sys
 
-
 def extract_io(source):
     tree = ast.parse(source)
     function_info = {}
-
     for node in ast.walk(tree):
         if isinstance(node, ast.FunctionDef) and node.name == 'compute':
             # Extract docstring
@@ -49,8 +47,8 @@ def extract_io(source):
 
     return function_info
 
+
 if __name__ == '__main__':
     source = sys.stdin.read()
     io = extract_io(source)
-
     print(json.dumps(io))
