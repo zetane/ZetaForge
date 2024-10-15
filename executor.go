@@ -749,6 +749,13 @@ func cloudExecute(pipeline *zjson.Pipeline, pipelineMerkleTree *zjson.PipelineMe
 	}
 	defer hub.CloseRoom(pipeline.Id)
 
+	if cfg.Cloud.Provider == "Debug" {
+		if err := upload(ctx, cfg.EntrypointFile, cfg.EntrypointFile, cfg); err != nil { // should never fail
+			log.Printf("failed to upload entrypoint file; err=%v", err)
+			return
+		}
+	}
+
 	s3key := organization + "/" + pipeline.Id + "/" + executionUuid
 	logDir, exists := os.LookupEnv("ZETAFORGE_LOGS")
 	if !exists {

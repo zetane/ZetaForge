@@ -550,7 +550,7 @@ func main() {
 			ctx.String(err.Status(), err.Error())
 			return
 		}
-		if config.IsLocal || config.Cloud.Provider == "Debug" {
+		if config.IsLocal {
 			go localExecute(&execution.Pipeline, &execution.MerkleTree, newExecution.ID, execution.Id, prefix, execution.Build, false, config, db, hub)
 		} else {
 			go cloudExecute(&execution.Pipeline, &execution.MerkleTree, newExecution.ID, execution.Id, prefix, execution.Build, false, config, db, hub)
@@ -959,7 +959,7 @@ func main() {
 			return
 		}
 
-		if config.IsLocal || config.Cloud.Provider == "Debug" {
+		if config.IsLocal {
 			go localExecute(&validatedPipeline, &merkleTree, newExecution.ID, executionId.String(), prefix, false, true, config, db, hub)
 		} else {
 			go cloudExecute(&validatedPipeline, &merkleTree, newExecution.ID, executionId.String(), prefix, false, true, config, db, hub)

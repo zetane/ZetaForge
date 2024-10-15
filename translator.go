@@ -103,8 +103,8 @@ func checkImage(ctx context.Context, image string, cfg Config) (bool, bool, erro
 				return false, false, err
 			}
 			for _, tag := range tagList.Tags {
-				expectedTagName := fmt.Sprintf("localhost:5000/%s:%s", name, tag)
-				if image == expectedTagName {
+				expectedTagName := fmt.Sprintf("%s:%s", name, tag)
+				if "zetaforge/"+image == expectedTagName {
 					return true, false, nil
 				}
 			}
@@ -168,7 +168,7 @@ func blockTemplate(block *zjson.Block, hash string, blockKey string, key string,
 	if cfg.IsLocal {
 		image = "zetaforge/" + image
 	} else if cfg.Cloud.Provider == "Debug" {
-		image = fmt.Sprintf("localhost:%d/zetaforge/%s", cfg.Cloud.RegistryPort, image)
+		image = fmt.Sprintf("localhost:%d/zetaforge/%s", cfg.Cloud.Debug.RegistryPort, image)
 	} else {
 		image = registryAddress(cfg) + "/zetaforge/" + image
 	}
@@ -234,8 +234,8 @@ func kanikoTemplate(block *zjson.Block, hash string, organization string, cfg Co
 	if cfg.IsLocal {
 		return nil
 	} else if cfg.Cloud.Provider == "Debug" {
-		imageName := getImageName(block, hash)
-		image := fmt.Sprintf("registry:%d/zetaforge/%s/%s", cfg.Cloud.Debug.RegistryPort, organization, imageName)
+		image := getImage(block, hash, organization)
+		image = fmt.Sprintf("registry:%d/zetaforge/%s", cfg.Cloud.Debug.RegistryPort, image)
 		cmd := []string{
 			"/kaniko/executor",
 			"--context",
@@ -246,6 +246,9 @@ func kanikoTemplate(block *zjson.Block, hash string, organization string, cfg Co
 			"--compressed-caching=false",
 			"--snapshot-mode=redo",
 			"--use-new-run",
+			"--cleanup", // Add this to clean up after build
+			"--cache=true",
+			"--single-snapshot", // Can help reduce layers and save space
 		}
 		artifact := wfv1.Artifact{
 			Name: "context",
