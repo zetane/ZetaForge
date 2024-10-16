@@ -35,7 +35,6 @@ export async function compileComputation(pipelinePath, blockId) {
       encoding: "utf8",
     });
     const io = JSON.parse(stdout);
-    console.log(io);
     return io;
   } catch (error) {
     const message = `Compilation failed for block \nblock path: ${blockPath} \nscript path: ${scriptPath}`;
@@ -94,7 +93,6 @@ export async function getBlockDirectory(pipelinePath, blockId) {
 
 function filePermissionVisitor(name, absolutePath, relativePath, isDirectory) {
   if (isDirectory) {
-    logger.debug(name);
     return {
       read: true,
       write: true,

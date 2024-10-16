@@ -226,8 +226,13 @@ func newResponseExecutionsRow(execution zdatabase.Execution) ResponseExecution {
 	return response
 }
 
-func createPipeline(ctx context.Context, db *sql.DB, organization string, pipeline zjson.Pipeline) (zdatabase.Pipeline, HTTPError) {
+func createPipeline(ctx context.Context, db *sql.DB, organization string, pipeline zjson.Pipeline, merkleTree zjson.PipelineMerkleTree) (zdatabase.Pipeline, HTTPError) {
 	jsonData, err := json.Marshal(initialize(&pipeline))
+	if err != nil {
+		return zdatabase.Pipeline{}, InternalServerError{err.Error()}
+	}
+
+	merkleTreeJson, err := json.Marshal(initialize(&merkleTree))
 	if err != nil {
 		return zdatabase.Pipeline{}, InternalServerError{err.Error()}
 	}
@@ -262,6 +267,7 @@ func createPipeline(ctx context.Context, db *sql.DB, organization string, pipeli
 			Uuid:         pipeline.Id,
 			Hash:         hash,
 			Json:         jsonData,
+			Merkle:       merkleTreeJson,
 		})
 		if err != nil {
 			return zdatabase.Pipeline{}, InternalServerError{err.Error()}

@@ -7,6 +7,7 @@ import { LOCAL_DOMAINS } from "../utils/constants";
 export async function getBuildContextStatus(
   configuration,
   pipelineSpecs,
+  pipelineMerkleTree,
   rebuild,
 ) {
   const response = await handleRequest(
@@ -22,6 +23,7 @@ export async function getBuildContextStatus(
     {
       rebuild: rebuild,
       pipeline: pipelineSpecs,
+      merkleTree: pipelineMerkleTree,
     },
   );
 
@@ -71,6 +73,7 @@ export async function createExecution(
   configuration,
   executionId,
   pipelineSpecs,
+  pipelineMerkleTree,
   rebuild,
 ) {
   const sortedPipelines = buildSortKeys(pipelineSpecs);
@@ -87,6 +90,7 @@ export async function createExecution(
     {
       id: executionId,
       pipeline: sortedPipelines,
+      merkleTree: pipelineMerkleTree,
       build: rebuild,
     },
   );

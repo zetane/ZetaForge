@@ -34,7 +34,7 @@ vi.mock("../../server/cache", () => ({
   cacheJoin: vi.fn(),
 }));
 
-describe("", () => {
+describe("blockSerialization", () => {
   const blockComputationsSourceCode = getCompuationsSourceCode();
 
   afterEach(() => {

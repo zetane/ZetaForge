@@ -74,7 +74,7 @@ func s3Client(ctx context.Context, cfg Config) (*s3.Client, error) {
 	var awsSecretKey string
 	region := "us-east-2"
 
-	if cfg.IsLocal {
+	if cfg.IsLocal || cfg.Cloud.Provider == "Debug" {
 		awsAccessKey = "AKIAIOSFODNN7EXAMPLE"
 		awsSecretKey = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
 		endpointResolver = &LocalEndpoint{Bucket: cfg.BucketName, S3Port: cfg.Local.BucketPort}

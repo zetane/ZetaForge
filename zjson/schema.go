@@ -96,18 +96,32 @@ type Pipeline struct {
 }
 
 type Execution struct {
-	Id       string   `json:"id"`
-	Pipeline Pipeline `json:"pipeline"`
-	Build    bool     `json:"build"`
+	Id         string             `json:"id"`
+	Pipeline   Pipeline           `json:"pipeline"`
+	MerkleTree PipelineMerkleTree `json:"merkleTree"`
+	Build      bool               `json:"build"`
 }
 
 type BuildContextStatusRequest struct {
-	Rebuild  bool     `json:"rebuild"`
-	Pipeline Pipeline `json:"pipeline"`
+	Rebuild    bool               `json:"rebuild"`
+	Pipeline   Pipeline           `json:"pipeline"`
+	MerkleTree PipelineMerkleTree `json:"merkleTree"`
 }
 
 type BuildContextStatusResponse struct {
 	BlockKey   string `json:"blockKey"`
 	IsUploaded bool   `json:"isUploaded"`
 	S3Key      string `json:"s3Key"`
+}
+
+type PipelineMerkleTree struct {
+	Hash   string                        `json:"hash"`
+	Blocks map[string]PipelineMerkleTree `json:"blocks,omitempty"`
+	Files  DirectoryMerkleTree           `json:"files,omitempty"`
+}
+
+type DirectoryMerkleTree struct {
+	Hash     string                `json:"hash"`
+	Path     string                `json:"path"`
+	Children []DirectoryMerkleTree `json:"children,omitempty"`
 }
