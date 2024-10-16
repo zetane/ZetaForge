@@ -398,19 +398,26 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, pipelineMerkleTree
 	templates := make(map[string]*wfv1.Template)
 	for id, block := range pipeline.Pipeline {
 		blockKey := id
-		hash := pipelineMerkleTree.Blocks[id].Hash
-		template := blockTemplate(&block, hash, blockKey, key, organization, deployed, cfg)
+		merkleTreeBlock, ok := pipelineMerkleTree.Blocks[id]
+		var version string
+		if ok {
+			version = merkleTreeBlock.Hash
+		} else {
+			version = block.Action.Container.Version
+		}
+
+		template := blockTemplate(&block, version, blockKey, key, organization, deployed, cfg)
 		task := wfv1.DAGTask{Name: template.Name, Template: template.Name}
 
 		if len(block.Action.Container.Image) > 0 {
-			kaniko := kanikoTemplate(&block, hash, organization, cfg)
-			built, repo, err := checkImage(ctx, getImage(&block, hash, organization), cfg)
+			kaniko := kanikoTemplate(&block, version, organization, cfg)
+			built, repo, err := checkImage(ctx, getImage(&block, version, organization), cfg)
 			if err != nil {
 				return &workflow, blocks, err
 			}
 
 			if repo {
-				err = createRepository(ctx, getImage(&block, hash, organization), cfg)
+				err = createRepository(ctx, getImage(&block, version, organization), cfg)
 				if err != nil {
 					return &workflow, blocks, err
 				}
@@ -420,9 +427,9 @@ func translate(ctx context.Context, pipeline *zjson.Pipeline, pipelineMerkleTree
 			blocks[blockPath] = ""
 			if build || !built {
 				if cfg.IsLocal {
-					blocks[blockPath] = "zetaforge/" + getImage(&block, hash, organization)
+					blocks[blockPath] = "zetaforge/" + getImage(&block, version, organization)
 				} else {
-					blocks[blockPath] = getImageName(&block, hash)
+					blocks[blockPath] = getImageName(&block, version)
 					templates[kaniko.Name] = kaniko
 					tasks[kaniko.Name] = &wfv1.DAGTask{Name: kaniko.Name, Template: kaniko.Name}
 					task.Dependencies = append(task.Dependencies, kaniko.Name)

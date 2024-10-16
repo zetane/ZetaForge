@@ -924,10 +924,16 @@ func main() {
 		}
 
 		var merkleTree zjson.PipelineMerkleTree
-		if err := json.Unmarshal([]byte(res.Merkle), &merkleTree); err != nil {
-			log.Printf("failed to unmarshal merkle tree JSON; err=%v", err)
-			ctx.String(http.StatusInternalServerError, "Failed to parse merkle tree data")
-			return
+		if res.Merkle.Valid {
+			if err := json.Unmarshal([]byte(res.Merkle.String), &merkleTree); err != nil {
+				log.Printf("failed to unmarshal merkle tree JSON; err=%v", err)
+				ctx.String(http.StatusInternalServerError, "Failed to parse merkle tree data")
+				return
+			}
+		} else {
+			merkleTree = zjson.PipelineMerkleTree{
+				Hash: "",
+			}
 		}
 
 		// Merge inputs from POST into the pipeline graph
