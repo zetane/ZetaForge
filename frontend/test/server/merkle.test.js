@@ -11,7 +11,6 @@ vi.mock("crypto", () => ({
   },
 }));
 
-//TODO improve names
 describe("merkle", () => {
   beforeEach(() => {
     crypto.createHash.mockImplementation(() => {
@@ -39,7 +38,7 @@ describe("merkle", () => {
   });
 
   describe("getPipelineMerkleTree", () => {
-    test("single block", async () => {
+    test("when given a single block, it should hash its directory recursively", async () => {
       mockFs({
         [pipelineFixture.getId()]: {
           [blockFixture.getId()]: {
@@ -98,7 +97,7 @@ describe("merkle", () => {
       expect(result).toEqual(expected);
     });
 
-    test("ignore parameter", async () => {
+    test("when the block is a parameter block, it should ignored in the hash", async () => {
       const block = blockFixture.getSpecs();
       const specs = pipelineFixture.getSpecs();
       block.information.id = "integer-1";
@@ -121,7 +120,7 @@ describe("merkle", () => {
       expect(result).toEqual(expected);
     });
 
-    test("ignore empty container", async () => {
+    test("when the a block contains an empty container action, it should be ignored in the hash", async () => {
       const block = blockFixture.getSpecs();
       const specs = pipelineFixture.getSpecs();
       block.information.id = "integer-1";
@@ -148,7 +147,7 @@ describe("merkle", () => {
       expect(result).toEqual(expected);
     });
 
-    test("multiple blocks", async () => {
+    test("when hashing mutlitple blocks, their hashes should be combined", async () => {
       const blockIds = ["block-1", "block-2", "block-3"];
       const blocks = [];
       for (let blockId of blockIds) {
@@ -220,7 +219,7 @@ describe("merkle", () => {
       expect(result).toEqual(expected);
     });
 
-    test("nested pipeline", async () => {
+    test("when the specs contain nested pipelines, they should be hashed recursively", async () => {
       const specs = pipelineFixture.getSpecs();
       const blockIds = ["block-1", "block-2", "block-3"];
       const blocks = blockIds.map((id) => {
@@ -293,7 +292,7 @@ describe("merkle", () => {
       expect(result).toEqual(expected);
     });
 
-    test("empty block directory", async () => {
+    test("when a block directory is empty, it should be hashed", async () => {
       const specs = pipelineFixture.getSpecs();
       const block = blockFixture.getSpecs();
       mockFs({
@@ -320,7 +319,7 @@ describe("merkle", () => {
       expect(result).toEqual(expected);
     });
 
-    test("empty directory in block", async () => {
+    test("when a block contains an empty directory, it should be hashed", async () => {
       const specs = pipelineFixture.getSpecs();
       const block = blockFixture.getSpecs();
       mockFs({
@@ -355,7 +354,7 @@ describe("merkle", () => {
       expect(result).toEqual(expected);
     });
 
-    test("empty pipeline", async () => {
+    test("when the top-level pipeline is empty, it should be hashed", async () => {
       const specs = pipelineFixture.getSpecs();
       specs.pipeline = {};
 
@@ -368,7 +367,7 @@ describe("merkle", () => {
       expect(result).toEqual(expected);
     });
 
-    test("no pipeline", async () => {
+    test("when there is no top-level pipeline, it should be handled like and empty pipeline", async () => {
       const specs = pipelineFixture.getSpecs();
       delete specs.pipeline;
 
