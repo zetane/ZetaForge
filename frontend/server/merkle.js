@@ -65,7 +65,7 @@ async function merkleDirectory(absolutePathSegments, relativePathSegments) {
       const fileHash = await computeFileHash(
         path.join(...entryAbsolutePathSegments),
       );
-      const entryRelativePath = entryRelativePathSegments.join("/")
+      const entryRelativePath = entryRelativePathSegments.join("/");
       children.push({ path: entryRelativePath, hash: fileHash });
     }
   }
