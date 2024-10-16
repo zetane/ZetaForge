@@ -41,29 +41,38 @@ function hasPipeline(block) {
 }
 
 async function computeDirectoryMerkleTree(dirPath) {
-  const files = await merkleDirectory(dirPath, "");
+  const files = await merkleDirectory([dirPath], []);
   return files;
 }
 
-async function merkleDirectory(dirPath, parentRelativePath) {
-  const entries = await fs.readdir(dirPath, { withFileTypes: true });
+async function merkleDirectory(absolutePathSegments, relativePathSegments) {
+  const entries = await fs.readdir(path.join(...absolutePathSegments), {
+    withFileTypes: true,
+  });
   const children = [];
 
   for (const entry of entries) {
-    const fullPath = path.join(dirPath, entry.name);
-    const nodeRelativePath = path.join(parentRelativePath, entry.name);
+    const entryAbsolutePathSegments = [...absolutePathSegments, entry.name];
+    const entryRelativePathSegments = [...relativePathSegments, entry.name];
 
     if (entry.isDirectory()) {
-      const subDirNode = await merkleDirectory(fullPath, nodeRelativePath);
+      const subDirNode = await merkleDirectory(
+        entryAbsolutePathSegments,
+        entryRelativePathSegments,
+      );
       children.push(subDirNode);
     } else {
-      const fileHash = await computeFileHash(fullPath);
-      children.push({ path: nodeRelativePath, hash: fileHash });
+      const fileHash = await computeFileHash(
+        path.join(...entryAbsolutePathSegments),
+      );
+      const entryRelativePath = entryRelativePathSegments.join("/")
+      children.push({ path: entryRelativePath, hash: fileHash });
     }
   }
 
+  const relativePath = relativePathSegments.join("/");
   const hash = combineChildrenHashes(children);
-  return { path: parentRelativePath, hash: hash, children: children };
+  return { path: relativePath, hash: hash, children: children };
 }
 
 async function computeFileHash(filePath) {
