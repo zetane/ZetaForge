@@ -183,12 +183,7 @@ export async function executePipeline(
   rebuild,
   anvilHostConfiguration,
 ) {
-  specs = await uploadBlocks(
-    id,
-    executionId,
-    specs,
-    anvilHostConfiguration,
-  );
+  specs = await uploadBlocks(id, executionId, specs, anvilHostConfiguration);
   specs["sink"] = pipelinePath;
   specs["build"] = pipelinePath;
   specs["name"] = name;
@@ -248,7 +243,7 @@ async function uploadBlocks(
           param.value = `"${fileName}"`;
         }
       }
-    } 
+    }
   }
   return pipelineSpecs;
 }

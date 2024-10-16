@@ -14,14 +14,17 @@ async function merklePipeline(pipeline, pipelinePath) {
   for (let key in pipeline) {
     const childBlock = pipeline[key];
     if (hasPipeline(childBlock)) {
-      node.blocks[key] = await merklePipeline(childBlock.action.pipeline, pipelinePath);
+      node.blocks[key] = await merklePipeline(
+        childBlock.action.pipeline,
+        pipelinePath,
+      );
     } else if (hasContainer(childBlock)) {
       const blockPath = path.join(pipelinePath, key);
-      const directoryMerkle = await computeDirectoryMerkleTree(blockPath)
+      const directoryMerkle = await computeDirectoryMerkleTree(blockPath);
       node.blocks[key] = {
         files: directoryMerkle,
-        hash: directoryMerkle.hash
-      }
+        hash: directoryMerkle.hash,
+      };
     }
   }
 
