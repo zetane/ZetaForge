@@ -25,7 +25,7 @@ dependencies = [
         "langchain-openai==0.1.2",
         "sentry-sdk===2.0.1"]
 
-requires-python = ">=3.7"
+requires-python = ">=3.10"
 
 [project.scripts]
 zetaforge = "zetaforge.forge_cli:main"

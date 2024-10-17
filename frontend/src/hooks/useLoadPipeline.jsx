@@ -25,8 +25,6 @@ function getLastFolder(path) {
 }
 
 export const useLoadPipeline = () => {
-  const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
-
   const loadPipeline = async (file) => {
     console.log("***********Loading pipeline from file:", file);
 
@@ -47,19 +45,15 @@ export const useLoadPipeline = () => {
       saveTime: Date.now(),
       data: data.pipeline,
       id: data.id,
+      key: data.id + ".",
     };
 
     const newPipeline = pipelineFactory(
       await window.cache.local(),
       loadedPipeline,
     );
-    const key = pipelineKey(newPipeline.id, null);
 
-    setWorkspace((draft) => {
-      draft.tabs[key] = {};
-      draft.pipelines[key] = newPipeline;
-      draft.active = key;
-    });
+    return newPipeline;
   };
 
   return loadPipeline;
@@ -171,6 +165,7 @@ export const useLoadServerPipeline = () => {
       path: path,
       data: data,
       id: serverPipeline.Uuid,
+      key: serverPipeline.Uuid + "." + executionId,
       history: serverPipeline.Uuid + "/" + executionId,
       record: serverPipeline,
       host: hostString,
@@ -224,6 +219,7 @@ export const useLoadExecution = () => {
       path: path,
       data: data,
       id: executionData.id,
+      key: executionData.id + "." + executionId,
       history: executionData.id + "/" + executionId,
       record: execution,
       host: hostString,
@@ -243,7 +239,6 @@ export const useLoadExecution = () => {
 };
 
 export const useLoadCorePipeline = () => {
-  const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
   const copyPipelineMutation = trpc.copyPipeline.useMutation();
 
   const loadPipeline = async (specs, corePath) => {
@@ -263,6 +258,7 @@ export const useLoadCorePipeline = () => {
       path: tempFile,
       data: specs.pipeline,
       id: specs.id,
+      key: specs.id + ".",
     };
 
     const newPipeline = pipelineFactory(
@@ -271,11 +267,7 @@ export const useLoadCorePipeline = () => {
     );
     const key = pipelineKey(newPipeline.id, null);
 
-    setWorkspace((draft) => {
-      draft.tabs[key] = {};
-      draft.pipelines[key] = newPipeline;
-      draft.active = key;
-    });
+    return newPipeline;
   };
 
   return loadPipeline;

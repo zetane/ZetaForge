@@ -1,7 +1,11 @@
 import React, { useEffect } from "react";
-import { useSetAtom } from "jotai";
+import { useAtom, useSetAtom } from "jotai";
 import { mixpanelAtom } from "@/atoms/mixpanelAtom";
-import { initializeWorkspaceAtom, pipelineFactory } from "@/atoms/pipelineAtom";
+import {
+  initializeWorkspaceAtom,
+  pipelineFactory,
+  workspaceAtom,
+} from "@/atoms/pipelineAtom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ipcLink } from "electron-trpc/renderer";
 import { trpc } from "@/utils/trpc";
@@ -23,14 +27,17 @@ const queryClient = new QueryClient({
 });
 
 export default function ServiceInitializer({ children }) {
+  const [workspace, _] = useAtom(workspaceAtom);
   const initializeWorkspace = useSetAtom(initializeWorkspaceAtom);
   const setMixpanel = useSetAtom(mixpanelAtom);
 
   useEffect(() => {
     const initializeServices = async () => {
       // Initialize workspace
-      const cachePath = await window.cache.local();
-      await initializeWorkspace({ cachePath });
+      if (!workspace?.active) {
+        const cachePath = await window.cache.local();
+        await initializeWorkspace({ cachePath });
+      }
 
       // Initialize Mixpanel
       const val = import.meta.env.VITE_DISABLE_MIXPANEL;

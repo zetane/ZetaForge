@@ -119,6 +119,7 @@ const menuTemplate: Electron.MenuItemConstructorOptions[] = [
 ];
 
 async function createWindow() {
+  console.log(join(process.env.VITE_PUBLIC, "zetane.png"));
   win = new BrowserWindow({
     title: "ZetaForge",
     icon: join(process.env.VITE_PUBLIC, "zetane.png"),
@@ -130,6 +131,7 @@ async function createWindow() {
       // Consider using contextBridge.exposeInMainWorld
       // Read more on https://www.electronjs.org/docs/latest/tutorial/context-isolation
       contextIsolation: true,
+      backgroundThrottling: false,
     },
   });
 

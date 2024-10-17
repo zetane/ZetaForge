@@ -4,7 +4,7 @@ import {
   useLoadServerPipeline,
 } from "@/hooks/useLoadPipeline";
 import { useEffect } from "react";
-import { workspaceAtom } from "@/atoms/pipelineAtom";
+import { workspaceAtom, pipelinesAtom } from "@/atoms/pipelineAtom";
 import { useImmerAtom } from "jotai-immer";
 import { useAtom } from "jotai";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
@@ -12,6 +12,7 @@ import { fetchExecutionDetails, getAllPipelines, ping } from "@/client/anvil";
 import { useSyncExecutionResults } from "@/hooks/useExecutionResults";
 
 export default function WorkspaceFetcher() {
+  const [pipelines, setPipelines] = useImmerAtom(pipelinesAtom);
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
   const loadPipeline = useLoadServerPipeline();
   const loadExecution = useLoadExecution();
@@ -19,6 +20,7 @@ export default function WorkspaceFetcher() {
   const syncResults = useSyncExecutionResults();
   const queryKey = ["pipelines", configuration?.anvil?.host];
 
+  // Main polling function
   const {
     pending,
     error,
@@ -28,7 +30,7 @@ export default function WorkspaceFetcher() {
     queryFn: async () => {
       return await getAllPipelines(configuration);
     },
-    refetchInterval: workspace.fetchInterval,
+    refetchInterval: 5000,
   });
   const {
     isPending: pingPending,
@@ -59,8 +61,8 @@ export default function WorkspaceFetcher() {
     const loadedExecution = await loadExecution(fetchedExec, configuration);
     const isActive = workspace.tabs[key];
     const merged = { ...existing, ...loadedExecution };
-    setWorkspace((draft) => {
-      draft.pipelines[key] = merged;
+    setPipelines((draft) => {
+      draft[key] = merged;
     });
     if (isActive) {
       try {
@@ -72,25 +74,27 @@ export default function WorkspaceFetcher() {
     return merged;
   };
 
+  // Polls for executions
   useQueries({
     queries: Object.keys(workspace.tabs)
       ?.filter((key) => {
-        const pipeline = workspace.pipelines[key];
+        const pipeline = pipelines[key];
         const existingStatus = pipeline?.record?.Status;
         return existingStatus === "Running" || existingStatus === "Pending";
       })
       .map((key) => {
-        const pipeline = workspace.pipelines[key];
+        const pipeline = pipelines[key];
         const id = key.split(".")[1];
         return {
           queryKey: ["execution", key],
           queryFn: () => getDetails(key, pipeline, configuration, id),
           enabled: !pending && !error,
-          refetchInterval: 1000,
+          refetchInterval: workspace?.fetchInterval,
         };
       }),
   });
 
+  // Once we poll, we write the whole data store
   useEffect(() => {
     if (!pipelinesData?.body) {
       return;
@@ -118,8 +122,8 @@ export default function WorkspaceFetcher() {
     Promise.all(loadPromises)
       .then((results) => {
         const loadObj = Object.fromEntries(results);
-        setWorkspace((draft) => {
-          draft.pipelines = { ...workspace.pipelines, ...loadObj };
+        setPipelines((draft) => {
+          draft = { ...pipelines, ...loadObj };
         });
       })
       .catch((error) => {

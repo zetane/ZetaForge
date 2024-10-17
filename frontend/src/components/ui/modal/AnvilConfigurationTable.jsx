@@ -80,7 +80,6 @@ function ConfigRow({
 }) {
   const [, removeConfiguration] = useAtom(removeConfigurationAtom);
   const [active, setActive] = useAtom(activeIndexAtom);
-  const [workspace, setWorkspace] = useAtom(workspaceAtom);
 
   function handleEditConfiguration() {
     onEdit(removeIndex, configuration);

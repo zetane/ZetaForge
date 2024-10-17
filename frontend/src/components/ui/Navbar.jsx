@@ -25,6 +25,7 @@ import SavePipelineButton from "./SavePipelineButton";
 import AnvilConfigurationsModal from "./modal/AnvilConfigurationsModal";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { PipelineStopButton } from "./PipelineStopButton";
+import NewFromCurrent from "./NewFromCurrent";
 
 export default function Navbar({ children }) {
   const [darkMode, setDarkMode] = useAtom(darkModeAtom);
@@ -72,6 +73,7 @@ export default function Navbar({ children }) {
       <HeaderNavigation aria-label="ZetaForge">
         <HeaderMenu menuLinkName="File" aria-label="File">
           <NewButton />
+          <NewFromCurrent />
           <SavePipelineButton />
           <SaveAsPipelineButton />
           <LoadPipelineButton />

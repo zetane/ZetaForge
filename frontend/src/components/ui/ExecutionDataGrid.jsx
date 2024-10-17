@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import ClosableModal from "./modal/ClosableModal";
-import { lineageAtom, workspaceAtom } from "@/atoms/pipelineAtom";
+import { addPipeline, lineageAtom, workspaceAtom } from "@/atoms/pipelineAtom";
 import { useImmerAtom } from "jotai-immer";
 import { useAtom } from "jotai";
 import {
@@ -35,7 +35,6 @@ export const PipelineTableRow = ({ row, getRowProps }) => {
 };
 
 export const ExecutionDataGrid = ({ closeModal }) => {
-  const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
   const [lineage] = useAtom(lineageAtom);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(15);
@@ -49,14 +48,8 @@ export const ExecutionDataGrid = ({ closeModal }) => {
   };
 
   const selectExecution = async (execution, configuration) => {
-    const key = execution.Uuid + "." + execution.Execution;
-
     const serverExec = await loadExecution(execution, configuration);
-    setWorkspace((draft) => {
-      draft.pipelines[key] = serverExec;
-      draft.tabs[key] = {};
-      draft.active = key;
-    });
+    addPipeline(serverExec);
     try {
       await syncResults(key);
     } catch (error) {

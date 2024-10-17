@@ -258,7 +258,7 @@ func streaming(ctx context.Context, name string, logger *log.Logger, cfg Config)
 	}
 }
 
-func runArgo(ctx context.Context, workflow *wfv1.Workflow, execution int64, cfg Config, db *sql.DB, logger *log.Logger, hub *Hub) (*wfv1.Workflow, error) {
+func runArgo(ctx context.Context, workflow *wfv1.Workflow, execution int64, cfg Config, db *sql.DB, logger *log.Logger, pipeline *zjson.Pipeline) (*wfv1.Workflow, error) {
 	//mixpanelClient is singleton, so a new instance won't be created.
 	mixpanelClient := GetMixpanelClient()
 
@@ -303,6 +303,7 @@ func runArgo(ctx context.Context, workflow *wfv1.Workflow, execution int64, cfg 
 	// streams to websocket
 	go streaming(ctx, workflow.Name, logger, cfg)
 	status := string(workflow.Status.Phase)
+	nodeMap := make(map[string]string)
 
 	for {
 		client, err = kubernetesClient(cfg)
@@ -330,6 +331,20 @@ func runArgo(ctx context.Context, workflow *wfv1.Workflow, execution int64, cfg 
 
 		if err != nil {
 			return workflow, err
+		}
+
+		for _, node := range workflow.Status.Nodes {
+			if node.Type == "Pod" {
+				nodeStatus := string(node.Phase)
+				if val, ok := nodeMap[node.Name]; ok {
+					if nodeStatus != val {
+						fmt.Printf("!!! would update: %v\n", nodeStatus)
+						nodeMap[node.Name] = nodeStatus
+					}
+				} else {
+					nodeMap[node.Name] = string(node.Phase)
+				}
+			}
 		}
 
 		if string(workflow.Status.Phase) != status {
@@ -711,7 +726,7 @@ func localExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 		return
 	}
 
-	workflow, err = runArgo(ctx, workflow, executionId, cfg, db, pipelineLogger, hub)
+	workflow, err = runArgo(ctx, workflow, executionId, cfg, db, pipelineLogger, pipeline)
 	if workflow != nil {
 		defer deleteArgo(ctx, workflow.Name, cfg)
 	}
@@ -796,7 +811,7 @@ func cloudExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 		return
 	}
 
-	workflow, err = runArgo(ctx, workflow, executionId, cfg, db, pipelineLogger, hub)
+	workflow, err = runArgo(ctx, workflow, executionId, cfg, db, pipelineLogger, pipeline)
 	if workflow != nil {
 		defer deleteArgo(ctx, workflow.Name, cfg)
 	}

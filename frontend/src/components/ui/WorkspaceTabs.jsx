@@ -33,23 +33,19 @@ export default function WorkspaceTabs() {
     const index = evt.selectedIndex;
     const key = renderedTabs[index]?.id;
 
-    setCam((prevCam) => {
-      const pos = { x: editor?.canvas_x, y: editor?.canvas_y };
-      const newCam = {
-        ...prevCam,
-        [workspace.active]: { zoom: editor?.zoom, pos: pos },
-      };
-      return newCam;
-    });
-
     setWorkspace((draft) => {
+      //const pos = { x: editor?.canvas_x, y: editor?.canvas_y };
+      //if (!draft.canvas) {
+      //  draft.canvas = {};
+      //}
+      //draft.canvas[key] = { zoom: editor?.zoom, pos: pos };
       draft.active = key;
     });
 
-    if (editor) {
-      editor.zoom = cam[key]?.zoom ?? 1;
-      editor.canvas_x = cam[key]?.pos.x ?? 0;
-      editor.canvas_y = cam[key]?.pos.y ?? 0;
+    if (editor && workspace.canvas[key]) {
+      editor.zoom = workspace.canvas[key]?.zoom;
+      editor.canvas_x = workspace.canvas[key]?.pos.x;
+      editor.canvas_y = workspace.canvas[key]?.pos.y;
       editor.zoom_refresh(); // Refresh after setting zoom, *required.
     }
   };
@@ -66,6 +62,7 @@ export default function WorkspaceTabs() {
       const key = deleteTab.id;
       const { [key]: _, ...filteredTabs } = workspace.tabs;
       const newTabArray = Object.keys(filteredTabs);
+      const isLocal = key.split(".")[1] == "";
 
       setWorkspace((draft) => {
         // make the same tab we're deleting active, unless it's at the end, in which case we get -1
@@ -81,6 +78,9 @@ export default function WorkspaceTabs() {
 
         draft.tabs = filteredTabs;
         draft.active = newTabArray[deleteIndex];
+        if (isLocal) {
+          delete draft.pipelines[key];
+        }
       });
     }
   };

@@ -4,6 +4,7 @@ import { HeaderMenuItem } from "@carbon/react";
 import { useAtom } from "jotai";
 import { useRef } from "react";
 import { useLoadPipeline } from "@/hooks/useLoadPipeline";
+import { addPipeline } from "@/atoms/pipelineAtom";
 
 const FILE_EXTENSION_REGEX = /\.[^/.]+$/;
 
@@ -37,7 +38,8 @@ export default function LoadPipelineButton() {
           fileNameNoExtension == pipelineName ||
           fileName == PIPELINE_SPECS_FILE_NAME
         ) {
-          await loadPipeline(file);
+          const newPipeline = await loadPipeline(file);
+          addPipeline(newPipeline);
           event.target.value = ""; // Reset the file input
         }
       }

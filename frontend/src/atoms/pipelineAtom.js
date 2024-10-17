@@ -1,5 +1,6 @@
 import { atom } from "jotai";
-import { withImmer } from "jotai-immer";
+import { atomWithStorage } from "jotai/utils";
+import { atomWithImmer, withImmer } from "jotai-immer";
 import rfdc from "rfdc";
 import { sha1 } from "js-sha1";
 import { generateId } from "@/utils/blockUtils";
@@ -32,18 +33,24 @@ export const pipelineFactory = (cachePath, pipeline = null) => {
   return defaultPipeline;
 };
 
+export const pipelinesAtom = atom({});
+
 // Initialize with a default value synchronously
 const defaultWorkspace = {
   tabs: {},
-  pipelines: {},
   active: null,
-  fetchInterval: 5 * 1000,
+  fetchInterval: 3000,
   offset: 0,
   limit: 15,
   connected: false,
 };
 
-export const workspaceAtom = atom(defaultWorkspace);
+export const workspaceAtom = atomWithStorage(
+  "workspace",
+  defaultWorkspace,
+  undefined,
+  { getOnInit: true },
+);
 
 export const initializeWorkspaceAtom = atom(
   null,
@@ -55,26 +62,28 @@ export const initializeWorkspaceAtom = atom(
     set(workspaceAtom, {
       ...defaultWorkspace,
       tabs: tabMap,
-      pipelines: { [emptyKey]: initPipeline },
       active: emptyKey,
     });
+
+    set(pipelinesAtom, { [emptyKey]: initPipeline });
   },
 );
 
 const pipelineAtomWithImmer = atom(
   (get) => {
     const workspace = get(workspaceAtom);
-    return workspace.active ? workspace.pipelines[workspace.active] : null;
+    const pipelines = get(pipelinesAtom);
+    return workspace.active ? pipelines[workspace.active] : null;
   },
   (get, set, newPipeline) => {
-    const workspace = get(workspaceAtom);
-    const newWorkspace = rfdc({ proto: true })(workspace);
+    const [pipelines, setPipelines] = atomWithImmer(pipelinesAtom);
     let key = `${newPipeline.id}.`;
     if (newPipeline.record) {
       key = `${newPipeline.id}.${newPipeline.record.Execution}`;
     }
-    newWorkspace.pipelines[key] = newPipeline;
-    set(workspaceAtom, newWorkspace);
+    setPipelines((draft) => {
+      draft[key] = newPipeline;
+    });
   },
 );
 
@@ -96,16 +105,46 @@ export const getPipelineFormat = (pipeline) => {
   };
 };
 
+export const deletePipeline = (key) => {
+  const [, setPipelines] = atomWithImmer(pipelinesAtom);
+
+  setPipelines((draft) => {
+    delete draft[key];
+  });
+};
+
+export const deleteTab = (key) => {
+  const [, setWorkspace] = atomWithImmer(workspaceAtom);
+
+  setWorkspace((draft) => {
+    delete draft.tabs[key];
+  });
+};
+
+export const addPipeline = (newPipeline) => {
+  const [workspace, setWorkspace] = atomWithImmer(workspaceAtom);
+  const [pipelines, setPipelines] = atomWithImmer(pipelinesAtom);
+
+  setPipelines((draft) => {
+    draft[newPipeline.key] = newPipeline;
+  });
+
+  setWorkspace((draft) => {
+    draft.tabs[newPipeline.key] = {};
+    draft.active = newPipeline.key;
+  });
+};
+
 export const lineageAtom = atom((get) => {
-  const workspace = get(workspaceAtom);
+  const pipelines = get(pipelinesAtom);
   const lineage = new Map();
 
-  if (!workspace?.pipelines) {
+  if (!pipelines) {
     return lineage;
   }
 
   // Filter out pipelines with empty .record fields
-  const validPipelines = Object.entries(workspace?.pipelines).filter(
+  const validPipelines = Object.entries(pipelines).filter(
     ([_, pipeline]) =>
       pipeline.record && Object.keys(pipeline.record).length > 0,
   );

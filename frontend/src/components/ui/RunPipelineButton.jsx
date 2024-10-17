@@ -1,5 +1,5 @@
 import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
-import { pipelineAtom } from "@/atoms/pipelineAtom";
+import { addPipeline, deleteTab, pipelineAtom } from "@/atoms/pipelineAtom";
 import { useQueryClient } from "@tanstack/react-query";
 import { mixpanelAtom } from "@/atoms/mixpanelAtom";
 import generateSchema from "@/utils/schemaValidation";
@@ -77,19 +77,7 @@ export default function RunPipelineButton({ children, action }) {
     });
 
     const loaded = await loadExecution(newExecution, configuration);
-    setWorkspace((draft) => {
-      const currentTab = draft.active;
-      const newKey = newExecution.Uuid + "." + newExecution.Execution;
-      const pipeline = draft.pipelines[newKey];
-      if (!pipeline) {
-        // key hasn't updated yet
-        draft.pipelines[newKey] = loaded;
-      }
-      draft.tabs[newKey] = {};
-      draft.active = newKey;
-      delete draft.tabs[currentTab];
-    });
-
+    addPipeline(loaded);
     trackMixpanelRunCreated();
   };
 

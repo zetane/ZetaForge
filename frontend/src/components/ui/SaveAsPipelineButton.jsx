@@ -4,6 +4,7 @@ import { HeaderMenuItem } from "@carbon/react";
 import { useAtom } from "jotai";
 import { trpc } from "@/utils/trpc";
 import { useImmerAtom } from "jotai-immer";
+import { generateId } from "@/utils/blockUtils";
 
 export default function SaveAsPipelineButton() {
   const [editor] = useAtom(drawflowEditorAtom);
@@ -25,7 +26,7 @@ export default function SaveAsPipelineButton() {
     pipelineSpecs["sink"] = pipeline.path;
     pipelineSpecs["build"] = pipeline.path;
     pipelineSpecs["name"] = pipeline.name;
-    pipelineSpecs["id"] = pipeline.id;
+    pipelineSpecs["id"] = generateId("pipeline");
     const saveData = {
       specs: pipelineSpecs,
       name: pipeline.name,
