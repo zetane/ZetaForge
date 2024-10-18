@@ -142,7 +142,11 @@ const BlockGenerator = ({
         history={history}
       />
     );
-  } else if (type == "file[]" || type == "multiFile") {
+  } else if (
+    type == "file[]" ||
+    type == "multiFile" ||
+    block.information.id == "multi-file-upload"
+  ) {
     content = (
       <MultiFileBlock
         blockId={id}
