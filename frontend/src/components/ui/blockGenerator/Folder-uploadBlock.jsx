@@ -2,14 +2,13 @@ import { useEffect, useRef, useState } from "react";
 
 export const FolderBlock = ({ blockId, block, setFocusAction, history }) => {
   const fileInput = useRef();
-  const uniqueKey = `folderName_${blockId}`;
   const [renderPath, setRenderPath] = useState(null);
   const [folderName, setFolderName] = useState(
-    () => localStorage.getItem(uniqueKey) || null,
+    block?.action?.parameters["folderName"]?.value || null,
   );
   const [filePaths, setFilePaths] = useState(() => {
-    const storedPaths = localStorage.getItem(`filePaths_${blockId}`);
-    return storedPaths ? JSON.parse(storedPaths) : [];
+    const existingPaths = block?.action?.parameters["path"]?.value || "[]";
+    return JSON.parse(existingPaths);
   });
 
   useEffect(() => {
@@ -18,6 +17,10 @@ export const FolderBlock = ({ blockId, block, setFocusAction, history }) => {
       setFocusAction((draft) => {
         draft.data[blockId].action.parameters["path"].type = "folder";
         draft.data[blockId].action.parameters["path"].value = formattedValue;
+        draft.data[blockId].action.parameters["folderName"] = {
+          type: "string",
+          value: folderName,
+        };
       });
       setRenderPath(folderName);
     }
@@ -44,17 +47,23 @@ export const FolderBlock = ({ blockId, block, setFocusAction, history }) => {
     const files = Array.from(fileInput.current.files);
     const filePaths = processFiles(files);
     const formattedValue = `[${filePaths.map((file) => `"${file}"`).join(", ")}]`;
+
     const firstFilePath = filePaths[0];
     const pathSegments = firstFilePath.split(/[/\\]/);
     const extractedFolderName = pathSegments[pathSegments.length - 2];
+
     setFolderName(extractedFolderName);
     setFilePaths(filePaths);
-    localStorage.setItem(uniqueKey, extractedFolderName);
-    localStorage.setItem(`filePaths_${blockId}`, JSON.stringify(filePaths));
+
     setFocusAction((draft) => {
       draft.data[blockId].action.parameters["path"].value = formattedValue;
       draft.data[blockId].action.parameters["path"].type = "folder";
+      draft.data[blockId].action.parameters["folderName"] = {
+        type: "string",
+        value: extractedFolderName,
+      };
     });
+
     setRenderPath(extractedFolderName);
   };
 
