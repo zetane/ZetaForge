@@ -63,7 +63,7 @@ export const LibraryPipelineTile = ({ pipeline, index }) => {
         </div>
       </div>
       <div className="absolute bottom-1 left-2 z-10">
-        <Tooltip label={pipelineDescription}>
+        <Tooltip label={pipelineDescription} className={"w-40"}>
           <Information size={20} />
         </Tooltip>
       </div>

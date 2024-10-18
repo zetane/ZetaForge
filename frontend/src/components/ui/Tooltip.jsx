@@ -1,8 +1,9 @@
-export default function Tooltip({ children, label }) {
+export default function Tooltip({ children, label, className }) {
+  className = `invisible absolute left-0 top-[24px] group-hover:visible ${className}`;
   return (
-    <div className="group">
+    <div className="group relative">
       {children}
-      <div className="invisible absolute left-0 top-[24px] group-hover:visible">
+      <div className={className}>
         <div className="tooltip">{label}</div>
       </div>
     </div>
