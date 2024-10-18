@@ -35,10 +35,26 @@ type Container struct {
 	CommandLine []string `json:"command_line"`
 }
 
+type ResourceQuantity struct {
+	Request string `json:"request"`
+	Limit   string `json:"limit"`
+}
+
+type GPU struct {
+	Count int `json:"count"`
+}
+
+type Resources struct {
+	CPU    ResourceQuantity `json:"cpu,omitempty"`
+	Memory ResourceQuantity `json:"memory,omitempty"`
+	GPU    GPU              `json:"gpu,omitempty"`
+}
+
 type Action struct {
 	Container  Container            `json:"container,omitempty"`
 	Pipeline   map[string]Block     `json:"pipeline,omitempty"`
 	Parameters map[string]Parameter `json:"parameters,omitempty"`
+	Resources  Resources            `json:"resources,omitempty"`
 }
 
 type TitleBar struct {

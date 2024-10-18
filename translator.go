@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"server/zjson"
@@ -204,7 +205,7 @@ func blockTemplate(block *zjson.Block, blockKey string, key string, organization
 	if deployed {
 		inputs = wfv1.Inputs{Artifacts: []wfv1.Artifact{entrypoint}}
 	}
-	return &wfv1.Template{
+	template := &wfv1.Template{
 		Name: blockKey,
 		Container: &corev1.Container{
 			Image:           image,
@@ -239,6 +240,63 @@ func blockTemplate(block *zjson.Block, blockKey string, key string, organization
 			},
 		},
 	}
+
+	if block.Action.Resources.CPU.Request != "" {
+		template.Container.Resources.Requests[corev1.ResourceCPU] = resource.MustParse(block.Action.Resources.CPU.Request)
+	}
+	if block.Action.Resources.CPU.Limit != "" {
+		template.Container.Resources.Limits[corev1.ResourceCPU] = resource.MustParse(block.Action.Resources.CPU.Limit)
+	}
+
+	// Memory
+	if block.Action.Resources.Memory.Request != "" {
+		template.Container.Resources.Requests[corev1.ResourceMemory] = resource.MustParse(block.Action.Resources.Memory.Request)
+	}
+	if block.Action.Resources.Memory.Limit != "" {
+		template.Container.Resources.Limits[corev1.ResourceMemory] = resource.MustParse(block.Action.Resources.Memory.Limit)
+	}
+
+	// GPU
+	if block.Action.Resources.GPU.Count > 0 {
+		gpuCount := strconv.Itoa(block.Action.Resources.GPU.Count)
+		template.Container.Resources.Requests["nvidia.com/gpu"] = resource.MustParse(gpuCount)
+		template.Container.Resources.Limits["nvidia.com/gpu"] = resource.MustParse(gpuCount)
+
+		// Add GPU node affinity based on NodePool name
+		template.Affinity = &corev1.Affinity{
+			NodeAffinity: &corev1.NodeAffinity{
+				RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+					NodeSelectorTerms: []corev1.NodeSelectorTerm{
+						{
+							MatchExpressions: []corev1.NodeSelectorRequirement{
+								{
+									Key:      "karpenter.sh/nodepool",
+									Operator: corev1.NodeSelectorOpIn,
+									Values:   []string{"gpu-pool"},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		// Add toleration for GPU taint
+		template.Tolerations = []corev1.Toleration{
+			{
+				Key:      "nvidia.com/gpu",
+				Operator: corev1.TolerationOpExists,
+				Effect:   corev1.TaintEffectNoSchedule,
+			},
+		}
+	} else {
+		// For non-GPU jobs, we don't need specific affinity or tolerations
+		// They will naturally schedule on the non-GPU nodes
+		template.Affinity = nil
+		template.Tolerations = nil
+	}
+
+	return template
 }
 
 func kanikoTemplate(block *zjson.Block, organization string, cfg Config) *wfv1.Template {
