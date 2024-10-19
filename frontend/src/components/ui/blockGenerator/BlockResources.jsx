@@ -15,10 +15,8 @@ export const BlockResources = ({ block, setFocusAction, id }) => {
   const [gpuEnabled, setGpuEnabled] = useState(
     block.action.resources?.gpu?.count > 0,
   );
-  console.log(configuration);
   const isLocalhost = configuration?.anvil?.host == "localhost";
-  console.log("islocalhost:", isLocalhost);
-  const toggleComponent = (
+  let toggle = (
     <Toggle
       id={`gpu-toggle-${id}`}
       labelText="Use GPU"
@@ -28,11 +26,10 @@ export const BlockResources = ({ block, setFocusAction, id }) => {
       className="mt-2"
     />
   );
-  let toggle = { toggleComponent };
   if (isLocalhost) {
     toggle = (
       <Tooltip label="GPU is not available on local kubernetes, connect to Forge Cloud to use GPU.">
-        {toggleComponent}
+        {toggle}
       </Tooltip>
     );
   }
