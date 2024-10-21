@@ -15,7 +15,7 @@ export default function useConfirmModal() {
       return;
     }
 
-    fileHandle.set(selectedFile);
+    await fileHandle.set(selectedFile);
   };
 
   const close = () => {
