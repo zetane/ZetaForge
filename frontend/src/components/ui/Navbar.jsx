@@ -1,5 +1,4 @@
 import { modalContentAtom } from "@/atoms/modalAtom";
-import { darkModeAtom } from "@/atoms/themeAtom";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { Play, Password, Renew } from "@carbon/icons-react";
 import {
@@ -25,9 +24,9 @@ import SavePipelineButton from "./SavePipelineButton";
 import AnvilConfigurationsModal from "./modal/AnvilConfigurationsModal";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { PipelineStopButton } from "./PipelineStopButton";
+import ToggleThemeButton from "./ToggleThemeButton";
 
 export default function Navbar({ children }) {
-  const [darkMode, setDarkMode] = useAtom(darkModeAtom);
   const [modalContent, setModalContent] = useAtom(modalContentAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const [configuration] = useAtom(activeConfigurationAtom);
@@ -87,9 +86,6 @@ export default function Navbar({ children }) {
           >
             Anvil Configurations
           </HeaderMenuItem>
-          <HeaderMenuItem label="Theme" onClick={() => setDarkMode(!darkMode)}>
-            Toggle Theme
-          </HeaderMenuItem>
         </HeaderMenu>
         <HeaderMenu menuLinkName="Help" aria-label="Help">
           <HeaderMenuItem
@@ -109,13 +105,16 @@ export default function Navbar({ children }) {
           </HeaderMenuItem>
         </HeaderMenu>
       </HeaderNavigation>
-      <HeaderGlobalBar>
-        {runButton}
-        <RunPipelineButton modalPopper={modalPopper} action="Rebuild">
-          <Renew size={20} style={svgOverride} />
-        </RunPipelineButton>
-        <LogsButton />
-        <PipelinesButton />
+      <HeaderGlobalBar className="!justify-between pr-[18px]">
+        <ToggleThemeButton />
+        <div>
+          {runButton}
+          <RunPipelineButton modalPopper={modalPopper} action="Rebuild">
+            <Renew size={20} style={svgOverride} />
+          </RunPipelineButton>
+          <LogsButton />
+          <PipelinesButton />
+        </div>
       </HeaderGlobalBar>
       {children}
     </Header>

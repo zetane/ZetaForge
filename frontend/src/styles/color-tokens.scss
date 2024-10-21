@@ -30,6 +30,8 @@
   --tooltip-color: var(--ztn-white-0);
   --tooltip-background-color: var(--ztn-gray-2);
   --focus-border: var(--ztn-purple-0);
+  --cds-support-success: var(--ztn-gray-0);
+  --cds-icon-on-color: var(--ztn-white-0);
 }
 
 @mixin ztn-colors-g100 {
@@ -63,4 +65,6 @@
   --tooltip-color: var(--ztn-black-1);
   --tooltip-background-color: var(--ztn-white-1);
   --focus-border: var(--ztn-purple-0);
+  --cds-toggle-off: var(--ztn-white-0);
+  --cds-icon-on-color: var(--ztn-black-0);
 }
