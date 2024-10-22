@@ -45,7 +45,7 @@ export default function LoadPipelineButton() {
   };
 
   return (
-    <div>
+    <>
       <HeaderMenuItem onClick={selectFile}>Load Pipeline</HeaderMenuItem>
       <input
         type="file"
@@ -55,6 +55,6 @@ export default function LoadPipelineButton() {
         onChange={handleFileChange}
         hidden
       />
-    </div>
+    </>
   );
 }

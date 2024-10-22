@@ -24,8 +24,6 @@ export default function NewButton() {
   };
 
   return (
-    <div>
-      <HeaderMenuItem onClick={() => handleClick(editor)}>New</HeaderMenuItem>
-    </div>
+    <HeaderMenuItem onClick={() => handleClick(editor)}>New</HeaderMenuItem>
   );
 }

@@ -77,6 +77,11 @@ main {
   inline-size: 30rem !important;
 }
 
+.ztn--side-nav[aria-expanded=true] {
+  inline-size: 100% !important;
+  min-inline-size: 160px !important;
+}
+
 .cds--side-nav__items {
   padding: 0px !important;
   overflow: visible !important;

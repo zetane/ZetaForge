@@ -102,7 +102,7 @@ export default function LoadBlockButton() {
   };
 
   return (
-    <div>
+    <>
       <HeaderMenuItem onClick={selectFile}>Load Block</HeaderMenuItem>
       <input
         type="file"
@@ -114,6 +114,6 @@ export default function LoadBlockButton() {
         }}
         hidden
       />
-    </div>
+    </>
   );
 }

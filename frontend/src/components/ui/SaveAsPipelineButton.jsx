@@ -47,10 +47,8 @@ export default function SaveAsPipelineButton() {
   };
 
   return (
-    <div>
-      <HeaderMenuItem onClick={() => handleClick(editor, pipeline)}>
-        Save As
-      </HeaderMenuItem>
-    </div>
+    <HeaderMenuItem onClick={() => handleClick(editor, pipeline)}>
+      Save As
+    </HeaderMenuItem>
   );
 }
