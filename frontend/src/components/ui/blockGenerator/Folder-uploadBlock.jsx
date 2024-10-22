@@ -1,34 +1,37 @@
 import { useEffect, useRef, useState } from "react";
-import { trimQuotes } from "@/utils/blockUtils";
 
 export const FolderBlock = ({ blockId, block, setFocusAction, history }) => {
   const fileInput = useRef();
   const [renderPath, setRenderPath] = useState(null);
+  const [folderName, setFolderName] = useState(
+    block?.action?.parameters["folderName"]?.value || null,
+  );
+  const [filePaths, setFilePaths] = useState(() => {
+    const existingPaths = block?.action?.parameters["path"]?.value || "[]";
+    return JSON.parse(existingPaths);
+  });
 
   useEffect(() => {
-    const type = block?.action?.parameters["path"]?.type;
-    if (history && type !== "fileLoad") {
-      let fileName = block?.action?.parameters["path"]?.value;
-      const fileSplit = fileName.split("/");
-      if (fileSplit.length > 1) {
-        fileName = fileSplit.at(-1);
-      }
-      fileName = trimQuotes(fileName);
-      const s3Url = history + "/" + fileName;
+    if (history && filePaths.length > 0 && folderName) {
+      const formattedValue = `[${filePaths.map((file) => `"${file}"`).join(", ")}]`;
       setFocusAction((draft) => {
-        draft.data[blockId].action.parameters["path"].value = s3Url;
-        draft.data[blockId].action.parameters["path"].type = "blob";
+        draft.data[blockId].action.parameters["path"].type = "folder";
+        draft.data[blockId].action.parameters["path"].value = formattedValue;
+        draft.data[blockId].action.parameters["folderName"] = {
+          type: "string",
+          value: folderName,
+        };
       });
-      setRenderPath(fileName);
+      setRenderPath(folderName);
     }
-  }, [block]);
+  }, [block, folderName, filePaths]);
 
   const processFiles = (files) => {
     const filePaths = [];
     const readDirectory = (dir, path = "") => {
       for (let i = 0; i < dir.length; i++) {
         const file = dir[i];
-        const fullPath = path ? `${path}/${file.name}` : file.name;
+        const fullPath = path ? `${path}/${file.path}` : file.path;
         if (file.webkitDirectory) {
           readDirectory(file.children, fullPath);
         } else {
@@ -36,7 +39,6 @@ export const FolderBlock = ({ blockId, block, setFocusAction, history }) => {
         }
       }
     };
-
     readDirectory(files, "");
     return filePaths;
   };
@@ -44,12 +46,25 @@ export const FolderBlock = ({ blockId, block, setFocusAction, history }) => {
   const loadFiles = (e) => {
     const files = Array.from(fileInput.current.files);
     const filePaths = processFiles(files);
-    const value = filePaths.join(", ");
+    const formattedValue = `[${filePaths.map((file) => `"${file}"`).join(", ")}]`;
+
+    const firstFilePath = filePaths[0];
+    const pathSegments = firstFilePath.split(/[/\\]/);
+    const extractedFolderName = pathSegments[pathSegments.length - 2];
+
+    setFolderName(extractedFolderName);
+    setFilePaths(filePaths);
+
     setFocusAction((draft) => {
-      draft.data[blockId].action.parameters["path"].value = value;
+      draft.data[blockId].action.parameters["path"].value = formattedValue;
       draft.data[blockId].action.parameters["path"].type = "folder";
+      draft.data[blockId].action.parameters["folderName"] = {
+        type: "string",
+        value: extractedFolderName,
+      };
     });
-    setRenderPath(value);
+
+    setRenderPath(extractedFolderName);
   };
 
   return (
