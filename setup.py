@@ -1,40 +1,26 @@
-import json
-import os
-from setuptools import find_packages, setup
-
-def get_package_version():
-    # Specify the path to the package.json file
-    package_json_path = os.path.join(os.path.dirname(__file__), 'frontend', 'package.json')
-    try:
-        # Read the contents of package.json
-        with open(package_json_path, 'r') as file:
-            package_data = json.load(file)
-
-        # Extract the version from the package data
-        version = package_data.get('version')
-
-        if version:
-            # Set the __version__ variable in your package's __init__.py
-            with open("zetaforge/__init__.py", "w") as fp:
-
-                fp.write(f"__version__ = '{version}'\nfrom .block_maker.zetahelper import block_maker")
-            return version
-        else:
-            raise ValueError("Version not found in package.json")
-
-    except FileNotFoundError:
-        raise FileNotFoundError("package.json not found")
-    except json.JSONDecodeError:
-        raise ValueError("Invalid JSON format in package.json")
-
+from setuptools import setup, find_packages
 
 setup(
-    version = get_package_version(),
-    entry_points={
-        'console_scripts': [
-            'zetaforge = zetaforge.forge_cli:main'
-        ]
-    },
-    packages=find_packages(include=('zetaforge',)),
-    include_package_data=True,
-    package_data={'zetaforge': ['utils/*', 'executables/*', 'block_maker/*'],},)
+    name='zetaforge',
+    version='0.4.0',
+    description='A Python API for interacting with Zetaforge',
+    long_description=open('README.md').read(),
+    long_description_content_type='text/markdown',
+    author='Zetane',
+    author_email='info@zetane.com', 			#CUSTOMIZEEEEE
+    url='https://github.com/',
+    license= '',
+    packages=find_packages(where='src'),
+    package_dir={'': 'src'},
+    install_requires=[
+        'requests',
+        'yaspin',
+        'colorama'
+    ],
+    python_requires='>=3.6',
+    classifiers=[
+        'Development Status :: 3 - Alpha',
+        'Programming Language :: Python :: 3',
+        'License :: OSI Approved :: MIT License',
+    ],
+)
