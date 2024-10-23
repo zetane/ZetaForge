@@ -74,9 +74,9 @@ func (q *Queries) AllFilterPipelines(ctx context.Context, organization string) (
 
 const createPipeline = `-- name: CreatePipeline :one
 INSERT INTO Pipelines(
-	organization, created, uuid, hash, json
+	organization, created, uuid, hash, json, merkle
 ) VALUES (
-	?, unixepoch('now'), ?, ?, json(?)
+	?, unixepoch('now'), ?, ?, json(?), json(?)
 )
 RETURNING id, organization, created, uuid, hash, json, deployed, deleted, merkle
 `
@@ -86,6 +86,7 @@ type CreatePipelineParams struct {
 	Uuid         string
 	Hash         string
 	Json         interface{}
+	Merkle       interface{}
 }
 
 func (q *Queries) CreatePipeline(ctx context.Context, arg CreatePipelineParams) (Pipeline, error) {
@@ -94,6 +95,7 @@ func (q *Queries) CreatePipeline(ctx context.Context, arg CreatePipelineParams) 
 		arg.Uuid,
 		arg.Hash,
 		arg.Json,
+		arg.Merkle,
 	)
 	var i Pipeline
 	err := row.Scan(

@@ -11,7 +11,7 @@ export default function SaveAsPipelineButton() {
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const [mixpanelService] = useAtom(mixpanelAtom);
 
-  const savePipeline = trpc.savePipeline.useMutation();
+  const copyPipeline = trpc.copyPipeline.useMutation();
 
   const handleClick = async (editor, pipeline) => {
     try {
@@ -36,8 +36,8 @@ export default function SaveAsPipelineButton() {
       writeFromDir: pipeline.path,
       writeToDir: undefined,
     };
-    const response = await savePipeline.mutateAsync(saveData);
-    const { name, dirPath } = response;
+    const response = await copyPipeline.mutateAsync(saveData);
+    const { name, dirPath, specs } = response;
 
     setPipeline((draft) => {
       draft.saveTime = Date.now();
