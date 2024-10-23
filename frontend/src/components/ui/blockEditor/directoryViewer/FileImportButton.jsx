@@ -13,7 +13,7 @@ export default function FileImportButton({ pipelinePath, blockId }) {
   };
 
   const handleInputChange = async (event) => {
-    const res = await uploadFiles(pipelinePath, blockId, event.target.files);
+    await uploadFiles(pipelinePath, blockId, event.target.files);
     trpcUtils.block.file.get.invalidate({
       pipelinePath: pipelinePath,
       blockId: blockId,
