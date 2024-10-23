@@ -4,6 +4,7 @@ import json
 import sys
 import shutil
 import subprocess
+import platform
 
 def setup_uv_environment(script_dir):
     # Path to the UV environment
@@ -11,20 +12,15 @@ def setup_uv_environment(script_dir):
     
     # Create UV environment if it does not exist
     if not os.path.exists(uv_env_path):
-        print("Setting up UV environment...")
-
         try:
             subprocess.run(["uv", "venv", uv_env_path], check=True)
         except subprocess.CalledProcessError as e:
             print(f"Failed to create UV environment: {e}")
             sys.exit(1)
 
-    # Install dependencies from requirements.txt inside the UV environment
     requirements_file = os.path.join(script_dir, "requirements.txt")
     if os.path.exists(requirements_file):
-        print("Installing dependencies inside UV environment...")
         try:
-            print("HERE>>>")
             subprocess.run(["uv", "pip", "install", "-r", requirements_file], check=True, cwd=script_dir)
         except subprocess.CalledProcessError as e:
             print(f"Failed to install dependencies: {e}")
@@ -34,7 +30,10 @@ def setup_uv_environment(script_dir):
 
 def rerun_with_uv_environment(script_dir):
     # Path to the Python interpreter in the UV environment
-    uv_python = os.path.join(script_dir, ".venv", "Scripts", "python.exe")
+    if platform.system() == "Windows":
+        uv_python = os.path.join(script_dir, ".venv", "Scripts", "python.exe")
+    else:
+        uv_python = os.path.join(script_dir, ".venv", "bin", "python3.9") # -- maybe I need to change the python version accordingly.
 
     # Check if the current Python interpreter is already the one in the UV environment
     if sys.executable == uv_python:
@@ -50,7 +49,7 @@ def rerun_with_uv_environment(script_dir):
         sys.exit(1)
 
 def main():
-    print("ARGUMENTS: " , sys.argv)
+    # print("ARGUMENTS: " , sys.argv)
     # Get the directory of the script (block folder)
     script_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -68,7 +67,7 @@ def main():
     os.chdir(script_dir)
 
     # Ensure the 'history' subfolder exists
-    os.makedirs(history_subfolder, exist_ok=True)
+    os.makedirs(history_subfolder, exist_ok=True) # This should not need to run otherwise file is missing in history subfolder.
 
     # Add the block folder (compute_dir) to the Python path to import 'computations'
     sys.path.insert(0, compute_dir)
@@ -96,15 +95,29 @@ def main():
 
     # Collect arguments passed to the script
     args_dict = {}
-    for arg in sys.argv[4:]:
-        key, value = arg.split('=')
-        if value.isdigit():
-            args_dict[key] = int(value)
-        else:
-            try:
-                args_dict[key] = float(value)
-            except ValueError:
-                args_dict[key] = value  # Leave as string if conversion fails
+    if sys.argv[3] == "docker":
+        for arg in sys.argv[5:]:
+            key, value = arg.split('=')
+            if value.isdigit():
+                args_dict[key] = int(value)
+            else:
+                try:
+                    args_dict[key] = float(value)
+                except ValueError:
+                    args_dict[key] = value  # Leave as string if conversion fails
+
+    else:
+        for arg in sys.argv[4:]:
+            key, value = arg.split('=')
+            if value.isdigit():
+                args_dict[key] = int(value)
+            else:
+                try:
+                    args_dict[key] = float(value)
+                except ValueError:
+                    args_dict[key] = value  # Leave as string if conversion fails
+
+   
 
     args_dict_copy = args_dict.copy()
 
@@ -113,7 +126,6 @@ def main():
             if "\\" in str(value):  # Check if value is an absolute path
                 print("CHECKED")
                 args_dict_copy[key] = value.split("\\")[-1]  # Extract the last part of the path (the file name)
-        print("DICTS: " , args_dict_copy)
 
     # Ensure images parameter is a Python list (if it's passed as a string)
     if 'images' in args_dict_copy and isinstance(args_dict_copy['images'], str):
@@ -127,7 +139,7 @@ def main():
         if value is not None:
             params.append(value)
         else:
-            print(f"Warning: No value found for {key} in pipeline.json")
+            print(f"Warning: No value found for {key} in pipeline.json or in argument")
 
     # Call the compute function
     # print(">>>>>>>>>PAssing parameters: " , params)
@@ -156,21 +168,22 @@ def main():
     
     for key, value in outputs.items():
         if sys.argv[3] == "docker":
-            result = sys.argv[1]
+            result = sys.argv[4].split('\\')[-1]
         else:
-            result = block_id.rsplit('-', 1)[0].split('\\')[-1]
+            result = block_id.split('\\')[-1]
 
-        if ("background-removal" in block_id):
-            output_file_path = os.path.join(history_subfolder, f"{result}-output_path.txt")
-        elif ("openai-agent" in block_id):
-            output_file_path = os.path.join(history_subfolder, f"{result}-response.txt")
-        elif ("images-to-video" in block_id):
-            output_file_path = os.path.join(history_subfolder, f"{result}-video_path.txt")
-        else:
-            output_file_path = os.path.join(history_subfolder, f"{result}-image_paths.txt")
+        # if ("background-removal" in block_id):
+        #     output_file_path = os.path.join(history_subfolder, f"{result}-output_path.txt")
+        # elif ("openai-agent" in block_id):
+        #     output_file_path = os.path.join(history_subfolder, f"{result}-response.txt")
+        # elif ("images-to-video" in block_id):
+        #     output_file_path = os.path.join(history_subfolder, f"{result}-video_path.txt")
+        # else:
+        #     output_file_path = os.path.join(history_subfolder, f"{result}-image_paths.txt")
+        output_file_path = os.path.join(history_subfolder, f"{result}.txt")
 
-        print("output file path:" , output_file_path)
-    
+        print("OUTPUT FILE:" ,output_file_path)
+        
         with open(output_file_path, "w") as file:
             file.write(json.dumps(value))
 

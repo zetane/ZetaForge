@@ -16,11 +16,12 @@ Katana can be run in two modes: `docker` and `local` (non-docker mode). It expec
 ### Running in Docker Mode
 
 ```
-go run . --mode=docker <pipeline-name>
+go run . --mode=docker <pipeline-name> <your-parameters>
 ```
 - PRE REQ: you must have a dockerfile , and requirements.txt(could be empty) files inside the block folder
 - This will build the Docker image if it's not found and execute the pipeline using Docker.
 - All necessary files from the pipeline folder will be mounted in Docker containers.
+- <your-parameters> are optional if you don't pass it, katana will pick from pipeline.json file.
 
 #### Dockerfile Example
 
@@ -49,15 +50,14 @@ RUN pip install -r requirements.txt
 ### Running in Non-Docker Mode
 
 ```
-go run . --mode=uv <pipeline-name>
+go run . --mode=uv <pipeline-name> <your inputs>
 ```
 or
 ```
-go run . --mode=no-uv <pipeline-name>
+go run . --mode=no-uv <pipeline-name> <your inputs>
 ```
 
-- No-UV : This will execute the pipeline directly on your local machine without Docker.
-- UV mode : This will create a virtual environment inside block folders, install requirements and then run each block. All the subsequent runs will use the existing environment to run. no installataion will be there after the 1st run.
+- This will execute the pipeline directly on your local machine without Docker.
 
 ## Pipeline Structure
 
@@ -86,10 +86,15 @@ For each pipeline execution, a timestamped folder will be created inside the `hi
 
 ## Example
 
-To run the pipeline named `abcd` in Docker mode:
+To run the pipeline named `abcd` in Docker mode: (let's say abcd is a canny-edge folder)
 
 ```
-go run . --mode=docker abcd
+go run . --mode=docker abcd path:"C:\Users\Teertha\Pictures\eeb3cafe-eb49-4162-9fcb-96323d07fd1c.jpg" integer:4 integer:500 integer:20
+```
+
+To run the pipeline named 'efgh'(open ai agent) in uv mode:
+```
+go run . --mode=docker 'efgh' password:"OPEN-AI_API_KEY" text:"Write a very short article about pandas" text:"You write articles on educational topics."
 ```
 
 ## Configuration

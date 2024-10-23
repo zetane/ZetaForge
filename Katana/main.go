@@ -12,10 +12,13 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 )
 
 var mode string
+
+var argsKeyVal []ArgsKeyVal // store the parameters passed by arguments.
 
 //go:embed entrypoint.py
 var entrypoint []byte
@@ -34,7 +37,6 @@ func execCommand(cmd string, dir string, id string, args Dict, historySubfolder 
 	for key, value := range args {
 		commandArgs = append(commandArgs, key+"="+value)
 	}
-
 	// Convert the paths to absolute paths
 	absDir, err := filepath.Abs(dir) // this should point to the block folder where computations.py is located
 	if err != nil {
@@ -54,9 +56,9 @@ func execCommand(cmd string, dir string, id string, args Dict, historySubfolder 
 		command = exec.Command("docker", "run", "--rm",
 			"-v", absDir+":/app", // Mount the block folder where computations.py is located
 			"-v", absHistorySubfolder+":/app/history/", // Mount the history folder
-			docker_image_name,              // Docker image -- hardcoded
+			docker_image_name,
 			"python", "/app/entrypoint.py", // Execute entrypoint.py inside Docker
-			id, "/app/history", mode) // Pass arguments to entrypoint.py (inside Docker paths)
+			id, "/app/history", mode, dir) // Pass arguments to entrypoint.py (inside Docker paths)
 	} else {
 		// Local execution
 		if runtime.GOOS == "windows" {
@@ -117,7 +119,6 @@ func (t *Task) Execute(args Dict) (Dict, error) {
 				var new_histrory_subfolder = historySubfolder[len(filepath.Base(TMPPATH)):]
 				data, err = os.ReadFile(filepath.Join(TMPPATH, new_histrory_subfolder, value) + ".txt") // wants to read from the 'history' floder
 			} else {
-				println("From line:199. value: ", value, ", TMPPATH:", TMPPATH)
 				data, err = os.ReadFile(filepath.Join(historySubfolder, value) + ".txt")
 			}
 		}
@@ -164,12 +165,27 @@ func deployTask(pipeline *Pipeline, historySubfolder string) (Execution, func())
 			tasks[name] = &Task{Name: name, Exec: func(args Dict) error { // without that entrypoint won't run
 				return execCommand(block.Action.Command.Exec, filepath.Join(TMPPATH, name), block.Information.Id, args, historySubfolder)
 			}}
-		} else if len(block.Action.Parameters) > 0 {
+		} else if len(block.Action.Parameters) > 0 { // importatnt for passing parameters
+			// Iterate over block parameters
 			for key, value := range block.Action.Parameters {
-				inputs[name] = &Param{Name: key, Value: value.Value}
-				// fmt.Println("Key", name, ", Value: ", value)
+				finalValue := value.Value // Default to the original value
+
+				// Search for a matching key in argsKeyVal
+				for i := range argsKeyVal { // I implemented a bubble-sort like search algo to match key val arguments.
+					if argsKeyVal[i].Key == key {
+						// If a match is found, replace the final value with the argument value
+						finalValue = argsKeyVal[i].Value
+
+						// Mark this key-value pair as used
+						argsKeyVal[i].Key = "-1"
+						argsKeyVal[i].Value = "-1"
+						break // Stop searching after the first match
+					}
+				}
+
+				inputs[name] = &Param{Name: key, Value: finalValue}
+				// fmt.Println("Key:", key, ", Final Value:", finalValue)
 			}
-			// fmt.Println("inputs:", inputs)
 		} else if block.Action.Command.Exec != "" {
 			if block.Action.Command.Dir == "" {
 				os.WriteFile("entrypoint.py", entrypoint, 0644)
@@ -211,7 +227,8 @@ func deployTask(pipeline *Pipeline, historySubfolder string) (Execution, func())
 					outputs[name] = pipe
 					task.Out = append(task.Out, pipe)
 				} else {
-					task.MapOut[name+label] = block.Information.Id + "-" + label
+					// task.MapOut[name+label] = block.Information.Id + "-" + label
+					task.MapOut[name+label] = name
 				}
 			}
 		}
@@ -271,7 +288,6 @@ func runTask(task *Task) {
 			maps.Copy(args, arg.Dict)
 
 			if arg.Err != nil {
-				// fmt.Println(">>>>>>>>>ERROR found in : ", task.Name, " , and the error is: ", arg.Err)
 				executionError = arg.Err
 			}
 		}
@@ -299,61 +315,7 @@ func runTask(task *Task) {
 	}
 }
 
-func main() {
-
-	pipelineName := os.Args[2]
-	pipelinePath := filepath.Join(".", pipelineName)
-
-	data, err := os.ReadFile(filepath.Join(pipelinePath, "pipeline.json"))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var pipeline Pipeline
-	err = json.Unmarshal(data, &pipeline)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if pipeline.Sink != "" {
-		TMPPATH = pipeline.Sink
-	}
-
-	flag.StringVar(&mode, "mode", "uv", "Execution mode: uv, no-uv, docker")
-	flag.Parse()
-
-	if len(os.Args) < 3 {
-		log.Fatal("Pipeline name or path must be provided as an argument.")
-	}
-
-	var filePaths []string // extracting files for the pipelines.
-	for _, block := range pipeline.Pipeline {
-		for paramName, param := range block.Action.Parameters {
-			if paramName == "path" {
-				filePaths = append(filePaths, param.Value) // Assuming 'Value' contains the file path
-			}
-		}
-	}
-
-	// fmt.Println("File Paths:", filePaths)
-
-	if mode == "docker" {
-		fmt.Println("Docker mode running")
-		docker_image_name = "katana-" + pipeline.Id
-		// fmt.Print("docker_image_name : ", docker_image_name)
-		buildAndRunDockerImage(pipelinePath, docker_image_name, filePaths)
-		return
-	} else {
-		fmt.Println("Running in non-docker mode")
-		runLocalPipeline(pipeline, pipelinePath)
-	}
-
-}
-
-// TRYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY
-
 func buildAndRunDockerImage(pipelinePath string, imageName string, filepaths []string) {
-	// Step 1: Check if Docker image already exists
 	checkCmd := exec.Command("docker", "images", "-q", imageName)
 	checkOutput, err := checkCmd.Output()
 	if err != nil {
@@ -391,13 +353,10 @@ func buildAndRunDockerImage(pipelinePath string, imageName string, filepaths []s
 	}
 	absPipelinePath = filepath.ToSlash(absPipelinePath)
 
-	// Step 2: Prepare history folder
 	historySubfolder = prepareHistoryFolder(absPipelinePath)
 
-	// Step 3: Copy files to history folder
 	copyToHistoryFolder(historySubfolder, filepaths)
 
-	// Step 4: Run the local pipeline using the Docker environment
 	runLocalPipelineInDocker(absPipelinePath, historySubfolder)
 }
 
@@ -487,6 +446,23 @@ func runLocalPipeline(pipeline Pipeline, pipelinePath string) {
 	historySubfolder = filepath.Join(historyDir, timestamp)
 	os.MkdirAll(historySubfolder, os.ModePerm)
 
+	// if there is any file in the values, copy it in history subfolder.
+	for _, arg := range argsKeyVal {
+		if arg.Key == "path" { // could be other KEY--------- CHECK LATER.
+			src := filepath.Clean(arg.Value)
+			dest := filepath.Join(historySubfolder, filepath.Base(arg.Value))
+			// fmt.Println("HISTORY SUBFOLDER:", historySubfolder, " , FILE PATH: ", dest)
+			input, err := os.ReadFile(src)
+			if err != nil {
+				log.Fatal(err)
+			}
+			if err := os.WriteFile(dest, input, 0644); err != nil {
+				log.Fatal(err)
+			}
+			fmt.Println("Moved file to", dest)
+		}
+	}
+
 	execution, release := deployTask(&pipeline, historySubfolder)
 
 	result, err := execution(make(Dict))
@@ -497,4 +473,76 @@ func runLocalPipeline(pipeline Pipeline, pipelinePath string) {
 	}
 
 	release()
+}
+
+type ArgsKeyVal struct {
+	Key   string
+	Value string
+}
+
+func main() {
+
+	pipelineName := os.Args[2]
+	pipelinePath := filepath.Join(".", pipelineName)
+
+	data, err := os.ReadFile(filepath.Join(pipelinePath, "pipeline.json"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var pipeline Pipeline
+	err = json.Unmarshal(data, &pipeline)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if pipeline.Sink != "" {
+		TMPPATH = pipeline.Sink
+	}
+
+	flag.StringVar(&mode, "mode", "uv", "Execution mode: uv, no-uv, docker")
+	flag.Parse()
+
+	if len(os.Args) < 3 {
+		log.Fatal("Pipeline name or path must be provided as an argument.")
+	}
+
+	for _, arg := range os.Args[3:] {
+		parts := strings.SplitN(arg, ":", 2)
+		if len(parts) == 2 {
+			argsKeyVal = append(argsKeyVal, ArgsKeyVal{
+				Key:   parts[0],
+				Value: parts[1],
+			})
+		}
+	}
+
+	var filePaths []string // extracting files for the pipelines.
+	for _, block := range pipeline.Pipeline {
+		for paramName, param := range block.Action.Parameters {
+			if paramName == "path" {
+				filePaths = append(filePaths, param.Value)
+			}
+		}
+	}
+
+	for _, arg := range argsKeyVal {
+		if arg.Key == "path" {
+			filePaths = append(filePaths, arg.Value)
+		}
+	}
+
+	fmt.Println("PARSED ARGUMENT: ", argsKeyVal, " AND GOT ARGUMENT: ", os.Args[3:]) // print the key value arguements.
+
+	if mode == "docker" {
+		fmt.Println("Docker mode running")
+		fmt.Println("filePaths: ", filePaths)
+		docker_image_name = "katana-" + pipeline.Id
+		// fmt.Print("docker_image_name : ", docker_image_name)
+		buildAndRunDockerImage(pipelinePath, docker_image_name, filePaths)
+		return
+	} else {
+		fmt.Println("Running in non-docker mode")
+		runLocalPipeline(pipeline, pipelinePath)
+	}
 }
