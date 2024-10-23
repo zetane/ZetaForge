@@ -94,7 +94,7 @@ go run . --mode=docker abcd path:"C:\Users\Teertha\Pictures\eeb3cafe-eb49-4162-9
 
 To run the pipeline named 'efgh'(open ai agent) in uv mode:
 ```
-go run . --mode=docker 'efgh' password:"OPEN-AI_API_KEY" text:"Write a very short article about pandas" text:"You write articles on educational topics."
+go run . --mode=uv 'efgh' password:"OPEN-AI_API_KEY" text:"Write a very short article about pandas" text:"You write articles on educational topics."
 ```
 
 ## Configuration
