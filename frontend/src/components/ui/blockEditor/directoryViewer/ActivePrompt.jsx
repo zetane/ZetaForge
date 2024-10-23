@@ -20,7 +20,7 @@ export default function ActivePrompt({ children, index }) {
   const [blockId] = useAtom(blockEditorIdAtom);
   const compile = useCompileComputation();
 
-  const isLast = index === 0;
+  const isFirst = index === 0;
   const borderStyle = !selectedPrompt.selected ? " prompt-selected" : "";
 
   const handleClick = () => {
@@ -60,7 +60,7 @@ export default function ActivePrompt({ children, index }) {
           flipped
         >
           <OverflowMenuIconItem
-            disabled={isLast}
+            disabled={isFirst}
             icon={TrashCan}
             onClick={handleDelete}
           >
