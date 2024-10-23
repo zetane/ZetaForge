@@ -37,7 +37,7 @@ export default function SaveAsPipelineButton() {
       writeToDir: undefined,
     };
     const response = await copyPipeline.mutateAsync(saveData);
-    const { name, dirPath, specs } = response;
+    const { name, dirPath } = response;
 
     setPipeline((draft) => {
       draft.saveTime = Date.now();

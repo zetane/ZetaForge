@@ -10,7 +10,7 @@ export const PipelineDeployButton = ({ uuid, hash, configuration }) => {
     mutationFn: async () => {
       return await deployPipeline(configuration, uuid, hash);
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       // Update the React Query cache
       const queryKey = ["pipelines", configuration?.anvil?.host];
       queryClient.setQueryData(queryKey, (pipelines) => {

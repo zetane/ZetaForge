@@ -39,7 +39,7 @@ export const MultiFileBlock = ({ blockId, block, setFocusAction, history }) => {
     return filePaths;
   };
 
-  const loadFiles = (e) => {
+  const loadFiles = () => {
     const files = Array.from(fileInput.current.files);
     // console.log("FILES: " ,files)
     const filePaths = processFiles(files);
