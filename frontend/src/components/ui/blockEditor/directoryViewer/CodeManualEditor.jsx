@@ -35,6 +35,10 @@ export default function CodeManualEditor() {
   const saveDisabled = isLoading || !fileBuffer.hasPendingChanges;
 
   useEffect(() => {
+    updateEditorState();
+  }, [fileBuffer.content]);
+
+  const updateEditorState = () => {
     if (editorRef?.current?.view) {
       const editorCode = editorRef.current.view.state.doc?.toString();
       if (editorCode !== fileBuffer.content) {
@@ -50,7 +54,7 @@ export default function CodeManualEditor() {
         editorRef.current.view.dispatch(transaction);
       }
     }
-  }, [fileBuffer.content]);
+  };
 
   const handleChange = (value) => {
     fileBuffer.update(value);
