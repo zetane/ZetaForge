@@ -93,6 +93,7 @@
     "json-formatter-js": "^2.3.4",
     "micromodal": "^0.4.10",
     "mixpanel-browser": "^2.48.1",
+    "mock-fs": "^5.3.0",
     "multer": "^1.4.5-lts.1",
     "nanoid": "^5.0.5",
     "openai": "^3.3.0",
