@@ -29,7 +29,7 @@ export const BlockResources = ({ block, setFocusAction, id }) => {
   if (isLocalhost) {
     toggle = (
       <ResourceTooltip
-        content="GPU is not available on local kubernetes, connect to Forge Cloud to use GPU."
+        content="GPU is not available on local Kubernetes, connect to Forge Cloud to use GPU."
         icon={Information}
         className="top-3"
       >
