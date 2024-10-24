@@ -4,13 +4,12 @@ import {
   offset,
   shift,
   flip,
-  arrow,
   FloatingPortal,
 } from "@floating-ui/react";
 import { useState } from "react";
 import { Theme, useTheme } from "@carbon/react";
 
-const TooltipContent = ({ children, className = "" }) => (
+const TooltipContent = ({ children }) => (
   <div
     className={`tooltip pointer-events-none fixed z-[100] max-w-xs rounded px-2 py-1 text-sm shadow-lg`}
   >
