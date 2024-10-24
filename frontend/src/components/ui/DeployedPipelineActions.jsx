@@ -1,21 +1,33 @@
-import { ComboButton, MenuItem, CodeSnippet } from "@carbon/react";
-import { TrashCan } from "@carbon/icons-react";
-import { modalContentAtom } from "@/atoms/modalAtom";
-import { useAtom } from "jotai";
+import { useState } from "react";
+import {
+  Tabs,
+  TabList,
+  Tab,
+  TabPanels,
+  TabPanel,
+  ComboButton,
+  CodeSnippet,
+} from "@carbon/react";
 import ClosableModal from "./modal/ClosableModal";
 import { getScheme } from "@/client/anvil";
 
 export const DeployedPipelineActions = ({
+  name,
   uuid,
   hash,
   configuration,
   pipelineData,
 }) => {
-  const [modalContent, setModalContent] = useAtom(modalContentAtom);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("js");
+  const [codePayload, setCodePayload] = useState({
+    jsCode: "",
+    pythonCode: "",
+  });
+
   const generatePostPayload = () => {
-    // Generate input structure based on the pipeline graph
     const inputs = {};
-    Object.entries(pipelineData.pipeline).forEach(([, node]) => {
+    Object.entries(pipelineData.pipeline).forEach(([nodeId, node]) => {
       if (node.inputs) {
         Object.entries(node.inputs).forEach(([inputName, input]) => {
           if (input.connections && input.connections.length > 0) {
@@ -36,52 +48,90 @@ export const DeployedPipelineActions = ({
       }
     });
 
-    const pythonCode = `
-from zetaforge import Zetaforge
+    const pythonCode = `from zetaforge import Zetaforge
 
-zetaforge = Zetaforge(base_url='${getScheme(configuration.anvil.host)}://${configuration.anvil.host}:${configuration.anvil.port}', token='${configuration.anvil.token}')
+zetaforge = Zetaforge(address='${getScheme(configuration.anvil.host)}://${configuration.anvil.host}:${configuration.anvil.port}', token='${configuration.anvil.token}')
 
-pipeline_uuid = '${uuid}'
-pipeline_hash = '${hash}'
-
-inputs = ${JSON.stringify(inputs, null, 2)}
-
-result = zetaforge.execute_pipeline(pipeline_uuid, pipeline_hash, inputs)
+result = zetaforge.run('${name}:${hash.substring(0, 8)}', input=${JSON.stringify(inputs, null, 2)})
 print('Pipeline execution result:', result)
-    `;
+`;
 
-    // Update modal content
-    setModalContent({
-      ...modalContent,
-      content: (
+    const jsCode = `import Zetaforge from "zetaforge";
+
+const zetaforge = new Zetaforge({
+  '${getScheme(configuration.anvil.host)}://${configuration.anvil.host}:${configuration.anvil.port}',
+  '${configuration.anvil.token}'
+});
+
+const pipelineUuid = "${uuid}";
+const pipelineHash = "${hash}";
+const inputs = ${JSON.stringify(inputs, null, 2)};
+
+async function executePipeline() {
+  try {
+    const executeResponse = await zetaforge.run(pipelineUuid, pipelineHash, inputs);
+    console.log("executeResponse: ", executeResponse);
+  } catch (error) {
+    console.error('Failed to execute pipeline:', error.message);
+  }
+}
+
+executePipeline(); // it will execute the pipeline....
+`;
+    setCodePayload({ jsCode, pythonCode });
+    setIsModalOpen(true);
+  };
+
+  const handleClose = () => setIsModalOpen(false);
+
+  const handleUndeploy = () => {
+    console.log("Undeploying pipeline:", uuid);
+  };
+
+  return (
+    <>
+      <ComboButton
+        size="sm"
+        label="Payload"
+        onClick={generatePostPayload}
+      ></ComboButton>
+
+      {isModalOpen && (
         <ClosableModal
           modalHeading="POST payload"
           passiveModal={true}
           modalClass="custom-modal-size"
+          onRequestClose={handleClose}
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            maxWidth: "100%",
+            width: "100%",
+            height: "100%",
+            maxHeight: "100%",
+            zIndex: "9999",
+          }}
         >
-          <CodeSnippet type="multi" feedback="Copied to clipboard">
-            {pythonCode}
-          </CodeSnippet>
+          <Tabs>
+            <TabList aria-label="Code Tabs" contained>
+              <Tab>JavaScript</Tab>
+              <Tab>Python</Tab>
+            </TabList>
+            <TabPanels>
+              <TabPanel>
+                <CodeSnippet type="multi" feedback="Copied to clipboard">
+                  {codePayload.jsCode}
+                </CodeSnippet>
+              </TabPanel>
+              <TabPanel>
+                <CodeSnippet type="multi" feedback="Copied to clipboard">
+                  {codePayload.pythonCode}
+                </CodeSnippet>
+              </TabPanel>
+            </TabPanels>
+          </Tabs>
         </ClosableModal>
-      ),
-    });
-  };
-
-  const handleUndeploy = () => {
-    // Stub for undeploy action
-    console.log("Undeploying pipeline:", uuid);
-    // Here you would typically call an API endpoint to undeploy the pipeline
-    // For now, we'll just log the action
-  };
-
-  return (
-    <ComboButton size="sm" label="Payload" onClick={generatePostPayload}>
-      <MenuItem
-        label="Undeploy"
-        onClick={handleUndeploy}
-        renderIcon={TrashCan}
-        kind="danger"
-      />
-    </ComboButton>
+      )}
+    </>
   );
 };
