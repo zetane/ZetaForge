@@ -1,6 +1,6 @@
 import { Button } from "@carbon/react";
 import { EditorCodeMirror } from "./CodeMirrorComponents";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { FileBufferContext } from "./DirectoryViewer";
 import { ChatHistoryContext } from "./DirectoryViewer";
 import { FileHandleContext } from "./DirectoryViewer";
@@ -17,6 +17,8 @@ export default function CodeManualEditor() {
   const fileHandle = useContext(FileHandleContext);
   const fileBuffer = useContext(FileBufferContext);
   const chatHistory = useContext(ChatHistoryContext);
+  const initialCode = useRef(fileBuffer.content);
+  const editorRef = useRef();
   const compile = useCompileComputation();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -31,6 +33,28 @@ export default function CodeManualEditor() {
     },
   ]);
   const saveDisabled = isLoading || !fileBuffer.hasPendingChanges;
+
+  useEffect(() => {
+    updateEditorState();
+  }, [fileBuffer.content]);
+
+  const updateEditorState = () => {
+    if (editorRef?.current?.view) {
+      const editorCode = editorRef.current.view.state.doc?.toString();
+      if (editorCode !== fileBuffer.content) {
+        const length = editorCode.length ?? 0;
+        const newLength = fileBuffer.content.length;
+        const cursorPosition = editorRef.current.view.state.selection.main.head;
+        const newCursorPosition = clamp(cursorPosition, 0, newLength);
+
+        const transaction = editorRef.current.view.state.update({
+          changes: { from: 0, to: length, insert: fileBuffer.content },
+          selection: { anchor: newCursorPosition },
+        });
+        editorRef.current.view.dispatch(transaction);
+      }
+    }
+  };
 
   const handleChange = (value) => {
     fileBuffer.update(value);
@@ -49,7 +73,8 @@ export default function CodeManualEditor() {
   return (
     <div className="relative min-h-0 flex-1">
       <EditorCodeMirror
-        code={fileBuffer.content ?? ""}
+        code={initialCode.current}
+        ref={editorRef}
         onChange={handleChange}
         keymap={editorKeymap}
       />
@@ -68,4 +93,8 @@ export default function CodeManualEditor() {
       </div>
     </div>
   );
+}
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
 }

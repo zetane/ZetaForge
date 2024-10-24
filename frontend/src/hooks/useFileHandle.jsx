@@ -12,10 +12,10 @@ export default function useFileHandle(pipelinePath, blockId) {
   );
 
   const set = async (file) => {
-    setCurrentFile(file);
     if (file.read) {
       await buffer.load(file.relativePath);
     }
+    setCurrentFile(file);
   };
 
   return {

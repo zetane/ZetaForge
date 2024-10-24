@@ -3,6 +3,7 @@ import { EditorView } from "@codemirror/view";
 import { loadLanguage } from "@uiw/codemirror-extensions-langs";
 import { githubLight } from "@uiw/codemirror-theme-github";
 import { vscodeDark } from "@uiw/codemirror-theme-vscode";
+import { forwardRef } from "react";
 
 import CodeMirror from "@uiw/react-codemirror";
 import { atom, useAtom } from "jotai";
@@ -70,33 +71,36 @@ export const ViewerCodeMirror = ({ currentIndex, code }) => {
   );
 };
 
-export const EditorCodeMirror = ({ code, onChange, keymap }) => {
-  const [theme] = useAtom(themeAtom);
-  const extensions = [loadLanguage("python"), backgroundTheme, keymap];
+export const EditorCodeMirror = forwardRef(
+  ({ code, onChange, keymap }, ref) => {
+    const [theme] = useAtom(themeAtom);
+    const extensions = [loadLanguage("python"), backgroundTheme, keymap];
 
-  return (
-    <CodeMirror
-      value={code}
-      style={{ height: "100%" }}
-      height="100%"
-      extensions={extensions}
-      basicSetup={{
-        lineNumbers: true,
-        highlightActiveLineGutter: false,
-        foldGutter: false,
-        allowMultipleSelections: false,
-        closeBrackets: false,
-        dropCursor: true,
-        tabSize: 4,
-        highlightActiveLine: false,
-        highlightSelectionMatches: false,
-        drawSelection: false,
-      }}
-      theme={theme}
-      onChange={onChange}
-    />
-  );
-};
+    return (
+      <CodeMirror
+        value={code}
+        style={{ height: "100%" }}
+        height="100%"
+        extensions={extensions}
+        ref={ref}
+        basicSetup={{
+          lineNumbers: true,
+          highlightActiveLineGutter: false,
+          foldGutter: false,
+          allowMultipleSelections: false,
+          closeBrackets: false,
+          dropCursor: true,
+          tabSize: 4,
+          highlightActiveLine: false,
+          highlightSelectionMatches: false,
+          drawSelection: false,
+        }}
+        theme={theme}
+        onChange={onChange}
+      />
+    );
+  },
+);
 
 export const LogsCodeMirror = ({ code, onUpdate }) => {
   const [theme] = useAtom(themeAtom);

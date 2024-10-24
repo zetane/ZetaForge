@@ -15,7 +15,7 @@ export default function useConfirmModal() {
       return;
     }
 
-    fileHandle.set(selectedFile);
+    await fileHandle.set(selectedFile);
   };
 
   const close = () => {
@@ -24,12 +24,12 @@ export default function useConfirmModal() {
 
   const save = async () => {
     fileBuffer.save();
-    fileHandle.set(selectedFile);
+    await fileHandle.set(selectedFile);
     close();
   };
 
   const discard = async () => {
-    fileHandle.set(selectedFile);
+    await fileHandle.set(selectedFile);
     close();
   };
 
