@@ -16,6 +16,7 @@
   --cds-button-primary-hover: var(--ztn-purple-10) !important;
   --cds-button-tertiary: var(--ztn-black-0) !important;
   --cds-button-tertiary-hover: var(--ztn-purple-0) !important;
+  --cds-background: var(--ztn-white-0) !important;
   --cds-background-brand: var(--ztn-white-0) !important;
   --cds-border-interactive: var(--ztn-purple-0) !important;
   --cds-link-primary: var(--ztn-purple-0) !important;
@@ -27,8 +28,7 @@
   --pipeline-background-color: var(--ztn-gray-1) !important;
   --cds-layer: var(--ztn-gray-2) !important;
   --cds-layer-accent: var(--ztn-white-0) !important;
-  --tooltip-color: var(--ztn-black-0);
-  --tooltip-background-color: var(--ztn-gray-2);
+  --cds-text-primary: var(--ztn-black-0) !important;
   --focus-border: var(--ztn-purple-0);
 }
 
@@ -51,6 +51,7 @@
   --cds-button-primary-hover: var(--ztn-purple-10) !important;
   --cds-button-tertiary: var(--ztn-white-0) !important;
   --cds-button-tertiary-hover: var(--ztn-purple-0) !important;
+  --cds-background: var(--ztn-black-0) !important;
   --cds-background-brand: var(--ztn-black-0) !important;
   --cds-border-interactive: var(--ztn-purple-0) !important;
   --cds-link-primary: var(--ztn-white-0) !important;
@@ -60,7 +61,6 @@
   --cds-focus: var(--ztn-purple-0) !important;
   --cds-focus-inverse: var(--ztn-purple-0) !important;
   --pipeline-background-color: var(--ztn-gray-1) !important;
-  --tooltip-color: var(--ztn-black-1);
-  --tooltip-background-color: var(--ztn-white-1);
   --focus-border: var(--ztn-purple-0);
+  --cds-text-primary: var(--ztn-white-0) !important;
 }

@@ -1,7 +1,7 @@
 import { trpc } from "@/utils/trpc";
 import { Information } from "@carbon/icons-react";
 import { Tile } from "@carbon/react";
-import Tooltip from "@/components/ui/Tooltip";
+import { ResourceTooltip } from "@/components/ui/Tooltip";
 
 const usePipelineCoverImagePath = (pipelineId) => {
   const { data, isLoading, error } = trpc.getPipelineCoverImagePath.useQuery({
@@ -62,10 +62,8 @@ export const LibraryPipelineTile = ({ pipeline, index }) => {
           )}
         </div>
       </div>
-      <div className="absolute bottom-1 left-2 z-10">
-        <Tooltip label={pipelineDescription} className={"w-40"}>
-          <Information size={20} />
-        </Tooltip>
+      <div className="absolute bottom-1 left-2">
+        <ResourceTooltip content={pipelineDescription} icon={Information} />
       </div>
     </Tile>
   );

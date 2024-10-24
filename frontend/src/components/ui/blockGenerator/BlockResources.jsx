@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { TextInput, Toggle } from "@carbon/react";
-import { ChevronDown, ChevronUp } from "@carbon/icons-react";
+import { ChevronDown, ChevronUp, Information } from "@carbon/icons-react";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { useAtom } from "jotai";
-import Tooltip from "@/components/ui/Tooltip";
+import { ResourceTooltip } from "@/components/ui/Tooltip";
 
 export const BlockResources = ({ block, setFocusAction, id }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -28,9 +28,13 @@ export const BlockResources = ({ block, setFocusAction, id }) => {
   );
   if (isLocalhost) {
     toggle = (
-      <Tooltip label="GPU is not available on local kubernetes, connect to Forge Cloud to use GPU.">
+      <ResourceTooltip
+        content="GPU is not available on local kubernetes, connect to Forge Cloud to use GPU."
+        icon={Information}
+        className="top-3"
+      >
         {toggle}
-      </Tooltip>
+      </ResourceTooltip>
     );
   }
 
@@ -70,24 +74,36 @@ export const BlockResources = ({ block, setFocusAction, id }) => {
       </div>
       {isExpanded && (
         <div className="space-y-4 p-4">
-          <TextInput
-            id={`cpu-input-${id}`}
-            labelText="CPU"
-            value={cpu}
-            onChange={(e) => handleResourceChange("cpu", e.target.value)}
-            placeholder="e.g., 500m"
-            size="sm"
-            className="max-w-xs"
-          />
-          <TextInput
-            id={`memory-input-${id}`}
-            labelText="Memory"
-            value={memory}
-            onChange={(e) => handleResourceChange("memory", e.target.value)}
-            placeholder="e.g., 512Mi"
-            size="sm"
-            className="max-w-xs"
-          />
+          <ResourceTooltip
+            content="Specify CPU units in millicores (e.g., '500m' for half a core) or whole cores (e.g., '2' for 2 cores)"
+            icon={Information}
+            className="top-2"
+          >
+            <TextInput
+              id={`cpu-input-${id}`}
+              labelText="CPU"
+              value={cpu}
+              onChange={(e) => handleResourceChange("cpu", e.target.value)}
+              placeholder="e.g., 500m"
+              size="sm"
+              className="max-w-xs"
+            />
+          </ResourceTooltip>
+          <ResourceTooltip
+            content="Specify memory in Mi/Gi (e.g., '512Mi' for 512 megabytes, '2Gi' for 2 gigabytes)"
+            icon={Information}
+            className="top-2"
+          >
+            <TextInput
+              id={`memory-input-${id}`}
+              labelText="Memory"
+              value={memory}
+              onChange={(e) => handleResourceChange("memory", e.target.value)}
+              placeholder="e.g., 512Mi"
+              size="sm"
+              className="max-w-xs"
+            />
+          </ResourceTooltip>
           {toggle}
         </div>
       )}
