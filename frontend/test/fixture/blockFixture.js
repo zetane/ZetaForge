@@ -5,7 +5,7 @@ export function getId() {
 export function getSpecs() {
   return {
     information: {
-      id: "new-python",
+      id: getId(),
       name: "New Python",
       description: "Template block for custom computations.",
       system_versions: ["0.1"],

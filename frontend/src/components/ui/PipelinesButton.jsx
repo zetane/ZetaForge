@@ -29,7 +29,6 @@ export default function PipelinesButton() {
 
   let grid = <ExecutionDataGrid closeModal={closeModal} />;
 
-  const svgOverride = { position: "absolute", right: "15px", top: "5px" };
   return (
     <Button
       style={styles}

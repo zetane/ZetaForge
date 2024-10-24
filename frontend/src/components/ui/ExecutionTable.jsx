@@ -11,9 +11,12 @@ import {
 import { PipelineStopButton } from "./PipelineStopButton";
 import { useAtom } from "jotai";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
+import { useImmerAtom } from "jotai-immer";
+import { workspaceAtom } from "@/atoms/pipelineAtom";
 
 export const ExecutionTable = ({ executions, closeModal }) => {
   const [configuration] = useAtom(activeConfigurationAtom);
+  const [, setWorkspace] = useImmerAtom(workspaceAtom);
   const selectExecution = (execution) => {
     const key = execution.pipeline + "." + execution.id;
 
@@ -32,7 +35,7 @@ export const ExecutionTable = ({ executions, closeModal }) => {
     { key: "actions", header: "Actions" },
   ];
 
-  const rows = Array.from(executions.entries()).map(([id, execution]) => ({
+  const rows = Array.from(executions.entries()).map(([, execution]) => ({
     id: execution.id,
     created: execution.created,
     status: execution.status,
