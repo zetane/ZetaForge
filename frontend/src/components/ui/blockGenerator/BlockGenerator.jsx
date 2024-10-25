@@ -14,6 +14,7 @@ import React from "react";
 import { logsAtom } from "@/atoms/logsAtom";
 import { isEmpty, PipelineLogs } from "@/components/ui/PipelineLogs";
 import BlockEventsContent from "./BlockEventsContent";
+import { BlockResources } from "./BlockResources";
 
 const isTypeDisabled = (action) => {
   if (!action.parameters) {
@@ -116,6 +117,14 @@ const BlockGenerator = ({
       draft.data[id].action.parameters[parameterName].value = value;
     });
   };
+  // Note: Right now everything uses kubernetes
+  // When executions can run on Katana we need to
+  // map the resource spec to Katana runner
+  // or disable this
+  let resources = (
+    <BlockResources block={block} setFocusAction={setFocusAction} id={id} />
+  );
+  const isContainer = !!block?.action?.container?.image && !preview;
 
   let content = (
     <BlockContent
@@ -178,7 +187,6 @@ const BlockGenerator = ({
           {preview && (
             <BlockPreview id={id} src={iframeSrc} history={history} />
           )}
-
           <BlockTitle
             name={block.information.name}
             id={id}
@@ -211,6 +219,7 @@ const BlockGenerator = ({
             </div>
             {content}
           </div>
+          {isContainer ? resources : null}
         </div>
       </div>
     </div>
