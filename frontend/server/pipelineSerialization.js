@@ -19,7 +19,7 @@ import {
   // getPipelinesByUuid,
 } from "./anvil";
 import { logger } from "./logger";
-// import { computeMerkleTreeForDirectory } from "./merkle.js";
+import { computePipelineMerkleTree } from "./merkle";
 
 export async function saveSpec(spec, writePath) {
   const pipelineSpecsPath = path.join(writePath, PIPELINE_SPECS_FILE_NAME);
@@ -183,24 +183,18 @@ export async function executePipeline(
   rebuild,
   anvilHostConfiguration,
 ) {
-  specs = await uploadBlocks(
-    id,
-    executionId,
-    specs,
-    pipelinePath,
-    anvilHostConfiguration,
-  );
+  specs = await uploadBlocks(id, executionId, specs, anvilHostConfiguration);
   specs["sink"] = pipelinePath;
   specs["build"] = pipelinePath;
   specs["name"] = name;
   specs["id"] = id;
 
-  //const merkle = await computeMerkleTreeForDirectory(path);
-  //const pipelines = await getPipelinesByUuid(anvilHostConfiguration, id);
+  const merkleTree = await computePipelineMerkleTree(specs, pipelinePath);
 
   await uploadBuildContexts(
     anvilHostConfiguration,
     specs,
+    merkleTree,
     pipelinePath,
     rebuild,
   );
@@ -209,6 +203,7 @@ export async function executePipeline(
     anvilHostConfiguration,
     executionId,
     specs,
+    merkleTree,
     rebuild,
   );
 }
@@ -217,7 +212,6 @@ async function uploadBlocks(
   pipelineId,
   executionId,
   pipelineSpecs,
-  blockPath,
   anvilConfiguration,
 ) {
   const nodes = pipelineSpecs.pipeline;
@@ -225,7 +219,6 @@ async function uploadBlocks(
     const node = nodes[nodeId];
 
     const parameters = node.action?.parameters;
-    const container = node.action?.container;
 
     if (parameters) {
       for (const paramKey in parameters) {
@@ -282,15 +275,6 @@ async function uploadBlocks(
           param.value = `"${fileName}"`;
         }
       }
-    } else if (container) {
-      const computationFile = path.join(
-        blockPath,
-        "/",
-        nodeId,
-        "/computations.py",
-      );
-      const awsKey = `${pipelineId}/${executionId}/${nodeId}.py`;
-      await checkAndUpload(awsKey, computationFile, anvilConfiguration);
     }
   }
   return pipelineSpecs;
@@ -299,12 +283,14 @@ async function uploadBlocks(
 async function uploadBuildContexts(
   configuration,
   pipelineSpecs,
+  pipelineMerkleTree,
   buildPath,
   rebuild,
 ) {
   const buildContextStatuses = await getBuildContextStatus(
     configuration,
     pipelineSpecs,
+    pipelineMerkleTree,
     rebuild,
   );
   await Promise.all(
