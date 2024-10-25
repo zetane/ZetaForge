@@ -12,7 +12,7 @@ import { fetchExecutionDetails, getAllPipelines, ping } from "@/client/anvil";
 import { useSyncExecutionResults } from "@/hooks/useExecutionResults";
 
 export default function WorkspaceFetcher() {
-  const [pipelines, setPipelines] = useImmerAtom(pipelinesAtom);
+  const [pipelines, setPipelines] = useAtom(pipelinesAtom);
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
   const loadPipeline = useLoadServerPipeline();
   const loadExecution = useLoadExecution();
@@ -101,7 +101,7 @@ export default function WorkspaceFetcher() {
     }
     const pipelinesToLoad = pipelinesData.body?.filter((serverPipeline) => {
       const key = serverPipeline.Uuid + "." + serverPipeline.Execution;
-      const existing = workspace.pipelines[key];
+      const existing = pipelines[key];
       const wasDeployed =
         existing && existing?.record?.Deployed != serverPipeline.Deployed;
       const statusUpdated =
@@ -122,9 +122,7 @@ export default function WorkspaceFetcher() {
     Promise.all(loadPromises)
       .then((results) => {
         const loadObj = Object.fromEntries(results);
-        setPipelines((draft) => {
-          draft = { ...pipelines, ...loadObj };
-        });
+        setPipelines({ ...pipelines, ...loadObj });
       })
       .catch((error) => {
         console.error("Error loading pipelines:", error);
