@@ -50,10 +50,19 @@ export const DeployedPipelineActions = ({
 
     const pythonCode = `from zetaforge import Zetaforge
 
-zetaforge = Zetaforge(address='${getScheme(configuration.anvil.host)}://${configuration.anvil.host}:${configuration.anvil.port}', token='${configuration.anvil.token}')
+    # Create an instance of the Zetaforge class
+zetaforge = Zetaforge(base_url='${getScheme(configuration.anvil.host)}://${configuration.anvil.host}:${configuration.anvil.port}', token='${configuration.anvil.token}')
 
-result = zetaforge.run('${name}:${hash.substring(0, 8)}', input=${JSON.stringify(inputs, null, 2)})
-print('Pipeline execution result:', result)
+pipelineUuid = "${uuid}"
+pipelineHash = "${hash}"
+inputs = ${JSON.stringify(inputs, null, 2)}
+
+try: 
+  execute_response = zetaforge.run(pipelineUuid, pipelineHash, inputs)
+  print('Pipeline execution result:', execute_response)
+
+except Exception as error:
+  print('Failed to execute pipeline:', str(error))
 `;
 
     const jsCode = `import Zetaforge from "zetaforge";
