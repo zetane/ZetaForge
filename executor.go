@@ -624,6 +624,15 @@ func buildImage(ctx context.Context, source string, tag string, logger *log.Logg
 				logger.Printf("Docker build error: %v", errorDetail["message"])
 			}
 		}
+        if cfg.Local.Driver == "k3s" {
+            pullImage := cmd.NewCmd("docker", "save", tag, "|", "k3s", "ctr", "images", "import", "-")
+            <-pullImage.Start()
+            log.Printf(pullImage.Status().Stdout)
+        else if cfg.Local.Driver == "k3d" {
+            pullImage := cmd.NewCmd("k3d", "image", "import", tag)
+            <-pullImage.Start()
+            log.Printf(pullImage.Status().Stdout)
+        }
 	}
 
 	return nil
