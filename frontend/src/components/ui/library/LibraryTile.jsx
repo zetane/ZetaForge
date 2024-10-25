@@ -1,7 +1,7 @@
 import { trpc } from "@/utils/trpc";
 import { Information } from "@carbon/icons-react";
 import { Tile } from "@carbon/react";
-import Tooltip from "@/components/ui/Tooltip";
+import { ResourceTooltip } from "@/components/ui/Tooltip";
 
 const useBlockCoverImagePath = (blockId) => {
   const { data, isLoading, error } = trpc.getBlockCoverImagePath.useQuery({
@@ -71,10 +71,8 @@ export const LibraryTile = ({ block, index }) => {
           )}
         </div>
       </div>
-      <div className="absolute bottom-1 left-2 z-10">
-        <Tooltip label={blockDescription}>
-          <Information size={20} />
-        </Tooltip>
+      <div className="absolute bottom-1 left-2">
+        <ResourceTooltip content={blockDescription} icon={Information} />
       </div>
     </Tile>
   );

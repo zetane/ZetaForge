@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"server/zjson"
@@ -30,6 +31,14 @@ type Catalog struct {
 type TagList struct {
 	Name string   `json:"name"`
 	Tags []string `json:"tags"`
+}
+
+func setResourceIfValid(resourceList corev1.ResourceList, resourceName corev1.ResourceName, value string) {
+	if value != "" {
+		if quantity, err := resource.ParseQuantity(value); err == nil {
+			resourceList[resourceName] = quantity
+		}
+	}
 }
 
 func checkImage(ctx context.Context, image string, cfg Config) (bool, bool, error) {
@@ -193,19 +202,15 @@ func blockTemplate(block *zjson.Block, hash string, blockKey string, key string,
 	if deployed {
 		inputs = wfv1.Inputs{Artifacts: []wfv1.Artifact{entrypoint}}
 	}
-	return &wfv1.Template{
+	template := &wfv1.Template{
 		Name: blockKey,
 		Container: &corev1.Container{
 			Image:           image,
 			Command:         block.Action.Container.CommandLine,
 			ImagePullPolicy: "IfNotPresent",
 			Resources: corev1.ResourceRequirements{
-				Requests: corev1.ResourceList{
-					corev1.ResourceEphemeralStorage: resource.MustParse("10Gi"),
-				},
-				Limits: corev1.ResourceList{
-					corev1.ResourceEphemeralStorage: resource.MustParse("80Gi"),
-				},
+				Requests: corev1.ResourceList{},
+				Limits:   corev1.ResourceList{},
 			},
 			VolumeMounts: []corev1.VolumeMount{
 				{
@@ -218,7 +223,6 @@ func blockTemplate(block *zjson.Block, hash string, blockKey string, key string,
 		Metadata: wfv1.Metadata{Annotations: idMap},
 		Volumes: []corev1.Volume{
 			{
-				//https://stackoverflow.com/questions/46085748/define-size-for-dev-shm-on-container-engine
 				Name: "dshm",
 				VolumeSource: corev1.VolumeSource{
 					EmptyDir: &corev1.EmptyDirVolumeSource{
@@ -228,6 +232,62 @@ func blockTemplate(block *zjson.Block, hash string, blockKey string, key string,
 			},
 		},
 	}
+
+	// Set default ephemeral storage
+	if storageRequest, err := resource.ParseQuantity("10Gi"); err == nil {
+		template.Container.Resources.Requests[corev1.ResourceEphemeralStorage] = storageRequest
+	}
+	if storageLimit, err := resource.ParseQuantity("80Gi"); err == nil {
+		template.Container.Resources.Limits[corev1.ResourceEphemeralStorage] = storageLimit
+	}
+
+	// CPU resources
+	// Note, setting CPU Limits can cause hard to find performance problems
+	// Based on how the resource limiter works
+	// Best practice here is just setting a request
+	setResourceIfValid(template.Container.Resources.Requests, corev1.ResourceCPU, block.Action.Resources.CPU.Request)
+
+	// Memory resources
+	setResourceIfValid(template.Container.Resources.Requests, corev1.ResourceMemory, block.Action.Resources.Memory.Request)
+	setResourceIfValid(template.Container.Resources.Limits, corev1.ResourceMemory, block.Action.Resources.Memory.Limit)
+
+	// GPU resources
+	if block.Action.Resources.GPU.Count > 0 {
+		gpuCount := strconv.Itoa(block.Action.Resources.GPU.Count)
+		if quantity, err := resource.ParseQuantity(gpuCount); err == nil {
+			template.Container.Resources.Requests["nvidia.com/gpu"] = quantity
+			template.Container.Resources.Limits["nvidia.com/gpu"] = quantity
+		}
+		// Add GPU node affinity based on NodePool name
+		template.Affinity = &corev1.Affinity{
+			NodeAffinity: &corev1.NodeAffinity{
+				RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+					NodeSelectorTerms: []corev1.NodeSelectorTerm{
+						{
+							MatchExpressions: []corev1.NodeSelectorRequirement{
+								{
+									Key:      "karpenter.sh/nodepool",
+									Operator: corev1.NodeSelectorOpIn,
+									Values:   []string{"gpu-pool"},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		// Add toleration for GPU taint
+		template.Tolerations = []corev1.Toleration{
+			{
+				Key:      "nvidia.com/gpu",
+				Operator: corev1.TolerationOpExists,
+				Effect:   corev1.TaintEffectNoSchedule,
+			},
+		}
+	}
+
+	return template
 }
 
 func kanikoTemplate(block *zjson.Block, hash string, organization string, cfg Config) *wfv1.Template {

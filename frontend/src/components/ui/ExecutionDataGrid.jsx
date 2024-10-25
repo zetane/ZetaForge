@@ -15,7 +15,6 @@ import {
   TableExpandRow,
   TableExpandedRow,
   TableExpandHeader,
-  Tag,
 } from "@carbon/react";
 import { ExecutionCardGrid } from "./ExecutionCardGrid";
 import { DeployedPipelineActions } from "./DeployedPipelineActions";
@@ -35,7 +34,7 @@ export const PipelineTableRow = ({ row, getRowProps }) => {
 };
 
 export const ExecutionDataGrid = ({ closeModal }) => {
-  const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
+  const [, setWorkspace] = useImmerAtom(workspaceAtom);
   const [lineage] = useAtom(lineageAtom);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(15);
@@ -81,6 +80,7 @@ export const ExecutionDataGrid = ({ closeModal }) => {
     return Array.from(lineage.entries()).map(([hash, pipeline]) => {
       const deployedAction = pipeline?.deployed ? (
         <DeployedPipelineActions
+          name={pipeline.name}
           uuid={pipeline.id}
           hash={hash}
           configuration={configuration}
