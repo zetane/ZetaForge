@@ -80,6 +80,7 @@ main {
 .ztn--side-nav[aria-expanded=true] {
   inline-size: 100% !important;
   min-inline-size: 160px !important;
+  max-inline-size: 20rem !important;
 }
 
 .cds--side-nav__items {

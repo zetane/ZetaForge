@@ -100,6 +100,8 @@ function ConfigRow({
         radio
         checked={active == selectIndex}
         onSelect={handleSelectConfiguration}
+        id="anvil-config-table"
+        name="anvil-config-table"
       />
       <ConfigCells configuration={configuration} />
       {removeable ? (

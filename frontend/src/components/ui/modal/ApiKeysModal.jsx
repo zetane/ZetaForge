@@ -34,6 +34,7 @@ export default function ApiKeysModal() {
         labelText="Active OpenAI"
         value={openAIApiKeyInput}
         onChange={onApiKeyChange}
+        id="openai-api-key"
       ></TextInput>
     </ClosableModal>
   );

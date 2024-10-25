@@ -546,10 +546,22 @@ export default class Drawflow {
     if (this.node_selected) {
       // update block position in pipeline
       const nodeId = this.node_selected.id.slice(5);
-      this.setPipeline((draft) => {
-        draft.data[nodeId].views.node.pos_x = this.node_selected.offsetLeft;
-        draft.data[nodeId].views.node.pos_y = this.node_selected.offsetTop;
-      });
+      const { pos_x, pos_y } = this.pipeline.data[nodeId].views.node;
+
+      const evalPos = (pos) => {
+        if (typeof pos === "string") return pos;
+        return parseFloat(pos.toFixed(3));
+      }
+      
+      if ( // prevent unnecessary re-render on node clicks
+          evalPos(pos_x) + "px" !== this.ele_selected.style.left ||
+          evalPos(pos_y) + "px" !== this.ele_selected.style.top
+        ) {
+        this.setPipeline((draft) => {
+          draft.data[nodeId].views.node.pos_x = this.node_selected.offsetLeft;
+          draft.data[nodeId].views.node.pos_y = this.node_selected.offsetTop;
+        });
+      }
     }
 
     this.drag = false;

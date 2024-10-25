@@ -11,9 +11,9 @@ const ToggleThemeButton = () => {
     };
 
     return (
-        <div className="ztn--toggle-container ml-2.5 relative flex">
+        <div className="ztn--toggle-container relative flex">
             <Toggle
-                id="ztn--theme-toggle"
+                id="theme-toggle"
                 onToggle={handleToggle}
                 labelA=""
                 labelB=""

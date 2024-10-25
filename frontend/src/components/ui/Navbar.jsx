@@ -1,7 +1,8 @@
 import { modalContentAtom } from "@/atoms/modalAtom";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
-import { Play, Password, Renew, Switcher as SwitchIcon } from "@carbon/icons-react";
+import { Play, Password, Renew, Switcher as SwitchIcon, ChevronDown, ChevronRight } from "@carbon/icons-react";
 import {
+  Button,
   Header,
   HeaderGlobalAction,
   HeaderGlobalBar,
@@ -89,6 +90,8 @@ export default function Navbar({ children }) {
 
   let runButton = (
     <RunPipelineButton modalPopper={modalPopper} action={runAction}>
+      {/* mobile={true} */}
+      {/* <Play size={20} /> */}
       <Play size={20} style={svgOverride} />
     </RunPipelineButton>
   );
@@ -106,130 +109,141 @@ export default function Navbar({ children }) {
   }
 
   return (
-    <>
-      <Header aria-label="ZetaForge" className="flex flex-wrap min-w-[274px]">
-        <SkipToContent />
-        <HeaderMenuButton aria-label={isSideNavExpanded ? 'Close menu' : 'Open menu'} onClick={handleSideNavToggle} isActive={isSideNavExpanded} aria-expanded={isSideNavExpanded} className="h-[47px]" />
-        <HeaderName prefix="" className="select-none">
-          ZetaForge
-        </HeaderName>
-        <HeaderNavigation aria-label="ZetaForge">
-          <HeaderMenu menuLinkName="File" aria-label="File">
-            <NewButton />
-            <SavePipelineButton />
-            <SaveAsPipelineButton />
-            <LoadPipelineButton />
-            <LoadBlockButton />
-          </HeaderMenu>
-          <HeaderMenu menuLinkName="Settings" aria-label="Settings">
-            <HeaderMenuItem onClick={() => modalPopper(<ApiKeysModal />)}>
-              <Password size={16} className="mx-1 align-middle"></Password>
-              <span>API Keys</span>
-            </HeaderMenuItem>
-            <HeaderMenuItem
-              onClick={() => modalPopper(<AnvilConfigurationsModal />)}
-            >
-              Anvil Configurations
-            </HeaderMenuItem>
-          </HeaderMenu>
-          <HeaderMenu menuLinkName="Help" aria-label="Help">
-            <HeaderMenuItem
-              onClick={() => window.open("https://github.com/zetane/zetaforge")}
-            >
-              GitHub
-            </HeaderMenuItem>
-            <HeaderMenuItem
-              onClick={() => window.open("https://discord.gg/zetaforge")}
-            >
-              Discord
-            </HeaderMenuItem>
-            <HeaderMenuItem
-              onClick={() => window.open("https://zetane.com/docs/")}
-            >
-              Docs
-            </HeaderMenuItem>
-          </HeaderMenu>
-        </HeaderNavigation>
-        <SideNav aria-label="Side navigation" expanded={isSideNavExpanded} isPersistent={false} aria-expanded={isSideNavExpanded} onSideNavBlur={handleSideNavToggle} className="ztn--side-nav">
-          <SideNavItems className={!isSideNavExpanded ? "hidden" : ""}>
-            <HeaderSideNavItems>
-              <HeaderMenu menuLinkName="File" aria-label="File">
-                <NewButton />
-                <SavePipelineButton />
-                <SaveAsPipelineButton />
-                <LoadPipelineButton />
-                <LoadBlockButton />
-              </HeaderMenu>
-              <HeaderMenu menuLinkName="Settings" aria-label="Settings">
-                <HeaderMenuItem onClick={() => modalPopper(<ApiKeysModal />)}>
-                  <Password size={16} className="mx-1 align-middle"></Password>
-                  <span>API Keys</span>
-                </HeaderMenuItem>
-                <HeaderMenuItem
-                  onClick={() => modalPopper(<AnvilConfigurationsModal />)}
-                >
-                  Anvil Configurations
-                </HeaderMenuItem>
-              </HeaderMenu>
-              <HeaderMenu menuLinkName="Help" aria-label="Help">
-                <HeaderMenuItem
-                  onClick={() => window.open("https://github.com/zetane/zetaforge")}
-                >
-                  GitHub
-                </HeaderMenuItem>
-                <HeaderMenuItem
-                  onClick={() => window.open("https://discord.gg/zetaforge")}
-                >
-                  Discord
-                </HeaderMenuItem>
-                <HeaderMenuItem
-                  onClick={() => window.open("https://zetane.com/docs/")}
-                >
-                  Docs
-                </HeaderMenuItem>
-              </HeaderMenu>
-            </HeaderSideNavItems>
-          </SideNavItems>
-        </SideNav>
-        <HeaderGlobalBar className="!justify-between pr-[18px]">
-          <ToggleThemeButton />
-          <div className="max-[1102px]:hidden">
-            {runButton}
-            <RunPipelineButton modalPopper={modalPopper} action="Rebuild">
-              <Renew size={20} style={svgOverride} />
-            </RunPipelineButton>
-            <LogsButton />
-            <PipelinesButton />
-          </div>
-          <div className="min-[1103px]:hidden">
-            <HeaderGlobalAction aria-label={isHeaderPanelExpanded ? 'Close options' : 'Open options'} aria-expanded={isHeaderPanelExpanded} isActive={isHeaderPanelExpanded} onClick={handleHeaderPanelToggle} tooltipAlignment="end" id="switcher-button">
-              <SwitchIcon size={20} />
-            </HeaderGlobalAction>
-          </div>
-        </HeaderGlobalBar>
-        <HeaderPanel expanded={isHeaderPanelExpanded} onHeaderPanelFocus={handleHeaderPanelToggle} className="z-[9000]">
-          <Switcher aria-label="Switcher Container" expanded={isHeaderPanelExpanded} className="items-end">
-            <div className="pr-[18px]">
+    <Header aria-label="ZetaForge" className="flex flex-wrap min-w-[274px]">
+      <SkipToContent />
+      {/* <HeaderMenuButton aria-label={isSideNavExpanded ? 'Close menu' : 'Open menu'} onClick={handleSideNavToggle} isActive={isSideNavExpanded} aria-expanded={isSideNavExpanded} className="h-[47px]" /> */}
+      <HeaderName prefix="" className="select-none">
+        ZetaForge
+        <Button
+          renderIcon={isSideNavExpanded ? ChevronRight : ChevronDown}
+          className="ztn--dropdown-menu-btn min-[1056px]:hidden"
+          kind="ghost"
+          onClick={handleSideNavToggle} 
+        />
+      </HeaderName>
+      <HeaderNavigation aria-label="ZetaForge">
+        <HeaderMenu menuLinkName="File" aria-label="File">
+          <NewButton />
+          <SavePipelineButton />
+          <SaveAsPipelineButton />
+          <LoadPipelineButton />
+          <LoadBlockButton />
+        </HeaderMenu>
+        <HeaderMenu menuLinkName="Settings" aria-label="Settings">
+          <HeaderMenuItem onClick={() => modalPopper(<ApiKeysModal />)}>
+            <Password size={16} className="mx-1 align-middle"></Password>
+            <span>API Keys</span>
+          </HeaderMenuItem>
+          <HeaderMenuItem
+            onClick={() => modalPopper(<AnvilConfigurationsModal />)}
+          >
+            Anvil Configurations
+          </HeaderMenuItem>
+          <HeaderMenuItem onClick={(e) => e.preventDefault()}>
+            <ToggleThemeButton />
+          </HeaderMenuItem>
+        </HeaderMenu>
+        <HeaderMenu menuLinkName="Help" aria-label="Help">
+          <HeaderMenuItem
+            onClick={() => window.open("https://github.com/zetane/zetaforge")}
+          >
+            GitHub
+          </HeaderMenuItem>
+          <HeaderMenuItem
+            onClick={() => window.open("https://discord.gg/zetaforge")}
+          >
+            Discord
+          </HeaderMenuItem>
+          <HeaderMenuItem
+            onClick={() => window.open("https://zetane.com/docs/")}
+          >
+            Docs
+          </HeaderMenuItem>
+        </HeaderMenu>
+      </HeaderNavigation>
+      <SideNav aria-label="Side navigation" expanded={isSideNavExpanded} isPersistent={false} aria-expanded={isSideNavExpanded} onSideNavBlur={handleSideNavToggle} className="ztn--side-nav">
+        <SideNavItems className={!isSideNavExpanded ? "hidden" : ""}>
+          <HeaderSideNavItems>
+            <HeaderMenu menuLinkName="File" aria-label="File">
+              <NewButton />
+              <SavePipelineButton />
+              <SaveAsPipelineButton />
+              <LoadPipelineButton />
+              <LoadBlockButton />
+            </HeaderMenu>
+            <HeaderMenu menuLinkName="Settings" aria-label="Settings">
+              <HeaderMenuItem onClick={() => modalPopper(<ApiKeysModal />)}>
+                <Password size={16} className="mx-1 align-middle"></Password>
+                <span>API Keys</span>
+              </HeaderMenuItem>
+              <HeaderMenuItem
+                onClick={() => modalPopper(<AnvilConfigurationsModal />)}
+              >
+                Anvil Configurations
+              </HeaderMenuItem>
+              <HeaderMenuItem onClick={(e) => e.preventDefault()}>
+                <ToggleThemeButton />
+              </HeaderMenuItem>
+            </HeaderMenu>
+            <HeaderMenu menuLinkName="Help" aria-label="Help">
+              <HeaderMenuItem
+                onClick={() => window.open("https://github.com/zetane/zetaforge")}
+              >
+                GitHub
+              </HeaderMenuItem>
+              <HeaderMenuItem
+                onClick={() => window.open("https://discord.gg/zetaforge")}
+              >
+                Discord
+              </HeaderMenuItem>
+              <HeaderMenuItem
+                onClick={() => window.open("https://zetane.com/docs/")}
+              >
+                Docs
+              </HeaderMenuItem>
+            </HeaderMenu>
+          </HeaderSideNavItems>
+        </SideNavItems>
+      </SideNav>
+      {/* <HeaderGlobalBar className="!justify-center pr-[18px]"> */}
+      <HeaderGlobalBar className="!justify-end pr-[18px]">
+        {/* <ToggleThemeButton /> */}
+        <div className="max-[1102px]:hidden">
+          {runButton}
+          <RunPipelineButton modalPopper={modalPopper} action="Rebuild">
+            <Renew size={20} style={svgOverride} />
+          </RunPipelineButton>
+          <LogsButton />
+          <PipelinesButton />
+        </div>
+        <div className="min-[1103px]:hidden">
+          <HeaderGlobalAction aria-label="ZetaForge Options" aria-expanded={isHeaderPanelExpanded} isActive={isHeaderPanelExpanded} onClick={handleHeaderPanelToggle} tooltipAlignment="end" id="switcher-button">
+            <SwitchIcon size={20} />
+          </HeaderGlobalAction>
+        </div>
+      </HeaderGlobalBar>
+      <HeaderPanel expanded={isHeaderPanelExpanded} onHeaderPanelFocus={handleHeaderPanelToggle} className="z-[9000]">
+        <Switcher aria-label="Switcher Container" expanded={isHeaderPanelExpanded} className="grid grid-cols-2 max-w-[254px] place-items-center">
+            <div className="p-4">
               {runButton}
             </div>
-            <SwitcherDivider />
-            <div className="pr-[18px]">
-              <RunPipelineButton modalPopper={modalPopper} action="Rebuild">
-                <Renew size={20} style={svgOverride} />
+         
+            <div className="p-4">
+              <RunPipelineButton modalPopper={modalPopper} action="Rebuild" mobile={true}>
+                <Renew size={20} />
               </RunPipelineButton>
             </div>
-            <SwitcherDivider />
-            <div className="pr-[18px]">
-              <LogsButton />
+       
+            <div className="p-4">
+              <LogsButton mobile={true} />
             </div>
-            <SwitcherDivider />
-            <div className="pr-[18px]">
-              <PipelinesButton />
+
+            <div className="p-4">
+              <PipelinesButton mobile={true} />
             </div>
-          </Switcher>
-        </HeaderPanel>
-        {children}
-      </Header>
-    </>
+        </Switcher>
+      </HeaderPanel>
+      {children}
+    </Header>
   );
 }

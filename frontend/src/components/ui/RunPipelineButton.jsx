@@ -7,7 +7,7 @@ import { trpc } from "@/utils/trpc";
 import { Button } from "@carbon/react";
 import { useAtom } from "jotai";
 import { useImmerAtom } from "jotai-immer";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { uuidv7 } from "uuidv7";
 import ClosableModal from "./modal/ClosableModal";
 import { workspaceAtom } from "@/atoms/pipelineAtom";
@@ -18,7 +18,7 @@ import {
 } from "@/hooks/useLoadPipeline";
 import { ping } from "@/client/anvil";
 
-export default function RunPipelineButton({ children, action }) {
+export default function RunPipelineButton({ children, action, mobile }) {
   const [editor] = useAtom(drawflowEditorAtom);
   const [pipeline] = useImmerAtom(pipelineAtom);
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
@@ -30,6 +30,7 @@ export default function RunPipelineButton({ children, action }) {
   const executePipeline = trpc.executePipeline.useMutation();
   const queryClient = useQueryClient();
   const loadExecution = useLoadExecution();
+  const buttonRef = useRef(null);
 
   const runPipeline = async () => {
     if (!validatePipelineExists()) return;
@@ -147,17 +148,39 @@ export default function RunPipelineButton({ children, action }) {
     margin: "5px",
   };
 
+  const handleClick = () => {
+    if (buttonRef?.current && !buttonRef?.current.disabled) {
+      buttonRef.current.click();
+    }
+  }
+
   return (
     <>
-      <Button
-        style={styles}
-        size="sm"
-        onClick={() => runPipeline()}
-        disabled={!workspace?.connected || clickedRun}
-      >
-        <span>{action}</span>
-        {children}
-      </Button>
+      {mobile ? (
+        <div className="flex flex-col items-center gap-4 cds--btn p-0 group">
+          <Button
+            // style={styles}
+            size="sm"
+            className="p-1.5 group-hover:bg-[var(--cds-button-primary-hover)]"
+            onClick={() => runPipeline()}
+            disabled={!workspace?.connected || clickedRun}
+            ref={buttonRef}
+          >
+            {children}
+          </Button>
+          <span onClick={() => handleClick()}>{action}</span>
+        </div>
+      ) : (
+        <Button
+          style={styles}
+          size="sm"
+          onClick={() => runPipeline()}
+          disabled={!workspace?.connected || clickedRun}
+        >
+          <span>{action}</span>
+          {children}
+        </Button>
+      )}
 
       <ClosableModal
         modalHeading="The following error(s) occurred:"
