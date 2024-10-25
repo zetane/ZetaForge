@@ -78,7 +78,7 @@ export default class Drawflow {
     this.container.addEventListener("mouseup", this.dragEnd.bind(this));
     this.container.addEventListener("mousemove", this.position.bind(this));
     this.container.addEventListener("mousedown", this.click.bind(this));
-    this.container.addEventListener("mouseleave", (_) => {
+    this.container.addEventListener("mouseleave", () => {
       this.editor_selected = false;
     });
 

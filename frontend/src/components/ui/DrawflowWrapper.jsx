@@ -1,6 +1,6 @@
 import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
 import { blockEditorIdAtom, isBlockEditorOpenAtom } from "@/atoms/editorAtom";
-import { pipelineAtom, workspaceAtom } from "@/atoms/pipelineAtom";
+import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { pipelineConnectionsAtom } from "@/atoms/pipelineConnectionsAtom";
 import Drawflow from "@/components/ZetaneDrawflowEditor";
 import BlockGenerator from "@/components/ui/blockGenerator/BlockGenerator";
@@ -77,7 +77,6 @@ export default function DrawflowWrapper() {
   pipelineRef.current = pipeline;
 
   const copyPipeline = trpc.copyPipeline.useMutation();
-  const getBlockPath = trpc.getBlockPath.useMutation();
 
   const handleDrawflow = useCallback((node) => {
     if (!node) {
@@ -140,7 +139,7 @@ export default function DrawflowWrapper() {
     if (editor) {
       editor.syncConnections(newConnections);
     }
-    setPipelineConnections((draft) => (draft = newConnections));
+    setPipelineConnections(() => newConnections);
 
     const syncData = async () => {
       try {

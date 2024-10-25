@@ -30,11 +30,8 @@ export default function WorkspaceFetcher() {
     },
     refetchInterval: workspace.fetchInterval,
   });
-  const {
-    isPending: pingPending,
-    error: pingError,
-    data: pingData,
-  } = useQuery({
+
+  useQuery({
     queryKey: ["ping"],
     queryFn: async () => {
       try {
@@ -53,7 +50,6 @@ export default function WorkspaceFetcher() {
         d.connected = true;
       }),
   });
-
   const getDetails = async (key, existing, configuration, execution) => {
     const fetchedExec = await fetchExecutionDetails(configuration, execution);
     const loadedExecution = await loadExecution(fetchedExec, configuration);
