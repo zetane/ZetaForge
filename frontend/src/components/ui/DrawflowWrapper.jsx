@@ -12,6 +12,7 @@ import { useImmerAtom } from "jotai-immer";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLoadCorePipeline } from "@/hooks/useLoadPipeline";
 import { createConnections } from "@/utils/createConnections";
+import { useWorkspace } from "@/hooks/useWorkspace";
 
 const launchDrawflow = (
   parentDomRef,
@@ -59,6 +60,7 @@ export default function DrawflowWrapper() {
   const pipelineRef = useRef(null);
   const nodeRefs = useRef({});
   const loadPipeline = useLoadCorePipeline();
+  const { addPipeline } = useWorkspace();
 
   const addNodeRefs = (nodeList) => {
     nodeRefs.current = { ...nodeRefs.current, ...nodeList };
@@ -77,7 +79,6 @@ export default function DrawflowWrapper() {
   pipelineRef.current = pipeline;
 
   const copyPipeline = trpc.copyPipeline.useMutation();
-  const getBlockPath = trpc.getBlockPath.useMutation();
 
   const handleDrawflow = useCallback((node) => {
     if (!node) {
@@ -95,6 +96,8 @@ export default function DrawflowWrapper() {
       setEditor(constructedEditor);
     }
   }, []);
+
+  console.log("rerender");
 
   useEffect(() => {
     const blocks = pipeline?.data || {};
@@ -203,12 +206,13 @@ export default function DrawflowWrapper() {
     addBlockToPipeline(block);
   };
 
-  const dropPipeline = (pipelineData) => {
+  const dropPipeline = async (pipelineData) => {
     const pipelineJson = JSON.parse(pipelineData);
     const { specs, path } = pipelineJson;
-    const newId = generateId(pipeline.id);
+    const newId = generateId(specs.id);
     specs.id = newId;
-    loadPipeline(specs, path);
+    const pipeline = await loadPipeline(specs, path);
+    addPipeline(pipeline);
   };
 
   const setBlockPos = (editor, block, posX, posY) => {

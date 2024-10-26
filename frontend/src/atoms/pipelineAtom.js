@@ -1,7 +1,7 @@
 import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
-import { atomWithImmer, withImmer } from "jotai-immer";
-import rfdc from "rfdc";
+import { withImmer } from "jotai-immer";
+import { produce } from "immer";
 import { sha1 } from "js-sha1";
 import { generateId } from "@/utils/blockUtils";
 
@@ -19,6 +19,7 @@ export const pipelineFactory = (cachePath, pipeline = null) => {
   let defaultPipeline = {
     id: id,
     name: id,
+    key: id + ".",
     saveTime: null,
     path: tempFile,
     data: {},
@@ -39,51 +40,61 @@ export const pipelinesAtom = atom({});
 const defaultWorkspace = {
   tabs: {},
   active: null,
-  fetchInterval: 3000,
+  fetchInterval: 10000,
   offset: 0,
   limit: 15,
   connected: false,
 };
 
-export const workspaceAtom = atomWithStorage(
+export const workspaceAtom = atom(defaultWorkspace);
+
+/*
+export const workspaceAtom = atom(
   "workspace",
   defaultWorkspace,
   undefined,
   { getOnInit: true },
 );
+*/
 
 export const initializeWorkspaceAtom = atom(
   null,
   async (get, set, { cachePath }) => {
     const initPipeline = pipelineFactory(cachePath);
     const emptyKey = `${initPipeline.id}.`;
-    const tabMap = { [emptyKey]: {} };
+    const tabMap = { [emptyKey]: initPipeline };
 
     set(workspaceAtom, {
       ...defaultWorkspace,
       tabs: tabMap,
       active: emptyKey,
     });
-
-    set(pipelinesAtom, { [emptyKey]: initPipeline });
   },
 );
+
+// Data structure here is a local workspace that is persisted to user browser
+// workspace.tabs has user working state
+// pipelines have data from the server
+// these get synced when the server updates data in PipelinesFetcher
+
+// pipeline is a derived atom that reads and writes to the workspace
 
 const pipelineAtomWithImmer = atom(
   (get) => {
     const workspace = get(workspaceAtom);
-    const pipelines = get(pipelinesAtom);
-    return workspace.active ? pipelines[workspace.active] : null;
+    return workspace.active ? workspace.tabs[workspace.active] : null;
   },
   (get, set, newPipeline) => {
-    const [pipelines, setPipelines] = atomWithImmer(pipelinesAtom);
-    let key = `${newPipeline.id}.`;
-    if (newPipeline.record) {
-      key = `${newPipeline.id}.${newPipeline.record.Execution}`;
-    }
-    setPipelines((draft) => {
-      draft[key] = newPipeline;
+    const workspace = get(workspaceAtom);
+    const key = newPipeline.record
+      ? `${newPipeline.id}.${newPipeline.record.Execution}`
+      : `${newPipeline.id}.`;
+
+    const updatedWorkspace = produce(workspace, (draft) => {
+      draft.tabs[key] = newPipeline;
     });
+
+    set(workspaceAtom, updatedWorkspace);
   },
 );
 
@@ -103,36 +114,6 @@ export const getPipelineFormat = (pipeline) => {
     id: pipeline.id,
     pipeline: pipeline.data,
   };
-};
-
-export const deletePipeline = (key) => {
-  const [, setPipelines] = atomWithImmer(pipelinesAtom);
-
-  setPipelines((draft) => {
-    delete draft[key];
-  });
-};
-
-export const deleteTab = (key) => {
-  const [, setWorkspace] = atomWithImmer(workspaceAtom);
-
-  setWorkspace((draft) => {
-    delete draft.tabs[key];
-  });
-};
-
-export const addPipeline = (newPipeline) => {
-  const [workspace, setWorkspace] = atomWithImmer(workspaceAtom);
-  const [pipelines, setPipelines] = atomWithImmer(pipelinesAtom);
-
-  setPipelines((draft) => {
-    draft[newPipeline.key] = newPipeline;
-  });
-
-  setWorkspace((draft) => {
-    draft.tabs[newPipeline.key] = {};
-    draft.active = newPipeline.key;
-  });
 };
 
 export const lineageAtom = atom((get) => {

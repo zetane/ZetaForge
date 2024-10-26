@@ -17,7 +17,7 @@ export default function WorkspaceTabs() {
     const pipelineTabs = [];
     let index = 0;
     Object.keys(workspace.tabs).forEach((key) => {
-      const pipeline = workspace.pipelines[key];
+      const pipeline = workspace.tabs[key];
       const label = pipeline?.name;
       pipelineTabs.push({ id: key, label: label, panel: <TabPanel /> });
 
@@ -31,21 +31,23 @@ export default function WorkspaceTabs() {
 
   const handleTabChange = (evt) => {
     const index = evt.selectedIndex;
-    const key = renderedTabs[index]?.id;
+    const newTab = renderedTabs[index]?.id;
+    const current = workspace.active;
 
     setWorkspace((draft) => {
-      //const pos = { x: editor?.canvas_x, y: editor?.canvas_y };
-      //if (!draft.canvas) {
-      //  draft.canvas = {};
-      //}
-      //draft.canvas[key] = { zoom: editor?.zoom, pos: pos };
-      draft.active = key;
+      const pos = { x: editor?.canvas_x, y: editor?.canvas_y };
+      if (!draft.canvas) {
+        draft.canvas = {};
+      }
+      draft.canvas[current] = { zoom: editor?.zoom, pos: pos };
+
+      draft.active = newTab;
     });
 
-    if (editor && workspace.canvas[key]) {
-      editor.zoom = workspace.canvas[key]?.zoom;
-      editor.canvas_x = workspace.canvas[key]?.pos.x;
-      editor.canvas_y = workspace.canvas[key]?.pos.y;
+    if (editor && workspace.canvas[newTab]) {
+      editor.zoom = workspace.canvas[newTab]?.zoom;
+      editor.canvas_x = workspace.canvas[newTab]?.pos.x;
+      editor.canvas_y = workspace.canvas[newTab]?.pos.y;
       editor.zoom_refresh(); // Refresh after setting zoom, *required.
     }
   };
@@ -62,7 +64,6 @@ export default function WorkspaceTabs() {
       const key = deleteTab.id;
       const { [key]: _, ...filteredTabs } = workspace.tabs;
       const newTabArray = Object.keys(filteredTabs);
-      const isLocal = key.split(".")[1] == "";
 
       setWorkspace((draft) => {
         // make the same tab we're deleting active, unless it's at the end, in which case we get -1
@@ -78,9 +79,6 @@ export default function WorkspaceTabs() {
 
         draft.tabs = filteredTabs;
         draft.active = newTabArray[deleteIndex];
-        if (isLocal) {
-          delete draft.pipelines[key];
-        }
       });
     }
   };

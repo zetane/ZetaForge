@@ -36,7 +36,6 @@ const BlockGenerator = ({
 }) => {
   const [pipeline, setFocusAction] = useImmerAtom(pipelineAtom);
   const [editor, _s] = useAtom(drawflowEditorAtom);
-  const [configuration] = useAtom(activeConfigurationAtom);
   const [logs, _] = useAtom(logsAtom);
 
   let styles = {

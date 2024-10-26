@@ -1,7 +1,6 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import ClosableModal from "./modal/ClosableModal";
-import { addPipeline, lineageAtom, workspaceAtom } from "@/atoms/pipelineAtom";
-import { useImmerAtom } from "jotai-immer";
+import { lineageAtom } from "@/atoms/pipelineAtom";
 import { useAtom } from "jotai";
 import {
   DataTable,
@@ -23,6 +22,8 @@ import { PipelineDeployButton } from "./PipelineDeployButton";
 import { useSyncExecutionResults } from "@/hooks/useExecutionResults";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { useLoadExecution } from "@/hooks/useLoadPipeline";
+import { useQueryClient } from "@tanstack/react-query";
+import { useWorkspace } from "@/hooks/useWorkspace";
 
 export const PipelineTableRow = ({ row, getRowProps }) => {
   return (
@@ -41,6 +42,16 @@ export const ExecutionDataGrid = ({ closeModal }) => {
   const syncResults = useSyncExecutionResults();
   const [configuration] = useAtom(activeConfigurationAtom);
   const loadExecution = useLoadExecution();
+  const queryClient = useQueryClient();
+  const { addPipeline } = useWorkspace();
+
+  useEffect(() => {
+    if (configuration?.anvil?.host) {
+      queryClient.invalidateQueries({
+        queryKey: ["pipelines", configuration?.anvil?.host],
+      });
+    }
+  }, [configuration?.anvil?.host]);
 
   const setPagination = ({ page, pageSize }) => {
     setCurrentPage(page);

@@ -1,5 +1,5 @@
 import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
-import { addPipeline, deleteTab, pipelineAtom } from "@/atoms/pipelineAtom";
+import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { useQueryClient } from "@tanstack/react-query";
 import { mixpanelAtom } from "@/atoms/mixpanelAtom";
 import generateSchema from "@/utils/schemaValidation";
@@ -12,11 +12,8 @@ import { uuidv7 } from "uuidv7";
 import ClosableModal from "./modal/ClosableModal";
 import { workspaceAtom } from "@/atoms/pipelineAtom";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
-import {
-  useLoadExecution,
-  useLoadServerPipeline,
-} from "@/hooks/useLoadPipeline";
-import { ping } from "@/client/anvil";
+import { useLoadExecution } from "@/hooks/useLoadPipeline";
+import { useWorkspace } from "@/hooks/useWorkspace";
 
 export default function RunPipelineButton({ children, action }) {
   const [editor] = useAtom(drawflowEditorAtom);
@@ -30,6 +27,7 @@ export default function RunPipelineButton({ children, action }) {
   const executePipeline = trpc.executePipeline.useMutation();
   const queryClient = useQueryClient();
   const loadExecution = useLoadExecution();
+  const { addPipeline } = useWorkspace();
 
   const runPipeline = async () => {
     if (!validatePipelineExists()) return;

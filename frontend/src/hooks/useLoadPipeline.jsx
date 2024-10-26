@@ -129,7 +129,7 @@ function sortSpecsKeys(pipeline) {
 }
 
 export const useLoadServerPipeline = () => {
-  const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
+  const [workspace] = useImmerAtom(workspaceAtom);
 
   const loadPipeline = async (serverPipeline, configuration) => {
     if (!serverPipeline) {
@@ -141,7 +141,7 @@ export const useLoadServerPipeline = () => {
 
     const localKey = serverPipeline.Uuid + ".";
     let path = `${await window.cache.local()}${serverPipeline.Uuid}`;
-    const local = workspace.pipelines[localKey];
+    const local = workspace.tabs[localKey];
     // Need to check if we've loaded a local path and use it for the history
     if (local && local.path) {
       path = local.path;
@@ -182,7 +182,7 @@ export const useLoadServerPipeline = () => {
 };
 
 export const useLoadExecution = () => {
-  const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
+  const [workspace] = useImmerAtom(workspaceAtom);
 
   const loadExecution = async (execution, configuration) => {
     if (!execution) {
@@ -200,7 +200,7 @@ export const useLoadExecution = () => {
 
     let path = `${await window.cache.local()}${executionData.id}`;
     const localKey = execution.Uuid + ".";
-    const local = workspace.pipelines[localKey];
+    const local = workspace.tabs[localKey];
     // Need to check if we've loaded a local path and use it for the history
     if (local && local.path) {
       path = local.path;
@@ -265,8 +265,6 @@ export const useLoadCorePipeline = () => {
       await window.cache.local(),
       loadedPipeline,
     );
-    const key = pipelineKey(newPipeline.id, null);
-
     return newPipeline;
   };
 

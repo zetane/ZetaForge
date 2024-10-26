@@ -18,20 +18,7 @@ export default function WorkspaceFetcher() {
   const loadExecution = useLoadExecution();
   const [configuration] = useAtom(activeConfigurationAtom);
   const syncResults = useSyncExecutionResults();
-  const queryKey = ["pipelines", configuration?.anvil?.host];
 
-  // Main polling function
-  const {
-    pending,
-    error,
-    data: pipelinesData,
-  } = useQuery({
-    queryKey: queryKey,
-    queryFn: async () => {
-      return await getAllPipelines(configuration);
-    },
-    refetchInterval: 5000,
-  });
   const {
     isPending: pingPending,
     error: pingError,
@@ -56,13 +43,16 @@ export default function WorkspaceFetcher() {
       }),
   });
 
-  const getDetails = async (key, existing, configuration, execution) => {
+  const syncWorkspace = async (key, existing, configuration, execution) => {
     const fetchedExec = await fetchExecutionDetails(configuration, execution);
     const loadedExecution = await loadExecution(fetchedExec, configuration);
     const isActive = workspace.tabs[key];
     const merged = { ...existing, ...loadedExecution };
     setPipelines((draft) => {
       draft[key] = merged;
+    });
+    setWorkspace((draft) => {
+      draft.tabs[key] = merged;
     });
     if (isActive) {
       try {
@@ -87,11 +77,27 @@ export default function WorkspaceFetcher() {
         const id = key.split(".")[1];
         return {
           queryKey: ["execution", key],
-          queryFn: () => getDetails(key, pipeline, configuration, id),
+          queryFn: () => syncWorkspace(key, pipeline, configuration, id),
           enabled: !pending && !error,
-          refetchInterval: workspace?.fetchInterval,
+          refetchInterval: 2000,
         };
       }),
+  });
+
+  // Main polling function
+  const queryKey = ["pipelines", configuration?.anvil?.host];
+
+  const {
+    pending,
+    error,
+    data: pipelinesData,
+  } = useQuery({
+    queryKey: queryKey,
+    queryFn: async () => {
+      return await getAllPipelines(configuration);
+    },
+    refetchInterval: 20000,
+    enabled: true,
   });
 
   // Once we poll, we write the whole data store
