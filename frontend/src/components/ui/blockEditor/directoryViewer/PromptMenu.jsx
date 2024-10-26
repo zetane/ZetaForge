@@ -11,7 +11,7 @@ import { FileHandleContext } from "./DirectoryViewer";
 import { Copy, TrashCan } from "@carbon/icons-react";
 import OverflowMenuIconItem from "../../OverflowMenuIconItem";
 
-export default function PromptMenu({ index, prompt }) {
+export default function PromptMenu({ index, prompt, isFirst }) {
   const [pipeline] = useAtom(pipelineAtom);
   const [blockId] = useAtom(blockEditorIdAtom);
   const chatHistory = useContext(ChatHistoryContext);
@@ -19,8 +19,6 @@ export default function PromptMenu({ index, prompt }) {
   const fileBuffer = useContext(FileBufferContext);
   const fileHandle = useContext(FileHandleContext);
   const compile = useCompileComputation();
-
-  const isLast = index === 0;
 
   const handleDelete = async () => {
     chatHistory.deletePrompt(index);
@@ -51,7 +49,7 @@ export default function PromptMenu({ index, prompt }) {
       <OverflowMenuIconItem
         className="disabled-focus"
         icon={TrashCan}
-        disabled={isLast}
+        disabled={isFirst}
         onClick={handleDelete}
       >
         Delete
