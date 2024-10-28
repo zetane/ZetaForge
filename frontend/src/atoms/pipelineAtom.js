@@ -48,14 +48,14 @@ const defaultWorkspace = {
 
 export const workspaceAtom = atom(defaultWorkspace);
 
-/*
-export const workspaceAtom = atom(
+/*export const workspaceAtom = atomWithStorage(
   "workspace",
   defaultWorkspace,
   undefined,
-  { getOnInit: true },
-);
-*/
+  {
+    getOnInit: true,
+  },
+);*/
 
 export const initializeWorkspaceAtom = atom(
   null,

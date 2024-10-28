@@ -16,7 +16,7 @@ export default function WorkspaceTabs() {
   useEffect(() => {
     const pipelineTabs = [];
     let index = 0;
-    Object.keys(workspace.tabs).forEach((key) => {
+    Object.keys(workspace?.tabs ?? {}).forEach((key) => {
       const pipeline = workspace.tabs[key];
       const label = pipeline?.name;
       pipelineTabs.push({ id: key, label: label, panel: <TabPanel /> });

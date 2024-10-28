@@ -37,10 +37,13 @@ export default function WorkspaceFetcher() {
     },
     refetchInterval: 2000,
     retry: false,
-    onSuccess: () =>
-      setWorkspace((d) => {
-        d.connected = true;
-      }),
+    onSuccess: () => {
+      if (!workspace.connected) {
+        setWorkspace((d) => {
+          d.connected = true;
+        });
+      }
+    },
   });
 
   const syncWorkspace = async (key, existing, configuration, execution) => {
@@ -66,7 +69,7 @@ export default function WorkspaceFetcher() {
 
   // Polls for executions
   useQueries({
-    queries: Object.keys(workspace.tabs)
+    queries: Object.keys(workspace?.tabs ?? {})
       ?.filter((key) => {
         const pipeline = pipelines[key];
         const existingStatus = pipeline?.record?.Status;
