@@ -35,11 +35,14 @@ export default function PromptList() {
           )}
         </div>
         <div className="flex grow flex-col-reverse gap-2 overflow-y-auto overflow-x-hidden px-2">
-          {previousPrompt.reverse().map((prompt, index) => (
-            <Prompt key={index} index={index}>
-              {prompt}
-            </Prompt>
-          ))}
+          {previousPrompt.reverse().map((prompt, index) => {
+            const isFirst = index === previousPrompt.length - 1;
+            return (
+              <Prompt key={index} index={index} isFirst={isFirst}>
+                {prompt}
+              </Prompt>
+            );
+          })}
         </div>
       </div>
     </div>
