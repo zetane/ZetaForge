@@ -62,7 +62,7 @@ export const ExecutionDataGrid = ({ closeModal }) => {
     const serverExec = await loadExecution(execution, configuration);
     addPipeline(serverExec);
     try {
-      await syncResults(key);
+      await syncResults(serverExec.key);
     } catch (error) {
       console.error("Sync failed: ", error);
     }

@@ -118,8 +118,11 @@ const menuTemplate: Electron.MenuItemConstructorOptions[] = [
   },
 ];
 
+ipcMain.handle("get-cache", () => {
+  return absoluteCachePath;
+});
+
 async function createWindow() {
-  console.log(join(process.env.VITE_PUBLIC, "zetane.png"));
   win = new BrowserWindow({
     title: "ZetaForge",
     icon: join(process.env.VITE_PUBLIC, "zetane.png"),
@@ -140,10 +143,6 @@ async function createWindow() {
   // Pass the menuTemplate
   const menu = Menu.buildFromTemplate(menuTemplate);
   Menu.setApplicationMenu(menu);
-
-  ipcMain.handle("get-cache", () => {
-    return absoluteCachePath;
-  });
 
   if (url) {
     // electron-vite-vue#298

@@ -1,9 +1,9 @@
 import { atom } from "jotai";
-import { atomWithStorage } from "jotai/utils";
 import { withImmer } from "jotai-immer";
 import { produce } from "immer";
 import { sha1 } from "js-sha1";
 import { generateId } from "@/utils/blockUtils";
+import { db } from "@/utils/db";
 
 export const pipelineKey = (id, data) => {
   let hash = "";
@@ -60,15 +60,27 @@ export const workspaceAtom = atom(defaultWorkspace);
 export const initializeWorkspaceAtom = atom(
   null,
   async (get, set, { cachePath }) => {
+    try {
+      // Try to get saved state first
+      const saved = await db.workspace.get("currentState");
+      if (saved?.data) {
+        set(workspaceAtom, saved.data);
+        return;
+      }
+    } catch (err) {
+      console.error("Failed to load saved workspace:", err);
+    }
     const initPipeline = pipelineFactory(cachePath);
     const emptyKey = `${initPipeline.id}.`;
     const tabMap = { [emptyKey]: initPipeline };
-
-    set(workspaceAtom, {
+    const initialWorkspace = {
       ...defaultWorkspace,
       tabs: tabMap,
       active: emptyKey,
-    });
+    };
+
+    set(workspaceAtom, initialWorkspace);
+    await db.workspace.put({ id: "currentState", data: initialWorkspace });
   },
 );
 
@@ -95,6 +107,7 @@ const pipelineAtomWithImmer = atom(
     });
 
     set(workspaceAtom, updatedWorkspace);
+    db.workspace.put({ id: "currentState", data: updatedWorkspace });
   },
 );
 

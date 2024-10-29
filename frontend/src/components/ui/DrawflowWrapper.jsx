@@ -97,8 +97,6 @@ export default function DrawflowWrapper() {
     }
   }, []);
 
-  console.log("rerender");
-
   useEffect(() => {
     const blocks = pipeline?.data || {};
     const nodes = Object.entries(blocks).map(([key, block]) => {

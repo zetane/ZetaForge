@@ -60,17 +60,14 @@ export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
 
   const fromBlockIndex = await getBlockIndex([bufferPath]);
 
-  let toBlockIndex = {};
-  if (await fileExists(writePipelineDirectory)) {
-    toBlockIndex = await getBlockIndex([writePipelineDirectory]);
-  } else {
+  if (!(await fileExists(writePipelineDirectory))) {
     await fs.mkdir(writePipelineDirectory, { recursive: true });
   }
 
   // Gets pipeline specs from the specs coming from the graph
   // Submitted by the client
   const newPipelineBlocks = getPipelineBlocks(pipelineSpecs);
-  const existingPipelineBlocks = (await fileExists(pipelineSpecsPath))
+  (await fileExists(pipelineSpecsPath))
     ? await readPipelineBlocks(pipelineSpecsPath)
     : new Set();
 
@@ -124,7 +121,7 @@ async function getBlockIndex(blockDirectories) {
     } catch (error) {
       if (error.code === "ENOENT") {
         const message = `Directory or file does not exist: ${error.path}`;
-        logger.error(error, message);
+        //logger.error(error, message);
       } else {
         // Handle other types of errors or rethrow the error
         throw error;

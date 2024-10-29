@@ -10,6 +10,7 @@ import { useAtom } from "jotai";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { fetchExecutionDetails, getAllPipelines, ping } from "@/client/anvil";
 import { useSyncExecutionResults } from "@/hooks/useExecutionResults";
+import { produce } from "immer";
 
 export default function WorkspaceFetcher() {
   const [pipelines, setPipelines] = useAtom(pipelinesAtom);
@@ -51,21 +52,39 @@ export default function WorkspaceFetcher() {
     const loadedExecution = await loadExecution(fetchedExec, configuration);
     const isActive = workspace.tabs[key];
     const merged = { ...existing, ...loadedExecution };
-    setPipelines((draft) => {
-      draft[key] = merged;
-    });
     setWorkspace((draft) => {
       draft.tabs[key] = merged;
     });
+
+    const updatedPipelines = produce(pipelines, (draft) => {
+      draft[key] = merged;
+    });
+    setPipelines(updatedPipelines);
     if (isActive) {
       try {
-        await syncResults(key);
+        syncResults(key);
       } catch (err) {
         console.error("Failed to sync results: ", err);
       }
     }
     return merged;
   };
+
+  // Main polling function
+  const queryKey = ["pipelines", configuration?.anvil?.host];
+
+  const {
+    pending,
+    error,
+    data: pipelinesData,
+  } = useQuery({
+    queryKey: queryKey,
+    queryFn: async () => {
+      return await getAllPipelines(configuration);
+    },
+    refetchInterval: 20000,
+    enabled: true,
+  });
 
   // Polls for executions
   useQueries({
@@ -85,22 +104,6 @@ export default function WorkspaceFetcher() {
           refetchInterval: 2000,
         };
       }),
-  });
-
-  // Main polling function
-  const queryKey = ["pipelines", configuration?.anvil?.host];
-
-  const {
-    pending,
-    error,
-    data: pipelinesData,
-  } = useQuery({
-    queryKey: queryKey,
-    queryFn: async () => {
-      return await getAllPipelines(configuration);
-    },
-    refetchInterval: 20000,
-    enabled: true,
   });
 
   // Once we poll, we write the whole data store

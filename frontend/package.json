@@ -35,6 +35,8 @@
     "@types/source-map-support": "^0.5.10",
     "@uiw/codemirror-theme-github": "^4.21.25",
     "allotment": "^1.20.2",
+    "dexie": "^4.0.9",
+    "dexie-react-hooks": "^1.1.7",
     "electron-trpc": "^0.5.2",
     "electron-updater": "^6.1.1",
     "getmac": "^6.6.0",

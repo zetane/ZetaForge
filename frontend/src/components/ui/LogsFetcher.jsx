@@ -1,6 +1,5 @@
 import { socketUrlAtom, pipelineAtom } from "@/atoms/pipelineAtom";
 import { useSyncExecutionResults } from "@/hooks/useExecutionResults";
-import { useStableWebSocket } from "@/hooks/useStableWebsocket";
 import { enableMapSet } from "immer";
 import { useAtom, useAtomValue } from "jotai";
 import { useImmerAtom } from "jotai-immer";
@@ -134,7 +133,6 @@ export default function LogsFetcher() {
       }
       if (tag === "outputs") {
         const key = `${pipeline.record?.Uuid}.${pipeline.record?.Execution}`;
-        console.log("syncing: ", key);
         try {
           syncResults(key);
         } catch (err) {
