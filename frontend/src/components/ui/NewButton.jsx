@@ -11,7 +11,7 @@ export default function NewButton() {
 
   return (
     <div>
-      <HeaderMenuItem onClick={() => handleClick()}>New</HeaderMenuItem>
+      <HeaderMenuItem onClick={handleClick}>New</HeaderMenuItem>
     </div>
   );
 }

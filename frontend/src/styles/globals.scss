@@ -25,6 +25,7 @@
 
 body {
   background-color: var(--cds-background) !important;
+  overflow: hidden;
 }
 
 :root {
@@ -99,10 +100,16 @@ main {
 
 [data-carbon-theme="g10"] {
   @include theme.theme(themes.$g10);
+  @include color-tokens.ztn-colors-g10;
+  @include drawflow-light-theme.drawflow-light;
+  @include block-editor.light;
 }
 
 [data-carbon-theme="g100"] {
   @include theme.theme(themes.$g100);
+  @include color-tokens.ztn-colors-g100;
+  @include drawflow-dark-theme.drawflow-dark;
+  @include block-editor.dark;
 }
 
 .theme-mode-transition * {
@@ -110,25 +117,13 @@ main {
 }
 
 .tooltip {
-  width: 8rem;
-  max-height: 8rem;
   overflow: hidden;
-  padding: 0.5rem;
-  border-radius: 2px;
-  color: var(--tooltip-color);
-  background-color: var(--tooltip-background-color);
-}
-
-.tooltip::after {
-  content: "";
-  position: absolute;
-  bottom: 100%;
-  left: 10px;
-  margin-left: -5px;
-  border-width: 5px;
-  border-style: solid;
-  border-color: transparent transparent var(--tooltip-background-color)
-    transparent;
+  min-width: 250px;
+  padding: 0.75rem;
+  border-radius: 3px 3px;
+  color: var(--cds-text-primary);
+  background-color: var(--cds-background);
+  border: 1px solid var(--cds-border-subtle);
 }
 
 .cds--btn--ghost:focus.disable-focus {

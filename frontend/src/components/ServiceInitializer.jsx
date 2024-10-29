@@ -1,11 +1,7 @@
 import React, { useEffect } from "react";
 import { useAtom, useSetAtom } from "jotai";
 import { mixpanelAtom } from "@/atoms/mixpanelAtom";
-import {
-  initializeWorkspaceAtom,
-  pipelineFactory,
-  workspaceAtom,
-} from "@/atoms/pipelineAtom";
+import { initializeWorkspaceAtom, workspaceAtom } from "@/atoms/pipelineAtom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ipcLink } from "electron-trpc/renderer";
 import { trpc } from "@/utils/trpc";

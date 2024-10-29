@@ -28,9 +28,6 @@ export const useLoadPipeline = () => {
   const loadPipeline = async (file) => {
     console.log("***********Loading pipeline from file:", file);
 
-    let relPath = file.webkitRelativePath;
-    relPath = relPath.replaceAll("\\", "/");
-
     const data = JSON.parse(await new Blob([file]).text());
     const saveFolder = getDirectoryPath(file.path);
 
@@ -65,7 +62,7 @@ function removeNullInputsOutputs(obj) {
 
   // Iterate through all keys in the object
   for (const key in obj) {
-    if (obj.hasOwnProperty(key)) {
+    if (Object.prototype.hasOwnProperty.call(key)) {
       const value = obj[key];
 
       // Check if both inputs and outputs are null

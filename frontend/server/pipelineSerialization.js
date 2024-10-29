@@ -6,20 +6,11 @@ import {
   BLOCK_SPECS_FILE_NAME,
   PIPELINE_SPECS_FILE_NAME,
 } from "../src/utils/constants";
-import { setDifference } from "../utils/set.js";
-import {
-  fileExists,
-  filterDirectories,
-  readJsonToObject,
-} from "./fileSystem.js";
+import { filterDirectories } from "./fileSystem.js";
 import { checkAndUpload, checkAndCopy, uploadDirectory } from "./s3.js";
-import {
-  createExecution,
-  getBuildContextStatus,
-  getPipelinesByUuid,
-} from "./anvil";
+import { createExecution, getBuildContextStatus } from "./anvil";
 import { logger } from "./logger";
-import { computeMerkleTreeForDirectory } from "./merkle.js";
+import { computePipelineMerkleTree } from "./merkle";
 
 export async function saveSpec(spec, writePath) {
   const pipelineSpecsPath = path.join(writePath, PIPELINE_SPECS_FILE_NAME);
@@ -67,9 +58,6 @@ export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
   // Gets pipeline specs from the specs coming from the graph
   // Submitted by the client
   const newPipelineBlocks = getPipelineBlocks(pipelineSpecs);
-  (await fileExists(pipelineSpecsPath))
-    ? await readPipelineBlocks(pipelineSpecsPath)
-    : new Set();
 
   for (const key of Array.from(newPipelineBlocks)) {
     const newBlockPath = path.join(writePipelineDirectory, key);
@@ -150,10 +138,10 @@ async function getBlocksInDirectory(directory) {
   return directories;
 }
 
-async function readPipelineBlocks(specsPath) {
-  const specs = await readJsonToObject(specsPath);
-  return getPipelineBlocks(specs);
-}
+// async function readPipelineBlocks(specsPath) {
+//   const specs = await readJsonToObject(specsPath);
+//   return getPipelineBlocks(specs);
+// }
 
 export async function removeBlock(blockId, pipelinePath) {
   const blockPath = await getPipelineBlockPath(pipelinePath, blockId);
@@ -180,24 +168,18 @@ export async function executePipeline(
   rebuild,
   anvilHostConfiguration,
 ) {
-  specs = await uploadBlocks(
-    id,
-    executionId,
-    specs,
-    pipelinePath,
-    anvilHostConfiguration,
-  );
+  specs = await uploadBlocks(id, executionId, specs, anvilHostConfiguration);
   specs["sink"] = pipelinePath;
   specs["build"] = pipelinePath;
   specs["name"] = name;
   specs["id"] = id;
 
-  //const merkle = await computeMerkleTreeForDirectory(path);
-  //const pipelines = await getPipelinesByUuid(anvilHostConfiguration, id);
+  const merkleTree = await computePipelineMerkleTree(specs, pipelinePath);
 
   await uploadBuildContexts(
     anvilHostConfiguration,
     specs,
+    merkleTree,
     pipelinePath,
     rebuild,
   );
@@ -206,6 +188,7 @@ export async function executePipeline(
     anvilHostConfiguration,
     executionId,
     specs,
+    merkleTree,
     rebuild,
   );
 }
@@ -214,7 +197,6 @@ async function uploadBlocks(
   pipelineId,
   executionId,
   pipelineSpecs,
-  blockPath,
   anvilConfiguration,
 ) {
   const nodes = pipelineSpecs.pipeline;
@@ -222,7 +204,6 @@ async function uploadBlocks(
     const node = nodes[nodeId];
 
     const parameters = node.action?.parameters;
-    const container = node.action?.container;
 
     if (parameters) {
       for (const paramKey in parameters) {
@@ -238,6 +219,35 @@ async function uploadBlocks(
             param.value = `"${fileName}"`;
             param.type = "blob";
           }
+        } else if (param.type === "folder" || param.type === "file[]") {
+          try {
+            const cleanedValue = param.value.replace(/\\/g, "\\\\");
+            const fileNames = [];
+            const filePaths = JSON.parse(cleanedValue);
+
+            for (const filePath of filePaths) {
+              // console.log("Uploading file:", filePath); // Debugging log
+              const fileName = path.basename(filePath);
+              fileNames.push(fileName);
+              const awsKey = `${pipelineId}/${executionId}/${fileName}`;
+
+              if (filePath && filePath.trim()) {
+                await checkAndUpload(awsKey, filePath, anvilConfiguration);
+                // console.log(`Uploaded: ${fileName} to ${awsKey}`); // which file uploaded.
+              } else {
+                // log invalid paths.
+                console.error("Invalid file path:", filePath);
+              }
+            }
+            // Preserve the original value and update type
+            param.value =
+              fileNames.length > 0
+                ? `["${fileNames.join('", "')}"]`
+                : param.value;
+            param.type = "blob";
+          } catch (error) {
+            console.error("Error processing folder:", error);
+          }
         } else if (param.type == "blob") {
           const copyKey = param.value;
           const fileName = param.value.split("/").at(-1);
@@ -247,15 +257,6 @@ async function uploadBlocks(
           param.value = `"${fileName}"`;
         }
       }
-    } else if (container) {
-      const computationFile = path.join(
-        blockPath,
-        "/",
-        nodeId,
-        "/computations.py",
-      );
-      const awsKey = `${pipelineId}/${executionId}/${nodeId}.py`;
-      await checkAndUpload(awsKey, computationFile, anvilConfiguration);
     }
   }
   return pipelineSpecs;
@@ -264,12 +265,14 @@ async function uploadBlocks(
 async function uploadBuildContexts(
   configuration,
   pipelineSpecs,
+  pipelineMerkleTree,
   buildPath,
   rebuild,
 ) {
   const buildContextStatuses = await getBuildContextStatus(
     configuration,
     pipelineSpecs,
+    pipelineMerkleTree,
     rebuild,
   );
   await Promise.all(

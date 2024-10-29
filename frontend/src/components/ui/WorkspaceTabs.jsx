@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Tabs, TabList, Tab, TabPanels, TabPanel } from "@carbon/react";
+import { Tabs, TabList, Tab, TabPanel } from "@carbon/react";
 import { workspaceAtom } from "@/atoms/pipelineAtom";
 import { useImmerAtom } from "jotai-immer";
 import { useAtom } from "jotai";
@@ -61,9 +61,13 @@ export default function WorkspaceTabs() {
     if (Object.keys(workspace.tabs).length > 1) {
       const deleteTab = renderedTabs[deleteIndex];
       const selectedTab = renderedTabs[selectedIndex];
-      const key = deleteTab.id;
-      const { [key]: _, ...filteredTabs } = workspace.tabs;
-      const newTabArray = Object.keys(filteredTabs);
+      const newTabArray = Object.keys(workspace.tabs).filter(
+        (k) => k != deleteTab.id,
+      );
+      const filteredTabs = newTabArray.reduce((tabs, k) => {
+        tabs[k] = workspace.tabs[k];
+        return tabs;
+      }, {});
 
       setWorkspace((draft) => {
         // make the same tab we're deleting active, unless it's at the end, in which case we get -1

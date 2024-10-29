@@ -30,7 +30,7 @@ import NewFromCurrent from "./NewFromCurrent";
 export default function Navbar({ children }) {
   const [darkMode, setDarkMode] = useAtom(darkModeAtom);
   const [modalContent, setModalContent] = useAtom(modalContentAtom);
-  const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
+  const [pipeline] = useImmerAtom(pipelineAtom);
   const [configuration] = useAtom(activeConfigurationAtom);
 
   const modalPopper = (content) => {

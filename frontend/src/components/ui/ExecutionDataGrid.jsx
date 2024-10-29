@@ -14,7 +14,6 @@ import {
   TableExpandRow,
   TableExpandedRow,
   TableExpandHeader,
-  Tag,
 } from "@carbon/react";
 import { ExecutionCardGrid } from "./ExecutionCardGrid";
 import { DeployedPipelineActions } from "./DeployedPipelineActions";
@@ -85,6 +84,7 @@ export const ExecutionDataGrid = ({ closeModal }) => {
     return Array.from(lineage.entries()).map(([hash, pipeline]) => {
       const deployedAction = pipeline?.deployed ? (
         <DeployedPipelineActions
+          name={pipeline.name}
           uuid={pipeline.id}
           hash={hash}
           configuration={configuration}

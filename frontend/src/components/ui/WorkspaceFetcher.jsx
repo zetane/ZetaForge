@@ -20,11 +20,7 @@ export default function WorkspaceFetcher() {
   const [configuration] = useAtom(activeConfigurationAtom);
   const syncResults = useSyncExecutionResults();
 
-  const {
-    isPending: pingPending,
-    error: pingError,
-    data: pingData,
-  } = useQuery({
+  useQuery({
     queryKey: ["ping"],
     queryFn: async () => {
       try {
