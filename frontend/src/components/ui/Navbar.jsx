@@ -1,23 +1,29 @@
 import { modalContentAtom } from "@/atoms/modalAtom";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
-import { Play, Password, Renew, Switcher as SwitchIcon, ChevronDown, ChevronRight } from "@carbon/icons-react";
+import {
+  Play,
+  Password,
+  Renew,
+  // Switcher as SwitchIcon,
+  ChevronDown,
+  ChevronRight
+} from "@carbon/icons-react";
 import {
   Button,
   Header,
-  HeaderGlobalAction,
+  // HeaderGlobalAction,
   HeaderGlobalBar,
   HeaderMenu,
-  HeaderMenuButton,
+  // HeaderMenuButton,
   HeaderMenuItem,
   HeaderName,
   HeaderNavigation,
-  HeaderPanel,
+  // HeaderPanel,
   HeaderSideNavItems,
   SideNav,
   SideNavItems,
   SkipToContent,
-  Switcher,
-  SwitcherDivider,
+  // Switcher,
 } from "@carbon/react";
 import { useAtom } from "jotai";
 import LoadBlockButton from "./LoadBlockButton";
@@ -42,15 +48,15 @@ export default function Navbar({ children }) {
   const [configuration] = useAtom(activeConfigurationAtom);
 
   const [isSideNavExpanded, setIsSideNavExpanded] = useState(false);
-  const [isHeaderPanelExpanded, setIsHeaderPanelExpanded] = useState(false);
+  // const [isHeaderPanelExpanded, setIsHeaderPanelExpanded] = useState(false);
 
   const handleSideNavToggle = () => {
     setIsSideNavExpanded((prev) => !prev);
   };
 
-  const handleHeaderPanelToggle = () => {
-    setIsHeaderPanelExpanded((prev) => !prev);
-  };
+  // const handleHeaderPanelToggle = () => {
+  //   setIsHeaderPanelExpanded((prev) => !prev);
+  // };
 
   useEffect(() => {
     const handleNavResize = () => {
@@ -63,16 +69,16 @@ export default function Navbar({ children }) {
     return () => window.removeEventListener('resize', handleNavResize);
   }, [isSideNavExpanded]);
 
-  useEffect(() => {
-    const handlePanelResize = () => {
-      if (window.innerWidth > 1102 && isHeaderPanelExpanded) {
-        setIsHeaderPanelExpanded(false);
-      }
-    };
-    window.addEventListener('resize', handlePanelResize);
-    handlePanelResize();
-    return () => window.removeEventListener('resize', handlePanelResize);
-  }, [isHeaderPanelExpanded]);
+  // useEffect(() => {
+  //   const handlePanelResize = () => {
+  //     if (window.innerWidth > 1102 && isHeaderPanelExpanded) {
+  //       setIsHeaderPanelExpanded(false);
+  //     }
+  //   };
+  //   window.addEventListener('resize', handlePanelResize);
+  //   handlePanelResize();
+  //   return () => window.removeEventListener('resize', handlePanelResize);
+  // }, [isHeaderPanelExpanded]);
   
 
   const modalPopper = (content) => {
@@ -207,8 +213,8 @@ export default function Navbar({ children }) {
       </SideNav>
       {/* <HeaderGlobalBar className="!justify-center pr-[18px]"> */}
       <HeaderGlobalBar className="!justify-end pr-[18px]">
-        {/* <ToggleThemeButton /> */}
-        <div className="max-[1102px]:hidden">
+        <div>
+          {/* className="max-[1102px]:hidden" */}
           {runButton}
           <RunPipelineButton modalPopper={modalPopper} action="Rebuild">
             <Renew size={20} style={svgOverride} />
@@ -216,13 +222,13 @@ export default function Navbar({ children }) {
           <LogsButton />
           <PipelinesButton />
         </div>
-        <div className="min-[1103px]:hidden">
+        {/* <div className="min-[1103px]:hidden">
           <HeaderGlobalAction aria-label="ZetaForge Options" aria-expanded={isHeaderPanelExpanded} isActive={isHeaderPanelExpanded} onClick={handleHeaderPanelToggle} tooltipAlignment="end" id="switcher-button">
             <SwitchIcon size={20} />
           </HeaderGlobalAction>
-        </div>
+        </div> */}
       </HeaderGlobalBar>
-      <HeaderPanel expanded={isHeaderPanelExpanded} onHeaderPanelFocus={handleHeaderPanelToggle} className="z-[9000]">
+      {/* <HeaderPanel expanded={isHeaderPanelExpanded} onHeaderPanelFocus={handleHeaderPanelToggle} className="z-[9000]">
         <Switcher aria-label="Switcher Container" expanded={isHeaderPanelExpanded} className="grid grid-cols-2 max-w-[254px] place-items-center">
             <div className="p-4">
               {runButton}
@@ -242,7 +248,7 @@ export default function Navbar({ children }) {
               <PipelinesButton mobile={true} />
             </div>
         </Switcher>
-      </HeaderPanel>
+      </HeaderPanel> */}
       {children}
     </Header>
   );

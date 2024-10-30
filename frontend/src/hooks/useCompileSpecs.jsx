@@ -21,11 +21,7 @@ export const useCompileComputation = () => {
       });
 
       if ("description" in newSpecsIO) {
-        if (pipeline?.data[blockId].information.description) {
-          newSpecsIO.description = pipeline.data[blockId].information.description;
-        } else {
-          newSpecsIO.description = "No description available.";
-        }
+        newSpecsIO.description = pipeline?.data[blockId].information.description || "No description available.";
       }
 
       const newSpecs = await updateSpecs(
