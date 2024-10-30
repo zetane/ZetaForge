@@ -4,14 +4,14 @@ import { workspaceAtom } from "@/atoms/pipelineAtom";
 import { useImmerAtom } from "jotai-immer";
 import { useAtom } from "jotai";
 import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
+import { useWorkspace } from "@/hooks/useWorkspace";
 
 export default function WorkspaceTabs() {
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
   const [renderedTabs, setRenderedTabs] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [cam, setCam] = useState({});
-
   const [editor] = useAtom(drawflowEditorAtom);
+  const { updateTabs } = useWorkspace();
 
   useEffect(() => {
     const pipelineTabs = [];
@@ -62,28 +62,27 @@ export default function WorkspaceTabs() {
       const deleteTab = renderedTabs[deleteIndex];
       const selectedTab = renderedTabs[selectedIndex];
       const newTabArray = Object.keys(workspace.tabs).filter(
-        (k) => k != deleteTab.id,
+        (id) => id != deleteTab.id,
       );
+
       const filteredTabs = newTabArray.reduce((tabs, k) => {
         tabs[k] = workspace.tabs[k];
         return tabs;
       }, {});
 
-      setWorkspace((draft) => {
-        // make the same tab we're deleting active, unless it's at the end, in which case we get -1
-        if (deleteIndex == selectedIndex) {
-          if (deleteIndex >= newTabArray.length) {
-            deleteIndex = newTabArray.length - 1;
-          }
-        } else {
-          // we're re-calculating the selectedIndex since the selected tab's index might have shifted
-          // due to a tab element being removed from the array
-          deleteIndex = newTabArray.indexOf(selectedTab.id);
-        }
+      console.log(newTabArray, filteredTabs);
 
-        draft.tabs = filteredTabs;
-        draft.active = newTabArray[deleteIndex];
-      });
+      if (deleteIndex == selectedIndex) {
+        if (deleteIndex >= newTabArray.length) {
+          deleteIndex = newTabArray.length - 1;
+        }
+      } else {
+        deleteIndex = newTabArray.indexOf(selectedTab.id);
+      }
+
+      const newActiveTab = newTabArray[deleteIndex];
+
+      updateTabs(filteredTabs, newActiveTab);
     }
   };
 

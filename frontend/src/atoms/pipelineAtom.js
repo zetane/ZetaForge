@@ -1,4 +1,5 @@
 import { atom } from "jotai";
+import { atomWithStorage } from "jotai/utils";
 import { withImmer } from "jotai-immer";
 import { produce } from "immer";
 import { sha1 } from "js-sha1";
@@ -48,14 +49,19 @@ const defaultWorkspace = {
 
 export const workspaceAtom = atom(defaultWorkspace);
 
-/*export const workspaceAtom = atomWithStorage(
-  "workspace",
-  defaultWorkspace,
-  undefined,
-  {
-    getOnInit: true,
+export const writeWorkspaceAtom = atom(
+  (get) => get(workspaceAtom),
+  (get, set, newWorkspace) => {
+    try {
+      db.workspace.put({ id: "currentState", data: newWorkspace });
+    } catch (error) {
+      console.log("failed to write to cache: ", error);
+    }
+    set(workspaceAtom, newWorkspace);
   },
-);*/
+);
+
+export const writeImmerWorkspace = withImmer(writeWorkspaceAtom);
 
 export const initializeWorkspaceAtom = atom(
   null,
@@ -63,7 +69,7 @@ export const initializeWorkspaceAtom = atom(
     try {
       // Try to get saved state first
       const saved = await db.workspace.get("currentState");
-      if (saved?.data) {
+      if (saved?.active && saved?.data) {
         set(workspaceAtom, saved.data);
         return;
       }
@@ -79,8 +85,7 @@ export const initializeWorkspaceAtom = atom(
       active: emptyKey,
     };
 
-    set(workspaceAtom, initialWorkspace);
-    await db.workspace.put({ id: "currentState", data: initialWorkspace });
+    set(writeWorkspaceAtom, initialWorkspace);
   },
 );
 
@@ -106,8 +111,7 @@ const pipelineAtomWithImmer = atom(
       draft.tabs[key] = newPipeline;
     });
 
-    set(workspaceAtom, updatedWorkspace);
-    db.workspace.put({ id: "currentState", data: updatedWorkspace });
+    set(writeWorkspaceAtom, updatedWorkspace);
   },
 );
 

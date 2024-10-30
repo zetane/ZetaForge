@@ -1,11 +1,19 @@
-import { workspaceAtom, pipelinesAtom } from "@/atoms/pipelineAtom";
+import { pipelinesAtom, writeWorkspaceAtom } from "@/atoms/pipelineAtom";
 import { produce } from "immer";
 import { useAtom } from "jotai";
 import { db } from "@/utils/db";
 
 export const useWorkspace = () => {
-  const [workspace, setWorkspace] = useAtom(workspaceAtom);
+  const [workspace, setWorkspace] = useAtom(writeWorkspaceAtom);
   const [pipelines, setPipelines] = useAtom(pipelinesAtom);
+
+  const updateTabs = (newTabs, newActive) => {
+    const updatedWorkspace = produce(workspace, (draft) => {
+      draft.tabs = newTabs;
+      draft.active = newActive;
+    });
+    setWorkspace(updatedWorkspace);
+  };
 
   const addPipeline = (newPipeline) => {
     const updatedPipelines = produce(pipelines, (draft) => {
@@ -18,8 +26,6 @@ export const useWorkspace = () => {
       draft.active = newPipeline.key;
     });
     setWorkspace(updatedWorkspace);
-
-    db.workspace.put({ id: "currentState", data: updatedWorkspace });
   };
 
   const deleteTab = (key) => {
@@ -27,8 +33,7 @@ export const useWorkspace = () => {
       delete draft.tabs[key];
     });
     setWorkspace(updatedWorkspace);
-    db.workspace.put({ id: "currentState", data: updatedWorkspace });
   };
 
-  return { addPipeline, deleteTab };
+  return { addPipeline, deleteTab, updateTabs };
 };

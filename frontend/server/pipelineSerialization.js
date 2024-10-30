@@ -11,6 +11,7 @@ import { checkAndUpload, checkAndCopy, uploadDirectory } from "./s3.js";
 import { createExecution, getBuildContextStatus } from "./anvil";
 import { logger } from "./logger";
 import { computePipelineMerkleTree } from "./merkle";
+import { fileExists } from "./fileSystem.js";
 
 export async function saveSpec(spec, writePath) {
   const pipelineSpecsPath = path.join(writePath, PIPELINE_SPECS_FILE_NAME);

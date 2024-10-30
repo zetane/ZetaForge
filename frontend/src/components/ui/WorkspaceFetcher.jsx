@@ -4,7 +4,7 @@ import {
   useLoadServerPipeline,
 } from "@/hooks/useLoadPipeline";
 import { useEffect } from "react";
-import { workspaceAtom, pipelinesAtom } from "@/atoms/pipelineAtom";
+import { pipelinesAtom, writeImmerWorkspace } from "@/atoms/pipelineAtom";
 import { useImmerAtom } from "jotai-immer";
 import { useAtom } from "jotai";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
@@ -14,7 +14,7 @@ import { produce } from "immer";
 
 export default function WorkspaceFetcher() {
   const [pipelines, setPipelines] = useAtom(pipelinesAtom);
-  const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
+  const [workspace, setWorkspace] = useImmerAtom(writeImmerWorkspace);
   const loadPipeline = useLoadServerPipeline();
   const loadExecution = useLoadExecution();
   const [configuration] = useAtom(activeConfigurationAtom);

@@ -18,7 +18,7 @@ import { useWorkspace } from "@/hooks/useWorkspace";
 export default function RunPipelineButton({ children, action }) {
   const [editor] = useAtom(drawflowEditorAtom);
   const [pipeline] = useImmerAtom(pipelineAtom);
-  const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
+  const [workspace] = useImmerAtom(workspaceAtom);
   const [validationErrorMsg, setValidationErrorMsg] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [mixpanelService] = useAtom(mixpanelAtom);
