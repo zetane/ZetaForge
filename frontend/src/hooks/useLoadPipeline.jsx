@@ -62,13 +62,11 @@ function removeNullInputsOutputs(obj) {
 
   // Iterate through all keys in the object
   for (const key in obj) {
-    if (Object.prototype.hasOwnProperty.call(key)) {
-      const value = obj[key];
+    const value = obj[key];
 
-      // Check if both inputs and outputs are null
-      if (value.inputs === null && value.outputs === null) {
-        keysToRemove.push(key);
-      }
+    // Check if both inputs and outputs are null
+    if (value.inputs === null && value.outputs === null) {
+      keysToRemove.push(key);
     }
   }
 

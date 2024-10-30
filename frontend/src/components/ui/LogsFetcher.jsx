@@ -45,7 +45,7 @@ async function fetchLogData(logPath, configuration) {
 export default function LogsFetcher() {
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const syncResults = useSyncExecutionResults();
-  const [, setLogs] = useImmerAtom(logsAtom);
+  const [logs, setLogs] = useImmerAtom(logsAtom);
   const configuration = useAtomValue(activeConfigurationAtom);
 
   const updateLogs = useCallback((newEntries) => {
@@ -120,7 +120,6 @@ export default function LogsFetcher() {
     const tag = parsedLogEntry?.event?.tag;
     if (pipeline?.data[blockId] && tag) {
       if (tag === "outputs" || tag === "inputs") {
-        console.log("updating I/O: ", blockId, tag);
         setPipeline((draft) => {
           const node = draft.data[blockId];
           try {
