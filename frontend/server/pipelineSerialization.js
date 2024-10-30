@@ -247,7 +247,7 @@ async function uploadBlocks(
               // console.log("Uploading file:", filePath); // Debugging log
               const relativePath = filePath
                 .split(rootFolder)[1]
-                .replace(/\\/g, "/")
+                .replace(/\\/g, "")
                 .trim();
               fileNames.push(relativePath);
               const awsKey = `${pipelineId}/${executionId}/${relativePath}`;
