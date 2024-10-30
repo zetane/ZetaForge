@@ -52,7 +52,16 @@ func checkImage(ctx context.Context, image string, cfg Config) (bool, bool, erro
 				}
 			}
 			return false, false, nil
-		} else {
+		} else if cfg.Local.Driver == "k3d" {
+			dockerImage := cmd.NewCmd("docker", "exec", "k3d-" + cfg.Local.K3DCluster + "-server-0", "crictl", "images")
+			<-dockerImage.Start()
+			for _, line := range dockerImage.Status().Stdout {
+				if "docker.io/zetaforge/"+image == line {
+					return true, false, nil
+				}
+			}
+            return false, false, nil
+    } else {
 			apiClient, err := client.NewClientWithOpts(
 				client.WithAPIVersionNegotiation(),
 			)
