@@ -55,11 +55,7 @@ export const MultiFileBlock = ({ blockId, block, setFocusAction, history }) => {
     <div className="block-content">
       <div className="mb-2 pl-2">
         {renderedFiles.map((file, index) => (
-          <div
-            key={index}
-          >
-            {file}
-          </div>
+          <div key={index}>{file}</div>
         ))}
       </div>
       <input
