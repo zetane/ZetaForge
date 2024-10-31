@@ -52,9 +52,11 @@ type Config struct {
 	Cloud           Cloud `json:"Cloud,omitempty"`
 }
 
+
 type Local struct {
 	BucketPort int
 	Driver     string
+	K3DCluster string `json:"K3DCluster,omitempty"`
 }
 
 type Cloud struct {

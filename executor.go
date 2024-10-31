@@ -720,6 +720,19 @@ func localExecute(pipeline *zjson.Pipeline, pipelineMerkleTree *zjson.PipelineMe
 		}
 	}
 
+    if cfg.Local.Driver == "k3d" {
+        imageImport := []string{"image", "import"}
+        for _, image := range blocks {
+            imageImport = append(imageImport, image)
+        }
+        imageImport = append(imageImport, "-c")
+        imageImport = append(imageImport, cfg.Local.K3DCluster)
+        pullImage := cmd.NewCmd("k3d", imageImport...)
+        <-pullImage.Start()
+        log.Println(pullImage.Status().Stdout)
+        log.Println(pullImage.Status().Stderr)
+    }
+
 	if err := eg.Wait(); err != nil {
 		pipelineLogger.Printf("error during pipeline build execution; err=%v", err)
 		log.Printf("error during pipeline build execution; err=%v", err)

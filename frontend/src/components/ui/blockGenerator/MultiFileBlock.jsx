@@ -41,11 +41,8 @@ export const MultiFileBlock = ({ blockId, block, setFocusAction, history }) => {
 
   const loadFiles = () => {
     const files = Array.from(fileInput.current.files);
-    // console.log("FILES: " ,files)
     const filePaths = processFiles(files);
-    // console.log("filePaths:" , filePaths)
     const formattedValue = `[${filePaths.map((file) => `"${file}"`).join(", ")}]`;
-    // console.log("formatted value: " , formattedValue)
     setFocusAction((draft) => {
       draft.data[blockId].action.parameters["files"].value = formattedValue; // Update to formatted value
       draft.data[blockId].action.parameters["files"].type = "file[]";
@@ -58,12 +55,7 @@ export const MultiFileBlock = ({ blockId, block, setFocusAction, history }) => {
     <div className="block-content">
       <div className="mb-2 pl-2">
         {renderedFiles.map((file, index) => (
-          <div
-            key={index}
-            style={{ color: "#ffffff", backgroundColor: "#333333" }}
-          >
-            {file}
-          </div>
+          <div key={index}>{file}</div>
         ))}
       </div>
       <input
@@ -74,7 +66,6 @@ export const MultiFileBlock = ({ blockId, block, setFocusAction, history }) => {
         multiple
         parameters-path="true"
         style={{
-          // for better visibility.
           color: "#ffffff",
         }}
       />
