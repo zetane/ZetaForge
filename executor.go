@@ -714,8 +714,8 @@ func localExecute(pipeline *zjson.Pipeline, pipelineMerkleTree *zjson.PipelineMe
         imageImport = append(imageImport, cfg.Local.K3DCluster)
         pullImage := cmd.NewCmd("k3d", imageImport...)
         <-pullImage.Start()
-        logger.Println(pullImage.Status().Stdout)
-        logger.Println(pullImage.Status().Stderr)
+        log.Println(pullImage.Status().Stdout)
+        log.Println(pullImage.Status().Stderr)
     }
 
 	if err := eg.Wait(); err != nil {
