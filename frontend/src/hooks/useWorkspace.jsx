@@ -1,7 +1,6 @@
 import { pipelinesAtom, writeWorkspaceAtom } from "@/atoms/pipelineAtom";
 import { produce } from "immer";
 import { useAtom } from "jotai";
-import { db } from "@/utils/db";
 
 export const useWorkspace = () => {
   const [workspace, setWorkspace] = useAtom(writeWorkspaceAtom);

@@ -1,11 +1,7 @@
 import { useImmerAtom } from "jotai-immer";
 import { trpc } from "@/utils/trpc";
 import { getDirectoryPath } from "@/../utils/fileUtils";
-import {
-  workspaceAtom,
-  pipelineFactory,
-  pipelineKey,
-} from "@/atoms/pipelineAtom";
+import { workspaceAtom, pipelineFactory } from "@/atoms/pipelineAtom";
 import { getWsConnection } from "@/client/anvil";
 
 function getLastFolder(path) {

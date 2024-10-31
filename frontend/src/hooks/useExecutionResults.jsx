@@ -1,4 +1,4 @@
-import { pipelinesAtom, workspaceAtom } from "@/atoms/pipelineAtom";
+import { pipelinesAtom } from "@/atoms/pipelineAtom";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { trpc } from "@/utils/trpc";
 import { useAtom } from "jotai";
