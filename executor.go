@@ -624,12 +624,6 @@ func buildImage(ctx context.Context, source string, tag string, logger *log.Logg
 				logger.Printf("Docker build error: %v", errorDetail["message"])
 			}
 		}
-
-        if cfg.Local.Driver == "k3d" {
-            pullImage := cmd.NewCmd("k3d", "image", "import", tag)
-            <-pullImage.Start()
-            logger.Println(pullImage.Status().Stdout)
-        }
 	}
 
 	return nil
@@ -710,6 +704,19 @@ func localExecute(pipeline *zjson.Pipeline, pipelineMerkleTree *zjson.PipelineMe
 			})
 		}
 	}
+
+    if cfg.Local.Driver == "k3d" {
+        imageImport := []string{"image", "import"}
+        for _, image := range blocks {
+            imageImport = append(imageImport, image)
+        }
+        imageImport = append(imageImport, "-c")
+        imageImport = append(imageImport, cfg.Local.K3DCluster)
+        pullImage := cmd.NewCmd("k3d", imageImport...)
+        <-pullImage.Start()
+        logger.Println(pullImage.Status().Stdout)
+        logger.Println(pullImage.Status().Stderr)
+    }
 
 	if err := eg.Wait(); err != nil {
 		pipelineLogger.Printf("error during pipeline build execution; err=%v", err)
