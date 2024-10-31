@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { useAtom, useSetAtom } from "jotai";
 import { mixpanelAtom } from "@/atoms/mixpanelAtom";
 import { initializeWorkspaceAtom, workspaceAtom } from "@/atoms/pipelineAtom";
@@ -23,7 +23,7 @@ const queryClient = new QueryClient({
 });
 
 export default function ServiceInitializer({ children }) {
-  const [workspace, _] = useAtom(workspaceAtom);
+  const [workspace] = useAtom(workspaceAtom);
   const initializeWorkspace = useSetAtom(initializeWorkspaceAtom);
   const setMixpanel = useSetAtom(mixpanelAtom);
 

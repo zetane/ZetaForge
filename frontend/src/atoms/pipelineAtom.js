@@ -1,5 +1,4 @@
 import { atom } from "jotai";
-import { atomWithStorage } from "jotai/utils";
 import { withImmer } from "jotai-immer";
 import { produce } from "immer";
 import { sha1 } from "js-sha1";

@@ -61,7 +61,7 @@ export default function LogsFetcher() {
       setLogs((draft) => {
         draft.set(key, entry);
       });
-      //updateNodes(entry, pipeline);
+      updateNodes(entry, pipeline);
     });
   }, []);
 

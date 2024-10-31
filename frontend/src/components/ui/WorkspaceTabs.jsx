@@ -70,8 +70,6 @@ export default function WorkspaceTabs() {
         return tabs;
       }, {});
 
-      console.log(newTabArray, filteredTabs);
-
       if (deleteIndex == selectedIndex) {
         if (deleteIndex >= newTabArray.length) {
           deleteIndex = newTabArray.length - 1;

@@ -35,7 +35,7 @@ const BlockGenerator = ({
   nodeRefs,
 }) => {
   const [, setFocusAction] = useImmerAtom(pipelineAtom);
-  const [logs, _] = useAtom(logsAtom);
+  const [logs] = useAtom(logsAtom);
 
   let styles = {
     top: `${block.views.node.pos_y}px`,

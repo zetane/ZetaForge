@@ -7,7 +7,7 @@ import { useWorkspace } from "@/hooks/useWorkspace";
 
 export default function NewFromCurrent() {
   const [editor] = useAtom(drawflowEditorAtom);
-  const [pipeline, _] = useAtom(pipelineAtom);
+  const [pipeline] = useAtom(pipelineAtom);
   const copyPipeline = trpc.copyPipeline.useMutation();
   const { addPipeline } = useWorkspace();
 

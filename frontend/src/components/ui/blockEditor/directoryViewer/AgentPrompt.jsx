@@ -41,7 +41,6 @@ export default function AgentPrompt() {
     setIsLoading(true);
 
     const newPrompt = textArea.trim();
-    console.log(chatHistory.history);
     const response = await callAgent.mutateAsync({
       userMessage: newPrompt,
       agentName: agentName,
