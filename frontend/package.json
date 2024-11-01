@@ -48,7 +48,6 @@
     "pino-pretty": "^11.2.1",
     "s3-sync-client": "^4.3.1",
     "source-map-support": "^0.5.21",
-    "tinybase": "^5.3.5",
     "use-debounce": "^10.0.4",
     "use-immer": "^0.9.0",
     "uuidv7": "^0.6.3"

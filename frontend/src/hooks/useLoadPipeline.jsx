@@ -3,6 +3,7 @@ import { trpc } from "@/utils/trpc";
 import { getDirectoryPath } from "@/../utils/fileUtils";
 import { workspaceAtom, pipelineFactory } from "@/atoms/pipelineAtom";
 import { getWsConnection } from "@/client/anvil";
+import { generateId } from "@/utils/blockUtils";
 
 function getLastFolder(path) {
   // Remove trailing slashes
@@ -235,6 +236,8 @@ export const useLoadCorePipeline = () => {
   const loadPipeline = async (specs, corePath) => {
     const tempFile = `${await window.cache.local()}${specs.id}`;
 
+    const newId = generateId(specs.id);
+
     const copyData = {
       specs: specs,
       name: specs.name,
@@ -248,7 +251,7 @@ export const useLoadCorePipeline = () => {
       saveTime: Date.now(),
       path: tempFile,
       data: specs.pipeline,
-      id: specs.id,
+      id: newId,
       key: specs.id + ".",
     };
 

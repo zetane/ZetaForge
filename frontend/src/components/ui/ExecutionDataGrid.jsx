@@ -44,14 +44,6 @@ export const ExecutionDataGrid = ({ closeModal }) => {
   const queryClient = useQueryClient();
   const { addPipeline } = useWorkspace();
 
-  useEffect(() => {
-    if (configuration?.anvil?.host) {
-      queryClient.invalidateQueries({
-        queryKey: ["pipelines", configuration?.anvil?.host],
-      });
-    }
-  }, [configuration?.anvil?.host]);
-
   const setPagination = ({ page, pageSize }) => {
     setCurrentPage(page);
     setPageSize(pageSize);

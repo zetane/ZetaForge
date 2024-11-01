@@ -75,7 +75,7 @@ export default function RunPipelineButton({ children, action }) {
     });
 
     const loaded = await loadExecution(newExecution, configuration);
-    addPipeline(loaded);
+    addPipeline(loaded, workspace?.active);
     trackMixpanelRunCreated();
   };
 

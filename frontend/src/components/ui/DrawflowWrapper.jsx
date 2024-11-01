@@ -207,8 +207,6 @@ export default function DrawflowWrapper() {
   const dropPipeline = async (pipelineData) => {
     const pipelineJson = JSON.parse(pipelineData);
     const { specs, path } = pipelineJson;
-    const newId = generateId(specs.id);
-    specs.id = newId;
     const pipeline = await loadPipeline(specs, path);
     addPipeline(pipeline);
   };
