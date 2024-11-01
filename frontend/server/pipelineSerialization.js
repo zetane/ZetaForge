@@ -239,16 +239,26 @@ async function uploadBlocks(
             const cleanedValue = param.value.replace(/\\/g, "\\\\");
             const fileNames = [];
             const filePaths = JSON.parse(cleanedValue);
+            const firstFilePath = filePaths[0];
+            const pathSegments = firstFilePath.split(/[/\\]/);
+            const rootFolder = pathSegments[pathSegments.length - 2];
 
             for (const filePath of filePaths) {
               // console.log("Uploading file:", filePath); // Debugging log
-              const fileName = path.basename(filePath);
-              fileNames.push(fileName);
-              const awsKey = `${pipelineId}/${executionId}/${fileName}`;
+              let relativePath = filePath.split(rootFolder)[1];
+
+              if (param.type === "folder") {
+                relativePath = relativePath.replace(/\\/g, "/").trim();
+              } else {
+                relativePath = relativePath.replace(/\\/g, "").trim();
+              }
+
+              fileNames.push(relativePath);
+              const awsKey = `${pipelineId}/${executionId}/${relativePath}`;
 
               if (filePath && filePath.trim()) {
                 await checkAndUpload(awsKey, filePath, anvilConfiguration);
-                // console.log(`Uploaded: ${fileName} to ${awsKey}`); // which file uploaded.
+                // console.log(`Uploaded: ${relativePath} to ${awsKey}`); // which file uploaded.
               } else {
                 // log invalid paths.
                 console.error("Invalid file path:", filePath);
