@@ -355,7 +355,7 @@ def check_expected_services(config):
             try:
                 sock.bind(('localhost', int(port)))
 
-                raise Exception(f"Was able to bind to {port}, which means kube services are nto running correctly. Please re-run `zetaforge setup`.")
+                raise Exception(f"Was able to bind to {port}, which means kube services are not running correctly. Please re-run `zetaforge setup`.")
             except socket.error as e:
                 if e.errno == errno.EADDRINUSE:
                     print(f"Service running at port {port}")
@@ -376,6 +376,7 @@ def create_config_json(s2_path, context, driver, is_dev):
         "EntrypointFile":"entrypoint.py",
         "ServiceAccount":"executor",
         "Bucket":"forge-bucket",
+        "BucketName": "zetaforge",
         "Database":"./zetaforge.db",
         "KubeContext": context,
         "SetupVersion":"1",
