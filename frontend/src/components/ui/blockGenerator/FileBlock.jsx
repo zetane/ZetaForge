@@ -15,6 +15,7 @@ export const FileBlock = ({ blockId, block, setFocusAction, history }) => {
       }
       fileName = trimQuotes(fileName);
       const s3Url = history + "/" + fileName;
+      console.log(s3Url);
       setFocusAction((draft) => {
         draft.data[blockId].action.parameters["path"].value = s3Url;
         draft.data[blockId].action.parameters["path"].type = "blob";

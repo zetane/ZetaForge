@@ -11,21 +11,6 @@ export const FolderBlock = ({ blockId, block, setFocusAction, history }) => {
     return JSON.parse(existingPaths);
   });
 
-  useEffect(() => {
-    if (history && filePaths.length > 0 && folderName) {
-      const formattedValue = `[${filePaths.map((file) => `"${file}"`).join(", ")}]`;
-      setFocusAction((draft) => {
-        draft.data[blockId].action.parameters["path"].type = "folder";
-        draft.data[blockId].action.parameters["path"].value = formattedValue;
-        draft.data[blockId].action.parameters["folderName"] = {
-          type: "string",
-          value: folderName,
-        };
-      });
-      setRenderPath(folderName);
-    }
-  }, [block, folderName, filePaths]);
-
   const processFiles = (files) => {
     const filePaths = [];
     const readDirectory = (dir, path = "") => {
@@ -46,7 +31,6 @@ export const FolderBlock = ({ blockId, block, setFocusAction, history }) => {
   const loadFiles = () => {
     const files = Array.from(fileInput.current.files);
     const filePaths = processFiles(files);
-    const formattedValue = `[${filePaths.map((file) => `"${file}"`).join(", ")}]`;
 
     const firstFilePath = filePaths[0];
     const pathSegments = firstFilePath.split(/[/\\]/);
@@ -56,7 +40,7 @@ export const FolderBlock = ({ blockId, block, setFocusAction, history }) => {
     setFilePaths(filePaths);
 
     setFocusAction((draft) => {
-      draft.data[blockId].action.parameters["path"].value = formattedValue;
+      draft.data[blockId].action.parameters["path"].value = filePaths;
       draft.data[blockId].action.parameters["path"].type = "folder";
       draft.data[blockId].action.parameters["folderName"] = {
         type: "string",

@@ -139,7 +139,7 @@ const BlockGenerator = ({
   const type =
     block?.action?.parameters?.path?.type ||
     block?.action?.parameters?.files?.type;
-  if (type == "folder" || block.information.id == "folder-upload") {
+  if (block?.information?.id == "folder-upload") {
     content = (
       <FolderBlock
         blockId={id}
@@ -148,11 +148,7 @@ const BlockGenerator = ({
         history={history}
       />
     );
-  } else if (
-    type == "file[]" ||
-    type == "multiFile" ||
-    block.information.id == "multi-file-upload"
-  ) {
+  } else if (type == "file[]" || type == "blob[]") {
     content = (
       <MultiFileBlock
         blockId={id}
