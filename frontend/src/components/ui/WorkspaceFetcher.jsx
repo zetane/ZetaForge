@@ -58,7 +58,11 @@ export default function WorkspaceFetcher() {
     setPipelines(updatedPipelines);
     if (isActive) {
       try {
-        syncResults(key);
+        // TODO:
+        // Surface sync errors
+        syncResults(key).catch((err) => {
+          console.log(err);
+        });
       } catch (err) {
         console.error("Failed to sync results: ", err);
       }
