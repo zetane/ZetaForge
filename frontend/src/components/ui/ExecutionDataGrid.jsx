@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import ClosableModal from "./modal/ClosableModal";
 import { lineageAtom } from "@/atoms/pipelineAtom";
 import { useAtom } from "jotai";
