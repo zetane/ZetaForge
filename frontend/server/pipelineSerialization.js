@@ -6,20 +6,12 @@ import {
   BLOCK_SPECS_FILE_NAME,
   PIPELINE_SPECS_FILE_NAME,
 } from "../src/utils/constants";
-// import { setDifference } from "../utils/set.js";
-import {
-  // fileExists,
-  filterDirectories,
-  // readJsonToObject,
-} from "./fileSystem.js";
+import { filterDirectories } from "./fileSystem.js";
 import { checkAndUpload, checkAndCopy, uploadDirectory } from "./s3.js";
-import {
-  createExecution,
-  getBuildContextStatus,
-  // getPipelinesByUuid,
-} from "./anvil";
+import { createExecution, getBuildContextStatus } from "./anvil";
 import { logger } from "./logger";
 import { computePipelineMerkleTree } from "./merkle";
+import { fileExists } from "./fileSystem.js";
 
 export async function saveSpec(spec, writePath) {
   const pipelineSpecsPath = path.join(writePath, PIPELINE_SPECS_FILE_NAME);
@@ -60,19 +52,13 @@ export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
 
   const fromBlockIndex = await getBlockIndex([bufferPath]);
 
-  // let toBlockIndex = {};
-  // if (await fileExists(writePipelineDirectory)) {
-  //   toBlockIndex = await getBlockIndex([writePipelineDirectory]);
-  // } else {
-  //   await fs.mkdir(writePipelineDirectory, { recursive: true });
-  // }
+  if (!(await fileExists(writePipelineDirectory))) {
+    await fs.mkdir(writePipelineDirectory, { recursive: true });
+  }
 
   // Gets pipeline specs from the specs coming from the graph
   // Submitted by the client
   const newPipelineBlocks = getPipelineBlocks(pipelineSpecs);
-  // const existingPipelineBlocks = (await fileExists(pipelineSpecsPath))
-  //   ? await readPipelineBlocks(pipelineSpecsPath)
-  //   : new Set();
 
   for (const key of Array.from(newPipelineBlocks)) {
     const newBlockPath = path.join(writePipelineDirectory, key);
@@ -123,8 +109,9 @@ async function getBlockIndex(blockDirectories) {
       }
     } catch (error) {
       if (error.code === "ENOENT") {
+        // TODO: fetching the actual block will fix this
         const message = `Directory or file does not exist: ${error.path}`;
-        logger.error(error, message);
+        logger.warn(error, message);
       } else {
         // Handle other types of errors or rethrow the error
         throw error;

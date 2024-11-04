@@ -13,11 +13,12 @@ import ClosableModal from "./modal/ClosableModal";
 import { workspaceAtom } from "@/atoms/pipelineAtom";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { useLoadExecution } from "@/hooks/useLoadPipeline";
+import { useWorkspace } from "@/hooks/useWorkspace";
 
 export default function RunPipelineButton({ children, action }) {
   const [editor] = useAtom(drawflowEditorAtom);
   const [pipeline] = useImmerAtom(pipelineAtom);
-  const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
+  const [workspace] = useImmerAtom(workspaceAtom);
   const [validationErrorMsg, setValidationErrorMsg] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [mixpanelService] = useAtom(mixpanelAtom);
@@ -26,6 +27,7 @@ export default function RunPipelineButton({ children, action }) {
   const executePipeline = trpc.executePipeline.useMutation();
   const queryClient = useQueryClient();
   const loadExecution = useLoadExecution();
+  const { addPipeline } = useWorkspace();
 
   const runPipeline = async () => {
     if (!validatePipelineExists()) return;
@@ -73,19 +75,7 @@ export default function RunPipelineButton({ children, action }) {
     });
 
     const loaded = await loadExecution(newExecution, configuration);
-    setWorkspace((draft) => {
-      const currentTab = draft.active;
-      const newKey = newExecution.Uuid + "." + newExecution.Execution;
-      const pipeline = draft.pipelines[newKey];
-      if (!pipeline) {
-        // key hasn't updated yet
-        draft.pipelines[newKey] = loaded;
-      }
-      draft.tabs[newKey] = {};
-      draft.active = newKey;
-      delete draft.tabs[currentTab];
-    });
-
+    addPipeline(loaded, workspace?.active);
     trackMixpanelRunCreated();
   };
 

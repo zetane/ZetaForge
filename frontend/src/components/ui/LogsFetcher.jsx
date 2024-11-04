@@ -45,7 +45,7 @@ async function fetchLogData(logPath, configuration) {
 export default function LogsFetcher() {
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
   const syncResults = useSyncExecutionResults();
-  const [, setLogs] = useImmerAtom(logsAtom);
+  const [logs, setLogs] = useImmerAtom(logsAtom);
   const configuration = useAtomValue(activeConfigurationAtom);
 
   const updateLogs = useCallback((newEntries) => {
@@ -55,10 +55,13 @@ export default function LogsFetcher() {
         return;
       }
       const key = `${entry?.time}-${entry?.executionId}-${entry?.blockId || ""}-${entry?.message}`;
+      if (logs.has(key)) {
+        return;
+      }
       setLogs((draft) => {
         draft.set(key, entry);
       });
-      updateNodes(entry);
+      updateNodes(entry, pipeline);
     });
   }, []);
 
@@ -91,35 +94,48 @@ export default function LogsFetcher() {
       const serverLogs = Array.isArray(pipeline.logs)
         ? pipeline.logs
         : [pipeline.logs];
-      const filteredLogs = serverLogs.filter((log) => log !== null);
 
-      updateLogs(filteredLogs);
+      serverLogs.forEach((log) => {
+        if (log == null) {
+          return;
+        }
+        const entry = parseLogLine(log);
+        if (!entry.message) {
+          return;
+        }
+        const key = `${entry?.time}-${entry?.executionId}-${entry?.blockId || ""}-${entry?.message}`;
+        if (logs.has(key)) {
+          return;
+        }
+        setLogs((draft) => {
+          draft.set(key, entry);
+        });
+        updateNodes(entry, pipeline);
+      });
     }
   }, [polledData, pipeline?.logs]);
 
-  const updateNodes = useCallback(async (parsedLogEntry) => {
-    if (pipeline?.data[parsedLogEntry?.blockId?.slice(6)]) {
-      if (
-        parsedLogEntry?.event?.tag === "outputs" ||
-        parsedLogEntry?.event?.tag === "inputs"
-      ) {
+  const updateNodes = useCallback(async (parsedLogEntry, pipeline) => {
+    const blockId = parsedLogEntry?.blockId?.slice(6);
+    const tag = parsedLogEntry?.event?.tag;
+    if (pipeline?.data[blockId] && tag) {
+      if (tag === "outputs" || tag === "inputs") {
         setPipeline((draft) => {
-          const node = draft.data[parsedLogEntry?.blockId.slice(6)];
+          const node = draft.data[blockId];
           try {
-            node.events[parsedLogEntry.event?.tag] = parsedLogEntry.event?.data;
+            node.events[tag] = parsedLogEntry.event?.data;
           } catch (err) {
-            console.error(`Failed to parse ${parsedLogEntry.event?.tag}:`, err);
+            console.error(`Failed to parse ${tag}:`, err);
           }
         });
       }
-    }
-
-    if (parsedLogEntry?.event?.tag === "outputs") {
-      const key = `${pipeline.record?.Uuid}.${pipeline.record?.Execution}`;
-      try {
-        syncResults(key);
-      } catch (err) {
-        console.error("Failed to sync: ", err);
+      if (tag === "outputs") {
+        const key = `${pipeline.record?.Uuid}.${pipeline.record?.Execution}`;
+        try {
+          syncResults(key);
+        } catch (err) {
+          console.error("Failed to sync: ", err);
+        }
       }
     }
   });

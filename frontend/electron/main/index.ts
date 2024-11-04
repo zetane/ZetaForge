@@ -118,6 +118,10 @@ const menuTemplate: Electron.MenuItemConstructorOptions[] = [
   },
 ];
 
+ipcMain.handle("get-cache", () => {
+  return absoluteCachePath;
+});
+
 async function createWindow() {
   win = new BrowserWindow({
     title: "ZetaForge",
@@ -130,6 +134,7 @@ async function createWindow() {
       // Consider using contextBridge.exposeInMainWorld
       // Read more on https://www.electronjs.org/docs/latest/tutorial/context-isolation
       contextIsolation: true,
+      backgroundThrottling: false,
     },
   });
 
@@ -138,10 +143,6 @@ async function createWindow() {
   // Pass the menuTemplate
   const menu = Menu.buildFromTemplate(menuTemplate);
   Menu.setApplicationMenu(menu);
-
-  ipcMain.handle("get-cache", () => {
-    return absoluteCachePath;
-  });
 
   if (url) {
     // electron-vite-vue#298

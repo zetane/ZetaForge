@@ -1,22 +1,12 @@
-import {
-  workspaceAtom,
-  pipelineFactory,
-  pipelineKey,
-} from "@/atoms/pipelineAtom";
+import { pipelineFactory } from "@/atoms/pipelineAtom";
+import { useWorkspace } from "@/hooks/useWorkspace";
 import { HeaderMenuItem } from "@carbon/react";
-import { useImmerAtom } from "jotai-immer";
 
 export default function NewButton() {
-  const [, setWorkspace] = useImmerAtom(workspaceAtom);
-
+  const { addPipeline } = useWorkspace();
   const handleClick = async () => {
     const newPipeline = pipelineFactory(await window.cache.local());
-    const key = pipelineKey(newPipeline.id, null);
-    setWorkspace((draft) => {
-      draft.tabs[key] = {};
-      draft.pipelines[key] = newPipeline;
-      draft.active = key;
-    });
+    addPipeline(newPipeline);
   };
 
   return (

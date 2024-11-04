@@ -1,12 +1,9 @@
 import { useImmerAtom } from "jotai-immer";
 import { trpc } from "@/utils/trpc";
 import { getDirectoryPath } from "@/../utils/fileUtils";
-import {
-  workspaceAtom,
-  pipelineFactory,
-  pipelineKey,
-} from "@/atoms/pipelineAtom";
+import { workspaceAtom, pipelineFactory } from "@/atoms/pipelineAtom";
 import { getWsConnection } from "@/client/anvil";
+import { generateId } from "@/utils/blockUtils";
 
 function getLastFolder(path) {
   // Remove trailing slashes
@@ -25,8 +22,6 @@ function getLastFolder(path) {
 }
 
 export const useLoadPipeline = () => {
-  const [, setWorkspace] = useImmerAtom(workspaceAtom);
-
   const loadPipeline = async (file) => {
     console.log("***********Loading pipeline from file:", file);
 
@@ -44,19 +39,15 @@ export const useLoadPipeline = () => {
       saveTime: Date.now(),
       data: data.pipeline,
       id: data.id,
+      key: data.id + ".",
     };
 
     const newPipeline = pipelineFactory(
       await window.cache.local(),
       loadedPipeline,
     );
-    const key = pipelineKey(newPipeline.id, null);
 
-    setWorkspace((draft) => {
-      draft.tabs[key] = {};
-      draft.pipelines[key] = newPipeline;
-      draft.active = key;
-    });
+    return newPipeline;
   };
 
   return loadPipeline;
@@ -68,13 +59,11 @@ function removeNullInputsOutputs(obj) {
 
   // Iterate through all keys in the object
   for (const key in obj) {
-    if (Object.prototype.hasOwnProperty.call(key)) {
-      const value = obj[key];
+    const value = obj[key];
 
-      // Check if both inputs and outputs are null
-      if (value.inputs === null && value.outputs === null) {
-        keysToRemove.push(key);
-      }
+    // Check if both inputs and outputs are null
+    if (value.inputs === null && value.outputs === null) {
+      keysToRemove.push(key);
     }
   }
 
@@ -144,7 +133,7 @@ export const useLoadServerPipeline = () => {
 
     const localKey = serverPipeline.Uuid + ".";
     let path = `${await window.cache.local()}${serverPipeline.Uuid}`;
-    const local = workspace.pipelines[localKey];
+    const local = workspace.tabs[localKey];
     // Need to check if we've loaded a local path and use it for the history
     if (local && local.path) {
       path = local.path;
@@ -168,6 +157,7 @@ export const useLoadServerPipeline = () => {
       path: path,
       data: data,
       id: serverPipeline.Uuid,
+      key: serverPipeline.Uuid + "." + executionId,
       history: serverPipeline.Uuid + "/" + executionId,
       record: serverPipeline,
       host: hostString,
@@ -202,7 +192,7 @@ export const useLoadExecution = () => {
 
     let path = `${await window.cache.local()}${executionData.id}`;
     const localKey = execution.Uuid + ".";
-    const local = workspace.pipelines[localKey];
+    const local = workspace.tabs[localKey];
     // Need to check if we've loaded a local path and use it for the history
     if (local && local.path) {
       path = local.path;
@@ -221,6 +211,7 @@ export const useLoadExecution = () => {
       path: path,
       data: data,
       id: executionData.id,
+      key: executionData.id + "." + executionId,
       history: executionData.id + "/" + executionId,
       record: execution,
       host: hostString,
@@ -240,11 +231,13 @@ export const useLoadExecution = () => {
 };
 
 export const useLoadCorePipeline = () => {
-  const [, setWorkspace] = useImmerAtom(workspaceAtom);
   const copyPipelineMutation = trpc.copyPipeline.useMutation();
 
   const loadPipeline = async (specs, corePath) => {
     const tempFile = `${await window.cache.local()}${specs.id}`;
+
+    const newId = generateId(specs.id);
+    specs.id = newId;
 
     const copyData = {
       specs: specs,
@@ -259,20 +252,15 @@ export const useLoadCorePipeline = () => {
       saveTime: Date.now(),
       path: tempFile,
       data: specs.pipeline,
-      id: specs.id,
+      id: newId,
+      key: newId + ".",
     };
 
     const newPipeline = pipelineFactory(
       await window.cache.local(),
       loadedPipeline,
     );
-    const key = pipelineKey(newPipeline.id, null);
-
-    setWorkspace((draft) => {
-      draft.tabs[key] = {};
-      draft.pipelines[key] = newPipeline;
-      draft.active = key;
-    });
+    return newPipeline;
   };
 
   return loadPipeline;
