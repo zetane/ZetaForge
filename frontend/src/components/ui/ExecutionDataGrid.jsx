@@ -21,7 +21,6 @@ import { PipelineDeployButton } from "./PipelineDeployButton";
 import { useSyncExecutionResults } from "@/hooks/useExecutionResults";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { useLoadExecution } from "@/hooks/useLoadPipeline";
-import { useQueryClient } from "@tanstack/react-query";
 import { useWorkspace } from "@/hooks/useWorkspace";
 
 export const PipelineTableRow = ({ row, getRowProps }) => {
@@ -41,7 +40,6 @@ export const ExecutionDataGrid = ({ closeModal }) => {
   const syncResults = useSyncExecutionResults();
   const [configuration] = useAtom(activeConfigurationAtom);
   const loadExecution = useLoadExecution();
-  const queryClient = useQueryClient();
   const { addPipeline } = useWorkspace();
 
   const setPagination = ({ page, pageSize }) => {

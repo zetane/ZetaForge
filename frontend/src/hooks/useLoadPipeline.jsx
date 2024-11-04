@@ -237,6 +237,7 @@ export const useLoadCorePipeline = () => {
     const tempFile = `${await window.cache.local()}${specs.id}`;
 
     const newId = generateId(specs.id);
+    specs.id = newId;
 
     const copyData = {
       specs: specs,
@@ -252,7 +253,7 @@ export const useLoadCorePipeline = () => {
       path: tempFile,
       data: specs.pipeline,
       id: newId,
-      key: specs.id + ".",
+      key: newId + ".",
     };
 
     const newPipeline = pipelineFactory(
