@@ -267,14 +267,33 @@ async function uploadBlocks(
         } else if (param.type == "blob[]") {
           const s3files = param.value;
           const uploadedFiles = Promise.all(
-            s3files.map(async (file) => {
-              const fileName = file.split("/").at(-1);
+            s3files.map(async (s3file) => {
+              const fileName = s3file.split("/").at(-1);
               const newAwsKey = `${pipelineId}/${executionId}/${fileName}`;
-              await checkAndCopy(newAwsKey, copyKey, anvilConfiguration);
+              await checkAndCopy(newAwsKey, s3file, anvilConfiguration);
               return fileName;
             }),
           );
 
+          param.value = JSON.stringify(uploadedFiles);
+        } else if (param.type == "folderBlob") {
+          const folder = parameters["folderName"];
+          if (!folder || folder == "") {
+            throw new Error("Folder block must set a folderName parameter");
+          }
+          const awsPaths = param.value;
+          const uploadedFiles = Promise.all(
+            awsPaths.map(async (s3file) => {
+              const folderIndex = s3file.indexOf(folder);
+              if (folderIndex === -1) {
+                throw new Error("Folder block must set a folderName parameter");
+              }
+              const slicePath = s3file.slice(folderIndex);
+              const newAwsKey = `${pipelineId}/${executionId}/${slicePath}`;
+              await checkAndCopy(newAwsKey, s3file, anvilConfiguration);
+              return slicePath;
+            }),
+          );
           param.value = JSON.stringify(uploadedFiles);
         }
       }

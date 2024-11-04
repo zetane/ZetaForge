@@ -11,6 +11,26 @@ export const FolderBlock = ({ blockId, block, setFocusAction, history }) => {
     return JSON.parse(existingPaths);
   });
 
+  useEffect(() => {
+    const type = block?.action?.parameters["path"]?.type;
+    const value = block?.action?.parameters["path"]?.value;
+    if (history && type == "folderBlob" && typeof value == "string") {
+      const paths = JSON.parse(value);
+      const s3Files = paths.map((name) => {
+        return history + "/" + name;
+      });
+      setFocusAction((draft) => {
+        draft.data[blockId].action.parameters["path"].type = "folderBlob";
+        draft.data[blockId].action.parameters["path"].value = s3Files;
+        draft.data[blockId].action.parameters["folderName"] = {
+          type: "string",
+          value: folderName,
+        };
+      });
+      setRenderPath(folderName);
+    }
+  }, [block, folderName, filePaths]);
+
   const processFiles = (files) => {
     const filePaths = [];
     const readDirectory = (dir, path = "") => {
@@ -41,7 +61,7 @@ export const FolderBlock = ({ blockId, block, setFocusAction, history }) => {
 
     setFocusAction((draft) => {
       draft.data[blockId].action.parameters["path"].value = filePaths;
-      draft.data[blockId].action.parameters["path"].type = "folder";
+      draft.data[blockId].action.parameters["path"].type = "file[]";
       draft.data[blockId].action.parameters["folderName"] = {
         type: "string",
         value: extractedFolderName,
