@@ -237,8 +237,8 @@ async function uploadBlocks(
           param.value = JSON.stringify(uploaded);
           param.type = "blob[]";
         } else if (param.type === "folder") {
-          const files = param.value;
-          const folder = parameters["folderName"];
+          const files = param?.value ?? [];
+          const folder = parameters?.folderName?.value;
           if (!folder || folder == "") {
             throw new Error("Folder block must set a folderName parameter");
           }
@@ -266,7 +266,7 @@ async function uploadBlocks(
           param.value = `"${fileName}"`;
         } else if (param.type == "blob[]") {
           const s3files = param.value;
-          const uploadedFiles = Promise.all(
+          const uploadedFiles = await Promise.all(
             s3files.map(async (s3file) => {
               const fileName = s3file.split("/").at(-1);
               const newAwsKey = `${pipelineId}/${executionId}/${fileName}`;
@@ -276,13 +276,14 @@ async function uploadBlocks(
           );
 
           param.value = JSON.stringify(uploadedFiles);
+          param.type = "blob[]";
         } else if (param.type == "folderBlob") {
-          const folder = parameters["folderName"];
+          const folder = parameters?.folderName?.value;
           if (!folder || folder == "") {
             throw new Error("Folder block must set a folderName parameter");
           }
-          const awsPaths = param.value;
-          const uploadedFiles = Promise.all(
+          const awsPaths = param?.value ?? [];
+          const uploadedFiles = await Promise.all(
             awsPaths.map(async (s3file) => {
               const folderIndex = s3file.indexOf(folder);
               if (folderIndex === -1) {

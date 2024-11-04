@@ -41,9 +41,7 @@ export default function RunPipelineButton({ children, action }) {
 
     if (!validateSchema()) return;
     setClickedRun(true);
-    console.log("submitting, ", pipelineSpecs);
     const newExecution = await execute(pipelineSpecs, executionId);
-    console.log(newExecution);
     setClickedRun(false);
     if (!newExecution) {
       return;

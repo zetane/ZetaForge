@@ -4,7 +4,7 @@ import { Code, View, CloudLogging } from "@carbon/icons-react";
 import { useImmerAtom } from "jotai-immer";
 import { useEffect, useRef, useState, useMemo } from "react";
 import { FileBlock } from "./FileBlock";
-import { FolderBlock } from "./Folder-uploadBlock";
+import { FolderBlock } from "./FolderBlock";
 import { MultiFileBlock } from "./MultiFileBlock";
 import { modalContentAtom } from "@/atoms/modalAtom";
 import { useAtom } from "jotai";

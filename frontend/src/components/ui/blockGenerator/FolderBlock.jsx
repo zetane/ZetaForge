@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { TreeView, TreeNode } from "@carbon/react";
+import { Folder, Document } from "@carbon/icons-react";
 
 export const FolderBlock = ({ blockId, block, setFocusAction, history }) => {
   const fileInput = useRef();
@@ -6,10 +8,7 @@ export const FolderBlock = ({ blockId, block, setFocusAction, history }) => {
   const [folderName, setFolderName] = useState(
     block?.action?.parameters["folderName"]?.value || null,
   );
-  const [filePaths, setFilePaths] = useState(() => {
-    const existingPaths = block?.action?.parameters["path"]?.value || "[]";
-    return JSON.parse(existingPaths);
-  });
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     const type = block?.action?.parameters["path"]?.type;
@@ -27,9 +26,14 @@ export const FolderBlock = ({ blockId, block, setFocusAction, history }) => {
           value: folderName,
         };
       });
-      setRenderPath(folderName);
+
+      const folderInfo = {
+        files: paths,
+        folderName: folderName,
+      };
+      setRenderPath(folderInfo);
     }
-  }, [block, folderName, filePaths]);
+  }, [block, folderName]);
 
   const processFiles = (files) => {
     const filePaths = [];
@@ -40,7 +44,11 @@ export const FolderBlock = ({ blockId, block, setFocusAction, history }) => {
         if (file.webkitDirectory) {
           readDirectory(file.children, fullPath);
         } else {
-          filePaths.push(fullPath);
+          const baseName = file.path.split("/").at(-1);
+          // DS STORE I BANISH THEE
+          if (baseName != ".DS_Store") {
+            filePaths.push(fullPath);
+          }
         }
       }
     };
@@ -57,23 +65,57 @@ export const FolderBlock = ({ blockId, block, setFocusAction, history }) => {
     const extractedFolderName = pathSegments[pathSegments.length - 2];
 
     setFolderName(extractedFolderName);
-    setFilePaths(filePaths);
 
     setFocusAction((draft) => {
       draft.data[blockId].action.parameters["path"].value = filePaths;
-      draft.data[blockId].action.parameters["path"].type = "file[]";
+      draft.data[blockId].action.parameters["path"].type = "folder";
       draft.data[blockId].action.parameters["folderName"] = {
         type: "string",
         value: extractedFolderName,
       };
     });
 
-    setRenderPath(extractedFolderName);
+    const folderInfo = {
+      files: filePaths,
+      folderName: extractedFolderName,
+    };
+
+    setRenderPath(folderInfo);
   };
+
+  let treeView = null;
+  if (renderPath?.folderName) {
+    treeView = (
+      <TreeView>
+        <TreeNode
+          key={0}
+          isExpanded={isExpanded}
+          onToggle={() => setIsExpanded(!isExpanded)}
+          label={renderPath.folderName}
+          renderIcon={Folder}
+          value={renderPath.folderName}
+        >
+          {renderPath.files.map((filePath, index) => (
+            <TreeNode
+              key={index + 1}
+              label={filePath}
+              value={filePath}
+              renderIcon={Document}
+              isSelectable={false}
+              onSelect={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+            />
+          ))}
+        </TreeNode>
+      </TreeView>
+    );
+  }
 
   return (
     <div className="block-content">
-      <div className="mb-2 pl-2">{renderPath}</div>
+      {treeView}
       <input
         id="folder-block"
         type="file"
