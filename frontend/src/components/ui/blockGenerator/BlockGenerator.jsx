@@ -4,7 +4,7 @@ import { Code, View, CloudLogging } from "@carbon/icons-react";
 import { useImmerAtom } from "jotai-immer";
 import { useEffect, useRef, useState, useMemo } from "react";
 import { FileBlock } from "./FileBlock";
-import { FolderBlock } from "./Folder-uploadBlock";
+import { FolderBlock } from "./FolderBlock";
 import { MultiFileBlock } from "./MultiFileBlock";
 import { modalContentAtom } from "@/atoms/modalAtom";
 import { useAtom } from "jotai";
@@ -139,7 +139,7 @@ const BlockGenerator = ({
   const type =
     block?.action?.parameters?.path?.type ||
     block?.action?.parameters?.files?.type;
-  if (type == "folder" || block.information.id == "folder-upload") {
+  if (block?.information?.id == "folder-upload") {
     content = (
       <FolderBlock
         blockId={id}
@@ -148,11 +148,7 @@ const BlockGenerator = ({
         history={history}
       />
     );
-  } else if (
-    type == "file[]" ||
-    type == "multiFile" ||
-    block.information.id == "multi-file-upload"
-  ) {
+  } else if (type == "file[]" || type == "blob[]") {
     content = (
       <MultiFileBlock
         blockId={id}

@@ -221,52 +221,81 @@ async function uploadBlocks(
             param.value = `"${fileName}"`;
             param.type = "blob";
           }
-        } else if (param.type === "folder" || param.type === "file[]") {
-          try {
-            const cleanedValue = param.value.replace(/\\/g, "\\\\");
-            const fileNames = [];
-            const filePaths = JSON.parse(cleanedValue);
-            const firstFilePath = filePaths[0];
-            const pathSegments = firstFilePath.split(/[/\\]/);
-            const rootFolder = pathSegments[pathSegments.length - 2];
-
-            for (const filePath of filePaths) {
-              // console.log("Uploading file:", filePath); // Debugging log
-              let relativePath = filePath.split(rootFolder)[1];
-
-              if (param.type === "folder") {
-                relativePath = relativePath.replace(/\\/g, "/").trim();
-              } else {
-                relativePath = relativePath.replace(/\\/g, "").trim();
-              }
-
-              fileNames.push(relativePath);
-              const awsKey = `${pipelineId}/${executionId}/${relativePath}`;
-
+        } else if (param.type == "file[]") {
+          const files = param.value;
+          const uploaded = await Promise.all(
+            files.map(async (filePath) => {
+              const fileName = path.basename(filePath);
+              const awsKey = `${pipelineId}/${executionId}/${fileName}`;
               if (filePath && filePath.trim()) {
                 await checkAndUpload(awsKey, filePath, anvilConfiguration);
-                // console.log(`Uploaded: ${relativePath} to ${awsKey}`); // which file uploaded.
-              } else {
-                // log invalid paths.
-                console.error("Invalid file path:", filePath);
               }
-            }
-            // Preserve the original value and update type
-            param.value =
-              fileNames.length > 0
-                ? `["${fileNames.join('", "')}"]`
-                : param.value;
-            param.type = "blob";
-          } catch (error) {
-            console.error("Error processing folder:", error);
+              return fileName;
+            }),
+          );
+
+          param.value = JSON.stringify(uploaded);
+          param.type = "blob[]";
+        } else if (param.type === "folder") {
+          const files = param?.value ?? [];
+          const folder = parameters?.folderName?.value;
+          if (!folder || folder == "") {
+            throw new Error("Folder block must set a folderName parameter");
           }
+          const uploaded = await Promise.all(
+            files.map(async (filePath) => {
+              const folderIndex = filePath.indexOf(folder);
+              if (folderIndex === -1) {
+                throw new Error("Folder block must set a folderName parameter");
+              }
+              const slicePath = filePath.slice(folderIndex);
+              const awsKey = `${pipelineId}/${executionId}/${slicePath}`;
+              if (filePath && filePath.trim()) {
+                await checkAndUpload(awsKey, filePath, anvilConfiguration);
+              }
+              return slicePath;
+            }),
+          );
+          param.value = JSON.stringify(uploaded);
+          param.type = "folderBlob";
         } else if (param.type == "blob") {
           const copyKey = param.value;
           const fileName = param.value.split("/").at(-1);
           const newAwsKey = `${pipelineId}/${executionId}/${fileName}`;
-
           await checkAndCopy(newAwsKey, copyKey, anvilConfiguration);
           param.value = `"${fileName}"`;
+        } else if (param.type == "blob[]") {
+          const s3files = param.value;
+          const uploadedFiles = await Promise.all(
+            s3files.map(async (s3file) => {
+              const fileName = s3file.split("/").at(-1);
+              const newAwsKey = `${pipelineId}/${executionId}/${fileName}`;
+              await checkAndCopy(newAwsKey, s3file, anvilConfiguration);
+              return fileName;
+            }),
+          );
+
+          param.value = JSON.stringify(uploadedFiles);
+          param.type = "blob[]";
+        } else if (param.type == "folderBlob") {
+          const folder = parameters?.folderName?.value;
+          if (!folder || folder == "") {
+            throw new Error("Folder block must set a folderName parameter");
+          }
+          const awsPaths = param?.value ?? [];
+          const uploadedFiles = await Promise.all(
+            awsPaths.map(async (s3file) => {
+              const folderIndex = s3file.indexOf(folder);
+              if (folderIndex === -1) {
+                throw new Error("Folder block must set a folderName parameter");
+              }
+              const slicePath = s3file.slice(folderIndex);
+              const newAwsKey = `${pipelineId}/${executionId}/${slicePath}`;
+              await checkAndCopy(newAwsKey, s3file, anvilConfiguration);
+              return slicePath;
+            }),
+          );
+          param.value = JSON.stringify(uploadedFiles);
         }
       }
     }
