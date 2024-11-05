@@ -64,7 +64,6 @@ async function merkleDirectory(absolutePathSegments, relativePathSegments) {
       );
       children.push(subDirNode);
     } else {
-      console.log(entry.name);
       if (METADATA.includes(entry.name)) {
         continue;
       }
@@ -84,7 +83,6 @@ async function merkleDirectory(absolutePathSegments, relativePathSegments) {
 async function computeFileHash(filePath) {
   const fileBuffer = await fs.readFile(filePath);
   const hash = crypto.createHash("sha256").update(fileBuffer).digest("hex");
-  console.log(`hashing ${filePath} as ${hash}`);
   return hash;
 }
 

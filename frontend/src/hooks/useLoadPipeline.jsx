@@ -134,12 +134,12 @@ export const useLoadServerPipeline = () => {
 
     const localKey = serverPipeline.Uuid + ".";
     let path = `${await window.cache.local()}${serverPipeline.Uuid}`;
+
     // Need to check if we've loaded a local path and use it for the history
     const local = workspace.tabs[localKey];
     const serverKey = serverPipeline.Uuid + "." + executionId;
     const server = workspace.tabs[serverKey];
 
-    // Need to check if we've loaded a local path and use it for the history
     if (local && local.path) {
       path = local.path;
     } else if (server && server.path) {
@@ -198,12 +198,13 @@ export const useLoadExecution = () => {
     const executionId = execution.Execution;
 
     let path = `${await window.cache.local()}${executionData.id}`;
+
+    // we check three locations for a local path
+    // otherwise the local path gets lost, since it's not in the cache
     const localKey = execution.Uuid + ".";
     const local = workspace.tabs[localKey];
-
     const serverKey = execution.Uuid + "." + executionId;
     const server = workspace.tabs[serverKey];
-    // Need to check if we've loaded a local path and use it for the history
     if (local && local.path) {
       path = local.path;
     } else if (server && server.path) {

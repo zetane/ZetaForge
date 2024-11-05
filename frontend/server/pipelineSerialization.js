@@ -178,7 +178,6 @@ export async function executePipeline(
   specs["id"] = id;
 
   const merkleTree = await computePipelineMerkleTree(specs, pipelinePath);
-  console.log(inspect(merkleTree, { depth: null }));
 
   await uploadBuildContexts(
     anvilHostConfiguration,
