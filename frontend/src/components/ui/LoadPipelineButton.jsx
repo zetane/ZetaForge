@@ -42,6 +42,7 @@ export default function LoadPipelineButton() {
           fileName == PIPELINE_SPECS_FILE_NAME
         ) {
           const newPipeline = await loadPipeline(file);
+          console.log("loaded from file: ", newPipeline);
           addPipeline(newPipeline);
           event.target.value = ""; // Reset the file input
         }

@@ -130,18 +130,24 @@ export const useLoadServerPipeline = () => {
     const host = configuration?.anvil?.host;
     const port = configuration?.anvil?.port;
     const hostString = host + ":" + port;
+    const executionId = serverPipeline.Execution;
 
     const localKey = serverPipeline.Uuid + ".";
     let path = `${await window.cache.local()}${serverPipeline.Uuid}`;
+    // Need to check if we've loaded a local path and use it for the history
     const local = workspace.tabs[localKey];
+    const serverKey = serverPipeline.Uuid + "." + executionId;
+    const server = workspace.tabs[serverKey];
+
     // Need to check if we've loaded a local path and use it for the history
     if (local && local.path) {
       path = local.path;
+    } else if (server && server.path) {
+      path = server.path;
     }
 
     const serverPipelineData = JSON.parse(serverPipeline.PipelineJson);
     let data = removeNullInputsOutputs(serverPipelineData?.pipeline);
-    const executionId = serverPipeline.Execution;
     let socketUrl = null;
     if (
       serverPipeline.Status == "Pending" ||
@@ -176,7 +182,7 @@ export const useLoadServerPipeline = () => {
 export const useLoadExecution = () => {
   const [workspace] = useImmerAtom(workspaceAtom);
 
-  const loadExecution = async (execution, configuration) => {
+  const loadExecution = async (execution, configuration, prevPath = null) => {
     if (!execution) {
       return;
     }
@@ -189,16 +195,23 @@ export const useLoadExecution = () => {
     if (execution.Results != "") {
       executionData = JSON.parse(execution.Results);
     }
+    const executionId = execution.Execution;
 
     let path = `${await window.cache.local()}${executionData.id}`;
     const localKey = execution.Uuid + ".";
     const local = workspace.tabs[localKey];
+
+    const serverKey = execution.Uuid + "." + executionId;
+    const server = workspace.tabs[serverKey];
     // Need to check if we've loaded a local path and use it for the history
     if (local && local.path) {
       path = local.path;
+    } else if (server && server.path) {
+      path = server.path;
+    } else if (prevPath) {
+      path = prevPath;
     }
 
-    const executionId = execution.Execution;
     let socketUrl = null;
     if (execution.Status == "Pending" || execution.Status == "Running") {
       socketUrl = getWsConnection(configuration, `ws/${executionId}`);
@@ -234,10 +247,10 @@ export const useLoadCorePipeline = () => {
   const copyPipelineMutation = trpc.copyPipeline.useMutation();
 
   const loadPipeline = async (specs, corePath) => {
-    const tempFile = `${await window.cache.local()}${specs.id}`;
-
     const newId = generateId(specs.id);
     specs.id = newId;
+
+    const tempFile = `${await window.cache.local()}${newId}`;
 
     const copyData = {
       specs: specs,
