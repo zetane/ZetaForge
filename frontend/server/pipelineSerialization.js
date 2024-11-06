@@ -12,6 +12,7 @@ import { createExecution, getBuildContextStatus } from "./anvil";
 import { logger } from "./logger";
 import { computePipelineMerkleTree } from "./merkle";
 import { fileExists } from "./fileSystem.js";
+import { inspect } from "util";
 
 export async function saveSpec(spec, writePath) {
   const pipelineSpecsPath = path.join(writePath, PIPELINE_SPECS_FILE_NAME);

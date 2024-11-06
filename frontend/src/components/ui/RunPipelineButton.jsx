@@ -38,6 +38,7 @@ export default function RunPipelineButton({ children, action }) {
       pipeline.data,
     );
     const executionId = uuidv7();
+    const prevPath = pipeline?.path;
 
     if (!validateSchema()) return;
     setClickedRun(true);
@@ -74,7 +75,7 @@ export default function RunPipelineButton({ children, action }) {
       return updatedPipelines;
     });
 
-    const loaded = await loadExecution(newExecution, configuration);
+    const loaded = await loadExecution(newExecution, configuration, prevPath);
     addPipeline(loaded, workspace?.active);
     trackMixpanelRunCreated();
   };
