@@ -61,7 +61,7 @@ export default function WorkspaceFetcher() {
     if (isActive) {
       try {
         const Merkle = "undefined"; // while running Merkle should be a blank something.
-        await syncResults(key , Merkle);
+        await syncResults(key, Merkle);
       } catch (err) {
         console.error("Failed to sync results: ", err);
       }

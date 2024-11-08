@@ -47,7 +47,7 @@ export const ExecutionDataGrid = ({ closeModal }) => {
     setPageSize(pageSize);
   };
 
-  const selectExecution = async (execution, configuration , Merkle) => {
+  const selectExecution = async (execution, configuration, Merkle) => {
     const key = execution.Uuid + "." + execution.Execution;
 
     const serverExec = await loadExecution(execution, configuration);
@@ -57,7 +57,7 @@ export const ExecutionDataGrid = ({ closeModal }) => {
       draft.active = key;
     });
     try {
-      await syncResults(key , Merkle);
+      await syncResults(key, Merkle);
     } catch (error) {
       console.error("Sync failed: ", error);
     }

@@ -1,5 +1,5 @@
 import path from "path";
-import fs from "fs"
+import fs from "fs";
 import { syncS3ToLocalDirectory } from "./s3";
 import { cacheJoin } from "./cache";
 
@@ -12,10 +12,9 @@ export async function syncExecutionResults(
 ) {
   let parse_Merkle;
   try {
-    Merkle = JSON.parse(Merkle)
+    Merkle = JSON.parse(Merkle);
     parse_Merkle = true;
-  }
-  catch (err) {
+  } catch (err) {
     // console.log(err)
     parse_Merkle = false;
   }
@@ -32,37 +31,46 @@ export async function syncExecutionResults(
   const localPath = path.join(resultPath, "history", executionUuid, "files");
   await syncS3ToLocalDirectory(s3Prefix, localPath, anvilConfiguration); // That is for downloading history folder and it's contents.
 
-  if (parse_Merkle) { // for downloading files
+  if (parse_Merkle) {
+    // for downloading files
     for (const blockKey in Merkle.blocks) {
       const block = Merkle.blocks[blockKey];
       const blockPath = localPath.split("history")[0];
-      const blockName = blockKey.split('-').slice(0, -1).join('-');
+      const blockName = blockKey.split("-").slice(0, -1).join("-");
 
       for (const file of block.files.children) {
         const blocksS3Prefix = `${blockName}-${block.hash}-build/${file.path}`;
 
-        await syncS3ToLocalDirectory(blocksS3Prefix, blockPath, anvilConfiguration);
+        await syncS3ToLocalDirectory(
+          blocksS3Prefix,
+          blockPath,
+          anvilConfiguration,
+        );
 
         const oldPath = path.join(blockPath, blocksS3Prefix);
         const newDir = path.join(blockPath, blockKey);
 
         if (!fs.existsSync(newDir)) {
-          fs.mkdirSync(newDir, { recursive: true });  // Create the directory recursively if it doesn't exist
+          fs.mkdirSync(newDir, { recursive: true }); // Create the directory recursively if it doesn't exist
         }
 
         const newPath = path.join(newDir, file.path);
 
-        try { // try to move to block folder.
+        try {
+          // try to move to block folder.
           await fs.promises.rename(oldPath, newPath);
         } catch (err) {
-          console.error('Error moving the file:', err);
+          console.error("Error moving the file:", err);
         }
-        const directory_path = path.join(blockPath, `${blockName}-${block.hash}-build`);
+        const directory_path = path.join(
+          blockPath,
+          `${blockName}-${block.hash}-build`,
+        );
         try {
           // console.log("directoryPath:", directory_path)
           await fs.promises.rmdir(directory_path);
         } catch (err) {
-          console.error('Error removing directory:', err);
+          console.error("Error removing directory:", err);
         }
       }
     }

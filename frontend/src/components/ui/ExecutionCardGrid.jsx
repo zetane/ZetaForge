@@ -19,7 +19,7 @@ const ExecutionCard = ({ execution, onSelect }) => {
     const result = await refetch();
     try {
       if (result.data) {
-        onSelect(result.data, configuration , result.data.Merkle);
+        onSelect(result.data, configuration, result.data.Merkle);
         // console.log("Merkle: " ,result.data.Merkle)
       } else {
         console.log("No data");
