@@ -37,6 +37,7 @@ type ResponsePipelineExecution struct {
 	Log           []string
 	LogPath       string
 	Results       string
+	Merkle        string
 }
 
 type AllPipelineExecution struct {
@@ -138,6 +139,7 @@ func newResponsePipelineExecution(filterPipeline zdatabase.FilterPipelineRow, ex
 		Log:           execLog,
 		LogPath:       s3key,
 		Results:       filterPipeline.Results.String,
+		Merkle:        filterPipeline.Merkle.String,
 	}, nil
 }
 
@@ -170,6 +172,7 @@ func newResponsePipelinesExecution(filterPipeline zdatabase.FilterPipelinesRow, 
 		Log:           execLog,
 		LogPath:       s3key,
 		Results:       filterPipeline.Results.String,
+		Merkle:        filterPipeline.Merkle.String,
 	}, nil
 }
 

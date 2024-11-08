@@ -705,18 +705,18 @@ func localExecute(pipeline *zjson.Pipeline, pipelineMerkleTree *zjson.PipelineMe
 		}
 	}
 
-    if cfg.Local.Driver == "k3d" {
-        imageImport := []string{"image", "import"}
-        for _, image := range blocks {
-            imageImport = append(imageImport, image)
-        }
-        imageImport = append(imageImport, "-c")
-        imageImport = append(imageImport, cfg.Local.K3DCluster)
-        pullImage := cmd.NewCmd("k3d", imageImport...)
-        <-pullImage.Start()
-        log.Println(pullImage.Status().Stdout)
-        log.Println(pullImage.Status().Stderr)
-    }
+	if cfg.Local.Driver == "k3d" {
+		imageImport := []string{"image", "import"}
+		for _, image := range blocks {
+			imageImport = append(imageImport, image)
+		}
+		imageImport = append(imageImport, "-c")
+		imageImport = append(imageImport, cfg.Local.K3DCluster)
+		pullImage := cmd.NewCmd("k3d", imageImport...)
+		<-pullImage.Start()
+		log.Println(pullImage.Status().Stdout)
+		log.Println(pullImage.Status().Stderr)
+	}
 
 	if err := eg.Wait(); err != nil {
 		pipelineLogger.Printf("error during pipeline build execution; err=%v", err)
@@ -835,7 +835,7 @@ func getBuildContextStatus(ctx context.Context, pipeline *zjson.Pipeline, merkle
 	var buildContextStatus []zjson.BuildContextStatusResponse
 	for id, block := range pipeline.Pipeline {
 		var hash = merkleTree.Blocks[id].Hash
-		if len(block.Action.Container.Image) > 0 && !cfg.IsLocal {
+		if len(block.Action.Container.Image) > 0 { // just to push local pipeline to clould change it to 'if len(block.Action.Container.Image) > 0 && !cfg.IsLocal {' afterwards.
 			var status = false
 			if !rebuild {
 				imageStatus, _, err := checkImage(ctx, getImage(&block, hash, organization), cfg)

@@ -1,4 +1,5 @@
 import path from "path";
+import fs from "fs"
 import { syncS3ToLocalDirectory } from "./s3";
 import { cacheJoin } from "./cache";
 
@@ -7,7 +8,18 @@ export async function syncExecutionResults(
   pipelineUuid,
   executionUuid,
   anvilConfiguration,
+  Merkle,
 ) {
+  let parse_Merkle;
+  try {
+    Merkle = JSON.parse(Merkle)
+    parse_Merkle = true;
+  }
+  catch (err) {
+    // console.log(err)
+    parse_Merkle = false;
+  }
+
   let s3Prefix;
   if (anvilConfiguration.anvil.token) {
     const data = atob(anvilConfiguration.anvil.token.split(".")[1]);
@@ -18,19 +30,43 @@ export async function syncExecutionResults(
   }
 
   const localPath = path.join(resultPath, "history", executionUuid, "files");
+  await syncS3ToLocalDirectory(s3Prefix, localPath, anvilConfiguration); // That is for downloading history folder and it's contents.
 
-  await syncS3ToLocalDirectory(s3Prefix, localPath, anvilConfiguration);
+  if (parse_Merkle) { // for downloading files
+    for (const blockKey in Merkle.blocks) {
+      const block = Merkle.blocks[blockKey];
+      const blockPath = localPath.split("history")[0];
+      const blockName = blockKey.split('-').slice(0, -1).join('-');
 
-  // TODO: Fix all of this for real
-  // This is because if a user loads a pipeline from a folder, we need to keep
-  // That folder as the pipeline "path" so that we can reference the blocks
-  // And sync the history to the loaded folder for user reference
+      for (const file of block.files.children) {
+        const blocksS3Prefix = `${blockName}-${block.hash}-build/${file.path}`;
 
-  // *BUT* we also need to serve the result files of runs
-  // whether they are local or remote, which means we need results
-  // In a retrievable location
-  //
-  //
+        await syncS3ToLocalDirectory(blocksS3Prefix, blockPath, anvilConfiguration);
+
+        const oldPath = path.join(blockPath, blocksS3Prefix);
+        const newDir = path.join(blockPath, blockKey);
+
+        if (!fs.existsSync(newDir)) {
+          fs.mkdirSync(newDir, { recursive: true });  // Create the directory recursively if it doesn't exist
+        }
+
+        const newPath = path.join(newDir, file.path);
+
+        try { // try to move to block folder.
+          await fs.promises.rename(oldPath, newPath);
+        } catch (err) {
+          console.error('Error moving the file:', err);
+        }
+        const directory_path = path.join(blockPath, `${blockName}-${block.hash}-build`);
+        try {
+          // console.log("directoryPath:", directory_path)
+          await fs.promises.rmdir(directory_path);
+        } catch (err) {
+          console.error('Error removing directory:', err);
+        }
+      }
+    }
+  }
   const cachePath = cacheJoin(pipelineUuid, "history", executionUuid, "files");
 
   if (cachePath != localPath) {

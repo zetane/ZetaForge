@@ -60,7 +60,8 @@ export default function WorkspaceFetcher() {
     });
     if (isActive) {
       try {
-        await syncResults(key);
+        const Merkle = "undefined"; // while running Merkle should be a blank something.
+        await syncResults(key , Merkle);
       } catch (err) {
         console.error("Failed to sync results: ", err);
       }
