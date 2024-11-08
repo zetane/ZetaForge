@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from "react";
 import ClosableModal from "./modal/ClosableModal";
-import { lineageAtom, workspaceAtom } from "@/atoms/pipelineAtom";
-import { useImmerAtom } from "jotai-immer";
+import { lineageAtom } from "@/atoms/pipelineAtom";
 import { useAtom } from "jotai";
 import {
   DataTable,
@@ -22,6 +21,7 @@ import { PipelineDeployButton } from "./PipelineDeployButton";
 import { useSyncExecutionResults } from "@/hooks/useExecutionResults";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { useLoadExecution } from "@/hooks/useLoadPipeline";
+import { useWorkspace } from "@/hooks/useWorkspace";
 
 export const PipelineTableRow = ({ row, getRowProps }) => {
   return (
@@ -34,13 +34,13 @@ export const PipelineTableRow = ({ row, getRowProps }) => {
 };
 
 export const ExecutionDataGrid = ({ closeModal }) => {
-  const [, setWorkspace] = useImmerAtom(workspaceAtom);
   const [lineage] = useAtom(lineageAtom);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(15);
   const syncResults = useSyncExecutionResults();
   const [configuration] = useAtom(activeConfigurationAtom);
   const loadExecution = useLoadExecution();
+  const { addPipeline } = useWorkspace();
 
   const setPagination = ({ page, pageSize }) => {
     setCurrentPage(page);
@@ -48,16 +48,10 @@ export const ExecutionDataGrid = ({ closeModal }) => {
   };
 
   const selectExecution = async (execution, configuration) => {
-    const key = execution.Uuid + "." + execution.Execution;
-
     const serverExec = await loadExecution(execution, configuration);
-    setWorkspace((draft) => {
-      draft.pipelines[key] = serverExec;
-      draft.tabs[key] = {};
-      draft.active = key;
-    });
+    addPipeline(serverExec);
     try {
-      await syncResults(key);
+      await syncResults(serverExec.key);
     } catch (error) {
       console.error("Sync failed: ", error);
     }

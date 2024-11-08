@@ -376,6 +376,7 @@ def create_config_json(s2_path, context, driver, is_dev):
         "EntrypointFile":"entrypoint.py",
         "ServiceAccount":"executor",
         "Bucket":"forge-bucket",
+        "BucketName": "zetaforge",
         "Database":"./zetaforge.db",
         "KubeContext": context,
         "SetupVersion":"1",

@@ -5,6 +5,7 @@ import { HeaderMenuItem } from "@carbon/react";
 import { useAtom } from "jotai";
 import { trpc } from "@/utils/trpc";
 import { useImmerAtom } from "jotai-immer";
+import { generateId } from "@/utils/blockUtils";
 
 export default function SavePipelineButton() {
   const [editor] = useAtom(drawflowEditorAtom);
@@ -30,15 +31,18 @@ export default function SavePipelineButton() {
     // They should be consolidated
 
     let writeToDir = pipeline.path;
+    let newPipelineId = pipeline.id;
     const tempFile = `${await window.cache.local()}${pipeline.id}`;
+
     if (pipeline.path == tempFile) {
       writeToDir = undefined;
+      newPipelineId = generateId("pipeline");
     }
 
     pipelineSpecs["sink"] = pipeline.path;
     pipelineSpecs["build"] = pipeline.path;
     pipelineSpecs["name"] = pipeline.name;
-    pipelineSpecs["id"] = pipeline.id;
+    pipelineSpecs["id"] = newPipelineId;
     const saveData = {
       specs: pipelineSpecs,
       name: pipeline.name,
@@ -47,7 +51,6 @@ export default function SavePipelineButton() {
     };
 
     const response = await copyPipeline.mutateAsync(saveData);
-    console.log(response);
     const { name, dirPath } = response;
 
     setPipeline((draft) => {
