@@ -26,6 +26,7 @@ import {
 } from "./pipelineSerialization.js";
 import { anvilConfigurationSchema } from "./schema";
 import { publicProcedure, router } from "./trpc";
+import { checkoutExecution } from "./git.js";
 
 function createProcedure<TInput extends z.ZodTypeAny, TOutput>(
   schema: TInput,
@@ -396,6 +397,16 @@ export const appRouter = router({
           blockId: z.string(),
         }),
         async ({ pipelinePath, blockId }) => getLogs(pipelinePath, blockId),
+      ),
+    }),
+    execution: router({
+      checkout: createProcedure(
+        z.object({
+          pipelineId: z.string(),
+          executionId: z.string(),
+        }),
+        async ({ pipelineId, executionId }) =>
+          checkoutExecution(pipelineId, executionId),
       ),
     }),
   }),

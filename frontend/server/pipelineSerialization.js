@@ -13,7 +13,28 @@ import { logger } from "./logger";
 import { computePipelineMerkleTree } from "./merkle";
 import { fileExists } from "./fileSystem.js";
 import { inspect } from "util";
+import { absoluteCachePath, cacheJoin } from "./cache";
+import { ensureGitRepoAndCommitBlocks } from "./git.js";
 
+export const convertToUnixPath = (inputPath) => {
+  // Normalize the path to handle mixed separators
+  let normalizedPath = inputPath.replace(/\\/g, "/");
+
+  // Remove any duplicate slashes
+  normalizedPath = normalizedPath.replace(/\/+/g, "/");
+
+  // Remove trailing slash if it exists (unless it's the root path)
+  if (normalizedPath.length > 1 && normalizedPath.endsWith("/")) {
+    normalizedPath = normalizedPath.slice(0, -1);
+  }
+
+  // Ensure path starts with a forward slash
+  if (!normalizedPath.startsWith("/")) {
+    normalizedPath = "/" + normalizedPath;
+  }
+
+  return normalizedPath;
+};
 export async function saveSpec(spec, writePath) {
   const pipelineSpecsPath = path.join(writePath, PIPELINE_SPECS_FILE_NAME);
   await fs.mkdir(writePath, { recursive: true });
@@ -184,7 +205,7 @@ export async function executePipeline(
     specs,
     merkleTree,
     pipelinePath,
-    rebuild,
+    executionId,
   );
 
   return await createExecution(
@@ -245,13 +266,14 @@ async function uploadBlocks(
           }
           const uploaded = await Promise.all(
             files.map(async (filePath) => {
-              const folderIndex = filePath.indexOf(folder);
+              const unixPath = convertToUnixPath(filePath);
+              const folderIndex = unixPath.indexOf(folder);
               if (folderIndex === -1) {
                 throw new Error("Folder block must set a folderName parameter");
               }
-              const slicePath = filePath.slice(folderIndex);
+              const slicePath = unixPath.slice(folderIndex);
               const awsKey = `${pipelineId}/${executionId}/${slicePath}`;
-              if (filePath && filePath.trim()) {
+              if (unixPath && unixPath.trim()) {
                 await checkAndUpload(awsKey, filePath, anvilConfiguration);
               }
               return slicePath;
@@ -309,13 +331,20 @@ async function uploadBuildContexts(
   pipelineSpecs,
   pipelineMerkleTree,
   buildPath,
-  rebuild,
+  executionId,
 ) {
   const buildContextStatuses = await getBuildContextStatus(
     configuration,
     pipelineSpecs,
     pipelineMerkleTree,
-    rebuild,
+    false,
+  );
+  const pipelineCache = cacheJoin(pipelineSpecs.id);
+  await ensureGitRepoAndCommitBlocks(
+    buildContextStatuses,
+    buildPath,
+    pipelineCache,
+    executionId,
   );
   await Promise.all(
     buildContextStatuses

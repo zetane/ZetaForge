@@ -1,7 +1,7 @@
 import { modalContentAtom } from "@/atoms/modalAtom";
 import { darkModeAtom } from "@/atoms/themeAtom";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
-import { Play, Password, Renew } from "@carbon/icons-react";
+import { Play, Password, CalendarHeatMap } from "@carbon/icons-react";
 import {
   Header,
   HeaderGlobalBar,
@@ -26,6 +26,7 @@ import AnvilConfigurationsModal from "./modal/AnvilConfigurationsModal";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { PipelineStopButton } from "./PipelineStopButton";
 import NewFromCurrent from "./NewFromCurrent";
+import SchedulePipelineButton from "./SchedulePipelineButton";
 
 export default function Navbar({ children }) {
   const [darkMode, setDarkMode] = useAtom(darkModeAtom);
@@ -113,9 +114,9 @@ export default function Navbar({ children }) {
       </HeaderNavigation>
       <HeaderGlobalBar>
         {runButton}
-        <RunPipelineButton modalPopper={modalPopper} action="Rebuild">
-          <Renew size={20} style={svgOverride} />
-        </RunPipelineButton>
+        <SchedulePipelineButton modalPopper={modalPopper} action="Schedule">
+          <CalendarHeatMap size={20} style={svgOverride} />
+        </SchedulePipelineButton>
         <LogsButton />
         <PipelinesButton />
       </HeaderGlobalBar>
