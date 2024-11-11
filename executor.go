@@ -258,7 +258,7 @@ func streaming(ctx context.Context, name string, logger *log.Logger, cfg Config)
 	}
 }
 
-func runArgo(ctx context.Context, workflow *wfv1.Workflow, execution int64, cfg Config, db *sql.DB, logger *log.Logger, hub *Hub) (*wfv1.Workflow, error) {
+func runArgo(ctx context.Context, workflow *wfv1.Workflow, execution int64, cfg Config, db *sql.DB, logger *log.Logger, pipeline *zjson.Pipeline) (*wfv1.Workflow, error) {
 	//mixpanelClient is singleton, so a new instance won't be created.
 	mixpanelClient := GetMixpanelClient()
 
@@ -303,6 +303,7 @@ func runArgo(ctx context.Context, workflow *wfv1.Workflow, execution int64, cfg 
 	// streams to websocket
 	go streaming(ctx, workflow.Name, logger, cfg)
 	status := string(workflow.Status.Phase)
+	nodeMap := make(map[string]string)
 
 	for {
 		client, err = kubernetesClient(cfg)
@@ -330,6 +331,20 @@ func runArgo(ctx context.Context, workflow *wfv1.Workflow, execution int64, cfg 
 
 		if err != nil {
 			return workflow, err
+		}
+
+		for _, node := range workflow.Status.Nodes {
+			if node.Type == "Pod" {
+				nodeStatus := string(node.Phase)
+				if val, ok := nodeMap[node.Name]; ok {
+					if nodeStatus != val {
+						fmt.Printf("!!! would update: %v\n", nodeStatus)
+						nodeMap[node.Name] = nodeStatus
+					}
+				} else {
+					nodeMap[node.Name] = string(node.Phase)
+				}
+			}
 		}
 
 		if string(workflow.Status.Phase) != status {
@@ -629,7 +644,7 @@ func buildImage(ctx context.Context, source string, tag string, logger *log.Logg
 	return nil
 }
 
-func localExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid string, organization string, build bool, deployed bool, cfg Config, db *sql.DB, hub *Hub) {
+func localExecute(pipeline *zjson.Pipeline, pipelineMerkleTree *zjson.PipelineMerkleTree, executionId int64, executionUuid string, organization string, build bool, deployed bool, cfg Config, db *sql.DB, hub *Hub) {
 	ctx := context.Background()
 	defer log.Printf("Completed")
 
@@ -666,7 +681,7 @@ func localExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 		return
 	}
 
-	workflow, blocks, err := translate(ctx, pipeline, organization, s3Key, executionUuid, build, deployed, cfg)
+	workflow, blocks, err := translate(ctx, pipeline, pipelineMerkleTree, organization, s3Key, executionUuid, build, deployed, cfg)
 	if err != nil {
 		log.Printf("failed to translate the pipeline; err=%v", err)
 		return
@@ -705,13 +720,26 @@ func localExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 		}
 	}
 
+    if cfg.Local.Driver == "k3d" {
+        imageImport := []string{"image", "import"}
+        for _, image := range blocks {
+            imageImport = append(imageImport, image)
+        }
+        imageImport = append(imageImport, "-c")
+        imageImport = append(imageImport, cfg.Local.K3DCluster)
+        pullImage := cmd.NewCmd("k3d", imageImport...)
+        <-pullImage.Start()
+        log.Println(pullImage.Status().Stdout)
+        log.Println(pullImage.Status().Stderr)
+    }
+
 	if err := eg.Wait(); err != nil {
 		pipelineLogger.Printf("error during pipeline build execution; err=%v", err)
 		log.Printf("error during pipeline build execution; err=%v", err)
 		return
 	}
 
-	workflow, err = runArgo(ctx, workflow, executionId, cfg, db, pipelineLogger, hub)
+	workflow, err = runArgo(ctx, workflow, executionId, cfg, db, pipelineLogger, pipeline)
 	if workflow != nil {
 		defer deleteArgo(ctx, workflow.Name, cfg)
 	}
@@ -737,7 +765,7 @@ func cleanupRun(ctx context.Context, db *sql.DB, executionId int64, executionUui
 	}
 }
 
-func cloudExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid string, organization string, build bool, deployed bool, cfg Config, db *sql.DB, hub *Hub) {
+func cloudExecute(pipeline *zjson.Pipeline, pipelineMerkleTree *zjson.PipelineMerkleTree, executionId int64, executionUuid string, organization string, build bool, deployed bool, cfg Config, db *sql.DB, hub *Hub) {
 	ctx := context.Background()
 	defer log.Printf("Completed")
 
@@ -748,6 +776,13 @@ func cloudExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 		return
 	}
 	defer hub.CloseRoom(pipeline.Id)
+
+	if cfg.Cloud.Provider == "Debug" {
+		if err := upload(ctx, cfg.EntrypointFile, cfg.EntrypointFile, cfg); err != nil { // should never fail
+			log.Printf("failed to upload entrypoint file; err=%v", err)
+			return
+		}
+	}
 
 	s3key := organization + "/" + pipeline.Id + "/" + executionUuid
 	logDir, exists := os.LookupEnv("ZETAFORGE_LOGS")
@@ -772,7 +807,7 @@ func cloudExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 		return
 	}
 
-	workflow, _, err := translate(ctx, pipeline, organization, s3key, executionUuid, build, deployed, cfg)
+	workflow, _, err := translate(ctx, pipeline, pipelineMerkleTree, organization, s3key, executionUuid, build, deployed, cfg)
 	if err != nil {
 		log.Printf("failed to translate the pipeline; err=%v", err)
 		return
@@ -796,7 +831,7 @@ func cloudExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 		return
 	}
 
-	workflow, err = runArgo(ctx, workflow, executionId, cfg, db, pipelineLogger, hub)
+	workflow, err = runArgo(ctx, workflow, executionId, cfg, db, pipelineLogger, pipeline)
 	if workflow != nil {
 		defer deleteArgo(ctx, workflow.Name, cfg)
 	}
@@ -811,13 +846,14 @@ func cloudExecute(pipeline *zjson.Pipeline, executionId int64, executionUuid str
 	}
 }
 
-func getBuildContextStatus(ctx context.Context, pipeline *zjson.Pipeline, rebuild bool, organization string, cfg Config) []zjson.BuildContextStatusResponse {
+func getBuildContextStatus(ctx context.Context, pipeline *zjson.Pipeline, merkleTree *zjson.PipelineMerkleTree, rebuild bool, organization string, cfg Config) []zjson.BuildContextStatusResponse {
 	var buildContextStatus []zjson.BuildContextStatusResponse
 	for id, block := range pipeline.Pipeline {
+		var hash = merkleTree.Blocks[id].Hash
 		if len(block.Action.Container.Image) > 0 && !cfg.IsLocal {
 			var status = false
 			if !rebuild {
-				imageStatus, _, err := checkImage(ctx, getImage(&block, organization), cfg)
+				imageStatus, _, err := checkImage(ctx, getImage(&block, hash, organization), cfg)
 				if err != nil {
 					log.Printf("failed to get build context status; err=%v", err)
 					return buildContextStatus
@@ -825,7 +861,7 @@ func getBuildContextStatus(ctx context.Context, pipeline *zjson.Pipeline, rebuil
 				status = imageStatus
 			}
 
-			s3Key := getKanikoBuildContextS3Key(&block)
+			s3Key := getKanikoBuildContextS3Key(&block, hash)
 
 			buildContextStatus = append(buildContextStatus, zjson.BuildContextStatusResponse{
 				BlockKey:   id,

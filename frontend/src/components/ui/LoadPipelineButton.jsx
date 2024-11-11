@@ -4,6 +4,7 @@ import { HeaderMenuItem } from "@carbon/react";
 import { useAtom } from "jotai";
 import { useRef } from "react";
 import { useLoadPipeline } from "@/hooks/useLoadPipeline";
+import { useWorkspace } from "@/hooks/useWorkspace";
 
 const FILE_EXTENSION_REGEX = /\.[^/.]+$/;
 
@@ -11,6 +12,7 @@ export default function LoadPipelineButton() {
   const loadPipeline = useLoadPipeline();
   const fileInput = useRef();
   const [mixpanelService] = useAtom(mixpanelAtom);
+  const { addPipeline } = useWorkspace();
 
   const selectFile = () => {
     fileInput.current.click();
@@ -19,7 +21,9 @@ export default function LoadPipelineButton() {
   const handleFileChange = async (event) => {
     try {
       mixpanelService.trackEvent("Load Pipeline");
-    } catch (err) {}
+    } catch (err) {
+      console.error(err);
+    }
     const files = event.target.files;
     for (const key in files) {
       const file = files[key];
@@ -37,7 +41,8 @@ export default function LoadPipelineButton() {
           fileNameNoExtension == pipelineName ||
           fileName == PIPELINE_SPECS_FILE_NAME
         ) {
-          await loadPipeline(file);
+          const newPipeline = await loadPipeline(file);
+          addPipeline(newPipeline);
           event.target.value = ""; // Reset the file input
         }
       }

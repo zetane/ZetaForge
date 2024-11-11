@@ -40,6 +40,7 @@ __pycache__/
 *.egg
 *.venv/*
 *.virtualenv/
+*.python-version
 backend/db.sqlite3 # If you use SQLite
 venv/
 build/

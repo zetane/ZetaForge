@@ -1,12 +1,9 @@
 import { useImmerAtom } from "jotai-immer";
 import { trpc } from "@/utils/trpc";
 import { getDirectoryPath } from "@/../utils/fileUtils";
-import {
-  workspaceAtom,
-  pipelineFactory,
-  pipelineKey,
-} from "@/atoms/pipelineAtom";
+import { workspaceAtom, pipelineFactory } from "@/atoms/pipelineAtom";
 import { getWsConnection } from "@/client/anvil";
+import { generateId } from "@/utils/blockUtils";
 
 function getLastFolder(path) {
   // Remove trailing slashes
@@ -25,13 +22,8 @@ function getLastFolder(path) {
 }
 
 export const useLoadPipeline = () => {
-  const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
-
   const loadPipeline = async (file) => {
     console.log("***********Loading pipeline from file:", file);
-
-    let relPath = file.webkitRelativePath;
-    relPath = relPath.replaceAll("\\", "/");
 
     const data = JSON.parse(await new Blob([file]).text());
     const saveFolder = getDirectoryPath(file.path);
@@ -47,20 +39,15 @@ export const useLoadPipeline = () => {
       saveTime: Date.now(),
       data: data.pipeline,
       id: data.id,
+      key: data.id + ".",
     };
 
     const newPipeline = pipelineFactory(
       await window.cache.local(),
       loadedPipeline,
     );
-    console.log("new: ", newPipeline);
-    const key = pipelineKey(newPipeline.id, null);
 
-    setWorkspace((draft) => {
-      draft.tabs[key] = {};
-      draft.pipelines[key] = newPipeline;
-      draft.active = key;
-    });
+    return newPipeline;
   };
 
   return loadPipeline;
@@ -72,13 +59,11 @@ function removeNullInputsOutputs(obj) {
 
   // Iterate through all keys in the object
   for (const key in obj) {
-    if (obj.hasOwnProperty(key)) {
-      const value = obj[key];
+    const value = obj[key];
 
-      // Check if both inputs and outputs are null
-      if (value.inputs === null && value.outputs === null) {
-        keysToRemove.push(key);
-      }
+    // Check if both inputs and outputs are null
+    if (value.inputs === null && value.outputs === null) {
+      keysToRemove.push(key);
     }
   }
 
@@ -136,30 +121,51 @@ function sortSpecsKeys(pipeline) {
 }
 
 export const useLoadServerPipeline = () => {
-  const loadPipeline = async (pipeline, configuration) => {
-    if (!pipeline) {
+  const [workspace] = useImmerAtom(workspaceAtom);
+
+  const loadPipeline = async (serverPipeline, configuration) => {
+    if (!serverPipeline) {
       return;
     }
     const host = configuration?.anvil?.host;
     const port = configuration?.anvil?.port;
     const hostString = host + ":" + port;
+    const executionId = serverPipeline.Execution;
 
-    const path = `${await window.cache.local()}${pipeline.Uuid}`;
-    const pipelineData = JSON.parse(pipeline.PipelineJson);
-    let data = removeNullInputsOutputs(pipelineData?.pipeline);
-    const executionId = pipeline.Execution;
+    const localKey = serverPipeline.Uuid + ".";
+    let path = `${await window.cache.local()}${serverPipeline.Uuid}`;
+
+    // Need to check if we've loaded a local path and use it for the history
+    const local = workspace.tabs[localKey];
+    const serverKey = serverPipeline.Uuid + "." + executionId;
+    const server = workspace.tabs[serverKey];
+
+    if (local && local.path) {
+      path = local.path;
+    } else if (server && server.path) {
+      path = server.path;
+    }
+
+    const serverPipelineData = JSON.parse(serverPipeline.PipelineJson);
+    let data = removeNullInputsOutputs(serverPipelineData?.pipeline);
     let socketUrl = null;
-    if (pipeline.Status == "Pending" || pipeline.Status == "Running") {
+    if (
+      serverPipeline.Status == "Pending" ||
+      serverPipeline.Status == "Running"
+    ) {
       socketUrl = getWsConnection(configuration, `ws/${executionId}`);
     }
     const loadedPipeline = {
-      name: pipelineData.name ? pipelineData.name : pipelineData.id,
+      name: serverPipelineData.name
+        ? serverPipelineData.name
+        : serverPipelineData.id,
       saveTime: Date.now(),
       path: path,
       data: data,
-      id: pipeline.Uuid,
-      history: pipeline.Uuid + "/" + executionId,
-      record: pipeline,
+      id: serverPipeline.Uuid,
+      key: serverPipeline.Uuid + "." + executionId,
+      history: serverPipeline.Uuid + "/" + executionId,
+      record: serverPipeline,
       host: hostString,
       socketUrl: socketUrl,
     };
@@ -174,8 +180,10 @@ export const useLoadServerPipeline = () => {
 };
 
 export const useLoadExecution = () => {
-  const loadExecution = async (pipeline, configuration) => {
-    if (!pipeline) {
+  const [workspace] = useImmerAtom(workspaceAtom);
+
+  const loadExecution = async (execution, configuration, prevPath = null) => {
+    if (!execution) {
       return;
     }
 
@@ -183,29 +191,46 @@ export const useLoadExecution = () => {
     const port = configuration?.anvil?.port;
     const hostString = host + ":" + port;
 
-    let pipelineData = JSON.parse(pipeline.PipelineJson);
-    if (pipeline.Results != "") {
-      pipelineData = JSON.parse(pipeline.Results);
+    let executionData = JSON.parse(execution.PipelineJson);
+    if (execution.Results != "") {
+      executionData = JSON.parse(execution.Results);
     }
-    const path = `${await window.cache.local()}${pipelineData.id}`;
-    const executionId = pipeline.Execution;
+    const executionId = execution.Execution;
+
+    let path = `${await window.cache.local()}${executionData.id}`;
+
+    // we check three locations for a local path
+    // otherwise the local path gets lost, since it's not in the cache
+    const localKey = execution.Uuid + ".";
+    const local = workspace.tabs[localKey];
+    const serverKey = execution.Uuid + "." + executionId;
+    const server = workspace.tabs[serverKey];
+    if (local && local.path) {
+      path = local.path;
+    } else if (server && server.path) {
+      path = server.path;
+    } else if (prevPath) {
+      path = prevPath;
+    }
+
     let socketUrl = null;
-    if (pipeline.Status == "Pending" || pipeline.Status == "Running") {
+    if (execution.Status == "Pending" || execution.Status == "Running") {
       socketUrl = getWsConnection(configuration, `ws/${executionId}`);
     }
-    let data = removeNullInputsOutputs(pipelineData?.pipeline);
+    let data = removeNullInputsOutputs(executionData?.pipeline);
 
     const loadedPipeline = {
-      name: pipelineData.name ? pipelineData.name : pipelineData.id,
+      name: executionData.name ? executionData.name : executionData.id,
       saveTime: Date.now(),
       path: path,
       data: data,
-      id: pipelineData.id,
-      history: pipelineData.id + "/" + executionId,
-      record: pipeline,
+      id: executionData.id,
+      key: executionData.id + "." + executionId,
+      history: executionData.id + "/" + executionId,
+      record: execution,
       host: hostString,
       socketUrl: socketUrl,
-      logs: pipeline?.Log,
+      logs: execution?.Log,
     };
     let newPipeline = pipelineFactory(
       await window.cache.local(),
@@ -220,11 +245,13 @@ export const useLoadExecution = () => {
 };
 
 export const useLoadCorePipeline = () => {
-  const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
   const copyPipelineMutation = trpc.copyPipeline.useMutation();
 
   const loadPipeline = async (specs, corePath) => {
-    const tempFile = `${await window.cache.local()}${specs.id}`;
+    const newId = generateId(specs.id);
+    specs.id = newId;
+
+    const tempFile = `${await window.cache.local()}${newId}`;
 
     const copyData = {
       specs: specs,
@@ -239,20 +266,15 @@ export const useLoadCorePipeline = () => {
       saveTime: Date.now(),
       path: tempFile,
       data: specs.pipeline,
-      id: specs.id,
+      id: newId,
+      key: newId + ".",
     };
 
     const newPipeline = pipelineFactory(
       await window.cache.local(),
       loadedPipeline,
     );
-    const key = pipelineKey(newPipeline.id, null);
-
-    setWorkspace((draft) => {
-      draft.tabs[key] = {};
-      draft.pipelines[key] = newPipeline;
-      draft.active = key;
-    });
+    return newPipeline;
   };
 
   return loadPipeline;

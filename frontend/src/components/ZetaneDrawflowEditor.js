@@ -78,7 +78,7 @@ export default class Drawflow {
     this.container.addEventListener("mouseup", this.dragEnd.bind(this));
     this.container.addEventListener("mousemove", this.position.bind(this));
     this.container.addEventListener("mousedown", this.click.bind(this));
-    this.container.addEventListener("mouseleave", (_) => {
+    this.container.addEventListener("mouseleave", () => {
       this.editor_selected = false;
     });
 
@@ -639,11 +639,6 @@ export default class Drawflow {
       ")";
   }
 
-  applyTransform() {
-    this.precanvas.style.transformOrigin = "0 0";
-    this.precanvas.style.transform = `translate(${this.canvas_x}px, ${this.canvas_y}px) scale(${this.zoom})`;
-  }
-
   handleZoom(event) {
     event.preventDefault();
 
@@ -667,18 +662,7 @@ export default class Drawflow {
     // Update zoom
     this.zoom = newZoom;
 
-    this.applyTransform();
-
-    console.log(
-      "Zoom:",
-      this.zoom,
-      "Canvas Position:",
-      { x: this.canvas_x, y: this.canvas_y },
-      "Mouse:",
-      { x: mouseX, y: mouseY },
-      "Fixed Point:",
-      { x: pointX, y: pointY },
-    );
+    this.zoom_refresh();
   }
 
   zoom_reset() {

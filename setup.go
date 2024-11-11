@@ -308,7 +308,7 @@ func setup(ctx context.Context, config Config, db *sql.DB) {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt)
 
-	if config.Local.Driver == "minikube" {
+	if config.Local.Driver == "minikube" || config.Local.Driver == "k3d" {
 		stopBucketCh := make(chan struct{}, 1)
 		go func() {
 			for {

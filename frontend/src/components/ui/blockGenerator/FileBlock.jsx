@@ -23,7 +23,7 @@ export const FileBlock = ({ blockId, block, setFocusAction, history }) => {
     }
   }, [block]);
 
-  const loadFile = async (e) => {
+  const loadFile = async () => {
     const files = fileInput.current.files;
     const file = files[0];
     const value = file.path.toString();
@@ -41,8 +41,8 @@ export const FileBlock = ({ blockId, block, setFocusAction, history }) => {
         id="file-block"
         type="file"
         ref={fileInput}
-        onChange={(e) => {
-          loadFile(e);
+        onChange={() => {
+          loadFile();
         }}
         parameters-path="true"
       />

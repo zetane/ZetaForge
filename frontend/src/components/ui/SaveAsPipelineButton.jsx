@@ -4,17 +4,22 @@ import { HeaderMenuItem } from "@carbon/react";
 import { useAtom } from "jotai";
 import { trpc } from "@/utils/trpc";
 import { useImmerAtom } from "jotai-immer";
+import { generateId } from "@/utils/blockUtils";
+import { mixpanelAtom } from "@/atoms/mixpanelAtom";
 
 export default function SaveAsPipelineButton() {
   const [editor] = useAtom(drawflowEditorAtom);
   const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
+  const [mixpanelService] = useAtom(mixpanelAtom);
 
-  const savePipeline = trpc.savePipeline.useMutation();
+  const copyPipeline = trpc.copyPipeline.useMutation();
 
   const handleClick = async (editor, pipeline) => {
     try {
       mixpanelService.trackEvent("Save Pipeline");
-    } catch (err) {}
+    } catch (err) {
+      console.error(err);
+    }
     const pipelineSpecs = editor.convert_drawflow_to_block(
       pipeline.name,
       pipeline.data,
@@ -25,15 +30,15 @@ export default function SaveAsPipelineButton() {
     pipelineSpecs["sink"] = pipeline.path;
     pipelineSpecs["build"] = pipeline.path;
     pipelineSpecs["name"] = pipeline.name;
-    pipelineSpecs["id"] = pipeline.id;
+    pipelineSpecs["id"] = generateId("pipeline");
     const saveData = {
       specs: pipelineSpecs,
       name: pipeline.name,
       writeFromDir: pipeline.path,
       writeToDir: undefined,
     };
-    const response = await savePipeline.mutateAsync(saveData);
-    const { name, dirPath, specs } = response;
+    const response = await copyPipeline.mutateAsync(saveData);
+    const { name, dirPath } = response;
 
     setPipeline((draft) => {
       draft.saveTime = Date.now();

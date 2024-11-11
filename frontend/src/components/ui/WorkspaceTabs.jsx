@@ -1,23 +1,23 @@
 import { useEffect, useState } from "react";
-import { Tabs, TabList, Tab, TabPanels, TabPanel } from "@carbon/react";
+import { Tabs, TabList, Tab, TabPanel } from "@carbon/react";
 import { workspaceAtom } from "@/atoms/pipelineAtom";
 import { useImmerAtom } from "jotai-immer";
 import { useAtom } from "jotai";
 import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
+import { useWorkspace } from "@/hooks/useWorkspace";
 
 export default function WorkspaceTabs() {
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
   const [renderedTabs, setRenderedTabs] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [zoomLevels, setZoomLevels] = useState({});
-
   const [editor] = useAtom(drawflowEditorAtom);
+  const { updateTabs } = useWorkspace();
 
   useEffect(() => {
     const pipelineTabs = [];
     let index = 0;
-    Object.keys(workspace.tabs).forEach((key) => {
-      const pipeline = workspace.pipelines[key];
+    Object.keys(workspace?.tabs ?? {}).forEach((key) => {
+      const pipeline = workspace.tabs[key];
       const label = pipeline?.name;
       pipelineTabs.push({ id: key, label: label, panel: <TabPanel /> });
 
@@ -31,19 +31,23 @@ export default function WorkspaceTabs() {
 
   const handleTabChange = (evt) => {
     const index = evt.selectedIndex;
-    const key = renderedTabs[index]?.id;
-
-    setZoomLevels((prevZoomLevels) => ({
-      ...prevZoomLevels,
-      [workspace.active]: editor?.zoom,
-    }));
+    const newTab = renderedTabs[index]?.id;
+    const current = workspace.active;
 
     setWorkspace((draft) => {
-      draft.active = key;
+      const pos = { x: editor?.canvas_x, y: editor?.canvas_y };
+      if (!draft.canvas) {
+        draft.canvas = {};
+      }
+      draft.canvas[current] = { zoom: editor?.zoom, pos: pos };
+
+      draft.active = newTab;
     });
 
-    if (editor) {
-      editor.zoom = zoomLevels[key] ?? 1;
+    if (editor && workspace.canvas[newTab]) {
+      editor.zoom = workspace.canvas[newTab]?.zoom;
+      editor.canvas_x = workspace.canvas[newTab]?.pos.x;
+      editor.canvas_y = workspace.canvas[newTab]?.pos.y;
       editor.zoom_refresh(); // Refresh after setting zoom, *required.
     }
   };
@@ -57,25 +61,26 @@ export default function WorkspaceTabs() {
     if (Object.keys(workspace.tabs).length > 1) {
       const deleteTab = renderedTabs[deleteIndex];
       const selectedTab = renderedTabs[selectedIndex];
-      const key = deleteTab.id;
-      const { [key]: _, ...filteredTabs } = workspace.tabs;
-      const newTabArray = Object.keys(filteredTabs);
+      const newTabArray = Object.keys(workspace.tabs).filter(
+        (id) => id != deleteTab.id,
+      );
 
-      setWorkspace((draft) => {
-        // make the same tab we're deleting active, unless it's at the end, in which case we get -1
-        if (deleteIndex == selectedIndex) {
-          if (deleteIndex >= newTabArray.length) {
-            deleteIndex = newTabArray.length - 1;
-          }
-        } else {
-          // we're re-calculating the selectedIndex since the selected tab's index might have shifted
-          // due to a tab element being removed from the array
-          deleteIndex = newTabArray.indexOf(selectedTab.id);
+      const filteredTabs = newTabArray.reduce((tabs, k) => {
+        tabs[k] = workspace.tabs[k];
+        return tabs;
+      }, {});
+
+      if (deleteIndex == selectedIndex) {
+        if (deleteIndex >= newTabArray.length) {
+          deleteIndex = newTabArray.length - 1;
         }
+      } else {
+        deleteIndex = newTabArray.indexOf(selectedTab.id);
+      }
 
-        draft.tabs = filteredTabs;
-        draft.active = newTabArray[deleteIndex];
-      });
+      const newActiveTab = newTabArray[deleteIndex];
+
+      updateTabs(filteredTabs, newActiveTab);
     }
   };
 

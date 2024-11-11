@@ -5,30 +5,45 @@ export const MultiFileBlock = ({ blockId, block, setFocusAction, history }) => {
   const [renderedFiles, setRenderedFiles] = useState([]);
 
   useEffect(() => {
-    if (history) {
-      const fileNames = block?.action?.parameters["files"]?.value.split(", ");
-      const updatedFiles = fileNames.map((fileName) => {
-        const fileSplit = fileName.split("/");
-        return fileSplit.length > 1 ? fileSplit.at(-1) : fileName;
+    const type = block?.action?.parameters["files"]?.type;
+    const value = block?.action?.parameters["files"]?.value;
+    if (history && type != "file[]" && typeof value == "string") {
+      const fileNames = JSON.parse(value);
+      const s3Files = fileNames.map((name) => {
+        return history + "/" + name;
       });
 
       setFocusAction((draft) => {
-        draft.data[blockId].action.parameters["files"].type = "file[]";
-        draft.data[blockId].action.parameters["files"].value =
-          fileNames.join(", ");
+        draft.data[blockId].action.parameters["files"].type = "blob[]";
+        draft.data[blockId].action.parameters["files"].value = s3Files;
       });
 
-      setRenderedFiles(updatedFiles);
+      setRenderedFiles(fileNames);
     }
   }, [block]);
 
-  const loadFiles = (e) => {
-    const files = Array.from(fileInput.current.files);
-    const filePaths = files.map((file) => file.name);
-    const value = filePaths.join(", ");
+  const processFiles = (files) => {
+    const filePaths = [];
+    const readDirectory = (dir, path = "") => {
+      for (let i = 0; i < dir.length; i++) {
+        const file = dir[i];
+        const fullPath = path ? `${path}/${file.path}` : file.path;
+        if (file.webkitDirectory) {
+          readDirectory(file.children, fullPath);
+        } else {
+          filePaths.push(fullPath);
+        }
+      }
+    };
+    readDirectory(files, "");
+    return filePaths;
+  };
 
+  const loadFiles = () => {
+    const files = Array.from(fileInput.current.files);
+    const filePaths = processFiles(files);
     setFocusAction((draft) => {
-      draft.data[blockId].action.parameters["files"].value = value;
+      draft.data[blockId].action.parameters["files"].value = filePaths; // Update to formatted value
       draft.data[blockId].action.parameters["files"].type = "file[]";
     });
 
@@ -39,12 +54,7 @@ export const MultiFileBlock = ({ blockId, block, setFocusAction, history }) => {
     <div className="block-content">
       <div className="mb-2 pl-2">
         {renderedFiles.map((file, index) => (
-          <div
-            key={index}
-            style={{ color: "#ffffff", backgroundColor: "#333333" }}
-          >
-            {file}
-          </div>
+          <div key={index}>{file}</div>
         ))}
       </div>
       <input
@@ -55,9 +65,7 @@ export const MultiFileBlock = ({ blockId, block, setFocusAction, history }) => {
         multiple
         parameters-path="true"
         style={{
-          // for better visibility.
           color: "#ffffff",
-          // backgroundColor: "#333333",
         }}
       />
     </div>
