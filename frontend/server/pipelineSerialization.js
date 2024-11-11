@@ -12,8 +12,7 @@ import { createExecution, getBuildContextStatus } from "./anvil";
 import { logger } from "./logger";
 import { computePipelineMerkleTree } from "./merkle";
 import { fileExists } from "./fileSystem.js";
-import { inspect } from "util";
-import { absoluteCachePath, cacheJoin } from "./cache";
+import { cacheJoin } from "./cache";
 import { ensureGitRepoAndCommitBlocks } from "./git.js";
 
 export const convertToUnixPath = (inputPath) => {

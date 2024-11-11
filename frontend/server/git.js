@@ -63,7 +63,7 @@ export async function ensureGitRepoAndCommitBlocks(
   // 3. Check for changes
   const statusMatrix = await git.statusMatrix({ fs, dir: cachePath });
   const hasChanges = statusMatrix.some(
-    ([_, head, workdir, stage]) => head !== workdir || head !== stage,
+    ([, head, workdir, stage]) => head !== workdir || head !== stage,
   );
 
   if (hasChanges) {
@@ -100,22 +100,6 @@ export async function ensureGitRepoAndCommitBlocks(
       object: currentCommit,
       message: `Execution ${executionId}`,
     });
-  }
-}
-
-async function getBlocksAtExecution(cachePath, executionId) {
-  const ref = `${executionId}`;
-  try {
-    // Checkout the specific tag
-    await git.checkout({
-      fs,
-      dir: cachePath,
-      ref: ref,
-      force: true,
-    });
-    // Now the working directory contains the blocks at that execution
-  } catch (e) {
-    console.error(`Execution ${executionId} not found`);
   }
 }
 

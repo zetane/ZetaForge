@@ -1,7 +1,7 @@
 import { modalContentAtom } from "@/atoms/modalAtom";
 import { darkModeAtom } from "@/atoms/themeAtom";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
-import { Play, Password, CalendarHeatMap } from "@carbon/icons-react";
+import { Play, Password } from "@carbon/icons-react";
 import {
   Header,
   HeaderGlobalBar,
