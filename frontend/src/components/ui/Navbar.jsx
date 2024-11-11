@@ -1,7 +1,7 @@
 import { modalContentAtom } from "@/atoms/modalAtom";
 import { darkModeAtom } from "@/atoms/themeAtom";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
-import { Play, Password, Renew } from "@carbon/icons-react";
+import { Play, Password } from "@carbon/icons-react";
 import {
   Header,
   HeaderGlobalBar,
@@ -113,9 +113,6 @@ export default function Navbar({ children }) {
       </HeaderNavigation>
       <HeaderGlobalBar>
         {runButton}
-        <RunPipelineButton modalPopper={modalPopper} action="Rebuild">
-          <Renew size={20} style={svgOverride} />
-        </RunPipelineButton>
         <LogsButton />
         <PipelinesButton />
       </HeaderGlobalBar>

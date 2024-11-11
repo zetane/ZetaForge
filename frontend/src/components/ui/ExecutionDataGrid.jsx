@@ -22,6 +22,7 @@ import { useSyncExecutionResults } from "@/hooks/useExecutionResults";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { useLoadExecution } from "@/hooks/useLoadPipeline";
 import { useWorkspace } from "@/hooks/useWorkspace";
+import { trpc } from "@/utils/trpc";
 
 export const PipelineTableRow = ({ row, getRowProps }) => {
   return (
@@ -41,6 +42,7 @@ export const ExecutionDataGrid = ({ closeModal }) => {
   const [configuration] = useAtom(activeConfigurationAtom);
   const loadExecution = useLoadExecution();
   const { addPipeline } = useWorkspace();
+  const checkoutPipeline = trpc.execution.checkout.useMutation();
 
   const setPagination = ({ page, pageSize }) => {
     setCurrentPage(page);
@@ -50,6 +52,11 @@ export const ExecutionDataGrid = ({ closeModal }) => {
   const selectExecution = async (execution, configuration) => {
     const serverExec = await loadExecution(execution, configuration);
     addPipeline(serverExec);
+    const [pipelineId, executionId] = serverExec.key.split(".");
+    checkoutPipeline({
+      pipelineId: pipelineId,
+      executionId: executionId,
+    });
     try {
       await syncResults(serverExec.key);
     } catch (error) {
