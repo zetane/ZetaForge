@@ -44,6 +44,7 @@
     "electron-trpc": "^0.5.2",
     "electron-updater": "^6.1.1",
     "getmac": "^6.6.0",
+    "isomorphic-git": "^1.27.1",
     "js-sha1": "^0.7.0",
     "localstorage-migrator": "^1.0.8",
     "pino": "^9.2.0",
