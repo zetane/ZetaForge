@@ -1,0 +1,33 @@
+{
+  "information": {
+    "id": "kube-cron",
+    "name": "Kubernetes CronJob",
+    "description": "A trigger for scheduling a cron job (recurring scheduled job) on kubernetes.",
+    "system_versions": ["0.1"],
+    "block_version": "1.0.0",
+    "block_source": "core/blocks/kubernetes-cron",
+    "block_type": "trigger"
+  },
+  "action": {
+    "trigger": {
+      "type": "kubernetes_cron",
+      "config": {
+        "schedule": "0 0 * * *"
+      }
+    }
+  },
+  "views": {
+    "node": {
+      "title_bar": {
+        "background_color": "#DC2626"
+      },
+      "html": "<input type='text' value='0 0 * * *' parameters-schedule/>",
+      "pos_x": "100",
+      "pos_y": "100",
+      "pos_z": "1"
+    }
+  },
+  "inputs": {},
+  "outputs": {},
+  "events": {}
+}

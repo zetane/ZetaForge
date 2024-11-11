@@ -50,11 +50,24 @@ type Resources struct {
 	GPU    GPU              `json:"gpu,omitempty"`
 }
 
+// TriggerAction defines the trigger configuration
+type TriggerAction struct {
+	// Type of trigger (e.g., "kubernetes_cron", "webhook", etc.)
+	Type string `json:"type"`
+
+	// Configuration for the trigger
+	Config map[string]string `json:"config,omitempty"`
+
+	// Optional source code for custom trigger implementation
+	Source string `json:"source,omitempty"`
+}
+
 type Action struct {
 	Container  Container            `json:"container,omitempty"`
 	Pipeline   map[string]Block     `json:"pipeline,omitempty"`
 	Parameters map[string]Parameter `json:"parameters,omitempty"`
 	Resources  Resources            `json:"resources,omitempty"`
+	Trigger    *TriggerAction       `json:"trigger,omitempty"`
 }
 
 type TitleBar struct {
