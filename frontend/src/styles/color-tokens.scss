@@ -29,7 +29,8 @@
   --cds-layer: var(--ztn-gray-2) !important;
   --cds-layer-accent: var(--ztn-white-0) !important;
   --cds-text-primary: var(--ztn-black-0) !important;
-  --focus-border: var(--ztn-purple-0);
+  --focus-border: var(--ztn-purple-0) !important;
+  --cds-interactive: var(--ztn-purple-0) !important;
 }
 
 @mixin ztn-colors-g100 {
@@ -63,4 +64,5 @@
   --pipeline-background-color: var(--ztn-gray-1) !important;
   --focus-border: var(--ztn-purple-0);
   --cds-text-primary: var(--ztn-white-0) !important;
+  --cds-interactive: var(--ztn-purple-0) !important;
 }

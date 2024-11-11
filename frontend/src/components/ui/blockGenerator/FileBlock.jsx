@@ -41,8 +41,8 @@ export const FileBlock = ({ blockId, block, setFocusAction, history }) => {
         id="file-block"
         type="file"
         ref={fileInput}
-        onChange={(e) => {
-          loadFile(e);
+        onChange={() => {
+          loadFile();
         }}
         parameters-path="true"
       />

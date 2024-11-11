@@ -19,7 +19,6 @@ export const DeployedPipelineActions = ({
   pipelineData,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("js");
   const [codePayload, setCodePayload] = useState({
     jsCode: "",
     pythonCode: "",
@@ -27,7 +26,7 @@ export const DeployedPipelineActions = ({
 
   const generatePostPayload = () => {
     const inputs = {};
-    Object.entries(pipelineData.pipeline).forEach(([nodeId, node]) => {
+    Object.entries(pipelineData.pipeline).forEach(([, node]) => {
       if (node.inputs) {
         Object.entries(node.inputs).forEach(([inputName, input]) => {
           if (input.connections && input.connections.length > 0) {
@@ -83,10 +82,6 @@ executePipeline(); // it will execute the pipeline....
   };
 
   const handleClose = () => setIsModalOpen(false);
-
-  const handleUndeploy = () => {
-    console.log("Undeploying pipeline:", uuid);
-  };
 
   return (
     <>
