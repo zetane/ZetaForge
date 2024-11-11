@@ -114,9 +114,6 @@ export default function Navbar({ children }) {
       </HeaderNavigation>
       <HeaderGlobalBar>
         {runButton}
-        <SchedulePipelineButton modalPopper={modalPopper} action="Schedule">
-          <CalendarHeatMap size={20} style={svgOverride} />
-        </SchedulePipelineButton>
         <LogsButton />
         <PipelinesButton />
       </HeaderGlobalBar>
