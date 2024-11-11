@@ -26,7 +26,6 @@ import AnvilConfigurationsModal from "./modal/AnvilConfigurationsModal";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { PipelineStopButton } from "./PipelineStopButton";
 import NewFromCurrent from "./NewFromCurrent";
-import SchedulePipelineButton from "./SchedulePipelineButton";
 
 export default function Navbar({ children }) {
   const [darkMode, setDarkMode] = useAtom(darkModeAtom);
