@@ -12,25 +12,29 @@ export async function ensureGitRepoAndCommitBlocks(
   // 1. Copy all blocks to cache
   if (buildPath != cachePath) {
     await Promise.all(
-      buildContextStatuses.map(async ({ blockKey }) => {
-        const sourcePath = path.join(buildPath, blockKey);
-        const targetPath = path.join(cachePath, blockKey);
+      buildContextStatuses
+        .filter((context) => {
+          context.hash != "";
+        })
+        .map(async ({ blockKey }) => {
+          const sourcePath = path.join(buildPath, blockKey);
+          const targetPath = path.join(cachePath, blockKey);
 
-        // Ensure target directory exists
-        await fs.promises.mkdir(targetPath, { recursive: true });
+          // Ensure target directory exists
+          await fs.promises.mkdir(targetPath, { recursive: true });
 
-        // Copy directory contents
-        const files = await fs.promises.readdir(sourcePath);
-        await Promise.all(
-          files.map((file) =>
-            fs.promises.cp(
-              path.join(sourcePath, file),
-              path.join(targetPath, file),
-              { recursive: true },
+          // Copy directory contents
+          const files = await fs.promises.readdir(sourcePath);
+          await Promise.all(
+            files.map((file) =>
+              fs.promises.cp(
+                path.join(sourcePath, file),
+                path.join(targetPath, file),
+                { recursive: true },
+              ),
             ),
-          ),
-        );
-      }),
+          );
+        }),
     );
   }
 
