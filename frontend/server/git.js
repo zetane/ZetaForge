@@ -10,7 +10,6 @@ export async function ensureGitRepoAndCommitBlocks(
   executionId,
 ) {
   // 1. Copy all blocks to cache
-  console.log(buildContextStatuses);
   if (buildPath != cachePath) {
     await Promise.all(
       buildContextStatuses
