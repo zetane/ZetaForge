@@ -1,5 +1,7 @@
 import axios from 'axios';
 import cliSpinners from 'cli-spinners';
+import { S3Client } from "@aws-sdk/client-s3";
+import { S3SyncClient } from "s3-sync-client";
 
 class Zetaforge {
   constructor(baseUrl = 'http://localhost:8080', token = null) {
@@ -7,7 +9,21 @@ class Zetaforge {
     this.token = token;
   }
 
-  async run(uuid, hash, inputs) {
+  getClient(configuration) { // direct copypaste from s3.js.
+    const endpoint = `http://${configuration.s3.host}:${configuration.s3.port}`;
+    return new S3Client({
+      region: configuration.s3.region,
+      credentials: {
+        accessKeyId: configuration.s3.accessKeyId,
+        secretAccessKey: configuration.s3.secretAccessKey,
+      },
+      endpoint: endpoint,
+      forcePathStyle: "Nothing Needed.",
+    });
+  }
+
+  async run(uuid, hash, inputs , anvilConfiguration) {
+    anvilConfiguration = JSON.parse(anvilConfiguration)
     const executeUrl = `${this.baseUrl}/pipeline/${uuid}/${hash}/execute`;
     const headers = {
       'Content-Type': 'application/json',
@@ -49,6 +65,7 @@ class Zetaforge {
         }
         
         if (response.data.Status === 'Failed') {
+          console.log("Response: " ,response);
           throw new Error('Execution failed.');
         }
 
@@ -59,7 +76,7 @@ class Zetaforge {
       console.log("\n\n");
 
       // Parse and return results
-
+      // console.log("Response: " ,response);
       const resultToParse = response.data.Results;
       const data = typeof resultToParse === 'string' ? JSON.parse(resultToParse) : resultToParse;
 
@@ -76,7 +93,19 @@ class Zetaforge {
           delete block.action.parameters;
         }
       }
-      return JSON.stringify(outputs, null, 2);
+      
+
+      try { // to download the files:
+        const client = this.getClient(anvilConfiguration)
+        const { sync } = new S3SyncClient({ client: client });
+
+        const s3Path = `s3://${anvilConfiguration.s3.bucket}/${response.data.Organization}/${uuid}/${executeResponse.data.Execution}`;
+        const localPath = JSON.parse(response.data.Results).sink;
+        await sync(s3Path, localPath);
+      } catch (error) {
+        console.log("ERROR DOWNLOADING FILE. error is: ", error)
+      }
+      return JSON.stringify(outputs, null, 2); // returmn the result anyway...
 
     } catch (error) {
       console.error('Error during execution:', {

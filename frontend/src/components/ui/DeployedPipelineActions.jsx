@@ -57,10 +57,10 @@ print('Pipeline execution result:', result)
 
     const jsCode = `import Zetaforge from "zetaforge";
 
-const zetaforge = new Zetaforge({
+const zetaforge = new Zetaforge(
   '${getScheme(configuration.anvil.host)}://${configuration.anvil.host}:${configuration.anvil.port}',
   '${configuration.anvil.token}'
-});
+);
 
 const pipelineUuid = "${uuid}";
 const pipelineHash = "${hash}";
@@ -68,7 +68,7 @@ const inputs = ${JSON.stringify(inputs, null, 2)};
 
 async function executePipeline() {
   try {
-    const executeResponse = await zetaforge.run(pipelineUuid, pipelineHash, inputs);
+    const executeResponse = await zetaforge.run(pipelineUuid, pipelineHash, inputs , '${JSON.stringify(configuration)}');
     console.log("executeResponse: ", executeResponse);
   } catch (error) {
     console.error('Failed to execute pipeline:', error.message);
