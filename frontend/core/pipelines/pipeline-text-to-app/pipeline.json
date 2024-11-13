@@ -534,5 +534,5 @@
   "build": "",
   "name": "text-to-app",
   "id": "pipeline-5zy3w5o9zh8w",
-  "description": "Pipeline to generate an HTML page based on the given prompt and accessible assets."
+  "description": "Pipeline to generate an HTML page based on the given prompt and accessible assets. side note: make sure to encapsulate the API key in quotes."
 }
