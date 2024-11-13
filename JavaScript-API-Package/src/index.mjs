@@ -18,11 +18,11 @@ class Zetaforge {
         secretAccessKey: configuration.s3.secretAccessKey,
       },
       endpoint: endpoint,
-      forcePathStyle: "Nothing Needed.",
+      forcePathStyle: "nothing needed here", // in s3 it was refering something.., here not needed.
     });
   }
 
-  async run(uuid, hash, inputs , anvilConfiguration) {
+  async run(uuid, hash, inputs, anvilConfiguration) {
     anvilConfiguration = JSON.parse(anvilConfiguration)
     const executeUrl = `${this.baseUrl}/pipeline/${uuid}/${hash}/execute`;
     const headers = {
@@ -46,12 +46,12 @@ class Zetaforge {
       const executeId = executeResponse.data.Execution;
       const statusUrl = `${this.baseUrl}/execution/${executeId}`;
       let response;
-      let prev_status = '' , frameIndex = 0;
+      let prev_status = '', frameIndex = 0;
       const spinner = cliSpinners.dots;
 
-      do {        
+      do {
         response = await axios.get(statusUrl, { headers });
-        if (prev_status == response.data.Status){ // print the cli-dots
+        if (prev_status == response.data.Status) { // print the cli-dots
           process.stdout.clearLine(0);
           process.stdout.cursorTo(0);
           process.stdout.write(`${spinner.frames[frameIndex]} `);
@@ -63,9 +63,8 @@ class Zetaforge {
           console.log(`\n\nCurrent status: ${response.data.Status}`);
           prev_status = response.data.Status;
         }
-        
+
         if (response.data.Status === 'Failed') {
-          console.log("Response: " ,response);
           throw new Error('Execution failed.');
         }
 
@@ -73,10 +72,11 @@ class Zetaforge {
 
       } while (response.data.Status === 'Pending' || response.data.Status === 'Running');
 
+      await new Promise(resolve => setTimeout(resolve, 600)); // some delay to fetch response.
+
       console.log("\n\n");
 
       // Parse and return results
-      // console.log("Response: " ,response);
       const resultToParse = response.data.Results;
       const data = typeof resultToParse === 'string' ? JSON.parse(resultToParse) : resultToParse;
 
@@ -93,19 +93,36 @@ class Zetaforge {
           delete block.action.parameters;
         }
       }
-      
 
-      try { // to download the files:
-        const client = this.getClient(anvilConfiguration)
-        const { sync } = new S3SyncClient({ client: client });
+      try { // try download output files:
+        for (const blockId in data.pipeline) {
+          const block = data.pipeline[blockId];
+          if (block.events && block.events.outputs) {
+            const outputs = block.events.outputs;
+            for (const outputKey in outputs) {
+              const output = outputs[outputKey];
+              // console.log(">>> output: ", output)
+              if (output != null) {
+                const client = this.getClient(anvilConfiguration)
+                const { sync } = new S3SyncClient({ client: client });
+                const s3Path = `s3://${anvilConfiguration.s3.bucket}/${response.data.Organization}/${uuid}/${executeResponse.data.Execution}/${output.replace(/"/g, '')}`;
+                const localPath = JSON.parse(response.data.Results).sink;
+                await sync(s3Path, localPath);
+                console.log(output , "file was downloaded in: " , localPath)
+              }
+            }
+          }
 
-        const s3Path = `s3://${anvilConfiguration.s3.bucket}/${response.data.Organization}/${uuid}/${executeResponse.data.Execution}`;
-        const localPath = JSON.parse(response.data.Results).sink;
-        await sync(s3Path, localPath);
-      } catch (error) {
-        console.log("ERROR DOWNLOADING FILE. error is: ", error)
+          if (block.action && block.action.parameters) {
+            delete block.action.parameters;
+          }
+        }
       }
-      return JSON.stringify(outputs, null, 2); // returmn the result anyway...
+      catch (error) {
+        console.log("ERROR DOWNLOADING FILE. error is: ", error)
+        return JSON.stringify(outputs, null, 2); // return the response anway.
+      }
+      return JSON.stringify(outputs, null, 2);
 
     } catch (error) {
       console.error('Error during execution:', {

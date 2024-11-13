@@ -22,7 +22,7 @@ Open your terminal, navigate to your project directory, and run the following co
 npm install zetaforge
 ```
 
-### Step 3: Update your package.json
+### Step 3: Update your package.json (optional , only for ES mode)
 To use ES modules, ensure that your package.json includes the following line:
 ```bash
 "type": "module"
@@ -37,7 +37,7 @@ To use ES modules, ensure that your package.json includes the following line:
 This setting allows you to use the import statement in your JavaScript files.
 
 ### Step 4:
-
+- for ES Mode:
 ```js
 import Zetaforge from 'zetaforge';
 
@@ -54,7 +54,7 @@ const inputs = {
 
 async function executePipeline() {
   try {
-    const executeResponse = await zetaforge.run(pipelineUuid, pipelineHash, inputs);
+    const executeResponse = await zetaforge.run(pipelineUuid, pipelineHash, inputs , anvilConfig.);
     console.log("executeResponse: ", executeResponse);
   } catch (error) {
     console.error('Failed to execute pipeline:', error.message);
@@ -62,6 +62,32 @@ async function executePipeline() {
 }
 
 executePipeline(); // it will execute the pipeline....
+```
+
+- for CMS Mode:
+
+```js
+const Zetaforge = require('zetaforge');
+
+const zetaforge = new Zetaforge('https://anvil.zetaforge.com:', 'YOUR_API_TOKEN');
+
+const pipelineUuid = 'YOUR_PIPELINE_UUID';
+const pipelineHash = 'YOUR_PIPELINE_HASH';
+const inputs = {
+  "role": "\"GIVE IT A ROLE(like teacher, doctor, engineer or even plumber\"",
+  "prompt": "\"INSTRUCTIONS. SUCH AS : suggest me a place to visit in this summer\"",
+  "api_key": "\"YOUR API\"",
+	"SOME OTHER KEY" : "\"OTHER KEYS VALUE\""
+};
+
+async function executePipeline() {
+  try {
+    const executeResponse = await zetaforge.run(pipelineUuid, pipelineHash, inputs , anvilConfig.);
+    console.log("executeResponse: ", executeResponse);
+  } catch (error) {
+    console.error('Failed to execute pipeline:', error.message);
+  }
+}
 ```
 
 ## API
