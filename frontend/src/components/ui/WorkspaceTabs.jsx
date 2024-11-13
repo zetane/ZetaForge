@@ -48,7 +48,7 @@ export default function WorkspaceTabs() {
 
     const [pipelineId, executionId] = newTab.split(".");
     try {
-      const resp = await checkoutPipeline.mutateAsync({
+      await checkoutPipeline.mutateAsync({
         pipelineId: pipelineId,
         executionId: executionId,
       });
