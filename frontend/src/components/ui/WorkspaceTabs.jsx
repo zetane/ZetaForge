@@ -5,6 +5,7 @@ import { useImmerAtom } from "jotai-immer";
 import { useAtom } from "jotai";
 import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
 import { useWorkspace } from "@/hooks/useWorkspace";
+import { trpc } from "@/utils/trpc";
 
 export default function WorkspaceTabs() {
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
@@ -12,6 +13,7 @@ export default function WorkspaceTabs() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [editor] = useAtom(drawflowEditorAtom);
   const { updateTabs } = useWorkspace();
+  const checkoutPipeline = trpc.execution.checkout.useMutation();
 
   useEffect(() => {
     const pipelineTabs = [];
@@ -29,7 +31,7 @@ export default function WorkspaceTabs() {
     setRenderedTabs(pipelineTabs);
   }, [workspace]);
 
-  const handleTabChange = (evt) => {
+  const handleTabChange = async (evt) => {
     const index = evt.selectedIndex;
     const newTab = renderedTabs[index]?.id;
     const current = workspace.active;
@@ -44,7 +46,17 @@ export default function WorkspaceTabs() {
       draft.active = newTab;
     });
 
-    if (editor && workspace.canvas[newTab]) {
+    const [pipelineId, executionId] = newTab.split(".");
+    try {
+      const resp = await checkoutPipeline.mutateAsync({
+        pipelineId: pipelineId,
+        executionId: executionId,
+      });
+    } catch (error) {
+      console.error("Failed to checkout pipeline files: ", error);
+    }
+
+    if (editor && workspace?.canvas?.[newTab]) {
       editor.zoom = workspace.canvas[newTab]?.zoom;
       editor.canvas_x = workspace.canvas[newTab]?.pos.x;
       editor.canvas_y = workspace.canvas[newTab]?.pos.y;
