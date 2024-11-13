@@ -109,7 +109,7 @@ export async function ensureGitRepoAndCommitBlocks(
 
 export async function checkoutExecution(pipelineId, executionId) {
   try {
-    const cachePath = cacheJoin(pipelineId, "history", executionId);
+    const cachePath = cacheJoin(pipelineId);
 
     // Check if cache directory exists
     try {
