@@ -2,7 +2,6 @@ import { useMutation } from "@tanstack/react-query";
 import { Deploy } from "@carbon/icons-react";
 import { Button } from "@carbon/react";
 import { deployPipeline } from "@/client/anvil";
-import { useWorkspace } from "@/hooks/useWorkspace";
 import { useQueryClient } from "@tanstack/react-query";
 
 export const PipelineDeployButton = ({ uuid, hash, configuration }) => {

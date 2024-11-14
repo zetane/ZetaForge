@@ -12,7 +12,6 @@ import ClosableModal from "./modal/ClosableModal";
 import { getScheme } from "@/client/anvil";
 
 export const DeployedPipelineActions = ({
-  name,
   uuid,
   hash,
   configuration,
