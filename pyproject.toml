@@ -27,7 +27,7 @@ dependencies = [
         "yaspin"
     ]
 
-requires-python = ">=3.7"
+requires-python = ">=3.10"
 
 [project.scripts]
 zetaforge = "zetaforge.forge_cli:main"

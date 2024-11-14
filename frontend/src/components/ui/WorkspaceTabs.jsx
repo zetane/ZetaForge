@@ -4,20 +4,22 @@ import { workspaceAtom } from "@/atoms/pipelineAtom";
 import { useImmerAtom } from "jotai-immer";
 import { useAtom } from "jotai";
 import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
+import { useWorkspace } from "@/hooks/useWorkspace";
+import { trpc } from "@/utils/trpc";
 
 export default function WorkspaceTabs() {
   const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
   const [renderedTabs, setRenderedTabs] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [cam, setCam] = useState({});
-
   const [editor] = useAtom(drawflowEditorAtom);
+  const { updateTabs } = useWorkspace();
+  const checkoutPipeline = trpc.execution.checkout.useMutation();
 
   useEffect(() => {
     const pipelineTabs = [];
     let index = 0;
-    Object.keys(workspace.tabs).forEach((key) => {
-      const pipeline = workspace.pipelines[key];
+    Object.keys(workspace?.tabs ?? {}).forEach((key) => {
+      const pipeline = workspace.tabs[key];
       const label = pipeline?.name;
       pipelineTabs.push({ id: key, label: label, panel: <TabPanel /> });
 
@@ -29,27 +31,35 @@ export default function WorkspaceTabs() {
     setRenderedTabs(pipelineTabs);
   }, [workspace]);
 
-  const handleTabChange = (evt) => {
+  const handleTabChange = async (evt) => {
     const index = evt.selectedIndex;
-    const key = renderedTabs[index]?.id;
-
-    setCam((prevCam) => {
-      const pos = { x: editor?.canvas_x, y: editor?.canvas_y };
-      const newCam = {
-        ...prevCam,
-        [workspace.active]: { zoom: editor?.zoom, pos: pos },
-      };
-      return newCam;
-    });
+    const newTab = renderedTabs[index]?.id;
+    const current = workspace.active;
 
     setWorkspace((draft) => {
-      draft.active = key;
+      const pos = { x: editor?.canvas_x, y: editor?.canvas_y };
+      if (!draft.canvas) {
+        draft.canvas = {};
+      }
+      draft.canvas[current] = { zoom: editor?.zoom, pos: pos };
+
+      draft.active = newTab;
     });
 
-    if (editor) {
-      editor.zoom = cam[key]?.zoom ?? 1;
-      editor.canvas_x = cam[key]?.pos.x ?? 0;
-      editor.canvas_y = cam[key]?.pos.y ?? 0;
+    const [pipelineId, executionId] = newTab.split(".");
+    try {
+      await checkoutPipeline.mutateAsync({
+        pipelineId: pipelineId,
+        executionId: executionId,
+      });
+    } catch (error) {
+      console.error("Failed to checkout pipeline files: ", error);
+    }
+
+    if (editor && workspace?.canvas?.[newTab]) {
+      editor.zoom = workspace.canvas[newTab]?.zoom;
+      editor.canvas_x = workspace.canvas[newTab]?.pos.x;
+      editor.canvas_y = workspace.canvas[newTab]?.pos.y;
       editor.zoom_refresh(); // Refresh after setting zoom, *required.
     }
   };
@@ -64,28 +74,25 @@ export default function WorkspaceTabs() {
       const deleteTab = renderedTabs[deleteIndex];
       const selectedTab = renderedTabs[selectedIndex];
       const newTabArray = Object.keys(workspace.tabs).filter(
-        (k) => k != deleteTab.id,
+        (id) => id != deleteTab.id,
       );
+
       const filteredTabs = newTabArray.reduce((tabs, k) => {
         tabs[k] = workspace.tabs[k];
         return tabs;
       }, {});
 
-      setWorkspace((draft) => {
-        // make the same tab we're deleting active, unless it's at the end, in which case we get -1
-        if (deleteIndex == selectedIndex) {
-          if (deleteIndex >= newTabArray.length) {
-            deleteIndex = newTabArray.length - 1;
-          }
-        } else {
-          // we're re-calculating the selectedIndex since the selected tab's index might have shifted
-          // due to a tab element being removed from the array
-          deleteIndex = newTabArray.indexOf(selectedTab.id);
+      if (deleteIndex == selectedIndex) {
+        if (deleteIndex >= newTabArray.length) {
+          deleteIndex = newTabArray.length - 1;
         }
+      } else {
+        deleteIndex = newTabArray.indexOf(selectedTab.id);
+      }
 
-        draft.tabs = filteredTabs;
-        draft.active = newTabArray[deleteIndex];
-      });
+      const newActiveTab = newTabArray[deleteIndex];
+
+      updateTabs(filteredTabs, newActiveTab);
     }
   };
 

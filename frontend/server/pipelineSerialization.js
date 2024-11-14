@@ -6,21 +6,34 @@ import {
   BLOCK_SPECS_FILE_NAME,
   PIPELINE_SPECS_FILE_NAME,
 } from "../src/utils/constants";
-// import { setDifference } from "../utils/set.js";
-import {
-  // fileExists,
-  filterDirectories,
-  // readJsonToObject,
-} from "./fileSystem.js";
+import { filterDirectories } from "./fileSystem.js";
 import { checkAndUpload, checkAndCopy, uploadDirectory } from "./s3.js";
-import {
-  createExecution,
-  getBuildContextStatus,
-  // getPipelinesByUuid,
-} from "./anvil";
+import { createExecution, getBuildContextStatus } from "./anvil";
 import { logger } from "./logger";
 import { computePipelineMerkleTree } from "./merkle";
+import { fileExists } from "./fileSystem.js";
+import { cacheJoin } from "./cache";
+import { ensureGitRepoAndCommitBlocks } from "./git.js";
 
+export const convertToUnixPath = (inputPath) => {
+  // Normalize the path to handle mixed separators
+  let normalizedPath = inputPath.replace(/\\/g, "/");
+
+  // Remove any duplicate slashes
+  normalizedPath = normalizedPath.replace(/\/+/g, "/");
+
+  // Remove trailing slash if it exists (unless it's the root path)
+  if (normalizedPath.length > 1 && normalizedPath.endsWith("/")) {
+    normalizedPath = normalizedPath.slice(0, -1);
+  }
+
+  // Ensure path starts with a forward slash
+  if (!normalizedPath.startsWith("/")) {
+    normalizedPath = "/" + normalizedPath;
+  }
+
+  return normalizedPath;
+};
 export async function saveSpec(spec, writePath) {
   const pipelineSpecsPath = path.join(writePath, PIPELINE_SPECS_FILE_NAME);
   await fs.mkdir(writePath, { recursive: true });
@@ -60,19 +73,13 @@ export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
 
   const fromBlockIndex = await getBlockIndex([bufferPath]);
 
-  // let toBlockIndex = {};
-  // if (await fileExists(writePipelineDirectory)) {
-  //   toBlockIndex = await getBlockIndex([writePipelineDirectory]);
-  // } else {
-  //   await fs.mkdir(writePipelineDirectory, { recursive: true });
-  // }
+  if (!(await fileExists(writePipelineDirectory))) {
+    await fs.mkdir(writePipelineDirectory, { recursive: true });
+  }
 
   // Gets pipeline specs from the specs coming from the graph
   // Submitted by the client
   const newPipelineBlocks = getPipelineBlocks(pipelineSpecs);
-  // const existingPipelineBlocks = (await fileExists(pipelineSpecsPath))
-  //   ? await readPipelineBlocks(pipelineSpecsPath)
-  //   : new Set();
 
   for (const key of Array.from(newPipelineBlocks)) {
     const newBlockPath = path.join(writePipelineDirectory, key);
@@ -123,8 +130,9 @@ async function getBlockIndex(blockDirectories) {
       }
     } catch (error) {
       if (error.code === "ENOENT") {
+        // TODO: fetching the actual block will fix this
         const message = `Directory or file does not exist: ${error.path}`;
-        logger.error(error, message);
+        logger.warn(error, message);
       } else {
         // Handle other types of errors or rethrow the error
         throw error;
@@ -196,7 +204,7 @@ export async function executePipeline(
     specs,
     merkleTree,
     pipelinePath,
-    rebuild,
+    executionId,
   );
 
   return await createExecution(
@@ -234,42 +242,82 @@ async function uploadBlocks(
             param.value = `"${fileName}"`;
             param.type = "blob";
           }
-        } else if (param.type === "folder" || param.type === "file[]") {
-          try {
-            const cleanedValue = param.value.replace(/\\/g, "\\\\");
-            const fileNames = [];
-            const filePaths = JSON.parse(cleanedValue);
-
-            for (const filePath of filePaths) {
-              // console.log("Uploading file:", filePath); // Debugging log
+        } else if (param.type == "file[]") {
+          const files = param.value;
+          const uploaded = await Promise.all(
+            files.map(async (filePath) => {
               const fileName = path.basename(filePath);
-              fileNames.push(fileName);
               const awsKey = `${pipelineId}/${executionId}/${fileName}`;
-
               if (filePath && filePath.trim()) {
                 await checkAndUpload(awsKey, filePath, anvilConfiguration);
-                // console.log(`Uploaded: ${fileName} to ${awsKey}`); // which file uploaded.
-              } else {
-                // log invalid paths.
-                console.error("Invalid file path:", filePath);
               }
-            }
-            // Preserve the original value and update type
-            param.value =
-              fileNames.length > 0
-                ? `["${fileNames.join('", "')}"]`
-                : param.value;
-            param.type = "blob";
-          } catch (error) {
-            console.error("Error processing folder:", error);
+              return fileName;
+            }),
+          );
+
+          param.value = JSON.stringify(uploaded);
+          param.type = "blob[]";
+        } else if (param.type === "folder") {
+          const files = param?.value ?? [];
+          const folder = parameters?.folderName?.value;
+          if (!folder || folder == "") {
+            throw new Error("Folder block must set a folderName parameter");
           }
+          const uploaded = await Promise.all(
+            files.map(async (filePath) => {
+              const unixPath = convertToUnixPath(filePath);
+              const folderIndex = unixPath.indexOf(folder);
+              if (folderIndex === -1) {
+                throw new Error("Folder block must set a folderName parameter");
+              }
+              const slicePath = unixPath.slice(folderIndex);
+              const awsKey = `${pipelineId}/${executionId}/${slicePath}`;
+              if (unixPath && unixPath.trim()) {
+                await checkAndUpload(awsKey, filePath, anvilConfiguration);
+              }
+              return slicePath;
+            }),
+          );
+          param.value = JSON.stringify(uploaded);
+          param.type = "folderBlob";
         } else if (param.type == "blob") {
           const copyKey = param.value;
           const fileName = param.value.split("/").at(-1);
           const newAwsKey = `${pipelineId}/${executionId}/${fileName}`;
-
           await checkAndCopy(newAwsKey, copyKey, anvilConfiguration);
           param.value = `"${fileName}"`;
+        } else if (param.type == "blob[]") {
+          const s3files = param.value;
+          const uploadedFiles = await Promise.all(
+            s3files.map(async (s3file) => {
+              const fileName = s3file.split("/").at(-1);
+              const newAwsKey = `${pipelineId}/${executionId}/${fileName}`;
+              await checkAndCopy(newAwsKey, s3file, anvilConfiguration);
+              return fileName;
+            }),
+          );
+
+          param.value = JSON.stringify(uploadedFiles);
+          param.type = "blob[]";
+        } else if (param.type == "folderBlob") {
+          const folder = parameters?.folderName?.value;
+          if (!folder || folder == "") {
+            throw new Error("Folder block must set a folderName parameter");
+          }
+          const awsPaths = param?.value ?? [];
+          const uploadedFiles = await Promise.all(
+            awsPaths.map(async (s3file) => {
+              const folderIndex = s3file.indexOf(folder);
+              if (folderIndex === -1) {
+                throw new Error("Folder block must set a folderName parameter");
+              }
+              const slicePath = s3file.slice(folderIndex);
+              const newAwsKey = `${pipelineId}/${executionId}/${slicePath}`;
+              await checkAndCopy(newAwsKey, s3file, anvilConfiguration);
+              return slicePath;
+            }),
+          );
+          param.value = JSON.stringify(uploadedFiles);
         }
       }
     }
@@ -282,13 +330,20 @@ async function uploadBuildContexts(
   pipelineSpecs,
   pipelineMerkleTree,
   buildPath,
-  rebuild,
+  executionId,
 ) {
   const buildContextStatuses = await getBuildContextStatus(
     configuration,
     pipelineSpecs,
     pipelineMerkleTree,
-    rebuild,
+    false,
+  );
+  const pipelineCache = cacheJoin(pipelineSpecs.id);
+  await ensureGitRepoAndCommitBlocks(
+    buildContextStatuses,
+    buildPath,
+    pipelineCache,
+    executionId,
   );
   await Promise.all(
     buildContextStatuses

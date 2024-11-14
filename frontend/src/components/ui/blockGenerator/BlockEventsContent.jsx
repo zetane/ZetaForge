@@ -8,7 +8,7 @@ import {
 } from "@carbon/react";
 
 const BlockEventsContent = ({ blockEvents }) => {
-  console.log(blockEvents);
+  console.log("events: ", blockEvents);
   const { inputs, outputs } = blockEvents;
 
   const renderValue = (value) => {
