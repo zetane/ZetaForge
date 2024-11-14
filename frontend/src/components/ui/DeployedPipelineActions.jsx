@@ -48,9 +48,9 @@ export const DeployedPipelineActions = ({
 
     const pythonCode = `from zetaforge import Zetaforge
 
-zetaforge = Zetaforge(address='${getScheme(configuration.anvil.host)}://${configuration.anvil.host}:${configuration.anvil.port}', token='${configuration.anvil.token}')
+zetaforge = Zetaforge(base_url='${getScheme(configuration.anvil.host)}://${configuration.anvil.host}:${configuration.anvil.port}', token='${configuration.anvil.token}')
 
-result = zetaforge.run('${uuid}', '${hash}', input=${JSON.stringify(inputs, null, 2)})
+result = zetaforge.run('${uuid}', '${hash}', inputs=${JSON.stringify(inputs, null, 2)})
 print('Pipeline execution result:', result)
 `;
 
