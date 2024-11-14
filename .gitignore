@@ -8,7 +8,6 @@ zetaforge/executables
 !zetaforge/executables/README.md
 frontend/server2
 !frontend/server2/entrypoint.py
-!frontend/build
 
 # Node and npm related
 node_modules/
@@ -54,3 +53,5 @@ build/
 *.tmp
 *.swp
 canny4/
+
+!frontend/build
