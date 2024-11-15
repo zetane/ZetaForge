@@ -51,8 +51,6 @@ export const ExecutionDataGrid = ({ closeModal }) => {
 
   const selectExecution = async (execution, configuration, Merkle) => {
     const key = execution.Uuid + "." + execution.Execution;
-
-  const selectExecution = async (execution, configuration) => {
     const serverExec = await loadExecution(execution, configuration);
     addPipeline(serverExec);
     const [pipelineId, executionId] = serverExec.key.split(".");
