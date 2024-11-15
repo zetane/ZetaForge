@@ -1,0 +1,25 @@
+{
+  "index": 0,
+  "history": [
+    {
+      "timestamp": 1731600898832,
+      "prompt": "Code Template",
+      "response": "def compute(in1, in2):\r\n    \"\"\"A textual description of the compute function.\r\n\r\n    Inputs:\r\n        in1 (all): Textual description of in1\r\n        in2 (all): Textual description of in2\r\n\r\n    Outputs:\r\n        out1 (all): Textual description of out1\r\n        out2 (all): Textual description of out2\r\n\r\n    Requirements:\r\n    \"\"\"\r\n    # some code\r\n    out1 = 2 * in1\r\n    out2 = \"This is the in2 string:\" + in2\r\n\r\n    return {\"out1\": out1, \"out2\": out2}\r\n\r\n\r\ndef test():\r\n    \"\"\"Test the compute function.\"\"\"\r\n\r\n    print(\"Running test\")\r\n"
+    },
+    {
+      "timestamp": 1731601223108,
+      "prompt": "Manual Edit of computations.py",
+      "response": "def compute(prompt, inference_steps):\n    \"\"\"\n    prompt: text description of image\n    inference_steps: difussion steps\n\n    output: generated image path\n    \"\"\"\n    from diffusers import StableDiffusionPipeline, EulerDiscreteScheduler\n\n    model_id = \"stabilityai/stable-diffusion-2\"\n    \n    # Use the Euler scheduler here instead\n    scheduler = EulerDiscreteScheduler.from_pretrained(model_id, subfolder=\"scheduler\")\n    pipe = StableDiffusionPipeline.from_pretrained(model_id, scheduler=scheduler, torch_dtype=torch.float16)\n    pipe = pipe.to(\"cuda\")\n    \n    image = pipe(prompt, num_inference_steps=inference_steps).images[0]\n        \n    image.save(\"result.png\")\n\n    return {\"generated_image_path\": \"result.png\"}\n\n\ndef test():\n    \"\"\"Test the compute function.\"\"\"\n\n    print(\"Running test\")\n"
+    },
+    {
+      "timestamp": 1731601351634,
+      "prompt": "Manual Edit of computations.py",
+      "response": "def compute(prompt, inference_steps):\n    \"\"\"\n    prompt: text description of image\n    inference_steps: difussion steps\n\n    output: generated image path\n\n    use GPU to run this pipeline, we are using float16 dtype\n    \"\"\"\n    from diffusers import StableDiffusionPipeline, EulerDiscreteScheduler\n\n    model_id = \"stabilityai/stable-diffusion-2\"\n    \n    # Use the Euler scheduler here instead\n    scheduler = EulerDiscreteScheduler.from_pretrained(model_id, subfolder=\"scheduler\")\n    pipe = StableDiffusionPipeline.from_pretrained(model_id, scheduler=scheduler, torch_dtype=torch.float16)\n    pipe = pipe.to(\"cuda\")\n    \n    image = pipe(prompt, num_inference_steps=inference_steps).images[0]\n        \n    image.save(\"result.png\")\n\n    return {\"generated_image_path\": \"result.png\"}\n\n\ndef test():\n    \"\"\"Test the compute function.\"\"\"\n\n    print(\"Running test\")\n"
+    },
+    {
+      "timestamp": 1731603317095,
+      "prompt": "Manual Edit of computations.py",
+      "response": "def compute(prompt, inference_steps):\n    \"\"\"\n    prompt: text description of image\n    inference_steps: difussion steps\n\n    output: generated image path\n\n    use GPU to run this pipeline, we are using float16 dtype\n    \"\"\"\n    from diffusers import StableDiffusionPipeline, EulerDiscreteScheduler\n    import torch \n    model_id = \"stabilityai/stable-diffusion-2\"\n    \n    # Use the Euler scheduler here instead\n    scheduler = EulerDiscreteScheduler.from_pretrained(model_id, subfolder=\"scheduler\")\n    pipe = StableDiffusionPipeline.from_pretrained(model_id, scheduler=scheduler, torch_dtype=torch.float16)\n    pipe = pipe.to(\"cuda\")\n    \n    image = pipe(prompt, num_inference_steps=inference_steps).images[0]\n        \n    image.save(\"result.png\")\n\n    return {\"generated_image_path\": \"result.png\"}\n\n\ndef test():\n    \"\"\"Test the compute function.\"\"\"\n\n    print(\"Running test\")\n"
+    }
+  ]
+}

@@ -1,0 +1,321 @@
+{
+  "pipeline": {
+    "new-python-1k08gnfkag96": {
+      "information": {
+        "id": "stable-diffusion-2",
+        "name": "Stable Diffusion 2",
+        "description": "prompt: text description of image\ninference_steps: difussion steps\n\noutput: generated image path\n\nuse GPU to run this pipeline, we are using float16 dtype",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks/stable-diffusion-2",
+        "block_type": "compute"
+      },
+      "inputs": {
+        "prompt": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "parameter-hhz20qr4vytg",
+              "variable": "parameter"
+            }
+          ]
+        },
+        "inference_steps": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "parameter-cuha2229jdsa",
+              "variable": "parameter"
+            }
+          ]
+        }
+      },
+      "outputs": {
+        "generated_image_path": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "view-images-gwly233ys03y",
+              "variable": "image_paths_view"
+            }
+          ]
+        }
+      },
+      "action": {
+        "container": {
+          "image": "stable-diffusion-2",
+          "version": "stable-diffusion-2-1k08gnfkag96",
+          "command_line": [
+            "python",
+            "-u",
+            "entrypoint.py"
+          ]
+        },
+        "resources": {
+          "cpu": {
+            "request": "",
+            "limit": ""
+          },
+          "memory": {
+            "request": "",
+            "limit": ""
+          },
+          "gpu": {
+            "count": 1
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "True or False",
+          "title_bar": {
+            "background_color": "#6b2be0"
+          },
+          "preview": {},
+          "html": "",
+          "pos_x": "786",
+          "pos_y": "188",
+          "pos_z": "999",
+          "behavior": "modal",
+          "order": {
+            "input": [
+              "prompt",
+              "inference_steps"
+            ],
+            "output": [
+              "generated_image_path"
+            ]
+          }
+        }
+      },
+      "events": {}
+    },
+    "parameter-hhz20qr4vytg": {
+      "information": {
+        "id": "parameter",
+        "name": "Parameter",
+        "description": "Parameter input.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks",
+        "block_type": "entry"
+      },
+      "inputs": {},
+      "outputs": {
+        "parameter": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "new-python-1k08gnfkag96",
+              "variable": "prompt"
+            }
+          ]
+        }
+      },
+      "action": {
+        "container": {
+          "image": "",
+          "version": "",
+          "command_line": []
+        },
+        "parameters": {
+          "parameter": {
+            "value": "\"A photograph of a gigantic, hyper-realistic king frog in stunning 8K resolution. The frog has iridescent green and gold skin covered in intricate, jewel-like scales. Its eyes are large and intelligent, with vertical slit pupils. Delicate webbing stretches between the frog's massive, muscular legs. The frog is sitting on a lush, mossy log in a dense, primeval forest, with rays of golden light filtering through the canopy above.\"",
+            "type": "Any"
+          }
+        },
+        "resources": {
+          "cpu": {
+            "request": "",
+            "limit": ""
+          },
+          "memory": {
+            "request": "",
+            "limit": ""
+          },
+          "gpu": {
+            "count": 0
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "true",
+          "title_bar": {
+            "background_color": "#909090"
+          },
+          "preview": {},
+          "html": "<input type='text' value='abcd' parameters-parameter/>",
+          "pos_x": "256",
+          "pos_y": "139",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "input": [],
+            "output": [
+              "parameter"
+            ]
+          }
+        }
+      },
+      "events": {}
+    },
+    "parameter-cuha2229jdsa": {
+      "information": {
+        "id": "parameter",
+        "name": "Parameter",
+        "description": "Parameter input.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks",
+        "block_type": "entry"
+      },
+      "inputs": {},
+      "outputs": {
+        "parameter": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "new-python-1k08gnfkag96",
+              "variable": "inference_steps"
+            }
+          ]
+        }
+      },
+      "action": {
+        "container": {
+          "image": "",
+          "version": "",
+          "command_line": []
+        },
+        "parameters": {
+          "parameter": {
+            "value": "100",
+            "type": "Any"
+          }
+        },
+        "resources": {
+          "cpu": {
+            "request": "",
+            "limit": ""
+          },
+          "memory": {
+            "request": "",
+            "limit": ""
+          },
+          "gpu": {
+            "count": 0
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "true",
+          "title_bar": {
+            "background_color": "#909090"
+          },
+          "preview": {},
+          "html": "<input type='text' value='abcd' parameters-parameter/>",
+          "pos_x": "491",
+          "pos_y": "469",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "input": [],
+            "output": [
+              "parameter"
+            ]
+          }
+        }
+      },
+      "events": {}
+    },
+    "view-images-gwly233ys03y": {
+      "information": {
+        "id": "view-images",
+        "name": "View Images",
+        "description": "Generates an HTML file with a unique name and returns the file name.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks/view-images",
+        "block_type": "view"
+      },
+      "inputs": {
+        "image_paths_view": {
+          "type": "List[file]",
+          "connections": [
+            {
+              "block": "new-python-1k08gnfkag96",
+              "variable": "generated_image_path"
+            }
+          ]
+        }
+      },
+      "outputs": {
+        "html": {
+          "type": "file",
+          "connections": []
+        }
+      },
+      "action": {
+        "container": {
+          "image": "view-images",
+          "version": "view-images-gwly233ys03y",
+          "command_line": [
+            "python",
+            "-u",
+            "entrypoint.py"
+          ]
+        },
+        "resources": {
+          "cpu": {
+            "request": "",
+            "limit": ""
+          },
+          "memory": {
+            "request": "",
+            "limit": ""
+          },
+          "gpu": {
+            "count": 0
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "True or False",
+          "title_bar": {
+            "background_color": "#D55908"
+          },
+          "preview": {
+            "active": "true"
+          },
+          "html": "",
+          "pos_x": "1219",
+          "pos_y": "407",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "input": [
+              "image_paths_view"
+            ],
+            "output": [
+              "html"
+            ]
+          }
+        },
+        "mode": "modal"
+      },
+      "events": {}
+    }
+  },
+  "sink": "C:/my_blocks/stable-diffusion-2/",
+  "build": "C:/my_blocks/stable-diffusion-2/",
+  "name": "stable-diffusion-2",
+  "id": "pipeline-zavlrd78q1mt"
+}
