@@ -14,10 +14,14 @@ def get_package_version():
         version = package_data.get('version')
 
         if version:
-            # Set the __version__ variable in your package's __init__.py
-            with open("zetaforge/__init__.py", "w") as fp:
+            
+            init_file_path = "zetaforge/__init__.py"
+            init_content = f"__version__ = '{version}'\nfrom .block_maker.zetahelper import block_maker\nfrom .Zetaforge import Zetaforge\n"
 
-                fp.write(f"__version__ = '{version}'\nfrom .block_maker.zetahelper import block_maker")
+            if not os.path.exists(init_file_path) or not open(init_file_path).read().startswith("__version__"):
+                with open(init_file_path, "w") as fp:
+                    fp.write(init_content)
+            
             return version
         else:
             raise ValueError("Version not found in package.json")
@@ -35,6 +39,6 @@ setup(
             'zetaforge = zetaforge.forge_cli:main'
         ]
     },
-    packages=find_packages(include=('zetaforge',)),
+    packages=find_packages(include=('zetaforge', 'Zetaforge')),
     include_package_data=True,
     package_data={'zetaforge': ['utils/*', 'executables/*', 'block_maker/*'],},)

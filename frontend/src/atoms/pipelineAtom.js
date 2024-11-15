@@ -1,8 +1,9 @@
 import { atom } from "jotai";
 import { withImmer } from "jotai-immer";
-import rfdc from "rfdc";
+import { produce } from "immer";
 import { sha1 } from "js-sha1";
 import { generateId } from "@/utils/blockUtils";
+import { db } from "@/utils/db";
 
 export const pipelineKey = (id, data) => {
   let hash = "";
@@ -18,6 +19,7 @@ export const pipelineFactory = (cachePath, pipeline = null) => {
   let defaultPipeline = {
     id: id,
     name: id,
+    key: id + ".",
     saveTime: null,
     path: tempFile,
     data: {},
@@ -32,12 +34,13 @@ export const pipelineFactory = (cachePath, pipeline = null) => {
   return defaultPipeline;
 };
 
+export const pipelinesAtom = atom({});
+
 // Initialize with a default value synchronously
 const defaultWorkspace = {
   tabs: {},
-  pipelines: {},
   active: null,
-  fetchInterval: 5 * 1000,
+  fetchInterval: 10000,
   offset: 0,
   limit: 15,
   connected: false,
@@ -45,36 +48,69 @@ const defaultWorkspace = {
 
 export const workspaceAtom = atom(defaultWorkspace);
 
+export const writeWorkspaceAtom = atom(
+  (get) => get(workspaceAtom),
+  (get, set, newWorkspace) => {
+    try {
+      db.workspace.put({ id: "currentState", data: newWorkspace });
+    } catch (error) {
+      console.log("failed to write to cache: ", error);
+    }
+    set(workspaceAtom, newWorkspace);
+  },
+);
+
+export const writeImmerWorkspace = withImmer(writeWorkspaceAtom);
+
 export const initializeWorkspaceAtom = atom(
   null,
   async (get, set, { cachePath }) => {
+    try {
+      // Try to get saved state first
+      const saved = await db.workspace.get("currentState");
+      if (saved?.active && saved?.data) {
+        set(workspaceAtom, saved.data);
+        return;
+      }
+    } catch (err) {
+      console.error("Failed to load saved workspace:", err);
+    }
     const initPipeline = pipelineFactory(cachePath);
     const emptyKey = `${initPipeline.id}.`;
-    const tabMap = { [emptyKey]: {} };
-
-    set(workspaceAtom, {
+    const tabMap = { [emptyKey]: initPipeline };
+    const initialWorkspace = {
       ...defaultWorkspace,
       tabs: tabMap,
-      pipelines: { [emptyKey]: initPipeline },
       active: emptyKey,
-    });
+    };
+
+    set(writeWorkspaceAtom, initialWorkspace);
   },
 );
+
+// Data structure here is a local workspace that is persisted to user browser
+// workspace.tabs has user working state
+// pipelines have data from the server
+// these get synced when the server updates data in PipelinesFetcher
+
+// pipeline is a derived atom that reads and writes to the workspace
 
 const pipelineAtomWithImmer = atom(
   (get) => {
     const workspace = get(workspaceAtom);
-    return workspace.active ? workspace.pipelines[workspace.active] : null;
+    return workspace.active ? workspace.tabs[workspace.active] : null;
   },
   (get, set, newPipeline) => {
     const workspace = get(workspaceAtom);
-    const newWorkspace = rfdc({ proto: true })(workspace);
-    let key = `${newPipeline.id}.`;
-    if (newPipeline.record) {
-      key = `${newPipeline.id}.${newPipeline.record.Execution}`;
-    }
-    newWorkspace.pipelines[key] = newPipeline;
-    set(workspaceAtom, newWorkspace);
+    const key = newPipeline.record
+      ? `${newPipeline.id}.${newPipeline.record.Execution}`
+      : `${newPipeline.id}.`;
+
+    const updatedWorkspace = produce(workspace, (draft) => {
+      draft.tabs[key] = newPipeline;
+    });
+
+    set(writeWorkspaceAtom, updatedWorkspace);
   },
 );
 
@@ -97,15 +133,15 @@ export const getPipelineFormat = (pipeline) => {
 };
 
 export const lineageAtom = atom((get) => {
-  const workspace = get(workspaceAtom);
+  const pipelines = get(pipelinesAtom);
   const lineage = new Map();
 
-  if (!workspace?.pipelines) {
+  if (!pipelines) {
     return lineage;
   }
 
   // Filter out pipelines with empty .record fields
-  const validPipelines = Object.entries(workspace?.pipelines).filter(
+  const validPipelines = Object.entries(pipelines).filter(
     ([, pipeline]) =>
       pipeline.record && Object.keys(pipeline.record).length > 0,
   );

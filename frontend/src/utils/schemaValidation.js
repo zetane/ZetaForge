@@ -7,7 +7,7 @@ export default function generateSchema(pipeline) {
       schemaFields[key] = z.any().optional();
     } else if (typeof value === "object" && !Array.isArray(value)) {
       schemaFields[key] = generateSchema(value);
-    } else if (key === "value") {
+    } else if (key === "value" && !Array.isArray(value)) {
       schemaFields[key] = z
         .any()
         .refine((val) => val.replace(/['"]+/g, "").trim().length !== 0, {

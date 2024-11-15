@@ -2,6 +2,8 @@ import crypto from "crypto";
 import { promises as fs } from "fs";
 import path from "path";
 
+const METADATA = ["specs.json", "chatHistory.json", "cover-image.png"];
+
 export async function computePipelineMerkleTree(specs, pipelinePath) {
   return merklePipeline(specs.pipeline, pipelinePath);
 }
@@ -62,6 +64,9 @@ async function merkleDirectory(absolutePathSegments, relativePathSegments) {
       );
       children.push(subDirNode);
     } else {
+      if (METADATA.includes(entry.name)) {
+        continue;
+      }
       const fileHash = await computeFileHash(
         path.join(...entryAbsolutePathSegments),
       );
@@ -77,7 +82,8 @@ async function merkleDirectory(absolutePathSegments, relativePathSegments) {
 
 async function computeFileHash(filePath) {
   const fileBuffer = await fs.readFile(filePath);
-  return crypto.createHash("sha256").update(fileBuffer).digest("hex");
+  const hash = crypto.createHash("sha256").update(fileBuffer).digest("hex");
+  return hash;
 }
 
 function combineChildrenHashes(nodes) {

@@ -4,32 +4,21 @@ import {
   useLoadServerPipeline,
 } from "@/hooks/useLoadPipeline";
 import { useEffect } from "react";
-import { workspaceAtom } from "@/atoms/pipelineAtom";
+import { pipelinesAtom, writeImmerWorkspace } from "@/atoms/pipelineAtom";
 import { useImmerAtom } from "jotai-immer";
 import { useAtom } from "jotai";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { fetchExecutionDetails, getAllPipelines, ping } from "@/client/anvil";
 import { useSyncExecutionResults } from "@/hooks/useExecutionResults";
+import { produce } from "immer";
 
 export default function WorkspaceFetcher() {
-  const [workspace, setWorkspace] = useImmerAtom(workspaceAtom);
+  const [pipelines, setPipelines] = useAtom(pipelinesAtom);
+  const [workspace, setWorkspace] = useImmerAtom(writeImmerWorkspace);
   const loadPipeline = useLoadServerPipeline();
   const loadExecution = useLoadExecution();
   const [configuration] = useAtom(activeConfigurationAtom);
   const syncResults = useSyncExecutionResults();
-  const queryKey = ["pipelines", configuration?.anvil?.host];
-
-  const {
-    pending,
-    error,
-    data: pipelinesData,
-  } = useQuery({
-    queryKey: queryKey,
-    queryFn: async () => {
-      return await getAllPipelines(configuration);
-    },
-    refetchInterval: workspace.fetchInterval,
-  });
 
   useQuery({
     queryKey: ["ping"],
@@ -45,23 +34,37 @@ export default function WorkspaceFetcher() {
     },
     refetchInterval: 2000,
     retry: false,
-    onSuccess: () =>
-      setWorkspace((d) => {
-        d.connected = true;
-      }),
+    onSuccess: () => {
+      if (!workspace.connected) {
+        setWorkspace((d) => {
+          d.connected = true;
+        });
+      }
+    },
   });
-  const getDetails = async (key, existing, configuration, execution) => {
+
+  const syncWorkspace = async (key, existing, configuration, execution) => {
     const fetchedExec = await fetchExecutionDetails(configuration, execution);
     const loadedExecution = await loadExecution(fetchedExec, configuration);
     const isActive = workspace.tabs[key];
     const merged = { ...existing, ...loadedExecution };
     setWorkspace((draft) => {
-      draft.pipelines[key] = merged;
+      draft.tabs[key] = merged;
     });
+
+    const updatedPipelines = produce(pipelines, (draft) => {
+      draft[key] = merged;
+    });
+    setPipelines(updatedPipelines);
     if (isActive) {
       try {
         const Merkle = "undefined"; // while running Merkle should be a blank something.
         await syncResults(key, Merkle);
+        // TODO:
+        // Surface sync errors
+        syncResults(key).catch((err) => {
+          console.log(err);
+        });
       } catch (err) {
         console.error("Failed to sync results: ", err);
       }
@@ -69,32 +72,50 @@ export default function WorkspaceFetcher() {
     return merged;
   };
 
+  // Main polling function
+  const queryKey = ["pipelines", configuration?.anvil?.host];
+
+  const {
+    pending,
+    error,
+    data: pipelinesData,
+  } = useQuery({
+    queryKey: queryKey,
+    queryFn: async () => {
+      return await getAllPipelines(configuration);
+    },
+    refetchInterval: 20000,
+    enabled: true,
+  });
+
+  // Polls for executions
   useQueries({
-    queries: Object.keys(workspace.tabs)
+    queries: Object.keys(workspace?.tabs ?? {})
       ?.filter((key) => {
-        const pipeline = workspace.pipelines[key];
+        const pipeline = pipelines[key];
         const existingStatus = pipeline?.record?.Status;
         return existingStatus === "Running" || existingStatus === "Pending";
       })
       .map((key) => {
-        const pipeline = workspace.pipelines[key];
+        const pipeline = pipelines[key];
         const id = key.split(".")[1];
         return {
           queryKey: ["execution", key],
-          queryFn: () => getDetails(key, pipeline, configuration, id),
+          queryFn: () => syncWorkspace(key, pipeline, configuration, id),
           enabled: !pending && !error,
-          refetchInterval: 1000,
+          refetchInterval: 2000,
         };
       }),
   });
 
+  // Once we poll, we write the whole data store
   useEffect(() => {
     if (!pipelinesData?.body) {
       return;
     }
     const pipelinesToLoad = pipelinesData.body?.filter((serverPipeline) => {
       const key = serverPipeline.Uuid + "." + serverPipeline.Execution;
-      const existing = workspace.pipelines[key];
+      const existing = pipelines[key];
       const wasDeployed =
         existing && existing?.record?.Deployed != serverPipeline.Deployed;
       const statusUpdated =
@@ -115,9 +136,7 @@ export default function WorkspaceFetcher() {
     Promise.all(loadPromises)
       .then((results) => {
         const loadObj = Object.fromEntries(results);
-        setWorkspace((draft) => {
-          draft.pipelines = { ...workspace.pipelines, ...loadObj };
-        });
+        setPipelines({ ...pipelines, ...loadObj });
       })
       .catch((error) => {
         console.error("Error loading pipelines:", error);

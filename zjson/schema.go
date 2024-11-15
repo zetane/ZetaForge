@@ -128,6 +128,7 @@ type BuildContextStatusResponse struct {
 	BlockKey   string `json:"blockKey"`
 	IsUploaded bool   `json:"isUploaded"`
 	S3Key      string `json:"s3Key"`
+	Hash       string `json:"hash"`
 }
 
 type PipelineMerkleTree struct {
