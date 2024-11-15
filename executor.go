@@ -835,7 +835,7 @@ func getBuildContextStatus(ctx context.Context, pipeline *zjson.Pipeline, merkle
 	var buildContextStatus []zjson.BuildContextStatusResponse
 	for id, block := range pipeline.Pipeline {
 		var hash = merkleTree.Blocks[id].Hash
-		if len(block.Action.Container.Image) > 0 { // just to push local pipeline to clould change it to 'if len(block.Action.Container.Image) > 0 && !cfg.IsLocal {' afterwards.
+		if len(block.Action.Container.Image) > 0 && !cfg.IsLocal {
 			var status = false
 			if !rebuild {
 				imageStatus, _, err := checkImage(ctx, getImage(&block, hash, organization), cfg)
