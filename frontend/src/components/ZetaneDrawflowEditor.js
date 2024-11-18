@@ -517,11 +517,11 @@ export default class Drawflow {
             this.connection_ele = null;
 
             this.setPipeline((draft) => {
-              draft.data[id_output].outputs[output_class].connections.push({
+              draft?.data[id_output]?.outputs[output_class]?.connections.push({
                 variable: input_class,
                 block: id_input,
               });
-              draft.data[id_input].inputs[input_class].connections.push({
+              draft?.data[id_input]?.inputs[input_class]?.connections.push({
                 variable: output_class,
                 block: id_output,
               });

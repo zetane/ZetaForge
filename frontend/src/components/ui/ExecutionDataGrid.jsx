@@ -140,7 +140,11 @@ export const ExecutionDataGrid = ({ closeModal }) => {
               <TableBody>
                 {rows.map((row) => (
                   <React.Fragment key={row.id}>
-                    <PipelineTableRow row={row} getRowProps={getRowProps} />
+                    <PipelineTableRow
+                      key={row.id}
+                      row={row}
+                      getRowProps={getRowProps}
+                    />
                     <TableExpandedRow colSpan={10} className="execution-group">
                       <ExecutionCardGrid
                         executions={lineage.get(row.id).executions}
