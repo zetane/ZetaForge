@@ -162,7 +162,6 @@ class Zetaforge:
                 self.logger.warning("No results found in response after retries")
                 return json.dumps({})
             
-            print("Raw Results:", repr(results))
             
             if isinstance(results, str):
                 results = self._safe_json_loads(results)
