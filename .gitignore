@@ -53,3 +53,5 @@ build/
 *.tmp
 *.swp
 canny4/
+
+!frontend/build

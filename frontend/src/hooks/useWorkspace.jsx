@@ -30,6 +30,13 @@ export const useWorkspace = () => {
     setWorkspace(updatedWorkspace);
   };
 
+  const updatePipelines = (newPipeline) => {
+    const updatedPipelines = produce(pipelines, (draft) => {
+      draft[newPipeline.key] = newPipeline;
+    });
+    setPipelines(updatedPipelines);
+  };
+
   const deleteTab = (key) => {
     const updatedWorkspace = produce(workspace, (draft) => {
       delete draft.tabs[key];
@@ -37,5 +44,5 @@ export const useWorkspace = () => {
     setWorkspace(updatedWorkspace);
   };
 
-  return { addPipeline, deleteTab, updateTabs };
+  return { addPipeline, deleteTab, updateTabs, updatePipelines };
 };

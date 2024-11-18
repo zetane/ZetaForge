@@ -1,0 +1,99 @@
+{
+  "information": {
+    "id": "text-to-html-app",
+    "name": "Text to HTML App",
+    "description": "Communicates with the OpenAI API to generate an HTML page based on the given prompt and accessible assets.\n\nArgs:\n    prompt (str): The detailed description for the application to be built.\n    api_key (str): The API key to authenticate with the OpenAI API.\n\nReturns:\n    dict: A dictionary containing the generated HTML page.",
+    "system_versions": [
+      "0.1"
+    ],
+    "block_version": "block version number",
+    "block_source": "",
+    "block_type": "compute"
+  },
+  "inputs": {
+    "prompt": {
+      "type": "Any",
+      "connections": [
+        {
+          "block": "openai-agent-1-tuo6ndtm42rc",
+          "variable": "response"
+        }
+      ]
+    },
+    "api_key": {
+      "type": "Any",
+      "connections": [
+        {
+          "block": "password-cra270gb0hn0",
+          "variable": "password"
+        }
+      ]
+    }
+  },
+  "outputs": {
+    "htlm": {
+      "type": "Any",
+      "connections": [
+        {
+          "block": "view-html-8qh8d7kxxrph",
+          "variable": "html_path"
+        }
+      ]
+    },
+    "content": {
+      "type": "Any",
+      "connections": [
+        {
+          "block": "interface-maker-ool7kd5xa3sw",
+          "variable": "initial_content"
+        }
+      ]
+    }
+  },
+  "action": {
+    "container": {
+      "image": "text-to-html-app",
+      "version": "text-to-html-app-rd6kt1w8j4zfy",
+      "command_line": [
+        "python",
+        "entrypoint.py"
+      ]
+    },
+    "resources": {
+      "cpu": {
+        "request": "",
+        "limit": ""
+      },
+      "memory": {
+        "request": "",
+        "limit": ""
+      },
+      "gpu": {
+        "count": 0
+      }
+    }
+  },
+  "views": {
+    "node": {
+      "active": "True",
+      "title_bar": {},
+      "preview": {},
+      "html": "",
+      "pos_x": "1330",
+      "pos_y": "414",
+      "pos_z": "999",
+      "behavior": "modal",
+      "order": {
+        "input": [
+          "prompt",
+          "api_key"
+        ],
+        "output": [
+          "htlm",
+          "content"
+        ]
+      }
+    }
+  },
+  "events": {}
+}
