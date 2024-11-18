@@ -67,7 +67,8 @@ const inputs = ${JSON.stringify(inputs, null, 2)};
 
 async function executePipeline() {
   try {
-    const executeResponse = await zetaforge.run(pipelineUuid, pipelineHash, inputs , '${JSON.stringify(configuration)}');
+    const specialToken = '${configuration.s3.accessKeyId}|~${configuration.s3.secretAccessKey}|~${configuration.s3.bucket}'
+    const executeResponse = await zetaforge.run(pipelineUuid, pipelineHash, inputs , specialToken);
     console.log("executeResponse: ", executeResponse);
   } catch (error) {
     console.error('Failed to execute pipeline:', error.message);

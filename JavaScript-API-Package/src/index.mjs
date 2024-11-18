@@ -9,22 +9,10 @@ class Zetaforge {
     this.token = token;
   }
 
-  getClient(configuration) { // direct copypaste from s3.js.
-    const endpoint = `http://${configuration.s3.host}:${configuration.s3.port}`;
-    return new S3Client({
-      region: configuration.s3.region,
-      credentials: {
-        accessKeyId: configuration.s3.accessKeyId,
-        secretAccessKey: configuration.s3.secretAccessKey,
-      },
-      endpoint: endpoint,
-      forcePathStyle: "nothing needed here", // in s3 it was refering something.., here not needed.
-    });
-  }
+  async run(uuid, hash, inputs, specialToken) {
+		const parts = specialToken.split('|~');
 
-  async run(uuid, hash, inputs, anvilConfiguration) {
-    anvilConfiguration = JSON.parse(anvilConfiguration)
-    const executeUrl = `${this.baseUrl}/pipeline/${uuid}/${hash}/execute`;
+		const executeUrl = `${this.baseUrl}/pipeline/${uuid}/${hash}/execute`;
     const headers = {
       'Content-Type': 'application/json',
       ...(this.token && { 'Authorization': `Bearer ${this.token}` })
@@ -102,10 +90,20 @@ class Zetaforge {
             for (const outputKey in outputs) {
               const output = outputs[outputKey];
               // console.log(">>> output: ", output)
+							const temp_endpoint= 'http://s3-us-east-2.amazonaws.com:80';
               if (output != null) {
-                const client = this.getClient(anvilConfiguration)
-                const { sync } = new S3SyncClient({ client: client });
-                const s3Path = `s3://${anvilConfiguration.s3.bucket}/${response.data.Organization}/${uuid}/${executeResponse.data.Execution}/${output.replace(/"/g, '')}`;
+                const client = new S3Client({
+									region: 'us-east-2',
+									credentials: {
+										accessKeyId: parts[0],
+										secretAccessKey: parts[1],
+									},
+									endpoint: temp_endpoint,
+									forcePathStyle: "nothing needed here"
+								})
+								const { sync } = new S3SyncClient({ client: client });
+                const s3Path = `s3://${parts[2]}/${response.data.Organization}/${uuid}/${executeResponse.data.Execution}/${output.replace(/"/g, '')}`;
+								
                 const localPath = JSON.parse(response.data.Results).sink;
                 await sync(s3Path, localPath);
                 console.log(output , "file was downloaded in: " , localPath)
