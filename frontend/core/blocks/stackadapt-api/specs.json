@@ -1,0 +1,79 @@
+{
+  "information": {
+    "id": "stack-adapt",
+    "name": "Stack Adapt",
+    "description": "Block to connect stackadapt account using API",
+    "system_versions": [
+      "0.1"
+    ],
+    "block_version": "block version number",
+    "block_source": "core/blocks/stack-adapt",
+    "block_type": "compute"
+  },
+  "inputs": {
+    "api_url": {
+      "type": "Any",
+      "connections": []
+    },
+    "api_key": {
+      "type": "Any",
+      "connections": []
+    },
+    "introspection_query": {
+      "type": "Any",
+      "connections": []
+    },
+    "filename": {
+      "type": "Any",
+      "connections": []
+    }
+  },
+  "outputs": {
+    "dataframe": {
+      "type": "Any",
+      "connections": []
+    },
+    "csv_file": {
+      "type": "Any",
+      "connections": []
+    }
+  },
+  "action": {
+    "container": {
+      "image": "stack-adapt",
+      "version": "latest",
+      "command_line": [
+        "python",
+        "-u",
+        "entrypoint.py"
+      ]
+    }
+  },
+  "views": {
+    "node": {
+      "active": "True",
+      "title_bar": {
+        "background_color": "#6b2be0"
+      },
+      "preview": {},
+      "html": "",
+      "pos_x": "1153.880439758302",
+      "pos_y": "447.1957359313969",
+      "pos_z": "999",
+      "behavior": "modal",
+      "order": {
+        "input": [
+          "api_url",
+          "api_key",
+          "introspection_query",
+          "filename"
+        ],
+        "output": [
+          "dataframe",
+          "csv_file"
+        ]
+      }
+    }
+  },
+  "events": {}
+}
