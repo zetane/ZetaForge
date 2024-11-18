@@ -8,24 +8,13 @@ export const PipelineDeployButton = ({ uuid, hash, configuration }) => {
   const queryClient = useQueryClient();
   const deploy = useMutation({
     mutationFn: async () => {
-      return await deployPipeline(configuration, uuid, hash);
+      const ret = await deployPipeline(configuration, uuid, hash);
+      return ret;
     },
     onSuccess: () => {
       // Update the React Query cache
       const queryKey = ["pipelines", configuration?.anvil?.host];
-      queryClient.setQueryData(queryKey, (pipelines) => {
-        return pipelines?.body.map((pipeline) => {
-          if (pipeline.Hash === hash) {
-            // Update the deployed status of the matching pipeline
-            const newPipeline = {
-              ...pipeline,
-              Deployed: true,
-            };
-            return newPipeline;
-          }
-          return pipeline;
-        });
-      });
+      queryClient.invalidateQueries({ queryKey: queryKey });
     },
   });
 

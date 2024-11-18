@@ -53,10 +53,14 @@ export const ExecutionDataGrid = ({ closeModal }) => {
     const serverExec = await loadExecution(execution, configuration);
     addPipeline(serverExec);
     const [pipelineId, executionId] = serverExec.key.split(".");
-    checkoutPipeline({
-      pipelineId: pipelineId,
-      executionId: executionId,
-    });
+    try {
+      await checkoutPipeline.mutateAsync({
+        pipelineId: pipelineId,
+        executionId: executionId,
+      });
+    } catch (error) {
+      console.error("Failed to checkout pipeline files: ", error);
+    }
     try {
       await syncResults(serverExec.key);
     } catch (error) {
@@ -136,7 +140,11 @@ export const ExecutionDataGrid = ({ closeModal }) => {
               <TableBody>
                 {rows.map((row) => (
                   <React.Fragment key={row.id}>
-                    <PipelineTableRow row={row} getRowProps={getRowProps} />
+                    <PipelineTableRow
+                      key={row.id}
+                      row={row}
+                      getRowProps={getRowProps}
+                    />
                     <TableExpandedRow colSpan={10} className="execution-group">
                       <ExecutionCardGrid
                         executions={lineage.get(row.id).executions}

@@ -399,16 +399,16 @@ export const appRouter = router({
         async ({ pipelinePath, blockId }) => getLogs(pipelinePath, blockId),
       ),
     }),
-    execution: router({
-      checkout: createProcedure(
-        z.object({
-          pipelineId: z.string(),
-          executionId: z.string(),
-        }),
-        async ({ pipelineId, executionId }) =>
-          checkoutExecution(pipelineId, executionId),
-      ),
-    }),
+  }),
+  execution: router({
+    checkout: createProcedure(
+      z.object({
+        pipelineId: z.string(),
+        executionId: z.string(),
+      }),
+      async ({ pipelineId, executionId }) =>
+        checkoutExecution(pipelineId, executionId),
+    ),
   }),
 });
 
