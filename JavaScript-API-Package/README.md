@@ -83,7 +83,8 @@ const inputs = {
 
 async function executePipeline() {
   try {
-    const executeResponse = await zetaforge.run(pipelineUuid, pipelineHash, inputs , anvilConfig.);
+    const executeResponse = await zetaforge.run(pipelineUuid, pipelineHash, inputs);
+
     console.log("executeResponse: ", executeResponse);
   } catch (error) {
     console.error('Failed to execute pipeline:', error.message);
