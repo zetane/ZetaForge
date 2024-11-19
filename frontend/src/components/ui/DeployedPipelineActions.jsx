@@ -58,7 +58,7 @@ print('Pipeline execution result:', result)
 
 const zetaforge = new Zetaforge(
   '${getScheme(configuration.anvil.host)}://${configuration.anvil.host}:${configuration.anvil.port}',
-  '${configuration.anvil.token}'
+  '${configuration.anvil.token}|~${configuration.s3.accessKeyId}|~${configuration.s3.secretAccessKey}|~${configuration.s3.bucket}'
 );
 
 const pipelineUuid = "${uuid}";
@@ -67,8 +67,7 @@ const inputs = ${JSON.stringify(inputs, null, 2)};
 
 async function executePipeline() {
   try {
-    const specialToken = '${configuration.s3.accessKeyId}|~${configuration.s3.secretAccessKey}|~${configuration.s3.bucket}'
-    const executeResponse = await zetaforge.run(pipelineUuid, pipelineHash, inputs , specialToken);
+    const executeResponse = await zetaforge.run(pipelineUuid, pipelineHash, inputs);
     console.log("executeResponse: ", executeResponse);
   } catch (error) {
     console.error('Failed to execute pipeline:', error.message);

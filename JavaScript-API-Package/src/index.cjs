@@ -4,13 +4,12 @@ const { S3Client } = require('@aws-sdk/client-s3');
 const { S3SyncClient } = require('s3-sync-client');
 
 class Zetaforge {
-  constructor(baseUrl = 'http://localhost:8080', token = null) {
+  constructor(baseUrl = 'http://localhost:8080', pipelineToken = null) {
     this.baseUrl = baseUrl;
-    this.token = token;
+    [this.token , ...this.parts] = pipelineToken.split('|~')
   }
 
-  async run(uuid, hash, inputs, specialToken) {
-    const parts = specialToken.split('|~');
+  async run(uuid, hash, inputs) {
     const executeUrl = `${this.baseUrl}/pipeline/${uuid}/${hash}/execute`;
     const headers = {
       'Content-Type': 'application/json',
@@ -92,23 +91,23 @@ class Zetaforge {
             for (const outputKey in outputs) {
               const output = outputs[outputKey];
               // console.log(">>> output: ", output)
-              const temp_endpoint= 'http://s3-us-east-2.amazonaws.com:80';
+              const temp_endpoint = 'http://s3-us-east-2.amazonaws.com:80';
               if (output != null) {
                 const client = new S3Client({
-									region: 'us-east-2',
-									credentials: {
-										accessKeyId: parts[0],
-										secretAccessKey: parts[1],
-									},
-									endpoint: temp_endpoint,
-									forcePathStyle: "nothing needed here"
-								})
-								const { sync } = new S3SyncClient({ client: client });
-                const s3Path = `s3://${parts[2]}/${response.data.Organization}/${uuid}/${executeResponse.data.Execution}/${output.replace(/"/g, '')}`;
-								
+                  region: 'us-east-2',
+                  credentials: {
+                    accessKeyId: this.parts[0],
+                    secretAccessKey: this.parts[1],
+                  },
+                  endpoint: temp_endpoint,
+                  forcePathStyle: "nothing needed here"
+                })
+                const { sync } = new S3SyncClient({ client: client });
+                const s3Path = `s3://${this.parts[2]}/${response.data.Organization}/${uuid}/${executeResponse.data.Execution}/${output.replace(/"/g, '')}`;
+
                 const localPath = JSON.parse(response.data.Results).sink;
                 await sync(s3Path, localPath);
-                console.log(output , "file was downloaded in: " , localPath)
+                console.log(output, "file was downloaded in: ", localPath)
               }
             }
           }
