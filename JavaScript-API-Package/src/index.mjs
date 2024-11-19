@@ -1,10 +1,12 @@
 import axios from 'axios';
 import cliSpinners from 'cli-spinners';
+import { S3Client } from "@aws-sdk/client-s3";
+import { S3SyncClient } from "s3-sync-client";
 
 class Zetaforge {
-  constructor(baseUrl = 'http://localhost:8080', token = null) {
+  constructor(baseUrl = 'http://localhost:8080', pipelineToken = null) {
     this.baseUrl = baseUrl;
-    this.token = token;
+    [this.token , ...this.parts] = pipelineToken.split('|~')
   }
 
   async run(uuid, hash, inputs) {
@@ -30,12 +32,12 @@ class Zetaforge {
       const executeId = executeResponse.data.Execution;
       const statusUrl = `${this.baseUrl}/execution/${executeId}`;
       let response;
-      let prev_status = '' , frameIndex = 0;
+      let prev_status = '', frameIndex = 0;
       const spinner = cliSpinners.dots;
 
-      do {        
+      do {
         response = await axios.get(statusUrl, { headers });
-        if (prev_status == response.data.Status){ // print the cli-dots
+        if (prev_status == response.data.Status) { // print the cli-dots
           process.stdout.clearLine(0);
           process.stdout.cursorTo(0);
           process.stdout.write(`${spinner.frames[frameIndex]} `);
@@ -47,7 +49,7 @@ class Zetaforge {
           console.log(`\n\nCurrent status: ${response.data.Status}`);
           prev_status = response.data.Status;
         }
-        
+
         if (response.data.Status === 'Failed') {
           throw new Error('Execution failed.');
         }
@@ -56,10 +58,11 @@ class Zetaforge {
 
       } while (response.data.Status === 'Pending' || response.data.Status === 'Running');
 
+      await new Promise(resolve => setTimeout(resolve, 600)); // some delay to fetch response.
+
       console.log("\n\n");
 
       // Parse and return results
-
       const resultToParse = response.data.Results;
       const data = typeof resultToParse === 'string' ? JSON.parse(resultToParse) : resultToParse;
 
@@ -75,6 +78,45 @@ class Zetaforge {
         if (block.action && block.action.parameters) {
           delete block.action.parameters;
         }
+      }
+
+      try { // try download output files:
+        for (const blockId in data.pipeline) {
+          const block = data.pipeline[blockId];
+          if (block.events && block.events.outputs) {
+            const outputs = block.events.outputs;
+            for (const outputKey in outputs) {
+              const output = outputs[outputKey];
+              // console.log(">>> output: ", output)
+              const temp_endpoint = 'http://s3-us-east-2.amazonaws.com:80';
+              if (output != null) {
+                const client = new S3Client({
+                  region: 'us-east-2',
+                  credentials: {
+                    accessKeyId: this.parts[0],
+                    secretAccessKey: this.parts[1],
+                  },
+                  endpoint: temp_endpoint,
+                  forcePathStyle: "nothing needed here"
+                })
+                const { sync } = new S3SyncClient({ client: client });
+                const s3Path = `s3://${this.parts[2]}/${response.data.Organization}/${uuid}/${executeResponse.data.Execution}/${output.replace(/"/g, '')}`;
+
+                const localPath = JSON.parse(response.data.Results).sink;
+                await sync(s3Path, localPath);
+                console.log(output, "file was downloaded in: ", localPath)
+              }
+            }
+          }
+
+          if (block.action && block.action.parameters) {
+            delete block.action.parameters;
+          }
+        }
+      }
+      catch (error) {
+        console.log("ERROR DOWNLOADING FILE. error is: ", error)
+        return JSON.stringify(outputs, null, 2); // return the response anway.
       }
       return JSON.stringify(outputs, null, 2);
 
