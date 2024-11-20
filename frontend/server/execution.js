@@ -25,48 +25,29 @@ export async function syncExecutionResults(
   if (merkle != null && merkle != "undefined" && merkle != "") {
     try {
       const merkle_persed = JSON.parse(merkle);
-      console.log("parsed merkle: ", merkle_persed);
       try {
         // for downloading files
         for (const blockKey in merkle_persed.blocks) {
           const block = merkle_persed.blocks[blockKey];
           const blockPath = localPath.split("history")[0];
           const blockName = blockKey.split("-").slice(0, -1).join("-");
+          const blocksS3Prefix = `${blockName}-${block.hash}-build`;
+          const localBlockDir = path.join(blockPath, blockKey);
 
-          for (const file of block.files.children) {
-            const blocksS3Prefix = `${blockName}-${block.hash}-build/${file.path}`;
+          if (!fs.existsSync(localBlockDir)) {
+            // directory creeation
+            fs.mkdirSync(localBlockDir, { recursive: true });
+          }
 
+          try {
             await syncS3ToLocalDirectory(
               blocksS3Prefix,
-              blockPath,
+              localBlockDir,
               anvilConfiguration,
             );
-
-            const oldPath = path.join(blockPath, blocksS3Prefix);
-            const newDir = path.join(blockPath, blockKey);
-
-            if (!fs.existsSync(newDir)) {
-              fs.mkdirSync(newDir, { recursive: true }); // Create the directory recursively if it doesn't exist
-            }
-
-            const newPath = path.join(newDir, file.path);
-
-            try {
-              // try to move to block folder.
-              await fs.promises.rename(oldPath, newPath);
-            } catch (err) {
-              console.error("Error moving the file:", err);
-            }
-            const directory_path = path.join(
-              blockPath,
-              `${blockName}-${block.hash}-build`,
-            );
-            try {
-              // console.log("directoryPath:", directory_path)
-              await fs.promises.rmdir(directory_path);
-            } catch (err) {
-              console.error("Error removing directory:", err);
-            }
+            // console.log(`Downloaded folder: ${blocksS3Prefix} to ${localBlockDir}`);
+          } catch (err) {
+            console.error("Error downloading the folder:", err);
           }
         }
       } catch (err) {
