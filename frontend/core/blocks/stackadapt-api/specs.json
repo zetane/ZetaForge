@@ -1,13 +1,13 @@
 {
   "information": {
-    "id": "stack-adapt",
+    "id": "stackadapt-api",
     "name": "Stack Adapt",
-    "description": "Block to connect stackadapt account using API",
+    "description": "This block facilitates seamless integration with a StackAdapt account using their API, enabling secure authentication, efficient data retrieval, and streamlined interaction with StackAdapt's advertising and analytics platform.",
     "system_versions": [
       "0.1"
     ],
     "block_version": "block version number",
-    "block_source": "core/blocks/stack-adapt",
+    "block_source": "core/blocks/stackadapt-api",
     "block_type": "compute"
   },
   "inputs": {
@@ -40,7 +40,7 @@
   },
   "action": {
     "container": {
-      "image": "stack-adapt",
+      "image": "stackadapt-api",
       "version": "latest",
       "command_line": [
         "python",
