@@ -56,10 +56,10 @@ print('Pipeline execution result:', result)
 
     const jsCode = `import Zetaforge from "zetaforge";
 
-const zetaforge = new Zetaforge({
+const zetaforge = new Zetaforge(
   '${getScheme(configuration.anvil.host)}://${configuration.anvil.host}:${configuration.anvil.port}',
-  '${configuration.anvil.token}'
-});
+  '${configuration.anvil.token}|~${configuration.s3.accessKeyId}|~${configuration.s3.secretAccessKey}|~${configuration.s3.bucket}'
+);
 
 const pipelineUuid = "${uuid}";
 const pipelineHash = "${hash}";
