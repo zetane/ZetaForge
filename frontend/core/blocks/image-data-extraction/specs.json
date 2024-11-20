@@ -2,7 +2,7 @@
   "information": {
     "id": "data-extraction",
     "name": "Data Extraction",
-    "description": "Block to extract data from images",
+    "description": "A code block designed to extract and process data from images, enabling automated retrieval and transformation of image content into structured formats.",
     "system_versions": [
       "0.1"
     ],
@@ -12,6 +12,11 @@
   },
   "inputs": {
     "folder_path": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    },
+    "open_ai_key": {
       "type": "Any",
       "connections": [],
       "relays": []

@@ -1,13 +1,13 @@
 {
   "information": {
-    "id": "text-image",
+    "id": "text-to-image",
     "name": "Text Image",
-    "description": "Text to image block",
+    "description": "This block generates high-quality images based on user-provided text prompts, leveraging an API for image generation and ensuring efficient processing, retrieval, and storage of the resulting visuals.",
     "system_versions": [
       "0.1"
     ],
     "block_version": "block version number",
-    "block_source": "core/blocks/text-image",
+    "block_source": "core/blocks/text-to-image",
     "block_type": "compute"
   },
   "inputs": {
@@ -36,7 +36,7 @@
   },
   "action": {
     "container": {
-      "image": "text-image",
+      "image": "text-to-image",
       "version": "latest",
       "command_line": [
         "python",

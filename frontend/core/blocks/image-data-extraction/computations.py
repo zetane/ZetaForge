@@ -14,8 +14,8 @@ def extract_text_from_image(image_path):
     return extracted_text
 
 # Call OpenAI API to process the extracted text using the correct API
-def analyze_text_with_gpt(extracted_text):
-    openai.api_key = os.getenv('OPENAI_API_KEY')  # Use environment variables for API keys
+def analyze_text_with_gpt(extracted_text, open_ai_key):
+    openai.api_key = open_ai_key  # Use environment variables for API keys
 
     # ChatGPT prompt for extracting name and company from text
     prompt = f"Extract the name of the person and company from the following text: {extracted_text}. Format the response as 'Person: <person_name>, Company: <company_name>'."
@@ -42,7 +42,7 @@ def parse_gpt_response(gpt_response):
     return person, company
 
 # Define the compute function
-def compute(folder_path, output_csv):
+def compute(folder_path,open_ai_key ,output_csv):
     """Compute function to extract text from multiple images and save results in a CSV file.
 
     Inputs:
@@ -67,7 +67,7 @@ def compute(folder_path, output_csv):
         extracted_text = extract_text_from_image(image_path)
         
         # Step 2: Analyze the text using GPT
-        gpt_response = analyze_text_with_gpt(extracted_text)
+        gpt_response = analyze_text_with_gpt(extracted_text,open_ai_key)
         
         # Step 3: Parse GPT response
         person, company = parse_gpt_response(gpt_response)

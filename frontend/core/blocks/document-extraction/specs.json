@@ -2,7 +2,7 @@
   "information": {
     "id": "ds4sd-dociling",
     "name": "Ds4sd Dociling",
-    "description": "Block to extract data from the files in markdown format",
+    "description": "A code block designed to extract and process data from files in markdown format, converting the content into a structured and analyzable form while preserving key markdown elements and formatting.",
     "system_versions": [
       "0.1"
     ],
