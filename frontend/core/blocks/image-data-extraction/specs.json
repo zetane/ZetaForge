@@ -1,13 +1,13 @@
 {
   "information": {
-    "id": "data-extraction",
+    "id": "image-data-extraction",
     "name": "Data Extraction",
     "description": "A code block designed to extract and process data from images, enabling automated retrieval and transformation of image content into structured formats.",
     "system_versions": [
       "0.1"
     ],
     "block_version": "block version number",
-    "block_source": "core/blocks/data-extraction",
+    "block_source": "core/blocks/image-data-extraction",
     "block_type": "compute"
   },
   "inputs": {
@@ -36,7 +36,7 @@
   },
   "action": {
     "container": {
-      "image": "data-extraction",
+      "image": "image-data-extraction",
       "version": "latest",
       "command_line": [
         "python",
