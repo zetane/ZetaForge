@@ -58,8 +58,8 @@ export default function WorkspaceFetcher() {
     setPipelines(updatedPipelines);
     if (isActive) {
       try {
-        const Merkle = "undefined"; // while running Merkle should be a blank something.
-        await syncResults(key, Merkle);
+        const merkle = "undefined"; // while running Merkle should be a blank something.
+        await syncResults(key, merkle);
         // TODO:
         // Surface sync errors
         syncResults(key).catch((err) => {
