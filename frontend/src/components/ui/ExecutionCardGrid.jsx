@@ -20,7 +20,6 @@ const ExecutionCard = ({ execution, onSelect }) => {
     try {
       if (result.data) {
         onSelect(result.data, configuration, result.data.Merkle);
-        // console.log("Merkle: " ,result.data.Merkle)
       } else {
         console.log("No data");
       }
