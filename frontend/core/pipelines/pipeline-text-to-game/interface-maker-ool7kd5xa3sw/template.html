@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat and Iframe</title>
+    <style>
+        body {
+            display: flex;
+            font-family: Roboto, Arial, sans-serif;
+            font-size: 18px;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden; /* Prevents body overflow */
+        }
+        #chat {
+            width: 25%;
+            padding: 10px;
+            margin-top: 40px;
+            border-right: 1px solid #ddd;
+            overflow-y: auto;
+        }
+        #main-container {
+            width: 75%;
+            display: flex;
+            flex-grow: 1;
+            flex-direction: column;
+            overflow: hidden; /* Prevents main container overflow */
+            position: relative;
+        }
+        .tabs {
+            display: flex;
+            cursor: pointer;
+            background-color: white;
+            color: black;
+        }
+        .tab {
+            padding: 10px;
+            border: 1px solid #ddd;
+            margin-right: 2px;
+            background-color: lightgray;
+            color: black;
+        }
+        .tab.active {
+            background-color: indigo;
+            border-bottom: none;
+            color: white;
+        }
+        #iframe-container, #response-container, #html-container {
+            flex-grow: 1;
+            padding: 10px;
+            display: none;
+            overflow: auto;
+        }
+        iframe {
+            width: 100%;
+            height: calc(100% - 20px); /* Adjusted for padding */
+            border: none;
+        }
+        .message {
+            margin: 5px 0;
+            display: flex;
+            align-items: center;
+        }
+        .message textarea {
+            font-size: 18px;
+            width: 80%;
+            padding: 5px;
+            resize: none; /* Prevents manual resizing */
+            overflow: hidden; /* Hides scrollbars */
+        }
+        .message button {
+            font-size: 18px;
+            padding: 5px;
+            margin-left: 3px;
+            background-color: indigo;
+            color: white;
+            border: none;
+            border-radius: 10%;
+            cursor: pointer;
+        }
+        .message button:disabled {
+            background-color: gray;
+            cursor: not-allowed;
+        }
+        .message button:hover:not(:disabled) {
+            background-color: darkslateblue;
+        }
+        #spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid indigo;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #response-content {
+            white-space: pre-wrap; /* Wrap long lines */
+            word-break: break-word; /* Break long words */
+            overflow-wrap: break-word; /* Break words to prevent overflow */
+            width: 100%; /* Ensure response content fits the container */
+        }
+        .chat-message {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            position: relative;
+        }
+        .chat-message.selected {
+            background-color: #f1f1f1;
+        }
+        .chat-message.disabled {
+            pointer-events: none;
+            opacity: 0.6;
+        }
+        .options-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+        .options-popup {
+            display: none;
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        .options-popup button {
+            background-color: white;
+            color: black;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+        }
+        .options-popup button:hover {
+            background-color: lightgray;
+        }
+        #button-container {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        #save-button, #load-button, #save-complete-button {
+            padding: 10px;
+            background-color: indigo;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            flex: 1 1 auto;
+        }
+        #save-button:hover, #load-button:hover, #save-complete-button:hover {
+            background-color: darkslateblue;
+        }
+        #file-input {
+            display: none; /* Hidden file input */
+        }
+        @media (max-width: 600px) {
+            #button-container {
+                flex-direction: column;
+                right: 10px;
+                top: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="chat">
+        <div id="messages"></div>
+        <div class="message">
+            <textarea id="message-input" placeholder="Type a message" rows="1" onkeypress="handleKeyPress(event)" oninput="adjustTextareaHeight(this)"></textarea>
+            <button id="send-button" onclick="sendMessage()">Send</button>
+            <div id="spinner"></div>
+        </div>
+    </div>
+    <div id="main-container">
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('iframe')">View</div>
+            <div class="tab" onclick="showTab('html')">HTML</div>
+            <div class="tab" onclick="showTab('response')">Response</div>
+        </div>
+        <div id="button-container">
+            <input type="file" id="file-input" accept=".html" onchange="loadHtmlFile()">
+            <button id="load-button" onclick="document.getElementById('file-input').click()">Load HTML</button>
+            <button id="save-button" onclick="saveHtmlFile()">Save HTML</button>
+            <button id="save-complete-button">Save Complete HTML</button>
+        </div>
+        <div id="iframe-container">
+            <iframe id="content-frame" src="about:blank"></iframe>
+        </div>
+        <div id="html-container">
+            <pre id="html-content"></pre>
+        </div>
+        <div id="response-container">
+            <pre id="response-content"></pre>
+        </div>
+    </div>
+
+    <script>
+        const systemMessage = {
+            role: 'system',
+            content: 'You are an assistant that generates a full HTML page based on user input. All the code should be in one HTML page and use CDN.'
+        };
+
+        const messageHistory = [];
+        let isSending = false;
+        const initialContent = `<< initial_content >>`; // Set this variable
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey && !isSending) {
+                event.preventDefault(); // Prevents the default behavior of Enter key
+                sendMessage();
+            }
+        }
+
+        function adjustTextareaHeight(textarea) {
+            textarea.style.height = 'auto'; // Reset height
+            textarea.style.height = textarea.scrollHeight + 'px'; // Adjust height
+        }
+
+        function showTab(tabName) {
+            const iframeContainer = document.getElementById('iframe-container');
+            const responseContainer = document.getElementById('response-container');
+            const htmlContainer = document.getElementById('html-container');
+            const tabs = document.querySelectorAll('.tab');
+
+            tabs.forEach(tab => tab.classList.remove('active'));
+            if (tabName === 'iframe') {
+                document.querySelector('.tab[onclick="showTab(\'iframe\')"]').classList.add('active');
+                iframeContainer.style.display = 'block';
+                responseContainer.style.display = 'none';
+                htmlContainer.style.display = 'none';
+            } else if (tabName === 'html') {
+                document.querySelector('.tab[onclick="showTab(\'html\')"]').classList.add('active');
+                iframeContainer.style.display = 'none';
+                responseContainer.style.display = 'none';
+                htmlContainer.style.display = 'block';
+            } else {
+                document.querySelector('.tab[onclick="showTab(\'response\')"]').classList.add('active');
+                iframeContainer.style.display = 'none';
+                responseContainer.style.display = 'block';
+                htmlContainer.style.display = 'none';
+            }
+        }
+
+        function selectMessage(index) {
+            console.log(`selectMessage called with index: ${index}`);
+            console.log(`messageHistory:`, messageHistory);
+
+            const chatMessages = document.querySelectorAll('.chat-message');
+            chatMessages.forEach((message, idx) => {
+                if (idx === index) {
+                    message.classList.add('selected');
+                } else {
+                    message.classList.remove('selected');
+                }
+            });
+
+            const selectedMessage = messageHistory[index];
+            if (selectedMessage) {
+                console.log(`Selected message found:`, selectedMessage);
+                updateIframe(selectedMessage.htmlContent);
+                updateResponseContent(selectedMessage.fullResponse);
+                updateHtmlContent(selectedMessage.htmlContent);
+            } else {
+                console.log(`Selected message not found at index: ${index}`);
+            }
+        }
+
+        function deleteMessage(index) {
+            console.log(`deleteMessage called with index: ${index}`);
+            messageHistory.splice(index, 1);
+            updateMessages();
+        }
+
+        function copyMessage(index) {
+            const messageToCopy = messageHistory[index];
+            if (messageToCopy) {
+                const copiedMessage = {
+                    prompt: `Copy: ${messageToCopy.prompt}`,
+                    htmlContent: messageToCopy.htmlContent,
+                    fullResponse: messageToCopy.fullResponse
+                };
+                messageHistory.push(copiedMessage);
+                updateMessages();
+                selectMessage(messageHistory.length - 1);
+            }
+        }
+
+        function updateMessages() {
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.innerHTML = '';
+            messageHistory.forEach((message, index) => {
+                const chatMessage = document.createElement('div');
+                chatMessage.innerText = message.prompt;
+                chatMessage.classList.add('chat-message');
+                chatMessage.onclick = () => selectMessage(index);
+
+                const optionsButton = document.createElement('button');
+                optionsButton.innerHTML = '&#8942;'; // Three vertical dots
+                optionsButton.classList.add('options-button');
+                optionsButton.onclick = (event) => {
+                    event.stopPropagation();
+                    togglePopup(index);
+                };
+
+                const optionsPopup = document.createElement('div');
+                optionsPopup.classList.add('options-popup');
+                const copyButton = document.createElement('button');
+                copyButton.innerText = 'Copy';
+                copyButton.onclick = (event) => {
+                    event.stopPropagation();
+                    copyMessage(index);
+                    closePopups();
+                };
+                const deleteButton = document.createElement('button');
+                deleteButton.innerText = 'Delete';
+                deleteButton.onclick = (event) => {
+                    event.stopPropagation();
+                    deleteMessage(index);
+                    closePopups();
+                };
+                optionsPopup.appendChild(copyButton);
+                optionsPopup.appendChild(deleteButton);
+
+                chatMessage.appendChild(optionsButton);
+                chatMessage.appendChild(optionsPopup);
+                messagesDiv.appendChild(chatMessage);
+            });
+        }
+
+        function togglePopup(index) {
+            closePopups();
+            const messagesDiv = document.getElementById('messages');
+            const chatMessage = messagesDiv.children[index];
+            const popup = chatMessage.querySelector('.options-popup');
+            popup.style.display = 'block';
+            document.addEventListener('click', closePopupsOnClickOutside);
+        }
+
+        function closePopupsOnClickOutside(event) {
+            if (!event.target.closest('.chat-message')) {
+                closePopups();
+            }
+        }
+
+        function closePopups() {
+            const popups = document.querySelectorAll('.options-popup');
+            popups.forEach(popup => popup.style.display = 'none');
+            document.removeEventListener('click', closePopupsOnClickOutside);
+        }
+
+        function updateIframe(htmlContent) {
+            const iframe = document.getElementById('content-frame');
+            iframe.srcdoc = htmlContent; // Use srcdoc to ensure proper rendering
+        }
+
+        function updateResponseContent(fullResponse) {
+            const responseContent = document.getElementById('response-content');
+            responseContent.textContent = fullResponse;
+        }
+
+        function updateHtmlContent(htmlContent) {
+            const htmlContentContainer = document.getElementById('html-content');
+            htmlContentContainer.textContent = htmlContent;
+        }
+
+        function saveHtmlFile() {
+            const htmlContent = document.getElementById('html-content').textContent;
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'output.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        async function saveHtmlWithMedia() {
+            const htmlContentDiv = document.getElementById('html-content');
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlContentDiv.textContent;
+
+            const mediaElements = tempDiv.querySelectorAll('img, audio, video');
+
+            for (const element of mediaElements) {
+                const src = element.src;
+                if (src.startsWith('data:')) {
+                    continue; // Skip already embedded data URLs
+                }
+                try {
+                    const response = await fetch(src);
+                    if (!response.ok) {
+                        console.warn(`Failed to fetch ${src}`);
+                        continue; // Skip if the media is not found
+                    }
+                    const blob = await response.blob();
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        element.src = e.target.result;
+                    };
+                    reader.readAsDataURL(blob);
+                    await new Promise(resolve => reader.onloadend = resolve); // Ensure the base64 conversion is done before proceeding
+                } catch (error) {
+                    console.error(`Error processing ${src}: ${error}`);
+                }
+            }
+
+            // Wait for all media to be processed
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            const htmlContent = tempDiv.innerHTML;
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'complete_output.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        document.getElementById('save-complete-button').addEventListener('click', saveHtmlWithMedia);
+
+        function loadHtmlFile() {
+            const fileInput = document.getElementById('file-input');
+            const file = fileInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const htmlContent = e.target.result;
+                    const newMessage = {
+                        prompt: `Imported HTML file ${file.name}`,
+                        htmlContent: htmlContent,
+                        fullResponse: htmlContent
+                    };
+                    messageHistory.push(newMessage);
+                    updateMessages();
+                    selectMessage(messageHistory.length - 1);
+                    showTab('iframe');  // Switch to the 'View' tab
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function unescapeHtml(escapedStr) {
+            // Parse the string to handle standard HTML entities
+            const doc = new DOMParser().parseFromString(escapedStr, 'text/html');
+            let unescapedStr = doc.documentElement.textContent;
+
+            // Manually replace the custom-escaped backtick entity
+            unescapedStr = unescapedStr.replace(/&#96;/g, '`').replace(/&#36;/g, '$');
+
+            return unescapedStr;
+        }
+
+        function loadInitialContent(content) {
+            const unescapedContent = unescapeHtml(content);
+            const newMessage = {
+                prompt: "Initial HTML content",
+                htmlContent: unescapedContent,
+                fullResponse: unescapedContent
+            };
+            messageHistory.push(newMessage);
+            updateMessages();
+            selectMessage(messageHistory.length - 1);
+            showTab('iframe');
+        }
+
+        // Check if initialContent is set and load the HTML content if so
+        if (initialContent) {
+            loadInitialContent(initialContent);
+        }
+
+        async function sendMessage() {
+            const messageInput = document.getElementById('message-input');
+            const message = messageInput.value;
+            if (message.trim() === '') return;
+
+            const sendButton = document.getElementById('send-button');
+            const spinner = document.getElementById('spinner');
+            sendButton.style.display = 'none';
+            spinner.style.display = 'block';
+            isSending = true;
+
+            const newMessage = {
+                prompt: message,
+                htmlContent: '',
+                fullResponse: ''
+            };
+
+            messageHistory.push(newMessage);
+            updateMessages();
+            const lastMessageIndex = messageHistory.length - 1;
+            const chatMessages = document.querySelectorAll('.chat-message');
+            chatMessages[lastMessageIndex].classList.add('disabled');
+
+            // Show running prompt in HTML view and response view
+            updateIframe('<html><body><p style="font-size:18px;font-family: Roboto, Arial, sans-serif;">Loading...</p></body></html>');
+            updateResponseContent('Loading...');
+
+            messageInput.value = '';
+            adjustTextareaHeight(messageInput);
+
+            // Create the messages array for the API call
+            const messages = [systemMessage];
+            if (messageHistory.length > 1) {
+                const lastEntry = messageHistory[messageHistory.length - 2];
+                messages.push({ role: 'user', content: lastEntry.prompt });
+                messages.push({ role: 'assistant', content: lastEntry.fullResponse });
+            }
+            messages.push({ role: 'user', content: message });
+
+            // Log the messages being sent to the API
+            console.log('Messages sent to API:', messages);
+
+            // Make API call to OpenAI
+            try {
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer << api_key >>'
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-4o',
+                        messages: messages
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const data = await response.json();
+                let htmlContent = data.choices[0].message.content;
+
+                // Extract the HTML content inside the ```html tags
+                const htmlMatch = htmlContent.match(/```html\n([\s\S]*?)\n```/);
+                if (htmlMatch && htmlMatch[1]) {
+                    htmlContent = htmlMatch[1];
+                }
+
+                // Update message history with the response
+                newMessage.htmlContent = htmlContent;
+                newMessage.fullResponse = data.choices[0].message.content;
+
+                console.log(`New message updated in history:`, newMessage);
+
+                // Display HTML content in iframe
+                updateIframe(htmlContent);
+
+                // Display full response in pre element
+                updateResponseContent(data.choices[0].message.content);
+
+                // Display just HTML content in pre element
+                updateHtmlContent(htmlContent);
+
+            } catch (error) {
+                console.error('Error fetching HTML:', error);
+
+                // Display error HTML
+                const errorHtml = `
+                    <html>
+                    <body>
+                        <h1>Error</h1>
+                        <p>There was an error processing your request.</p>
+                    </body>
+                    </html>`;
+                updateIframe(errorHtml);
+            } finally {
+                // Hide spinner
+                spinner.style.display = 'none';
+                sendButton.style.display = 'block';
+                chatMessages[lastMessageIndex].classList.remove('disabled');
+                isSending = false;
+                selectMessage(messageHistory.length - 1);
+                showTab('iframe');
+            }
+        }
+    </script>
+</body>
+</html>
