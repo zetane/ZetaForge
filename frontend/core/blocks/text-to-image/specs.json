@@ -1,0 +1,63 @@
+{
+  "information": {
+    "id": "text-to-image",
+    "name": "Text Image",
+    "description": "This block generates high-quality images based on user-provided text prompts, leveraging an API for image generation and ensuring efficient processing, retrieval, and storage of the resulting visuals.",
+    "system_versions": [
+      "0.1"
+    ],
+    "block_version": "block version number",
+    "block_source": "core/blocks/text-to-image",
+    "block_type": "compute"
+  },
+  "inputs": {
+    "prompt": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    },
+    "api_key": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    }
+  },
+  "outputs": {
+    "saved_image": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    },
+    "prompt": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    }
+  },
+  "action": {
+    "container": {
+      "image": "text-to-image",
+      "version": "latest",
+      "command_line": [
+        "python",
+        "-u",
+        "entrypoint.py"
+      ]
+    }
+  },
+  "views": {
+    "node": {
+      "behavior": "modal",
+      "active": "True",
+      "title_bar": {
+        "background_color": "#6b2be0"
+      },
+      "preview": {},
+      "html": "",
+      "pos_x": "1194",
+      "pos_y": "290",
+      "pos_z": "999"
+    }
+  },
+  "events": {}
+}
