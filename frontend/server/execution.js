@@ -44,15 +44,12 @@ export async function syncExecutionResults(
             fs.mkdirSync(localBlockDir, { recursive: true });
           }
 
-          console.log(`syncing ${localBlockDir} block ${blocksS3Prefix}`);
-
           try {
             await syncS3ToLocalDirectory(
               blocksS3Prefix,
               localBlockDir,
               anvilConfiguration,
             );
-            // console.log(`Downloaded folder: ${blocksS3Prefix} to ${localBlockDir}`);
           } catch (err) {
             console.error("Error downloading the folder:", err);
           }
