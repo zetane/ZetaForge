@@ -11,10 +11,11 @@ export async function ensureGitRepoAndCommitBlocks(
 ) {
   // 1. Copy all blocks to cache
   if (buildPath != cachePath) {
+    console.log(buildContextStatuses);
     await Promise.all(
       buildContextStatuses
         .filter((context) => {
-          context.hash != "";
+          return context.hash != "";
         })
         .map(async ({ blockKey }) => {
           const sourcePath = path.join(buildPath, blockKey);

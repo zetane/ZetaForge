@@ -93,13 +93,15 @@ export async function uploadDirectory(key, diretoryPath, anvilConfiguration) {
 
 async function upload(key, filePath, anvilConfiguration) {
   const client = getClient(anvilConfiguration);
+  const s3key = getFullS3Key(key, anvilConfiguration);
+  console.log("uploading to ", s3key);
 
   try {
     const fileBody = await fs.readFile(filePath);
     const res = await client.send(
       new PutObjectCommand({
         Bucket: anvilConfiguration.s3.bucket,
-        Key: getFullS3Key(key, anvilConfiguration),
+        Key: s3key,
         Body: fileBody,
       }),
     );

@@ -16,6 +16,7 @@ export const useSyncExecutionResults = () => {
       executionUuid: pipeline.record.Execution,
       anvilConfiguration: configuration,
       merkle: merkle,
+      spec: pipeline.data,
     });
   };
 
