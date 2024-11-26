@@ -31,7 +31,7 @@ export async function syncExecutionResults(
         // for downloading files
         for (const blockKey in merkle_persed.blocks) {
           const blockSpec = spec[blockKey];
-          if (!org || !blockSpec?.information?.id) {
+          if (!org || !blockSpec?.action?.container?.image) {
             continue;
           }
           const block = merkle_persed.blocks[blockKey];
