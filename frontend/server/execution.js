@@ -36,7 +36,7 @@ export async function syncExecutionResults(
           }
           const block = merkle_persed.blocks[blockKey];
           const blockPath = localPath.split("history")[0];
-          const blocksS3Prefix = `${org}/${blockSpec?.information?.id}-${block.hash}-build`;
+          const blocksS3Prefix = `${org}/${blockSpec?.action?.container?.image}-${block.hash}-build`;
           const localBlockDir = path.join(blockPath, blockKey);
 
           if (!fs.existsSync(localBlockDir)) {
