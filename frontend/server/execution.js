@@ -44,6 +44,8 @@ export async function syncExecutionResults(
             fs.mkdirSync(localBlockDir, { recursive: true });
           }
 
+          console.log(`syncing ${localBlockDir} block ${blocksS3Prefix}`);
+
           try {
             await syncS3ToLocalDirectory(
               blocksS3Prefix,

@@ -3,6 +3,24 @@ import fs from "fs";
 import path from "path";
 import { cacheJoin } from "./cache.js";
 
+async function ensureGitignore(dir) {
+  const gitignorePath = path.join(dir, ".gitignore");
+  try {
+    // Check if .gitignore exists
+    await fs.promises.access(gitignorePath);
+    const content = await fs.promises.readFile(gitignorePath, "utf8");
+    if (!content.includes("history/")) {
+      await fs.promises.appendFile(gitignorePath, "\nhistory/\n");
+      return true; // indicates .gitignore was modified
+    }
+    return false; // indicates no changes were needed
+  } catch (e) {
+    // .gitignore doesn't exist, create it
+    await fs.promises.writeFile(gitignorePath, "history/\n", "utf8");
+    return true; // indicates .gitignore was created
+  }
+}
+
 export async function ensureGitRepoAndCommitBlocks(
   buildContextStatuses,
   buildPath,
@@ -61,6 +79,24 @@ export async function ensureGitRepoAndCommitBlocks(
       dir: cachePath,
       path: "user.email",
       value: "pipeline@system.local",
+    });
+  }
+
+  const gitignoreModified = await ensureGitignore(cachePath);
+
+  if (gitignoreModified) {
+    // Add and commit .gitignore if it was created or modified
+    await git.add({ fs, dir: cachePath, filepath: ".gitignore" });
+    await git.commit({
+      fs,
+      dir: cachePath,
+      message: isRepo
+        ? "chore: update .gitignore"
+        : "chore: initial commit with .gitignore",
+      author: {
+        name: "Pipeline System",
+        email: "pipeline@system.local",
+      },
     });
   }
 
