@@ -80,6 +80,14 @@ class CliLogger:
         self.console.print(banner_panel)
         self.console.print()  # Add spacing after banner
 
+        system_info = self._get_system_info()
+        self.console.print(Panel(
+            system_info,
+            title="[yellow]System Information[/yellow]",
+            border_style="bright_blue"
+        ))
+        self.console.print()
+
     def log(self, message: str, level: LogLevel = LogLevel.INFO, emoji: str = ""):
         """Log a message with appropriate styling"""
         style = self.styles[level]
