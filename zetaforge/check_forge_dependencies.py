@@ -2,7 +2,11 @@ import subprocess
 import platform
 from pathlib import Path
 import os
+from zetaforge.logger import CliLogger
+
 EXECUTABLES_PATH = os.path.join(Path(__file__).parent, 'executables')
+
+logger = CliLogger()
 
 def check_kubectl():
     check_ctl = subprocess.run(["kubectl", "version", "--client"], capture_output=True, text=True)
@@ -11,11 +15,10 @@ def check_kubectl():
 def check_running_kube(context):
     check_kube = subprocess.run(["kubectl", f"--context={context}", "get", "pods"], capture_output=True, text=True)
     if check_kube.returncode == 0:
-        print("Kubernetes is running, continuing..")
+        logger.success("Kubernetes is running, continuing..")
         return True
     else:
-        print("Kubernetes is not running!  ", check_kube.returncode)
-        print(check_kube.stderr)
+        logger.error(f"Kubernetes is not running! {check_kube.stderr}")
         return False
 
 def check_kube_pod(name):
@@ -25,7 +28,7 @@ def check_kube_pod(name):
         parts = line.split("-")
         if parts[0] == name:
             return True
-    
+
     return False
 
 def check_kube_svc(name, namespace="default"):
@@ -37,9 +40,9 @@ def check_kube_svc(name, namespace="default"):
         parts = line.split(" ")
         if parts[0].strip() == name:
             return True
-    
+
     return False
-    
+
 def check_minikube():
     check_ctl = subprocess.run(["minikube", "version"], capture_output=True, text=True)
     return check_ctl.returncode == 0

@@ -1,0 +1,70 @@
+{
+  "information": {
+    "id": "interface-maker",
+    "name": "Interface Maker",
+    "description": "Tool to generate HTML apps interfaces using the OpenAI API.\n\nInputs:\n    api_key (str): API key to be included in the generated HTML page.\n    initial_content (str): Initial HTML content to be embedded in the generated HTML page.\n    image_paths (list): List of image paths to be included and saved locally.\n\nOutputs:\n    dict: A dictionary with the key 'html' and the value being the name of the generated HTML file.",
+    "system_versions": [
+      "0.1"
+    ],
+    "block_version": "1.0",
+    "block_source": "",
+    "block_type": "view"
+  },
+  "inputs": {
+    "initial_content": {
+      "type": "Any",
+      "connections": []
+    },
+    "api_key": {
+      "type": "Any",
+      "connections": []
+    },
+    "image_paths": {
+      "type": "Any",
+      "connections": []
+    }
+  },
+  "outputs": {
+    "html": {
+      "type": "Any",
+      "connections": []
+    }
+  },
+  "action": {
+    "container": {
+      "image": "interface-maker",
+      "version": "interface-maker-ool7kd5xda3sw",
+      "command_line": [
+        "python",
+        "entrypoint.py"
+      ]
+    }
+  },
+  "views": {
+    "node": {
+      "active": "true",
+      "title_bar": {
+        "background_color": "#0099ff"
+      },
+      "preview": {
+        "active": "true"
+      },
+      "html": "",
+      "pos_x": 0,
+      "pos_y": 0,
+      "pos_z": "999",
+      "order": {
+        "input": [
+          "initial_content",
+          "api_key",
+          "image_paths"
+        ],
+        "output": [
+          "html"
+        ]
+      }
+    },
+    "mode": "modal"
+  },
+  "events": {}
+}

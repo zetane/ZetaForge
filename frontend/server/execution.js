@@ -9,11 +9,13 @@ export async function syncExecutionResults(
   executionUuid,
   anvilConfiguration,
   merkle,
+  spec,
 ) {
   let s3Prefix;
+  let org;
   if (anvilConfiguration.anvil.token) {
     const data = atob(anvilConfiguration.anvil.token.split(".")[1]);
-    const org = JSON.parse(data).sub;
+    org = JSON.parse(data).sub;
     s3Prefix = `${org}/${pipelineUuid}/${executionUuid}`;
   } else {
     s3Prefix = `${pipelineUuid}/${executionUuid}`;
@@ -28,10 +30,13 @@ export async function syncExecutionResults(
       try {
         // for downloading files
         for (const blockKey in merkle_persed.blocks) {
+          const blockSpec = spec[blockKey];
+          if (!org || !blockSpec?.action?.container?.image) {
+            continue;
+          }
           const block = merkle_persed.blocks[blockKey];
           const blockPath = localPath.split("history")[0];
-          const blockName = blockKey.split("-").slice(0, -1).join("-");
-          const blocksS3Prefix = `${blockName}-${block.hash}-build`;
+          const blocksS3Prefix = `${org}/${blockSpec?.action?.container?.image}-${block.hash}-build`;
           const localBlockDir = path.join(blockPath, blockKey);
 
           if (!fs.existsSync(localBlockDir)) {
@@ -45,7 +50,6 @@ export async function syncExecutionResults(
               localBlockDir,
               anvilConfiguration,
             );
-            // console.log(`Downloaded folder: ${blocksS3Prefix} to ${localBlockDir}`);
           } catch (err) {
             console.error("Error downloading the folder:", err);
           }

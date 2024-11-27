@@ -7,7 +7,6 @@ from pkg_resources import resource_filename
 from .check_forge_dependencies import check_minikube, check_running_kube, check_kube_pod, check_kubectl
 from .install_forge_dependencies import *
 from pathlib import Path
-from colorama import init, Fore
 from datetime import datetime
 import socket
 import json
@@ -15,7 +14,7 @@ import shutil
 import threading
 from .mixpanel_client import mixpanel_client
 import sentry_sdk
-
+from .logger import CliLogger
 
 run_env = mixpanel_client.is_dev
 env = "production"
@@ -34,6 +33,8 @@ INSTALL_YAML = resource_filename("zetaforge", os.path.join('utils', 'install.yam
 
 EXECUTABLES_PATH = os.path.join(Path(__file__).parent, 'executables')
 FRONT_END = os.path.join(EXECUTABLES_PATH, "frontend")
+
+logger = CliLogger()
 
 def write_json(server_version, client_version, context, driver, is_dev, s2_path=None):
     if s2_path:
@@ -106,44 +107,16 @@ def get_kubectl_contexts():
                 context_name = context_name[1:]
             contexts.append(context_name)
 
-    # Print the contexts for the user
-    print("Available kubectl contexts:")
-    for i, context in enumerate(contexts, start=1):
-        if context.startswith("*"):
-            print(f"{i}. {context[1:]} (current)")
-        else:
-            print(f"{i}. {context}")
-
     return contexts
 
 def select_kubectl_context():
     # Get the list of kubectl contexts
     contexts = get_kubectl_contexts()
+    selected = logger.show_numbered_menu("Select kubernetes context: ", contexts)
 
-    # Prompt the user to select a context
-    while True:
-        try:
-            choice = int(input("Enter the number of the context you want to use: "))
-            if 1 <= choice <= len(contexts):
-                break
-            else:
-                print("Invalid choice. Please try again.")
-        except ValueError:
-            print("Invalid input. Please enter a valid number.")
-
-    selected_context = contexts[choice - 1].strip("* ")
-
-    # Confirm the selected context with the user
-    confirmation = input(f"You have selected the context: {selected_context}. Is this correct? (y/n): ")
-    if confirmation.lower() != "y":
-        print("Context selection canceled.")
-        return None
-
-    return selected_context
+    return contexts[selected]
 
 def setup(server_version, client_version, driver, build_flag = True, install_flag = True, is_dev=False, server_path=None):
-    print("Platform: ", platform.machine())
-    print("CWD: ", os.path.abspath(os.getcwd()))
     mixpanel_client.track_event('Setup Initiated')
 
     if driver == "minikube":
@@ -151,13 +124,13 @@ def setup(server_version, client_version, driver, build_flag = True, install_fla
         if not check_minikube():
             mixpanel_client.track_event("Setup Failure - Minikube Not Found")
             time.sleep(0.5)
-            print("Minikube not found. Please install minikube.")
+            logger.error("Minikube not found. Please install minikube.")
             raise Exception("Minikube not found!")
         minikube = subprocess.run(["minikube", "-p", "zetaforge", "start"], capture_output=True, text=True)
         if minikube.returncode != 0:
             mixpanel_client.track_event("Setup Failure - Cannot Start Minikube")
             time.sleep(0.5)
-            print(minikube.stderr)
+            logger.error(minikube.stderr)
             raise Exception("Error while starting minikube")
         mixpanel_client.track_event("Setup - Minikube Started")
     else:
@@ -169,7 +142,7 @@ def setup(server_version, client_version, driver, build_flag = True, install_fla
             switch_context = subprocess.run(["kubectl", "config", "use-context", f"{context}"], capture_output=True, text=True)
             mixpanel_client.track_event("Setup - Kubectl Found")
         else:
-            print("Kubectl not found. Please install docker-desktop, orbstack, or minikube and enable kubernetes, or ensure that kubectl installed and is able to connect to a working kubernetes cluster.")
+            logger.error("Kubectl not found. Please install docker-desktop, orbstack, or minikube and enable kubernetes, or ensure that kubectl is installed and is able to connect to a working kubernetes cluster.")
             mixpanel_client.track_event("Setup Failure - Kubectl Not Found")
             time.sleep(0.5)
             raise EnvironmentError("Kubectl not found!")
@@ -177,22 +150,15 @@ def setup(server_version, client_version, driver, build_flag = True, install_fla
         in_context = (switch_context.returncode == 0)
 
         if not in_context:
-            print(f"Cannot find the context {context} for kubernetes. Please double check that you have entered the correct context.")
-            subprocess.run(["kubectl", "config", "get-contexts"], capture_output=True, text=True)
+            logger.error(f"Cannot find the context {context} for kubernetes. Please double check that you have entered the correct context.")
             mixpanel_client.track_event("Setup Failure - Context Switch Error")
             raise Exception("Exception while setting the context")
 
         mixpanel_client.track_event("Setup - Context changed")
 
-        running_kube = check_running_kube(context)
-        if not running_kube:
-            raise Exception("Kubernetes is not running, please start kubernetes and ensure that you are able to connect to the kube context.")
-
-    install_frontend_dependencies(client_version=client_version)
-
     config_path = write_json(server_version, client_version, context, driver, is_dev, s2_path=server_path)
 
-    print(f"Setup complete, wrote config to {config_path}.")
+    logger.success(f"Setup complete, wrote config to {config_path}.")
     mixpanel_client.track_event("Setup Successful")
     return config_path
 
@@ -219,8 +185,6 @@ def run_forge(server_version=None, client_version=None, server_path=None, client
     time_start = datetime.now()
     mixpanel_client.track_event('Launch Initiated')
     change_env_config(server_version, client_version, is_dev)
-    #init is called for collarama library, better logging.
-    init()
 
     if server_path is None:
         _, server_path = get_launch_paths(server_version, client_version)
@@ -231,7 +195,7 @@ def run_forge(server_version=None, client_version=None, server_path=None, client
     try:
         server = None
         client = None
-        print(f"Launching execution server {server_path}..")
+        logger.success(f"Launching execution server {server_path}..")
         server_executable = os.path.basename(server_path)
         if platform.system() != 'Windows':
             server_executable = f"./{server_executable}"
@@ -246,7 +210,7 @@ def run_forge(server_version=None, client_version=None, server_path=None, client
 
         mixpanel_client.track_event('Launch - Anvil Launched')
 
-        print(f"Launching client {client_path}..")
+        logger.success(f"Launching client {client_path}..")
         client_executable = os.path.basename(client_path)
         if platform.system() == 'Darwin':
             client_executable = [f"./{client_executable}"]
@@ -301,9 +265,6 @@ def run_forge(server_version=None, client_version=None, server_path=None, client
             time.sleep(2) # mixpanel instance is asynch, so making sure that it completes the call before tear down
         except:
             print("Mixpanel cannot track")
-
-        client.kill()
-
 
 #purge executables, and upload them from the scratch
 def purge():
