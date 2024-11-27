@@ -1,0 +1,52 @@
+{
+  "information": {
+    "id": "new-python",
+    "name": "Images Block",
+    "description": "List all image files in the current directory, rename them by appending 'img_' in front, and save them with the same name. Return the filenames of the renamed files.",
+    "system_versions": [
+      "0.1"
+    ],
+    "block_version": "block version number",
+    "block_source": "core/blocks/new-python",
+    "block_type": "compute"
+  },
+  "inputs": {},
+  "outputs": {
+    "image_files": {
+      "type": "Any",
+      "connections": []
+    }
+  },
+  "action": {
+    "container": {
+      "image": "new-python",
+      "version": "new-python-i3a02bb938agbh",
+      "command_line": [
+        "python",
+        "-u",
+        "entrypoint.py"
+      ]
+    }
+  },
+  "views": {
+    "node": {
+      "active": "True or False",
+      "title_bar": {
+        "background_color": "#6b2be0"
+      },
+      "preview": {},
+      "html": "",
+      "pos_x": 0,
+      "pos_y": 0,
+      "pos_z": "999",
+      "behavior": "modal",
+      "order": {
+        "input": [],
+        "output": [
+          "image_files"
+        ]
+      }
+    }
+  },
+  "events": {}
+}

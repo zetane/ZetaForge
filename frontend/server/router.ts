@@ -285,13 +285,24 @@ export const appRouter = router({
       pipelineUuid: z.string(),
       executionUuid: z.string(),
       anvilConfiguration: anvilConfigurationSchema,
+      merkle: z.string().optional(),
+      spec: z.any().optional(),
     }),
-    async ({ pipelinePath, pipelineUuid, executionUuid, anvilConfiguration }) =>
+    async ({
+      pipelinePath,
+      pipelineUuid,
+      executionUuid,
+      anvilConfiguration,
+      merkle,
+      spec,
+    }) =>
       syncExecutionResults(
         pipelinePath,
         pipelineUuid,
         executionUuid,
         anvilConfiguration,
+        merkle,
+        spec,
       ),
   ),
 

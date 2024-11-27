@@ -49,7 +49,7 @@ export const ExecutionDataGrid = ({ closeModal }) => {
     setPageSize(pageSize);
   };
 
-  const selectExecution = async (execution, configuration) => {
+  const selectExecution = async (execution, configuration, merkle) => {
     const serverExec = await loadExecution(execution, configuration);
     addPipeline(serverExec);
     const [pipelineId, executionId] = serverExec.key.split(".");
@@ -62,7 +62,7 @@ export const ExecutionDataGrid = ({ closeModal }) => {
       console.error("Failed to checkout pipeline files: ", error);
     }
     try {
-      await syncResults(serverExec.key);
+      await syncResults(serverExec.key, merkle);
     } catch (error) {
       console.error("Sync failed: ", error);
     }

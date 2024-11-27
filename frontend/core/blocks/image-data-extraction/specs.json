@@ -1,0 +1,63 @@
+{
+  "information": {
+    "id": "image-data-extraction",
+    "name": "Data Extraction",
+    "description": "A code block designed to extract and process data from images, enabling automated retrieval and transformation of image content into structured formats.",
+    "system_versions": [
+      "0.1"
+    ],
+    "block_version": "block version number",
+    "block_source": "core/blocks/image-data-extraction",
+    "block_type": "compute"
+  },
+  "inputs": {
+    "folder_path": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    },
+    "open_ai_key": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    },
+    "output_csv": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    }
+  },
+  "outputs": {
+    "result": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    }
+  },
+  "action": {
+    "container": {
+      "image": "image-data-extraction",
+      "version": "latest",
+      "command_line": [
+        "python",
+        "-u",
+        "entrypoint.py"
+      ]
+    }
+  },
+  "views": {
+    "node": {
+      "behavior": "modal",
+      "active": "True",
+      "title_bar": {
+        "background_color": "#6b2be0"
+      },
+      "preview": {},
+      "html": "",
+      "pos_x": 1353.8908730859496,
+      "pos_y": 388.4764911332192,
+      "pos_z": "999"
+    }
+  },
+  "events": {}
+}

@@ -14,14 +14,14 @@ def get_package_version():
         version = package_data.get('version')
 
         if version:
-            
+
             init_file_path = "zetaforge/__init__.py"
             init_content = f"__version__ = '{version}'\nfrom .block_maker.zetahelper import block_maker\nfrom .Zetaforge import Zetaforge\n"
 
             if not os.path.exists(init_file_path) or not open(init_file_path).read().startswith("__version__"):
                 with open(init_file_path, "w") as fp:
                     fp.write(init_content)
-            
+
             return version
         else:
             raise ValueError("Version not found in package.json")
@@ -31,9 +31,10 @@ def get_package_version():
     except json.JSONDecodeError:
         raise ValueError("Invalid JSON format in package.json")
 
+package_version = get_package_version()
 
 setup(
-    version = get_package_version(),
+    version = package_version,
     entry_points={
         'console_scripts': [
             'zetaforge = zetaforge.forge_cli:main'

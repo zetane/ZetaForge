@@ -1,4 +1,5 @@
 import path from "path";
+import fs from "fs";
 import { syncS3ToLocalDirectory } from "./s3";
 import { cacheJoin } from "./cache";
 
@@ -7,30 +8,59 @@ export async function syncExecutionResults(
   pipelineUuid,
   executionUuid,
   anvilConfiguration,
+  merkle,
+  spec,
 ) {
   let s3Prefix;
+  let org;
   if (anvilConfiguration.anvil.token) {
     const data = atob(anvilConfiguration.anvil.token.split(".")[1]);
-    const org = JSON.parse(data).sub;
+    org = JSON.parse(data).sub;
     s3Prefix = `${org}/${pipelineUuid}/${executionUuid}`;
   } else {
     s3Prefix = `${pipelineUuid}/${executionUuid}`;
   }
 
   const localPath = path.join(resultPath, "history", executionUuid, "files");
+  await syncS3ToLocalDirectory(s3Prefix, localPath, anvilConfiguration); // That is for downloading history folder and it's contents.
 
-  await syncS3ToLocalDirectory(s3Prefix, localPath, anvilConfiguration);
+  if (merkle != null && merkle != "undefined" && merkle != "") {
+    try {
+      const merkle_persed = JSON.parse(merkle);
+      try {
+        // for downloading files
+        for (const blockKey in merkle_persed.blocks) {
+          const blockSpec = spec[blockKey];
+          if (!org || !blockSpec?.action?.container?.image) {
+            continue;
+          }
+          const block = merkle_persed.blocks[blockKey];
+          const blockPath = localPath.split("history")[0];
+          const blocksS3Prefix = `${org}/${blockSpec?.action?.container?.image}-${block.hash}-build`;
+          const localBlockDir = path.join(blockPath, blockKey);
 
-  // TODO: Fix all of this for real
-  // This is because if a user loads a pipeline from a folder, we need to keep
-  // That folder as the pipeline "path" so that we can reference the blocks
-  // And sync the history to the loaded folder for user reference
+          if (!fs.existsSync(localBlockDir)) {
+            // directory creeation
+            fs.mkdirSync(localBlockDir, { recursive: true });
+          }
 
-  // *BUT* we also need to serve the result files of runs
-  // whether they are local or remote, which means we need results
-  // In a retrievable location
-  //
-  //
+          try {
+            await syncS3ToLocalDirectory(
+              blocksS3Prefix,
+              localBlockDir,
+              anvilConfiguration,
+            );
+          } catch (err) {
+            console.error("Error downloading the folder:", err);
+          }
+        }
+      } catch (err) {
+        console.error("Error downloading files:", err);
+      }
+    } catch (err) {
+      console.error("Error parsing merkle:", err);
+    }
+  }
   const cachePath = cacheJoin(pipelineUuid, "history", executionUuid, "files");
 
   if (cachePath != localPath) {
