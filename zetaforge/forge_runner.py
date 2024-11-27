@@ -7,7 +7,6 @@ from pkg_resources import resource_filename
 from .check_forge_dependencies import check_minikube, check_running_kube, check_kube_pod, check_kubectl
 from .install_forge_dependencies import *
 from pathlib import Path
-from colorama import init, Fore
 from datetime import datetime
 import socket
 import json
@@ -156,9 +155,6 @@ def setup(server_version, client_version, driver, build_flag = True, install_fla
             raise Exception("Exception while setting the context")
 
         mixpanel_client.track_event("Setup - Context changed")
-        running_kube = check_running_kube(context)
-        if not running_kube:
-            raise Exception("Kubernetes is not running, please start kubernetes and ensure that you are able to connect to the kube context.")
 
     config_path = write_json(server_version, client_version, context, driver, is_dev, s2_path=server_path)
 
@@ -189,8 +185,6 @@ def run_forge(server_version=None, client_version=None, server_path=None, client
     time_start = datetime.now()
     mixpanel_client.track_event('Launch Initiated')
     change_env_config(server_version, client_version, is_dev)
-    #init is called for collarama library, better logging.
-    init()
 
     if server_path is None:
         _, server_path = get_launch_paths(server_version, client_version)

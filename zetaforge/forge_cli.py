@@ -1,10 +1,9 @@
 from zetaforge.logger import CliLogger
-from .forge_runner import run_forge, teardown, purge, setup, uninstall
+from .forge_runner import run_forge, teardown, purge, setup, uninstall, check_running_kube
 from .install_forge_dependencies import check_version_exists, install_new_version, get_launch_paths, remove_running_services
 import argparse, os, json
 from pathlib import Path
 from .__init__ import __version__
-from colorama import init, Fore, Style
 from .mixpanel_client import mixpanel_client
 
 EXECUTABLES_PATH = os.path.join(Path(__file__).parent, 'executables')
@@ -25,8 +24,6 @@ def main():
     parser.add_argument("--driver", help="Defines which driver to use for kubernetes", default="docker-desktop")
     parser.add_argument("--is_dev" , "-dev", action="store_true", help="If passed, the mixpanel events will have a field, is_dev that is set to be True")
     args = parser.parse_args()
-
-    init()  # Initialize colorama
 
     server_versions = [__version__]
     client_versions =[__version__]
@@ -50,6 +47,11 @@ def main():
             config = load_config(config_file)
 
         if config is not None and success:
+            context = config["KubeContext"]
+            running_kube = check_running_kube(context)
+            if not running_kube:
+                raise Exception("Kubernetes is not running, please start kubernetes and ensure that you are able to connect to the kube context.")
+
             run_forge(server_version=server_versions[-1], client_version=client_versions[-1], server_path=args.s2_path, client_path=args.app_path, is_dev=args.is_dev)
         else:
             raise Exception("Config failed to load, please re-run `zetaforge setup`.")
