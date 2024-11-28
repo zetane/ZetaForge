@@ -1,5 +1,8 @@
 def compute(prompt, inference_steps):
     """
+    Pipeline to generate images based on text description
+    it takes description and inference steps as an input and provide the result image
+    
     prompt: text description of image
     inference_steps: difussion steps
 

@@ -4,7 +4,7 @@
       "information": {
         "id": "stable-diffusion-2",
         "name": "Stable Diffusion 2",
-        "description": "prompt: text description of image\ninference_steps: difussion steps\n\noutput: generated image path\n\nuse GPU to run this pipeline, we are using float16 dtype",
+        "description": "Pipeline to generate images based on text description\nit takes description and inference steps as an input and provide the result image\nprompt: text description of image\ninference_steps: difussion steps\n\noutput: generated image path\n\nuse GPU to run this pipeline, we are using float16 dtype",
         "system_versions": [
           "0.1"
         ],
@@ -314,8 +314,6 @@
       "events": {}
     }
   },
-  "sink": "C:/my_blocks/stable-diffusion-2/",
-  "build": "C:/my_blocks/stable-diffusion-2/",
   "name": "stable-diffusion-2",
   "id": "pipeline-zavlrd78q1mt"
 }
