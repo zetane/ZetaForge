@@ -1368,11 +1368,10 @@ wheels = [
 
 [[package]]
 name = "zetaforge"
-version = "0.4.2"
+version = "0.4.3"
 source = { editable = "." }
 dependencies = [
     { name = "boto3" },
-    { name = "colorama" },
     { name = "langchain" },
     { name = "langchain-openai" },
     { name = "mixpanel" },
@@ -1386,7 +1385,6 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "boto3", specifier = "==1.34.79" },
-    { name = "colorama", specifier = "==0.4.6" },
     { name = "langchain", specifier = "==0.1.15" },
     { name = "langchain-openai", specifier = "==0.1.2" },
     { name = "mixpanel", specifier = "==4.10.1" },
