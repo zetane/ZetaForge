@@ -24,7 +24,7 @@ Parameter Blocks do not have any input nodes; instead, they have a UI element th
 the other hand, Compute Blocks have both input and output nodes. View Blocks have a small box on top that will visualize
 its input based on the implemented logic in that View Block.
 
-Each Block, regardless of its type, is saved in a directory named after the Block in `frontend/core/blocks`. However, 
+Each Block, regardless of its type, is saved in a directory named after the Block in `frontend/core/blocks`. However,
 the content of the directory representing a Block varies depending on its type.
 
 ### Components of Parameter Blocks
@@ -36,9 +36,9 @@ the structural information about a Block and is stored in `frontend/core/blocks/
 
 A directory representing a Compute Block should contain five files:
 
-1. `computations.py`: Includes (at least) `compute(args)` and `test(args)` functions. The `compute` function implements 
-the logic of the Block, while the `test` function is designed to test the compute function. The `compute` function 
-returns a dictionary with keys that match the output node names from the specs file.
+1. `computations.py`: Includes (at least) `compute(args)` and `test(args)` functions. The `compute` function implements
+   the logic of the Block, while the `test` function is designed to test the compute function. The `compute` function
+   returns a dictionary with keys that match the output node names from the specs file.
 
 2. `Dockerfile`: Describes the instructions to build a Docker image. This file should always include `COPY computations.py .`.
 
@@ -49,16 +49,16 @@ returns a dictionary with keys that match the output node names from the specs f
 5. `specs.json`: Includes the structural information about the Block.
 
 ### Components of View Blocks
+
 The role of View Blocks is to create and display visualizations for the computed Block outputs.
 View Blocks have the same five components as the Compute Blocks; i.e., `computations.py`, `Dockerfile`, `requirements.txt`,
 `run_test.py`, and `specs.json`. Using View Blocks, we create HTML-formatted visualizations that will be visualized
-on top of the View Block as the Pipeline runs. 
-
+on top of the View Block as the Pipeline runs.
 
 ## Creating Blocks
 
 To create a Block, use a template Block listed on the sidebar. You can drag and drop a template Block, such as
-`New Python`, and modify its components to build your own Block.
+`Denoising`, and modify its components to build your own Block.
 
 ![drop-a-block.gif](assets%2Fdrop-a-block.gif)
 
@@ -66,11 +66,13 @@ To create a Block, use a template Block listed on the sidebar. You can drag and 
 
 To make any modifications, click on the `</ >` icon to open the Block Editor sidebar on the right.
 
-To modify the compute or view logic, simply edit the `compute` function. You can add as many lines of code as you like to the 
-`computations.py` file. 
+To modify the compute or view logic, simply edit the `compute` function. You can add as many lines of code as you like to the
+`computations.py` file.
 
-[//]: # (You can also write a specific prompt to modify the code with the help of an AI agent, such as GPT-4.)
+[//]: # "You can also write a specific prompt to modify the code with the help of an AI agent, such as GPT-4."
+
 ### Block Templates
+
 The `computations.py` file should follow this template:
 
 ```python
@@ -101,15 +103,15 @@ def compute(in1,...):
     """
     Description
     """
-    
+
     html_template = """
     <!DOCTYPE html>
     <html>
-    ... 
+    ...
     <!-- Some html code... -->
     </html>
     """
-    
+
     unique_id = str(uuid.uuid4())
     html_path = f"viz_{unique_id}.html"
     in1_str = json.dumps(in1)
@@ -131,13 +133,14 @@ compute function should always be a dictionary with keys and values correspondin
 
 ### Saving Changes to Blocks
 
-You can save the changes you made to a Block by compiling that Block inside the Block Editor. Just look for the "compile
-Block files" button as shown below:
+You can save the changes you made to a Block by compiling that Block inside the Block Editor. Just follow instructions as shown
 
-![compile-run-block-editor.png](assets%2Fcompile-run-block-editor.png)
+![compile-run-block-editor.gif](assets%2Fcompile-run-block-editor.gif)
 
+Within the files section you can modify the code, and navigate to the `Test Block` section to compile and `run test` will run the `test` function inside the `computations.py` file
 
-The "compile files and run Block" button will compile the changes and run the test functions specified by the `test` 
-function inside the `computations.py` file.
+<!--
+The "compile files and run test" button will compile the changes and run the test functions specified by the `test`
+function inside the `computations.py` file. -->
 
-To learn more about the Block Editor, please refer to our [user interface guide](user-interface.md/#block-editor).  
+To learn more about the Block Editor, please refer to our [user interface guide](user-interface.md/#block-editor).

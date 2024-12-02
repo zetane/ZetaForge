@@ -2,7 +2,7 @@
 
 A Pipeline is composed of Blocks. To construct a Pipeline, drag and drop Blocks into your workspace and connect the Blocks by adding links between the output of one Block and the input of the next Block. ZetaForge supports directed acyclic connections between the Blocks.
 
-![drag-drop-blocks-add-links.gif](assets%2Fdrag-drop-blocks-add-links.gif)
+![assemble-pipeline.gif](assets%2Fassemble-pipeline.gif)
 
 The changes made to the workspace are saved in `frontend/.cache`. When the first Block is added to an empty workspace, a new directory (`pipeline-${pipeline_id}`) will be created under `frontend/.cache` for the Pipeline representing the workspace. The information about the pipeline, such as the Blocks making the pipeline and the connections between them, is stored in a JSON file with the same name as the pipeline, i.e., `pipeline-${pipeline_id}.json`. Note that the `${pipeline_id}` is displayed at the top of the window in the ZetaForge app.
 
@@ -33,4 +33,4 @@ Finally, we add the Save Text Block to store the story GPT generated to a file a
 
 We run the Pipeline by clicking on the Run button at the top of the window. Here is a screenshot of the full Pipeline:
 
-![GPT Story Teller Pipeline](assets/gpt-storyteller-pipeline.png)
+![Super Resolution Pipeline](assets/Super-resolution.png)
