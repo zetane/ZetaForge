@@ -111,10 +111,14 @@ export async function ensureGitRepoAndCommitBlocks(
     await git.add({ fs, dir: cachePath, filepath: "." });
 
     // Create commit with block hashes in message
-    const commitMessage = buildContextStatuses
+    let commitMessage = buildContextStatuses
       .filter((status) => status.hash)
       .map((status) => `${status.blockKey}: ${status.hash}`)
       .join("\n");
+
+    if (!commitMessage) {
+      commitMessage = "Initial commit";
+    }
 
     await git.commit({
       fs,
