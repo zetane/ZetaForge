@@ -32,7 +32,7 @@ export async function ensureGitRepoAndCommitBlocks(
     await Promise.all(
       buildContextStatuses
         .filter((context) => {
-          return context.hash != "";
+          return context.s3Key != "" || (context?.hash && context.hash != "");
         })
         .map(async ({ blockKey }) => {
           const sourcePath = path.join(buildPath, blockKey);
