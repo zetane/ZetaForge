@@ -18,7 +18,7 @@ After the creation or modification of a pipeline, our system stores the informat
    ![selected-executed-pipeline.png](assets%2Fselected-executed-pipeline.png)
 
 3. **Deploy desired pipeline**
-   Once you have selected your desired pipeline, you can deploy it by simply clicking on the deploy button corresponding to it. the system would process the request, and update the deploy button to **Payload**
+   Once you have selected your desired pipeline, you can deploy it by simply clicking on the deploy button corresponding to it. The system would process the request, and update the deploy button to **Payload**
    ![deploy-to-payload.gif](assets%2Fdeploy-to-payload.gif)
 4. **Retrieve Code Examples**
    After succesfully deploying your pipeline, you can click the **Payload** button, and this will display code examples demonstrating how to call the API for your pipeline. You can utilize these examples to have them integrated into your applications.
