@@ -1,0 +1,62 @@
+{
+    "information": {
+        "id": "detect-edges-canny",
+        "name": "Detect edges canny",
+        "description": "Detects edges in a given image using the Canny edge detection algorithm.\n\nThis function takes an input image and applies the Canny edge detection algorithm to it.\nThe Canny algorithm is a multi-stage process that includes noise reduction, gradient calculation,\nnon-maximum suppression, and edge tracking by hysteresis. The output is an image highlighting\nthe edges detected in the input image.\n\nInputs:\n- image_path: The file path to the input image on which edge detection will be performed.\n- low_threshold: The lower threshold for the hysteresis procedure in the Canny algorithm.\n- high_threshold: The upper threshold for the hysteresis procedure in the Canny algorithm.\n\nOutputs:\n- edges_image_path: The file path to the output image that contains the edges detected in the input image.",
+        "system_versions": [
+            "0.1"
+        ],
+        "block_version": "1.0",
+        "block_source": "core/blocks/generated-blocks/detect-edges-canny-20241213-003506-450",
+        "block_type": "compute"
+    },
+    "inputs": {
+        "image_path": {
+            "type": "Any",
+            "connections": [],
+            "relays": []
+        },
+        "low_threshold": {
+            "type": "Any",
+            "connections": [],
+            "relays": []
+        },
+        "high_threshold": {
+            "type": "Any",
+            "connections": [],
+            "relays": []
+        }
+    },
+    "outputs": {
+        "edges_image_path": {
+            "type": "Any",
+            "connections": [],
+            "relays": []
+        }
+    },
+    "action": {
+        "container": {
+            "image": "detect-edges-canny",
+            "version": "latest",
+            "command_line": [
+                "python",
+                "entrypoint.py"
+            ]
+        }
+    },
+    "views": {
+        "node": {
+            "behavior": "modal",
+            "active": "True",
+            "title_bar": {
+                "background_color": "#228B22"
+            },
+            "preview": {},
+            "html": "",
+            "pos_x": "0",
+            "pos_y": "0",
+            "pos_z": "999"
+        }
+    },
+    "events": {}
+}
