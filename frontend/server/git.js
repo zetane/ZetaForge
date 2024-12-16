@@ -5,18 +5,28 @@ import { cacheJoin } from "./cache.js";
 
 async function ensureGitignore(dir) {
   const gitignorePath = path.join(dir, ".gitignore");
+  const ignoreItems = ["history/", "chatHistory.json"];
+
   try {
     // Check if .gitignore exists
     await fs.promises.access(gitignorePath);
     const content = await fs.promises.readFile(gitignorePath, "utf8");
-    if (!content.includes("history/")) {
-      await fs.promises.appendFile(gitignorePath, "\nhistory/\n");
-      return true; // indicates .gitignore was modified
+
+    let modified = false;
+    for (const item of ignoreItems) {
+      if (!content.includes(item)) {
+        await fs.promises.appendFile(gitignorePath, `\n${item}\n`);
+        modified = true;
+      }
     }
-    return false; // indicates no changes were needed
+    return modified; // true if any changes were made, false if none needed
   } catch (e) {
-    // .gitignore doesn't exist, create it
-    await fs.promises.writeFile(gitignorePath, "history/\n", "utf8");
+    // .gitignore doesn't exist, create it with all items
+    await fs.promises.writeFile(
+      gitignorePath,
+      ignoreItems.join("\n") + "\n",
+      "utf8",
+    );
     return true; // indicates .gitignore was created
   }
 }
