@@ -74,7 +74,11 @@ export async function copyPipeline(pipelineSpecs, fromDir, toDir) {
   const fromBlockIndex = await getBlockIndex([bufferPath]);
 
   if (!(await fileExists(writePipelineDirectory))) {
-    await fs.mkdir(writePipelineDirectory, { recursive: true });
+    try {
+      await fs.mkdir(writePipelineDirectory, { recursive: true });
+    } catch (error) {
+      console.log(`Directory ${writePipelineDirectory} already exists`);
+    }
   }
 
   // Gets pipeline specs from the specs coming from the graph

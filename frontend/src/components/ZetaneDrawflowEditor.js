@@ -1018,26 +1018,39 @@ export default class Drawflow {
           inputElement = nodeRefs[`${input_id}-input-${input_class}`];
           outputElement = nodeRefs[`${output_id}-output-${output_class}`];
 
+          if (!inputElement) {
+            console.error(
+              `Input element ${input_id}-input-${input_class} not found`,
+            );
+            return;
+          }
+          if (!outputElement) {
+            console.error(
+              `Output element ${output_id}-output-${output_class} not found`,
+            );
+            return;
+          }
+
           const eX =
-            inputElement.offsetWidth / 2 +
-            (inputElement.getBoundingClientRect().x -
-              precanvas.getBoundingClientRect().x) *
+            inputElement?.offsetWidth / 2 +
+            (inputElement.getBoundingClientRect()?.x -
+              precanvas.getBoundingClientRect()?.x) *
               precanvasWitdhZoom;
           const eY =
-            inputElement.offsetHeight / 2 +
-            (inputElement.getBoundingClientRect().y -
-              precanvas.getBoundingClientRect().y) *
+            inputElement?.offsetHeight / 2 +
+            (inputElement.getBoundingClientRect()?.y -
+              precanvas.getBoundingClientRect()?.y) *
               precanvasHeightZoom;
 
           line_x =
-            outputElement.offsetWidth / 2 +
-            (outputElement.getBoundingClientRect().x -
-              precanvas.getBoundingClientRect().x) *
+            outputElement?.offsetWidth / 2 +
+            (outputElement.getBoundingClientRect()?.x -
+              precanvas.getBoundingClientRect()?.x) *
               precanvasWitdhZoom;
           line_y =
-            outputElement.offsetHeight / 2 +
-            (outputElement.getBoundingClientRect().y -
-              precanvas.getBoundingClientRect().y) *
+            outputElement?.offsetHeight / 2 +
+            (outputElement.getBoundingClientRect()?.y -
+              precanvas.getBoundingClientRect()?.y) *
               precanvasHeightZoom;
 
           var x = eX;
