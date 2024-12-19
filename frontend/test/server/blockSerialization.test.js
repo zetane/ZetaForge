@@ -23,7 +23,6 @@ import * as pipelineFixture from "../fixture/pipelineFixture";
 import * as blockFixture from "../fixture/blockFixture";
 import { ServerError } from "../../server/serverError";
 import { logger } from "../../server/logger";
-import { resourcesPath } from "process";
 
 // Only mock external dependencies and side effects
 vi.mock("fs/promises", () => ({

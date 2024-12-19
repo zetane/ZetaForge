@@ -20,6 +20,7 @@ export default [
     ],
     rules: {
       "no-control-regex": 0,
+      "@typescript-eslint/no-explicit-any": ["off"],
     },
   },
   {
