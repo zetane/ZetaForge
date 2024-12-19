@@ -42,8 +42,8 @@ export default function CodeManualEditor() {
     if (editorRef?.current?.view) {
       const editorCode = editorRef.current.view.state.doc?.toString();
       if (editorCode !== fileBuffer.content) {
-        const length = editorCode.length ?? 0;
-        const newLength = fileBuffer.content.length;
+        const length = editorCode?.length ?? 0;
+        const newLength = fileBuffer?.content?.length;
         const cursorPosition = editorRef.current.view.state.selection.main.head;
         const newCursorPosition = clamp(cursorPosition, 0, newLength);
 
