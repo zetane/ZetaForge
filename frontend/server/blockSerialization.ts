@@ -240,7 +240,7 @@ export async function callAgent(
 ): Promise<any> {
   let agents = "agents";
   if (app.isPackaged) {
-    agents = path.join(process.resourcesPath, "agents");
+    agents = path.join(process?.resourcesPath ?? "", "agents");
   }
   const scriptPath = path.join(
     agents,
@@ -259,8 +259,6 @@ export async function callAgent(
       encoding: "utf8",
     });
 
-    console.log("python response: ", stdout);
-
     const parsedOutput = JSON.parse(stdout);
 
     // Check if the response contains an error
@@ -277,7 +275,6 @@ export async function callAgent(
     }
 
     const response = parsedOutput.response;
-    console.log(response);
     return response;
   } catch (error: any) {
     // If the error is already a ServerError (from our error handling above), throw it directly

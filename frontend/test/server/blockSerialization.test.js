@@ -8,21 +8,22 @@ import {
   filePermissionVisitor,
   getBlockFile,
   updateBlockFile,
-  getFilePermissions,
-  isFileSupported,
-  callAgent,
   getLogs,
+  callAgent,
 } from "../../server/blockSerialization";
 import fs from "fs/promises";
+import path from "path";
 import { fileExists, getDirectoryTree } from "../../server/fileSystem";
 import { cacheJoin } from "../../server/cache";
 import { app } from "electron";
+import process from "process";
 import { spawnAsync } from "../../server/spawnAsync";
 import { getCompuationsSourceCode } from "../fixture/blockFixture";
 import * as pipelineFixture from "../fixture/pipelineFixture";
 import * as blockFixture from "../fixture/blockFixture";
 import { ServerError } from "../../server/serverError";
 import { logger } from "../../server/logger";
+import { resourcesPath } from "process";
 
 // Only mock external dependencies and side effects
 vi.mock("fs/promises", () => ({
@@ -38,6 +39,14 @@ vi.mock("electron", () => ({
     getPath: vi.fn(),
   },
 }));
+
+vi.mock("process", async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    resourcesPath: path.join("/mocked", "resources"),
+  };
+});
 
 vi.mock("../../server/fileSystem", () => ({
   fileExists: vi.fn(),
@@ -85,10 +94,13 @@ describe("blockSerialization", () => {
       vi.mocked(app).isPackaged = false;
       vi.mocked(app.getPath).mockReturnValue("");
       vi.mocked(cacheJoin).mockReturnValueOnce(
-        `${pipelineFixture.getId()}/${blockFixture.getId()}`,
+        path.join(`${pipelineFixture.getId()}`, `${blockFixture.getId()}`),
       );
       vi.mocked(cacheJoin).mockReturnValueOnce(
-        `${pipelineFixture.getId()}/${blockFixture.getId()}/computations.py`,
+        path.join(
+          `${pipelineFixture.getId()}`,
+          `${blockFixture.getId()}/computations.py`,
+        ),
       );
       vi.mocked(fileExists).mockResolvedValueOnce(true);
       vi.mocked(spawnAsync).mockResolvedValueOnce(
@@ -163,7 +175,7 @@ describe("blockSerialization", () => {
       const specs = { inputs: {}, outputs: {}, views: { node: {} } };
       await saveBlockSpecs("/pipeline", "block1", specs);
       expect(vi.mocked(fs.writeFile)).toHaveBeenCalledWith(
-        "/pipeline/block1/specs.json",
+        path.join("/pipeline", "block1", "specs.json"),
         JSON.stringify(
           { inputs: {}, outputs: {}, views: { node: { pos_x: 0, pos_y: 0 } } },
           null,
@@ -203,11 +215,11 @@ describe("blockSerialization", () => {
 
       await runTest("/pipeline", "block1");
       expect(vi.mocked(fileExists)).toHaveBeenCalledWith(
-        "resources/run_test.py",
+        path.join("resources", "run_test.py"),
       );
       expect(vi.mocked(spawnAsync)).toHaveBeenCalledWith("python", [
-        "resources/run_test.py",
-        "/pipeline/block1",
+        path.join("resources", "run_test.py"),
+        path.join("/pipeline", "block1"),
         "block1",
       ]);
     });
@@ -228,7 +240,7 @@ describe("blockSerialization", () => {
       const result = await getBlockDirectory("/pipeline", "block1");
       expect(result).toEqual(tree);
       expect(vi.mocked(getDirectoryTree)).toHaveBeenCalledWith(
-        "/pipeline/block1",
+        path.join("/pipeline", "block1"),
         filePermissionVisitor,
       );
     });
@@ -254,7 +266,7 @@ describe("blockSerialization", () => {
     test("should handle files correctly", () => {
       const result = filePermissionVisitor(
         "test.py",
-        "/path/to/test.py",
+        path.join("/path", "to", "test.py"),
         "test.py",
         false,
       );
@@ -286,7 +298,7 @@ describe("blockSerialization", () => {
     test("should update block file content successfully", async () => {
       await updateBlockFile("/pipeline", "block1", "file.txt", "new content");
       expect(vi.mocked(fs.writeFile)).toHaveBeenCalledWith(
-        "/pipeline/block1/file.txt",
+        path.join("/pipeline", "block1", "file.txt"),
         "new content",
       );
     });
@@ -327,5 +339,93 @@ describe("blockSerialization", () => {
       );
       expect(vi.mocked(logger.error)).toHaveBeenCalled();
     });
+  });
+});
+
+describe("callAgent", () => {
+  test("should call agent successfully and return response", async () => {
+    vi.mocked(spawnAsync).mockResolvedValueOnce(
+      JSON.stringify({ response: "Agent response" }),
+    );
+    const result = await callAgent("user message", "testAgent", [], "api-key");
+    expect(result).toBe("Agent response");
+    expect(vi.mocked(spawnAsync)).toHaveBeenCalledWith(
+      "python",
+      [path.join("agents", "testAgent", "generate", "computations.py")],
+      {
+        input: JSON.stringify({
+          apiKey: "api-key",
+          userMessage: "user message",
+          conversationHistory: [],
+        }),
+        encoding: "utf8",
+      },
+    );
+  });
+
+  test("should handle packaged app path correctly", async () => {
+    vi.mocked(app).isPackaged = true;
+    vi.mocked(process).resourcesPath = path.join("/mocked", "resources");
+    vi.mocked(spawnAsync).mockResolvedValueOnce(
+      JSON.stringify({ response: "Agent response" }),
+    );
+    await callAgent("user message", "testAgent", [], "api-key");
+    expect(vi.mocked(spawnAsync)).toHaveBeenCalledWith(
+      "python",
+      [
+        path.join(
+          "/mocked",
+          "resources",
+          "agents",
+          "testAgent",
+          "generate",
+          "computations.py",
+        ),
+      ],
+      {
+        input: JSON.stringify({
+          apiKey: "api-key",
+          userMessage: "user message",
+          conversationHistory: [],
+        }),
+        encoding: "utf8",
+      },
+    );
+  });
+
+  test("should throw ServerError if spawnAsync fails", async () => {
+    vi.mocked(spawnAsync).mockRejectedValueOnce(new Error("Spawn error"));
+    await expect(
+      callAgent("user message", "testAgent", [], "api-key"),
+    ).rejects.toThrowError(ServerError);
+    expect(vi.mocked(logger.error)).toHaveBeenCalled();
+  });
+
+  test("should throw ServerError if agent returns an error", async () => {
+    vi.mocked(spawnAsync).mockResolvedValueOnce(
+      JSON.stringify({ error: { message: "Agent error", status_code: 400 } }),
+    );
+    await expect(
+      callAgent("user message", "testAgent", [], "api-key"),
+    ).rejects.toThrowError(ServerError);
+    expect(vi.mocked(logger.error)).toHaveBeenCalled(); // ServerError is thrown directly
+  });
+
+  test("should throw ServerError for non-ServerError from agent", async () => {
+    vi.mocked(spawnAsync).mockResolvedValueOnce(
+      JSON.stringify({ error: "some string error" }),
+    );
+    await expect(
+      callAgent("user message", "testAgent", [], "api-key"),
+    ).rejects.toThrowError(ServerError);
+    expect(vi.mocked(logger.error)).toHaveBeenCalled();
+  });
+
+  test("should throw ServerError if response is not valid JSON", async () => {
+    vi.mocked(spawnAsync).mockResolvedValueOnce("invalid json");
+    await expect(
+      callAgent("user message", "testAgent", [], "api-key"),
+    ).rejects.toThrowError(ServerError);
+    expect(vi.mocked(logger.error)).toHaveBeenCalled();
   });
 });
