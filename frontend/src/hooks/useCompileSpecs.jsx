@@ -34,8 +34,13 @@ export const useCompileComputation = () => {
         blockSpecs: newSpecs,
       });
     } catch (error) {
+      console.log(error);
       console.error(error);
-      setCompilationErrorToast(true);
+      setCompilationErrorToast({
+        show: true,
+        title: "Compilation Failed",
+        caption: `Failed to compile python code: ${error}`,
+      });
     }
   };
   return compile;

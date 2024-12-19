@@ -12,6 +12,7 @@ import { FileBufferContext } from "./DirectoryViewer";
 import { FileHandleContext } from "./DirectoryViewer";
 import { useCompileComputation } from "@/hooks/useCompileSpecs";
 import { useDebouncedCallback } from "use-debounce";
+import { compilationErrorToastAtom } from "@/atoms/compilationErrorToast";
 
 export default function AgentPrompt() {
   const [pipeline] = useAtom(pipelineAtom);
@@ -26,6 +27,7 @@ export default function AgentPrompt() {
   const fileBuffer = useContext(FileBufferContext);
   const fileHandle = useContext(FileHandleContext);
   const compile = useCompileComputation();
+  const [, setCompilationError] = useAtom(compilationErrorToastAtom);
 
   const isViewBlock =
     pipeline?.data[blockId]?.information?.block_type === "view";
@@ -40,24 +42,37 @@ export default function AgentPrompt() {
     e.preventDefault();
     setIsLoading(true);
 
-    const newPrompt = textArea.trim();
-    const response = await callAgent.mutateAsync({
-      userMessage: newPrompt,
-      agentName: agentName,
-      conversationHistory: chatHistory.history,
-      apiKey: openAIApiKey,
-    });
+    try {
+      const newPrompt = textArea.trim();
+      const data = {
+        userMessage: newPrompt,
+        agentName: agentName,
+        conversationHistory: chatHistory.history,
+        apiKey: openAIApiKey,
+      };
 
-    chatHistory.addPrompt(newPrompt, response);
-    await fileBuffer.updateSave(response);
-    if (fileHandle.isComputation) {
-      compile(pipeline.path, blockId);
+      console.log(data);
+      const response = await callAgent.mutateAsync(data);
+      console.log(response);
+
+      chatHistory.addPrompt(newPrompt, response);
+      await fileBuffer.updateSave(response);
+      if (fileHandle.isComputation) {
+        compile(pipeline.path, blockId);
+      }
+
+      selectedPrompt.unselect();
+      setTextArea("");
+    } catch (error) {
+      console.log(error);
+      setCompilationError({
+        show: true,
+        title: error.message,
+        caption: error.data?.details,
+      });
+    } finally {
+      setIsLoading(false);
     }
-
-    selectedPrompt.unselect();
-
-    setTextArea("");
-    setIsLoading(false);
   };
 
   const handleKeyDown = (e) => {

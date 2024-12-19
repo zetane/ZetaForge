@@ -1,5 +1,9 @@
 import { atom } from "jotai";
 
-const compilationErrorToastAtom = atom(false);
+const compilationErrorToastAtom = atom({
+  show: false,
+  title: "",
+  caption: "",
+});
 
 export { compilationErrorToastAtom };

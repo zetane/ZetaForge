@@ -8,12 +8,23 @@ export default function ToastWrapper() {
   );
 
   const onClose = () => {
-    setCompilationErrorToast(false);
+    setCompilationErrorToast({ show: false, title: "", caption: "" });
+  };
+
+  const setToastContent = (title, caption) => {
+    setCompilationErrorToast({ show: true, title, caption });
   };
 
   return (
     <div className="absolute bottom-3 right-3 z-[9000]">
-      {compilationErrorToast && <CompilationErrorToast onClose={onClose} />}
+      {compilationErrorToast.show && (
+        <CompilationErrorToast
+          onClose={onClose}
+          title={compilationErrorToast.title}
+          caption={compilationErrorToast.caption}
+          setToastContent={setToastContent}
+        />
+      )}
     </div>
   );
 }
