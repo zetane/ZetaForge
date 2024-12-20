@@ -1,0 +1,70 @@
+{
+  "information": {
+    "id": "view-images-captions",
+    "name": "View Images Captions",
+    "description": "Generates an HTML file with a unique name and returns the file name. The html file produces the image with the caption of that image. The caption is provided as the input to the block",
+    "system_versions": [
+      "0.1"
+    ],
+    "block_version": "block version number",
+    "block_source": "core/blocks/view-images-captions",
+    "block_type": "view"
+  },
+  "inputs": {
+    "image_paths": {
+      "type": "Any",
+      "connections": []
+    },
+    "captions": {
+      "type": "Any",
+      "connections": []
+    }
+  },
+  "outputs": {
+    "html": {
+      "type": "file",
+      "connections": []
+    }
+  },
+  "action": {
+    "container": {
+      "image": "view-images-captions",
+      "version": "latest",
+      "command_line": [
+        "python",
+        "-u",
+        "entrypoint.py"
+      ]
+    },
+    "resources": {
+      "cpu": {
+        "request": "",
+        "limit": ""
+      },
+      "memory": {
+        "request": "",
+        "limit": ""
+      },
+      "gpu": {
+        "count": 0
+      }
+    }
+  },
+  "views": {
+    "node": {
+      "active": "True",
+      "title_bar": {
+        "background_color": "#D55908"
+      },
+      "preview": {
+        "active": "true"
+      },
+      "html": "",
+      "pos_x": "2009",
+      "pos_y": "390",
+      "pos_z": "999, this is the z-index for 2D canvas"
+    },
+    "mode": "modal"
+  },
+  "events": {}
+}
