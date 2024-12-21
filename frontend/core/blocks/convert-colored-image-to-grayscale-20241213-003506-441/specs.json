@@ -1,0 +1,52 @@
+{
+    "information": {
+        "id": "convert-colored-image-to-grayscale",
+        "name": "Convert colored image to grayscale",
+        "description": "Convert a colored image to a grayscale image.\n\nThis function takes the path to a colored image file as input and converts it to a grayscale image.\nThe output is the path to the resulting grayscale image file. The grayscale image will have shades of gray,\nwhere each pixel represents the intensity of light, with black being the weakest intensity and white being the strongest.\n\nParameters:\nimage_path (str): The file path to the colored image that needs to be converted to grayscale.\n\nReturns:\ndict: A dictionary with the key 'grayscale_image_path' and the value being the file path to the resulting grayscale image.",
+        "system_versions": [
+            "0.1"
+        ],
+        "block_version": "1.0",
+        "block_source": "core/blocks/generated-blocks/convert-colored-image-to-grayscale-20241213-003506-441",
+        "block_type": "compute"
+    },
+    "inputs": {
+        "image_path": {
+            "type": "Any",
+            "connections": [],
+            "relays": []
+        }
+    },
+    "outputs": {
+        "grayscale_image_path": {
+            "type": "Any",
+            "connections": [],
+            "relays": []
+        }
+    },
+    "action": {
+        "container": {
+            "image": "convert-colored-image-to-grayscale",
+            "version": "latest",
+            "command_line": [
+                "python",
+                "entrypoint.py"
+            ]
+        }
+    },
+    "views": {
+        "node": {
+            "behavior": "modal",
+            "active": "True",
+            "title_bar": {
+                "background_color": "#228B22"
+            },
+            "preview": {},
+            "html": "",
+            "pos_x": "0",
+            "pos_y": "0",
+            "pos_z": "999"
+        }
+    },
+    "events": {}
+}
