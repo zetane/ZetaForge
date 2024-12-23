@@ -1,0 +1,97 @@
+{
+    "information": {
+        "id": "detect-edges-canny",
+        "name": "Detect edges canny",
+        "description": "Detects edges in an image using the Canny edge detection algorithm.\n\nParameters:\nimage_path (str): The file path to the input image on which edge detection will be performed.\nlow_threshold (int): The lower threshold for the hysteresis procedure in the Canny edge detection algorithm.\nhigh_threshold (int): The upper threshold for the hysteresis procedure in the Canny edge detection algorithm.\nsigma (float): The standard deviation of the Gaussian filter used in the noise reduction step of the Canny edge detection algorithm.\n\nReturns:\ndict: A dictionary containing the file path to the output image with detected edges, a list of coordinates of detected edges, and the total number of edge pixels detected.",
+        "system_versions": [
+            "0.1"
+        ],
+        "block_version": "1.0",
+        "block_source": "core/blocks/generated-blocks/detect-edges-canny-20241223-163102-326",
+        "block_type": "compute"
+    },
+    "inputs": {
+        "image_path": {
+            "type": "file",
+            "connections": [
+                {
+                    "variable": "path",
+                    "block": "file-ajds8374gha"
+                }
+            ],
+            "relays": []
+        },
+        "low_threshold": {
+            "type": "int",
+            "connections": [
+                {
+                    "variable": "parameter",
+                    "block": "parameter-asldkfj284"
+                }
+            ],
+            "relays": []
+        },
+        "high_threshold": {
+            "type": "int",
+            "connections": [
+                {
+                    "variable": "parameter",
+                    "block": "parameter-poiert948"
+                }
+            ],
+            "relays": []
+        },
+        "sigma": {
+            "type": "float",
+            "connections": [
+                {
+                    "variable": "parameter",
+                    "block": "parameter-quiffh942"
+                }
+            ],
+            "relays": []
+        }
+    },
+    "outputs": {
+        "edges_image_path": {
+            "type": "file",
+            "connections": [],
+            "relays": []
+        },
+        "edges_coordinates": {
+            "type": "List[Tuple[int, int]]",
+            "connections": [],
+            "relays": []
+        },
+        "edges_count": {
+            "type": "int",
+            "connections": [],
+            "relays": []
+        }
+    },
+    "action": {
+        "container": {
+            "image": "detect-edges-canny",
+            "version": "latest",
+            "command_line": [
+                "python",
+                "entrypoint.py"
+            ]
+        }
+    },
+    "views": {
+        "node": {
+            "behavior": "modal",
+            "active": "True",
+            "title_bar": {
+                "background_color": "#228B22"
+            },
+            "preview": {},
+            "html": "",
+            "pos_x": "0",
+            "pos_y": "0",
+            "pos_z": "999"
+        }
+    },
+    "events": {}
+}
