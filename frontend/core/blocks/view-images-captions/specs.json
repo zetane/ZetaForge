@@ -12,11 +12,11 @@
   },
   "inputs": {
     "image_paths": {
-      "type": "Any",
+      "type": "List[file]",
       "connections": []
     },
     "captions": {
-      "type": "Any",
+      "type": "List[file]",
       "connections": []
     }
   },

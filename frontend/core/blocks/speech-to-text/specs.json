@@ -12,17 +12,17 @@
   },
   "inputs": {
     "audio_path": {
-      "type": "Any",
+      "type": "str",
       "connections": []
     },
     "openai_api_key": {
-      "type": "Any",
+      "type": "str",
       "connections": []
     }
   },
   "outputs": {
     "result": {
-      "type": "Any",
+      "type": "List[file]",
       "connections": []
     }
   },

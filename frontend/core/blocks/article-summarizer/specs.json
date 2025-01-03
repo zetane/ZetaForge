@@ -12,21 +12,21 @@
   },
   "inputs": {
     "article_text": {
-      "type": "Any",
+      "type": "str",
       "connections": []
     },
     "max_length": {
-      "type": "Any",
+      "type": "str",
       "connections": []
     },
     "min_length": {
-      "type": "Any",
+      "type": "str",
       "connections": []
     }
   },
   "outputs": {
     "result": {
-      "type": "Any",
+      "type": "List[file]",
       "connections": []
     }
   },

@@ -12,19 +12,19 @@
   },
   "inputs": {
     "audio_path": {
-      "type": "Any",
+      "type": "str",
       "connections": [],
       "relays": []
     },
     "openai_api_key": {
-      "type": "Any",
+      "type": "str",
       "connections": [],
       "relays": []
     }
   },
   "outputs": {
     "result": {
-      "type": "Any",
+      "type": "List[file]",
       "connections": [],
       "relays": []
     }
