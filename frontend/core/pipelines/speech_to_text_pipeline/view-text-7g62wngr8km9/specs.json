@@ -1,0 +1,79 @@
+{
+  "information": {
+    "id": "view-text",
+    "name": "View Text",
+    "description": "Text data viewer",
+    "system_versions": [
+      "0.1"
+    ],
+    "block_version": "block version number",
+    "block_source": "core/blocks/view-text",
+    "block_type": "view"
+  },
+  "inputs": {
+    "data_view": {
+      "type": "List[file]",
+      "connections": [
+        {
+          "block": "speech-to-text-kl3gss2epz68",
+          "variable": "result"
+        }
+      ]
+    }
+  },
+  "outputs": {
+    "html": {
+      "type": "file",
+      "connections": []
+    }
+  },
+  "action": {
+    "container": {
+      "image": "view-text",
+      "version": "view-text-7g62wngr8km9",
+      "command_line": [
+        "python",
+        "-u",
+        "entrypoint.py"
+      ]
+    },
+    "resources": {
+      "cpu": {
+        "request": "",
+        "limit": ""
+      },
+      "memory": {
+        "request": "",
+        "limit": ""
+      },
+      "gpu": {
+        "count": 0
+      }
+    }
+  },
+  "views": {
+    "node": {
+      "active": "True",
+      "title_bar": {
+        "background_color": "#D55908"
+      },
+      "preview": {
+        "active": "true"
+      },
+      "html": "",
+      "pos_x": "2078",
+      "pos_y": "616",
+      "pos_z": "999, this is the z-index for 2D canvas",
+      "order": {
+        "output": [
+          "html"
+        ],
+        "input": [
+          "data_view"
+        ]
+      }
+    },
+    "mode": "modal"
+  },
+  "events": {}
+}
