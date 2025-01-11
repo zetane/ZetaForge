@@ -2,10 +2,8 @@
   "information": {
     "id": "mkv-to-mp4",
     "name": "MKV to MP4",
-    "description": "Converts an MKV file to MP4 without re-encoding the video stream.",
-    "system_versions": [
-      "0.1"
-    ],
+    "description": "Generates an HTML gallery file displaying a list of media files (videos) and converts MKV files to MP4 format if necessary.\n\nParameters:\nmedia_paths_view (str or list): A path or a list of paths to media files (videos) to include in the gallery. MKV files will be converted to MP4 before inclusion.\n\nReturns:\ndict: A dictionary with a key 'html' containing the name of the generated HTML file displaying the media gallery.",
+    "system_versions": ["0.1"],
     "block_version": "block version number",
     "block_source": "core/blocks/mkv-to-mp4",
     "block_type": "compute"
@@ -28,10 +26,7 @@
     "container": {
       "image": "mkv-mp4-v1",
       "version": "latest",
-      "command_line": [
-        "python",
-        "entrypoint.py"
-      ]
+      "command_line": ["python", "entrypoint.py"]
     }
   },
   "views": {

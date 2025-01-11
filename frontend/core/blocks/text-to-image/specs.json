@@ -2,10 +2,8 @@
   "information": {
     "id": "text-to-image",
     "name": "Text Image",
-    "description": "This block generates high-quality images based on user-provided text prompts, leveraging an API for image generation and ensuring efficient processing, retrieval, and storage of the resulting visuals.",
-    "system_versions": [
-      "0.1"
-    ],
+    "description": "Generates an image based on a given prompt by sending a request to an image generation API. The function then waits for the result, retrieves the image URL, downloads the image, and saves it locally.\n\nParameters:\n- prompt (str): A text description for generating the image.\n- api_key (str): API key for authentication.\n\nReturns:\n- dict: A dictionary with two keys:\n  - 'saved_image': A list containing the path to the saved image.\n  - 'prompt': A list containing the prompt used for generating the image.",
+    "system_versions": ["0.1"],
     "block_version": "block version number",
     "block_source": "core/blocks/text-to-image",
     "block_type": "compute"
@@ -38,11 +36,7 @@
     "container": {
       "image": "text-to-image",
       "version": "latest",
-      "command_line": [
-        "python",
-        "-u",
-        "entrypoint.py"
-      ]
+      "command_line": ["python", "-u", "entrypoint.py"]
     }
   },
   "views": {

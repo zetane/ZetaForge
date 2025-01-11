@@ -2,10 +2,8 @@
   "information": {
     "id": "paligemma-postprocess",
     "name": "Paligemma Result",
-    "description": "Process the image for detection and segmentation using PaliGemma.",
-    "system_versions": [
-      "0.1"
-    ],
+    "description": "Processes an input image with detection and segmentation outputs using PaliGemma's results. Generates an HTML visualization of the processed image and outputs bounding boxes or segmentation overlays as appropriate.\n\nParameters:\n- img_path (str): The path to the input image file.\n- prompt (str): The prompt specifying the task ('detect', 'segment', or both).\n- output (str): The output string containing detection and/or segmentation data.\n\nReturns:\n- dict: A dictionary containing the HTML file path under the key 'html'.",
+    "system_versions": ["0.1"],
     "block_version": "block version number",
     "block_source": "core/blocks/paligemma-postprocess",
     "block_type": "view"
@@ -13,21 +11,15 @@
   "inputs": {
     "img_path": {
       "type": "Any",
-      "connections": [
-
-      ]
+      "connections": []
     },
     "prompt": {
       "type": "Any",
-      "connections": [
-        
-      ]
+      "connections": []
     },
     "output": {
       "type": "Any",
-      "connections": [
-
-      ]
+      "connections": []
     }
   },
   "outputs": {
@@ -40,11 +32,7 @@
     "container": {
       "image": "paligemma-postprocess",
       "version": "latest",
-      "command_line": [
-        "python",
-        "-u",
-        "entrypoint.py"
-      ]
+      "command_line": ["python", "-u", "entrypoint.py"]
     }
   },
   "views": {
@@ -61,14 +49,8 @@
       "pos_y": "266",
       "pos_z": "999, this is the z-index for 2D canvas",
       "order": {
-        "input": [
-          "img_path",
-          "prompt",
-          "output"
-        ],
-        "output": [
-          "html"
-        ]
+        "input": ["img_path", "prompt", "output"],
+        "output": ["html"]
       }
     },
     "mode": "modal"

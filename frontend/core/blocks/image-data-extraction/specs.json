@@ -2,10 +2,8 @@
   "information": {
     "id": "image-data-extraction",
     "name": "Data Extraction",
-    "description": "A code block designed to extract and process data from images, enabling automated retrieval and transformation of image content into structured formats.",
-    "system_versions": [
-      "0.1"
-    ],
+    "description": "Processes a folder of images to extract text, analyze it using GPT, and save the results in a CSV file.\n\nParameters:\nfolder_path (str): The path to the folder containing image files to process.\nopen_ai_key (str): The OpenAI API key used for GPT model interaction.\noutput_csv (str): The file path for the output CSV file where results will be saved.\n\nReturns:\ndict: A dictionary containing a Pandas DataFrame with columns 'Image Name', 'Person', and 'Company', summarizing the extracted information from each image.",
+    "system_versions": ["0.1"],
     "block_version": "block version number",
     "block_source": "core/blocks/image-data-extraction",
     "block_type": "compute"
@@ -38,11 +36,7 @@
     "container": {
       "image": "image-data-extraction",
       "version": "latest",
-      "command_line": [
-        "python",
-        "-u",
-        "entrypoint.py"
-      ]
+      "command_line": ["python", "-u", "entrypoint.py"]
     }
   },
   "views": {

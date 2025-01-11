@@ -2,10 +2,8 @@
   "information": {
     "id": "gpt-storyteller",
     "name": "GPT Story Teller",
-    "description": "Generates a story based on a given prompt.",
-    "system_versions": [
-      "0.1"
-    ],
+    "description": "This block generates a children's story teaching a moral or good habit, formatted as six panels suitable for illustration.\n\n Inputs:\n- `story_description` (str): A prompt describing the moral or good habit to be taught.\n- `api_key` (str): API key for authenticating with the story generation service.\n\n Outputs:\n- `story` (dict): A structured dictionary containing the story in six parts, formatted for easy conversion to JSON.",
+    "system_versions": ["0.1"],
     "block_version": "block version number",
     "block_source": "core/blocks/gpt-storyteller",
     "block_type": "compute"
@@ -33,18 +31,14 @@
     "container": {
       "image": "gpt-storyteller",
       "version": "latest",
-      "command_line": [
-        "python",
-        "entrypoint.py"
-      ]
+      "command_line": ["python", "entrypoint.py"]
     }
   },
   "views": {
     "node": {
       "behavior": "modal",
       "active": "True",
-      "title_bar": {
-      },
+      "title_bar": {},
       "preview": {
         "active": "false"
       },
