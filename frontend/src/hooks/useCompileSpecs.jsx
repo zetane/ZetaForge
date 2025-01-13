@@ -34,6 +34,7 @@ export const useCompileComputation = () => {
         blockSpecs: newSpecs,
       });
     } catch (error) {
+      console.log(error);
       console.error(error);
       setCompilationErrorToast({
         show: true,
