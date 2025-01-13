@@ -70,7 +70,6 @@ export default function AgentPrompt() {
     }
 
     setIsLoading(false);
-
   };
 
   const handleKeyDown = (e) => {
