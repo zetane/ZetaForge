@@ -203,4 +203,5 @@ if __name__ == "__main__":
                 "type": e.__class__.__name__
             }
         }
-        print(json.dumps(error_response))
+        print(json.dumps(error_response), file=sys.stderr)
+        exit(1)
