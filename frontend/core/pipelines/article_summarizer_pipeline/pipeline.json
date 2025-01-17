@@ -1,0 +1,402 @@
+{
+  "pipeline": {
+    "view-text-q4if4ybe65yq": {
+      "information": {
+        "id": "view-text",
+        "name": "View Text",
+        "description": "Text data viewer",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks/view-text",
+        "block_type": "view"
+      },
+      "inputs": {
+        "data_view": {
+          "type": "List[file]",
+          "connections": [
+            {
+              "block": "new-python-m2g758jo1oh1",
+              "variable": "result"
+            }
+          ]
+        }
+      },
+      "outputs": {
+        "html": {
+          "type": "file",
+          "connections": []
+        }
+      },
+      "action": {
+        "container": {
+          "image": "view-text",
+          "version": "view-text-q4if4ybe65yq",
+          "command_line": [
+            "python",
+            "-u",
+            "entrypoint.py"
+          ]
+        },
+        "resources": {
+          "cpu": {
+            "request": "",
+            "limit": ""
+          },
+          "memory": {
+            "request": "",
+            "limit": ""
+          },
+          "gpu": {
+            "count": 0
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "True",
+          "title_bar": {
+            "background_color": "#D55908"
+          },
+          "preview": {
+            "active": "true"
+          },
+          "html": "",
+          "pos_x": "1801",
+          "pos_y": "432",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "input": [
+              "data_view"
+            ],
+            "output": [
+              "html"
+            ]
+          }
+        },
+        "mode": "modal"
+      },
+      "events": {}
+    },
+    "new-python-m2g758jo1oh1": {
+      "information": {
+        "id": "new-python",
+        "name": "Article Summarizer",
+        "description": "Summarizes the given article text into bullet points and returns the result in a dictionary.\n\n:param article_text: The text of the article to summarize.\n:param max_length: Maximum length of the summary.\n:param min_length: Minimum length of the summary.\n:return: A dictionary containing the bullet points summary.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks/article-summarizer",
+        "block_type": "compute"
+      },
+      "inputs": {
+        "article_text": {
+          "type": "str",
+          "connections": [
+            {
+              "block": "parameter-7lux1od9oza6",
+              "variable": "parameter"
+            }
+          ]
+        },
+        "max_length": {
+          "type": "str",
+          "connections": [
+            {
+              "block": "parameter-jn5a3quao8w3",
+              "variable": "parameter"
+            }
+          ]
+        },
+        "min_length": {
+          "type": "str",
+          "connections": [
+            {
+              "block": "parameter-wy34ii8oxx2t",
+              "variable": "parameter"
+            }
+          ]
+        }
+      },
+      "outputs": {
+        "result": {
+          "type": "List[file]",
+          "connections": [
+            {
+              "block": "view-text-q4if4ybe65yq",
+              "variable": "data_view"
+            }
+          ]
+        }
+      },
+      "action": {
+        "container": {
+          "image": "article-summarizer",
+          "version": "new-python-m2g758jo1oh1",
+          "command_line": [
+            "python",
+            "-u",
+            "entrypoint.py"
+          ]
+        },
+        "resources": {
+          "cpu": {
+            "request": "",
+            "limit": ""
+          },
+          "memory": {
+            "request": "",
+            "limit": ""
+          },
+          "gpu": {
+            "count": 0
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "True or False",
+          "title_bar": {
+            "background_color": "#6b2be0"
+          },
+          "preview": {},
+          "html": "",
+          "pos_x": "1280",
+          "pos_y": "387",
+          "pos_z": "999",
+          "behavior": "modal",
+          "order": {
+            "input": [
+              "article_text",
+              "max_length",
+              "min_length"
+            ],
+            "output": [
+              "result"
+            ]
+          }
+        }
+      },
+      "events": {}
+    },
+    "parameter-7lux1od9oza6": {
+      "information": {
+        "id": "parameter",
+        "name": "Parameter",
+        "description": "Parameter input.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks",
+        "block_type": "entry"
+      },
+      "inputs": {},
+      "outputs": {
+        "parameter": {
+          "type": "str",
+          "connections": [
+            {
+              "block": "new-python-m2g758jo1oh1",
+              "variable": "article_text"
+            }
+          ]
+        }
+      },
+      "action": {
+        "container": {
+          "image": "",
+          "version": "",
+          "command_line": []
+        },
+        "parameters": {
+          "parameter": {
+            "value": "\"Artificial intelligence (AI) refers to the simulation of human intelligence in machines that are programmed to think like humans and mimic their actions. The term may also be applied to any machine that exhibits traits associated with a human mind such as learning and problem-solving. The ideal characteristic of artificial intelligence is its ability to rationalize and take actions that have the best chance of achieving a specific goal. A subset of AI is machine learning (ML), which refers to the concept that computer programs can automatically learn from and adapt to new data without being assisted by humans. Deep learning techniques enable this automatic learning through the absorption of huge amounts of unstructured data such as text, images, or video.\"",
+            "type": "str"
+          }
+        },
+        "resources": {
+          "cpu": {
+            "request": "",
+            "limit": ""
+          },
+          "memory": {
+            "request": "",
+            "limit": ""
+          },
+          "gpu": {
+            "count": 0
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "true",
+          "title_bar": {
+            "background_color": "#909090"
+          },
+          "preview": {},
+          "html": "<input type='text' value='abcd' parameters-parameter/>",
+          "pos_x": "596",
+          "pos_y": "225.609375",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "input": [],
+            "output": [
+              "parameter"
+            ]
+          }
+        }
+      },
+      "events": {}
+    },
+    "parameter-jn5a3quao8w3": {
+      "information": {
+        "id": "parameter",
+        "name": "Parameter",
+        "description": "Parameter input.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks",
+        "block_type": "entry"
+      },
+      "inputs": {},
+      "outputs": {
+        "parameter": {
+          "type": "str",
+          "connections": [
+            {
+              "block": "new-python-m2g758jo1oh1",
+              "variable": "max_length"
+            }
+          ]
+        }
+      },
+      "action": {
+        "container": {
+          "image": "",
+          "version": "",
+          "command_line": []
+        },
+        "parameters": {
+          "parameter": {
+            "value": "\"150\"",
+            "type": "str"
+          }
+        },
+        "resources": {
+          "cpu": {
+            "request": "",
+            "limit": ""
+          },
+          "memory": {
+            "request": "",
+            "limit": ""
+          },
+          "gpu": {
+            "count": 0
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "true",
+          "title_bar": {
+            "background_color": "#909090"
+          },
+          "preview": {},
+          "html": "<input type='text' value='abcd' parameters-parameter/>",
+          "pos_x": "578",
+          "pos_y": "446",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "input": [],
+            "output": [
+              "parameter"
+            ]
+          }
+        }
+      },
+      "events": {}
+    },
+    "parameter-wy34ii8oxx2t": {
+      "information": {
+        "id": "parameter",
+        "name": "Parameter",
+        "description": "Parameter input.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks",
+        "block_type": "entry"
+      },
+      "inputs": {},
+      "outputs": {
+        "parameter": {
+          "type": "str",
+          "connections": [
+            {
+              "block": "new-python-m2g758jo1oh1",
+              "variable": "min_length"
+            }
+          ]
+        }
+      },
+      "action": {
+        "container": {
+          "image": "",
+          "version": "",
+          "command_line": []
+        },
+        "parameters": {
+          "parameter": {
+            "value": "\"100\"",
+            "type": "str"
+          }
+        },
+        "resources": {
+          "cpu": {
+            "request": "",
+            "limit": ""
+          },
+          "memory": {
+            "request": "",
+            "limit": ""
+          },
+          "gpu": {
+            "count": 0
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "true",
+          "title_bar": {
+            "background_color": "#909090"
+          },
+          "preview": {},
+          "html": "<input type='text' value='abcd' parameters-parameter/>",
+          "pos_x": "594",
+          "pos_y": "711",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "input": [],
+            "output": [
+              "parameter"
+            ]
+          }
+        }
+      },
+      "events": {}
+    }
+  },
+  "sink": "",
+  "build": "",
+  "name": "article_summarizer_pipeline",
+  "id": "pipeline-grvsrnj6karw"
+}
