@@ -11,7 +11,7 @@ import {
   runTest,
   saveBlockSpecs,
   updateBlockFile,
-} from "./blockSerialization.js";
+} from "./blockSerialization";
 import { getHistory, getIndex, updateHistory, updateIndex } from "./chat.js";
 import { syncExecutionResults } from "./execution";
 import { readPipelines, readSpecs } from "./fileSystem.js";
@@ -26,6 +26,7 @@ import {
 } from "./pipelineSerialization.js";
 import { anvilConfigurationSchema } from "./schema";
 import { publicProcedure, router } from "./trpc";
+import { checkoutExecution } from "./git.js";
 
 function createProcedure<TInput extends z.ZodTypeAny, TOutput>(
   schema: TInput,
@@ -284,13 +285,24 @@ export const appRouter = router({
       pipelineUuid: z.string(),
       executionUuid: z.string(),
       anvilConfiguration: anvilConfigurationSchema,
+      merkle: z.string().optional(),
+      spec: z.any().optional(),
     }),
-    async ({ pipelinePath, pipelineUuid, executionUuid, anvilConfiguration }) =>
+    async ({
+      pipelinePath,
+      pipelineUuid,
+      executionUuid,
+      anvilConfiguration,
+      merkle,
+      spec,
+    }) =>
       syncExecutionResults(
         pipelinePath,
         pipelineUuid,
         executionUuid,
         anvilConfiguration,
+        merkle,
+        spec,
       ),
   ),
 
@@ -398,6 +410,16 @@ export const appRouter = router({
         async ({ pipelinePath, blockId }) => getLogs(pipelinePath, blockId),
       ),
     }),
+  }),
+  execution: router({
+    checkout: createProcedure(
+      z.object({
+        pipelineId: z.string(),
+        executionId: z.string(),
+      }),
+      async ({ pipelineId, executionId }) =>
+        checkoutExecution(pipelineId, executionId),
+    ),
   }),
 });
 

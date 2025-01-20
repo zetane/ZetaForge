@@ -11,7 +11,7 @@ export const isEmpty = (obj) => {
 };
 
 export const PipelineLogs = ({ title, filter }) => {
-  const [logs, _] = useAtom(logsAtom);
+  const [logs] = useAtom(logsAtom);
 
   const sortedLogs = useMemo(() => {
     let result = Array.from(logs?.values()).sort((a, b) =>

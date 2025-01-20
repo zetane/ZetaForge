@@ -1,0 +1,57 @@
+{
+    "information": {
+        "id": "draw-rectangle-around-object",
+        "name": "Draw_rectangle_around_object",
+        "description": "Draws a rectangle around a specified object in an image.\n\nParameters:\nimage_path (str): The path to the image file where the rectangle will be drawn.\ncoordinates (dict): A dictionary containing the coordinates of the rectangle. Example: {'top_left': {'x': 'int', 'y': 'int'}, 'bottom_right': {'x': 'int', 'y': 'int'}}\n\nReturns:\ndict: A dictionary with the path to the modified image file with the rectangle drawn around the object.",
+        "system_versions": [
+            "0.1"
+        ],
+        "block_version": "1.0",
+        "block_source": "core/blocks/draw-rectangle-around-object-20250115-142535-099",
+        "block_type": "compute"
+    },
+    "inputs": {
+        "image_path": {
+            "type": "file",
+            "connections": [],
+            "relays": []
+        },
+        "coordinates": {
+            "type": "dict",
+            "connections": [],
+            "relays": []
+        }
+    },
+    "outputs": {
+        "modified_image_path": {
+            "type": "str",
+            "connections": [],
+            "relays": []
+        }
+    },
+    "action": {
+        "container": {
+            "image": "draw-rectangle-around-object",
+            "version": "latest",
+            "command_line": [
+                "python",
+                "entrypoint.py"
+            ]
+        }
+    },
+    "views": {
+        "node": {
+            "behavior": "modal",
+            "active": "True",
+            "title_bar": {
+                "background_color": "#228B22"
+            },
+            "preview": {},
+            "html": "",
+            "pos_x": "0",
+            "pos_y": "0",
+            "pos_z": "999"
+        }
+    },
+    "events": {}
+}

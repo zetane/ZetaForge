@@ -3,7 +3,7 @@ import PromptMenu from "./PromptMenu";
 import { Button } from "@carbon/react";
 import { SelectedPromptContext } from "./DirectoryViewer";
 
-export default function Prompt({ children, index }) {
+export default function Prompt({ children, index, isFirst }) {
   const selectedPrompt = useContext(SelectedPromptContext);
 
   const isSelected = index === selectedPrompt.index;
@@ -31,7 +31,7 @@ export default function Prompt({ children, index }) {
         </span>
       </Button>
       <div className="invisible absolute right-0 top-0 group-hover:visible">
-        <PromptMenu index={index} prompt={children} />
+        <PromptMenu index={index} prompt={children} isFirst={isFirst} />
       </div>
     </div>
   );

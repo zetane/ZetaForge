@@ -1,6 +1,6 @@
 import { drawflowEditorAtom } from "@/atoms/drawflowAtom";
 import { blockEditorIdAtom, isBlockEditorOpenAtom } from "@/atoms/editorAtom";
-import { pipelineAtom, workspaceAtom } from "@/atoms/pipelineAtom";
+import { pipelineAtom } from "@/atoms/pipelineAtom";
 import { pipelineConnectionsAtom } from "@/atoms/pipelineConnectionsAtom";
 import Drawflow from "@/components/ZetaneDrawflowEditor";
 import BlockGenerator from "@/components/ui/blockGenerator/BlockGenerator";
@@ -12,6 +12,7 @@ import { useImmerAtom } from "jotai-immer";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLoadCorePipeline } from "@/hooks/useLoadPipeline";
 import { createConnections } from "@/utils/createConnections";
+import { useWorkspace } from "@/hooks/useWorkspace";
 
 const launchDrawflow = (
   parentDomRef,
@@ -59,6 +60,7 @@ export default function DrawflowWrapper() {
   const pipelineRef = useRef(null);
   const nodeRefs = useRef({});
   const loadPipeline = useLoadCorePipeline();
+  const { addPipeline } = useWorkspace();
 
   const addNodeRefs = (nodeList) => {
     nodeRefs.current = { ...nodeRefs.current, ...nodeList };
@@ -77,7 +79,6 @@ export default function DrawflowWrapper() {
   pipelineRef.current = pipeline;
 
   const copyPipeline = trpc.copyPipeline.useMutation();
-  const getBlockPath = trpc.getBlockPath.useMutation();
 
   const handleDrawflow = useCallback((node) => {
     if (!node) {
@@ -140,7 +141,7 @@ export default function DrawflowWrapper() {
     if (editor) {
       editor.syncConnections(newConnections);
     }
-    setPipelineConnections((draft) => (draft = newConnections));
+    setPipelineConnections(() => newConnections);
 
     const syncData = async () => {
       try {
@@ -203,12 +204,11 @@ export default function DrawflowWrapper() {
     addBlockToPipeline(block);
   };
 
-  const dropPipeline = (pipelineData) => {
+  const dropPipeline = async (pipelineData) => {
     const pipelineJson = JSON.parse(pipelineData);
     const { specs, path } = pipelineJson;
-    const newId = generateId(pipeline.id);
-    specs.id = newId;
-    loadPipeline(specs, path);
+    const pipeline = await loadPipeline(specs, path);
+    addPipeline(pipeline);
   };
 
   const setBlockPos = (editor, block, posX, posY) => {

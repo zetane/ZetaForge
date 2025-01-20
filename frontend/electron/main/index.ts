@@ -11,10 +11,10 @@ import * as Sentry from "@sentry/electron";
 import { createIPCHandler } from "electron-trpc/main";
 import { release } from "node:os";
 import { dirname, join } from "node:path";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 import "../../polyfill/crypto";
 import { startExpressServer } from "../../server/express.mjs";
-import { update } from "./update";
 import sourcemap from "source-map-support";
 
 Sentry.init({
@@ -44,9 +44,10 @@ process.env.VITE_PUBLIC = process.env.VITE_DEV_SERVER_URL
   ? join(process.env.DIST_ELECTRON, "../public")
   : process.env.DIST;
 
+const isDev = !app.isPackaged;
 const targetValue = "--is_dev";
 const targetIndex = process.argv.indexOf(targetValue);
-if (targetIndex !== -1) {
+if (targetIndex !== -1 || isDev) {
   const value = process.argv[targetIndex];
   process.env.VITE_ZETAFORGE_IS_DEV = "True";
 } else {
@@ -118,10 +119,16 @@ const menuTemplate: Electron.MenuItemConstructorOptions[] = [
   },
 ];
 
+ipcMain.handle("get-cache", () => {
+  return absoluteCachePath;
+});
+
 async function createWindow() {
   win = new BrowserWindow({
     title: "ZetaForge",
-    icon: join(process.env.VITE_PUBLIC, "zetane.png"),
+    icon: isDev
+      ? path.join(process.cwd(), "build/icon.png")
+      : path.join(__dirname, "../build/icon.png"),
     webPreferences: {
       preload,
       // Warning: Enable nodeIntegration and disable contextIsolation is not secure in production
@@ -130,6 +137,7 @@ async function createWindow() {
       // Consider using contextBridge.exposeInMainWorld
       // Read more on https://www.electronjs.org/docs/latest/tutorial/context-isolation
       contextIsolation: true,
+      backgroundThrottling: false,
     },
   });
 
@@ -138,10 +146,6 @@ async function createWindow() {
   // Pass the menuTemplate
   const menu = Menu.buildFromTemplate(menuTemplate);
   Menu.setApplicationMenu(menu);
-
-  ipcMain.handle("get-cache", () => {
-    return absoluteCachePath;
-  });
 
   if (url) {
     // electron-vite-vue#298

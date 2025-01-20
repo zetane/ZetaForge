@@ -3,7 +3,13 @@ import ast
 import inspect
 import shutil
 import json
+from datetime import datetime
 from computations import compute
+
+def datetime_converter(o):
+    """Convert datetime objects to string."""
+    if isinstance(o, datetime):
+        return o.__str__()
 
 def main():
     original_path = os.getcwd()
@@ -33,7 +39,7 @@ def main():
     for key in inspect.signature(compute).parameters.keys():
         value = os.getenv(key)
         debug_inputs[key] = value
-    
+
     print("debug|||", debug_inputs)
 
     for key in inspect.signature(compute).parameters.keys():
@@ -41,20 +47,20 @@ def main():
         debug_inputs[key] = value
         params.append(ast.literal_eval(value))
         inputs[key] = value
-    
+
     json_inputs = json.dumps(inputs)
     print("inputs|||", json_inputs)
 
     outputs = compute(*params)
 
     # the "|||" are used for parsing
-    json_outputs = json.dumps(outputs)
+    json_outputs = json.dumps(outputs, default=datetime_converter)
     print("outputs|||", json_outputs)
 
     os.chdir(original_path)
     for key, value in outputs.items():
         with open(block_id + "-" + key + ".txt", "w") as file:
-            file.write(json.dumps(value))
+            file.write(json.dumps(value, default=datetime_converter))
 
     # Check the current execution directory for files and folders after the compute function executes
     current_files_and_folders = set(os.listdir())

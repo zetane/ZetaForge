@@ -1,7 +1,7 @@
 import { modalContentAtom } from "@/atoms/modalAtom";
 import { darkModeAtom } from "@/atoms/themeAtom";
 import { pipelineAtom } from "@/atoms/pipelineAtom";
-import { Play, Password, Renew } from "@carbon/icons-react";
+import { Play, Password } from "@carbon/icons-react";
 import {
   Header,
   HeaderGlobalBar,
@@ -25,11 +25,12 @@ import SavePipelineButton from "./SavePipelineButton";
 import AnvilConfigurationsModal from "./modal/AnvilConfigurationsModal";
 import { activeConfigurationAtom } from "@/atoms/anvilConfigurationsAtom";
 import { PipelineStopButton } from "./PipelineStopButton";
+import NewFromCurrent from "./NewFromCurrent";
 
 export default function Navbar({ children }) {
   const [darkMode, setDarkMode] = useAtom(darkModeAtom);
   const [modalContent, setModalContent] = useAtom(modalContentAtom);
-  const [pipeline, setPipeline] = useImmerAtom(pipelineAtom);
+  const [pipeline] = useImmerAtom(pipelineAtom);
   const [configuration] = useAtom(activeConfigurationAtom);
 
   const modalPopper = (content) => {
@@ -72,6 +73,7 @@ export default function Navbar({ children }) {
       <HeaderNavigation aria-label="ZetaForge">
         <HeaderMenu menuLinkName="File" aria-label="File">
           <NewButton />
+          <NewFromCurrent />
           <SavePipelineButton />
           <SaveAsPipelineButton />
           <LoadPipelineButton />
@@ -111,9 +113,6 @@ export default function Navbar({ children }) {
       </HeaderNavigation>
       <HeaderGlobalBar>
         {runButton}
-        <RunPipelineButton modalPopper={modalPopper} action="Rebuild">
-          <Renew size={20} style={svgOverride} />
-        </RunPipelineButton>
         <LogsButton />
         <PipelinesButton />
       </HeaderGlobalBar>

@@ -3,20 +3,22 @@ import platform
 import subprocess
 import gzip
 import boto3
+import hashlib
 import os
 import shutil
 from pathlib import Path
 from botocore.client import Config
 from botocore import UNSIGNED
-from pathlib import Path
 import ssl
-import os
-import platform
 import sys
 from zipfile import ZipFile
 import tarfile
 from .check_forge_dependencies import check_kube_svc
 from pkg_resources import resource_filename
+from .logger import CliLogger
+
+import json
+from typing import Optional, Tuple, Dict
 
 # BACKEND = resource_filename("")
 EXECUTABLES_PATH = os.path.join(Path(__file__).parent, 'executables')
@@ -26,6 +28,7 @@ BUILD_YAML = resource_filename("zetaforge", os.path.join('utils', 'build.yaml'))
 INSTALL_YAML = resource_filename("zetaforge", os.path.join('utils', 'install.yaml'))
 
 s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED), region_name='us-east-2')
+logger = CliLogger()
 
 def install_kubectl():
     try:
@@ -124,10 +127,9 @@ def extract_zip(zip_file, target_dir):
 
 def extract_tar(tar_file, target_dir):
     with tarfile.open(tar_file, 'r') as tar:
-        print(f"Extracting {tar_file} to {target_dir}")
         tar.extractall(target_dir)
 
-    print(f"\nExtraction completed.")
+    logger.success(f"Extraction complete")
 
 def gunzip_file(in_file, out_file):
     with gzip.open(in_file, 'rb') as f_in:
@@ -189,34 +191,6 @@ def get_server_executable(s2_version=None):
             filename += '-arm64'
     return filename
 
-def check_and_clean_files(directory, version):
-    for filename in os.listdir(directory):
-        file_parts = filename.split('-')
-        if len(file_parts) >= 2:
-            file_version = file_parts[1]
-            if file_version == version:
-                print(f"Found an existing install of version {version}")
-            else:
-                print(f"Found a previous version of forge, uninstalling..")
-
-
-                file_path = os.path.join(directory, filename)
-                if os.path.isfile(file_path):
-                    os.remove(file_path)
-                    print(f"Removed file: {filename}")
-                elif os.path.isdir(file_path):
-                    shutil.rmtree(file_path)
-                    print(f"Removed directory: {filename}")
-
-        if filename == 'ZetaForge.app' or filename == 'zetaforge.app':
-            _, server_path = get_launch_paths(version, version)
-            if os.path.exists(server_path):
-                print(f"Found existing version {version}")
-            else:
-                # did not find the correct version, reinstall it
-                print(f"Found ZetaForge.app but did not find version {version}, removing previous app")
-                shutil.rmtree(os.path.join(EXECUTABLES_PATH, filename))
-
 def remove_running_services():
     print(f"Checking for existing kube services to remove..")
     registry = check_kube_svc("registry")
@@ -228,13 +202,6 @@ def remove_running_services():
     if argo:
         build = subprocess.run(["kubectl", "delete", "-f", INSTALL_YAML], capture_output=True, text=True)
         print("Removing build: ", {build.stdout})
-
-def check_version(server_version, client_version):
-    try:
-        check_and_clean_files(EXECUTABLES_PATH, client_version)
-        check_and_clean_files(EXECUTABLES_PATH, server_version)
-    except Exception as e:
-        print("Error removing previous version: ", e)
 
 def get_app_dir(client_version):
     if platform.system() == 'Darwin':
@@ -264,47 +231,307 @@ def get_launch_paths(server_version, client_version):
 
     return client_path, os.path.join(server_dir, server_name)
 
+def get_etag(bucket: str, key: str) -> Optional[str]:
+    """
+    Get ETag from S3 object metadata.
 
-def download_binary(bucket_key, destination):
-    bucket = "forge-executables-test"
-    print(f"Fetching executable: {bucket_key}")
+    Args:
+        bucket: S3 bucket name
+        key: Object key
+
+    Returns:
+        Optional[str]: ETag if available, None if not found
+    """
     try:
-        meta_data = s3.head_object(Bucket=bucket, Key=bucket_key)
+        meta_data = s3.head_object(Bucket=bucket, Key=key)
+        etag = meta_data.get('ETag', '').strip('"')  # Remove surrounding quotes
+        return etag
     except Exception as e:
-        raise Exception(f"Executable not found: {bucket_key}! There is no binary build for this version and platform, please log an issue at https://github.com/zetane/zetaforge")
+        logger.error(f"Failed to get ETag: {e}")
+        return None
 
-    total_length = int(meta_data.get('ContentLength', 0) / (1024 * 1024))
-    downloaded = 0
-    def progress(chunk):
-        nonlocal downloaded
-        downloaded += chunk
-        download_mb = int(downloaded / (1024*1024))
-        done = int((50 * downloaded / total_length) / (1024 * 1024))
+def verify_etag(file_path: str, expected_etag: str) -> bool:
+    """
+    Verify if local file matches S3 ETag.
+    For multipart uploads, we just check if the file exists
+    as the ETag calculation for multipart uploads is complex.
 
-        sys.stdout.write("\r[%s%s] %s/%sMB" % ('=' * done, ' ' * (50-done), download_mb, total_length) )
-        sys.stdout.flush()
+    Args:
+        file_path: Path to local file
+        expected_etag: Expected ETag from S3
 
-    print(f"Downloading app {bucket_key} to {EXECUTABLES_PATH}")
-    s3.download_file(bucket, bucket_key, destination, Callback=progress)
-    print("\nCompleted app download..")
+    Returns:
+        bool: True if file exists and matches simple ETag
+    """
+    if not os.path.exists(file_path):
+        return False
+
+    # If it's a multipart ETag (contains a dash), we just verify file exists
+    if '-' in expected_etag:
+        return True
+
+    # For simple ETags (no multipart), we can do a direct MD5 comparison
+    import hashlib
+    md5_hash = hashlib.md5()
+
+    with open(file_path, 'rb') as f:
+        for chunk in iter(lambda: f.read(4096), b''):
+            md5_hash.update(chunk)
+
+    calculated_etag = md5_hash.hexdigest()
+    return calculated_etag == expected_etag
+
+def download_with_verification(bucket_key: str, destination: str, bucket: str = "forge-executables-test") -> bool:
+    """
+    Download file if needed and verify integrity.
+
+    Args:
+        bucket_key: Key in S3 bucket
+        destination: Local destination path
+        bucket: S3 bucket name
+
+    Returns:
+        bool: True if file is available and verified
+    """
+    try:
+        # Get expected hash from S3 metadata
+        print(f"Fetching {bucket_key} from {bucket}")
+        expected_etag = get_etag(bucket, bucket_key)
+        if not expected_etag:
+            logger.error("Could not get ETag for verification")
+            return False
+
+        if os.path.exists(destination):
+            if verify_etag(destination, expected_etag):
+                logger.success(f"Using cached version: {os.path.basename(destination)}")
+                return True
+            else:
+                logger.warning("Cache invalid or outdated, downloading fresh copy")
+                os.remove(destination)
+
+        # Get file size for progress bar
+        meta_data = s3.head_object(Bucket=bucket, Key=bucket_key)
+        total_length = int(meta_data.get('ContentLength', 0))
+
+        # Download with progress bar
+        with logger.create_download_progress() as progress:
+            task_id = progress.add_task(
+                description=f"Downloading {os.path.basename(bucket_key)}",
+                total=total_length
+            )
+
+            def progress_callback(chunk):
+                progress.update(task_id, advance=chunk)
+
+            s3.download_file(
+                bucket,
+                bucket_key,
+                destination,
+                Callback=progress_callback
+            )
+
+        # Verify downloaded file
+        if verify_etag(destination, expected_etag):
+            logger.success("Download verified successfully")
+            return True
+        else:
+            logger.error("Download verification failed")
+            os.remove(destination)
+            return False
+
+    except Exception as e:
+        print(f"Error during download: {e}")
+        if os.path.exists(destination):
+            os.remove(destination)
+        return False
 
 
-def install_frontend_dependencies(client_version, no_cache=True):
-    os.makedirs(EXECUTABLES_PATH, exist_ok=True)
+class VersionInstallError(Exception):
+    """Custom exception for installation errors"""
+    pass
 
-    bucket_key = get_download_file(client_version)
-    app_dir = get_app_dir(client_version)
-    tar_file = os.path.join(EXECUTABLES_PATH, bucket_key)
-    if not os.path.exists(tar_file) or no_cache:
-        download_binary(bucket_key, tar_file)
+def load_config(config_file: str) -> Optional[Dict]:
+    """
+    Load and validate configuration file.
 
-    print("Unzipping and installing app..")
+    Args:
+        config_file: Path to config file
 
-    if os.path.exists(app_dir):
-        shutil.rmtree(app_dir)
+    Returns:
+        Optional[Dict]: Configuration dictionary or None if invalid/missing
+    """
+    if os.path.exists(config_file):
+        try:
+            with open(config_file, "r") as file:
+                config = json.load(file)
+                return config
+        except (IOError, json.JSONDecodeError) as e:
+            print(f"Error loading configuration file: {e}")
+    return None
 
-    extract_tar(tar_file, EXECUTABLES_PATH)
+def get_config_path(app_dir: str) -> str:
+    """Get the platform-specific path to config.json"""
+    if platform.system() == 'Darwin':
+        return os.path.join(app_dir, "Contents", "Resources", "config.json")
+    else:
+        return os.path.join(app_dir, "resources", "config.json")
 
-    print(f"Zetaforge extracted and installed at {os.path.join(EXECUTABLES_PATH)}")
+def backup_config(old_dir: str, new_dir: str) -> bool:
+    """
+    Backup config.json from old installation to new installation and validate it.
+
+    Args:
+        old_dir: Path to old installation
+        new_dir: Path to new installation
+
+    Returns:
+        bool: True if config was copied and validated successfully
+    """
+    old_config_path = get_config_path(old_dir)
+    new_config_path = get_config_path(new_dir)
+
+    # First check if old config exists and is valid
+    old_config = load_config(old_config_path)
+    if old_config is None:
+        print("No valid configuration found in previous installation")
+        return False
+
+    try:
+        # Ensure target directory exists
+        os.makedirs(os.path.dirname(new_config_path), exist_ok=True)
+
+        # Copy the config file
+        shutil.copy2(old_config_path, new_config_path)
+        print("Preserved existing configuration")
+
+        # Validate the copied config
+        new_config = load_config(new_config_path)
+        if new_config is None:
+            print("Warning: Config validation failed after copy")
+            return False
+
+        return True
+    except IOError as e:
+        print(f"Warning: Failed to copy config file: {e}")
+        return False
+
+def verify_installation(client_path: str, server_path: str) -> bool:
+    """
+    Verify that the new installation is valid and has required components.
+
+    Args:
+        client_path: Path to client executable
+        server_path: Path to server executable
+
+    Returns:
+        bool: True if installation is valid
+    """
+    if not (os.path.exists(client_path) and os.path.exists(server_path)):
+        return False
 
     return True
+
+def safe_remove(path: str) -> None:
+    """Safely remove a file or directory"""
+    try:
+        if os.path.isfile(path):
+            os.remove(path)
+            logger.success(f"Removed file: {os.path.basename(path)}")
+        elif os.path.isdir(path):
+            shutil.rmtree(path)
+            logger.success(f"Removed directory: {os.path.basename(path)}")
+    except OSError as e:
+        logger.warning(f"Warning: Failed to remove {path}: {e}")
+
+def check_version_exists(directory: str, version: str) -> bool:
+    """
+    Check if a specific version is properly installed.
+
+    Args:
+        directory: Installation directory
+        version: Version to check for
+
+    Returns:
+        bool: True if version exists and is valid
+    """
+    client_path, server_path = get_launch_paths(version, version)
+    return verify_installation(client_path, server_path)
+
+def clean_old_versions(directory: str, current_version: str):
+    """
+    Remove old versions after confirming new version is installed.
+    Preserves downloads (.tar.gz) and the current version.
+
+    Args:
+        directory: Installation directory
+        current_version: Version to preserve
+    """
+    for filename in os.listdir(directory):
+        if filename.endswith('.tar.gz'):
+            continue  # Preserve downloads
+
+        file_path = os.path.join(directory, filename)
+        if not os.path.isdir(file_path):
+            continue
+
+        # Check if this is a version directory
+        file_parts = filename.split('-')
+        if len(file_parts) >= 2:
+            file_version = file_parts[1]
+            if file_version != current_version:
+                logger.info(f"Removing old version: {filename}")
+                safe_remove(file_path)
+
+def install_new_version(version: str, directory: str) -> bool:
+    """
+    Coordinated installation of new version with config management.
+
+    Args:
+        version: Version to install
+        directory: Installation directory
+
+    Returns:
+        bool: True if installation successful
+    """
+    try:
+        # Step 1: Find existing installations
+        if check_version_exists(directory, version):
+            logger.success(f"Version {version} is already installed")
+            return True
+
+        # Step 2: Download and install new version if needed
+        logger.info(f"Installing ZetaForge v{version}", "🔧")
+        bucket_key = get_download_file(version)
+        tar_file = os.path.join(directory, bucket_key)
+
+        # Download and verify (or use cached copy)
+        if not download_with_verification(bucket_key, tar_file):
+            raise VersionInstallError(f"Failed to get verified copy of version {version}")
+
+        # Extract and install
+        app_dir = get_app_dir(version)
+        if os.path.exists(app_dir):
+            shutil.rmtree(app_dir)
+        logger.info("Extracting files...", "📦")
+        extract_tar(tar_file, directory)
+
+        # Verify the new installation works
+        if not check_version_exists(directory, version):
+            raise VersionInstallError("Installation verification failed")
+
+        # Only clean up old versions after successful installation
+        clean_old_versions(directory, version)
+        logger.success(f"ZetaForge v{version} installed successfully")
+
+        return True
+
+    except Exception as e:
+        print(f"Error during installation: {e}")
+        # Clean up partial new installation
+        try:
+            app_dir = get_app_dir(version)
+            if os.path.exists(app_dir):
+                safe_remove(app_dir)
+        except Exception as cleanup_error:
+            print(f"Error during cleanup: {cleanup_error}")
+        return False

@@ -1,0 +1,80 @@
+{
+  "information": {
+    "id": "openai-agent-1",
+    "name": "OpenAI Agent",
+    "description": "Communicates with the OpenAI API to generate a completion based on the given role and prompt.\n\nArgs:\n    role (str): The role of the system for the chat model (e.g., \"You are a copywriter...\").\n    prompt (str): The prompt to be provided to the user in the chat model.\n    api_key (str): The API key to authenticate with the OpenAI API.\n\nReturns:\n    str: The content of the generated response from the OpenAI API.",
+    "system_versions": [
+      "0.1"
+    ],
+    "block_version": "block version number",
+    "block_source": "",
+    "block_type": "compute"
+  },
+  "inputs": {
+    "prompt": {
+      "type": "Any",
+      "connections": [
+        {
+          "block": "text-n4mzvwd9a94p",
+          "variable": "text"
+        }
+      ]
+    },
+    "api_key": {
+      "type": "Any",
+      "connections": [
+        {
+          "block": "password-cra270gb0hn0",
+          "variable": "password"
+        }
+      ]
+    }
+  },
+  "outputs": {
+    "response": {
+      "type": "Any",
+      "connections": [
+        {
+          "block": "text-as-html-ttf7h7l5j6rb",
+          "variable": "data_view"
+        },
+        {
+          "block": "text-to-html-app-r6kt1w8j4zfy",
+          "variable": "prompt"
+        }
+      ]
+    }
+  },
+  "action": {
+    "container": {
+      "image": "openai-agent-1",
+      "version": "openai-agent-1-tuo6ndtm42rc",
+      "command_line": [
+        "python",
+        "entrypoint.py"
+      ]
+    }
+  },
+  "views": {
+    "node": {
+      "active": "True",
+      "title_bar": {},
+      "preview": {},
+      "html": "",
+      "pos_x": "613",
+      "pos_y": "371",
+      "pos_z": "999",
+      "behavior": "modal",
+      "order": {
+        "input": [
+          "prompt",
+          "api_key"
+        ],
+        "output": [
+          "response"
+        ]
+      }
+    }
+  },
+  "events": {}
+}

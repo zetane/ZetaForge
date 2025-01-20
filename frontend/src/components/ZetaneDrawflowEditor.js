@@ -78,7 +78,7 @@ export default class Drawflow {
     this.container.addEventListener("mouseup", this.dragEnd.bind(this));
     this.container.addEventListener("mousemove", this.position.bind(this));
     this.container.addEventListener("mousedown", this.click.bind(this));
-    this.container.addEventListener("mouseleave", (_) => {
+    this.container.addEventListener("mouseleave", () => {
       this.editor_selected = false;
     });
 
@@ -517,11 +517,11 @@ export default class Drawflow {
             this.connection_ele = null;
 
             this.setPipeline((draft) => {
-              draft.data[id_output].outputs[output_class].connections.push({
+              draft?.data[id_output]?.outputs[output_class]?.connections.push({
                 variable: input_class,
                 block: id_input,
               });
-              draft.data[id_input].inputs[input_class].connections.push({
+              draft?.data[id_input]?.inputs[input_class]?.connections.push({
                 variable: output_class,
                 block: id_output,
               });
@@ -639,11 +639,6 @@ export default class Drawflow {
       ")";
   }
 
-  applyTransform() {
-    this.precanvas.style.transformOrigin = "0 0";
-    this.precanvas.style.transform = `translate(${this.canvas_x}px, ${this.canvas_y}px) scale(${this.zoom})`;
-  }
-
   handleZoom(event) {
     event.preventDefault();
 
@@ -667,18 +662,7 @@ export default class Drawflow {
     // Update zoom
     this.zoom = newZoom;
 
-    this.applyTransform();
-
-    console.log(
-      "Zoom:",
-      this.zoom,
-      "Canvas Position:",
-      { x: this.canvas_x, y: this.canvas_y },
-      "Mouse:",
-      { x: mouseX, y: mouseY },
-      "Fixed Point:",
-      { x: pointX, y: pointY },
-    );
+    this.zoom_refresh();
   }
 
   zoom_reset() {
@@ -1034,26 +1018,39 @@ export default class Drawflow {
           inputElement = nodeRefs[`${input_id}-input-${input_class}`];
           outputElement = nodeRefs[`${output_id}-output-${output_class}`];
 
+          if (!inputElement) {
+            console.error(
+              `Input element ${input_id}-input-${input_class} not found`,
+            );
+            return;
+          }
+          if (!outputElement) {
+            console.error(
+              `Output element ${output_id}-output-${output_class} not found`,
+            );
+            return;
+          }
+
           const eX =
-            inputElement.offsetWidth / 2 +
-            (inputElement.getBoundingClientRect().x -
-              precanvas.getBoundingClientRect().x) *
+            inputElement?.offsetWidth / 2 +
+            (inputElement.getBoundingClientRect()?.x -
+              precanvas.getBoundingClientRect()?.x) *
               precanvasWitdhZoom;
           const eY =
-            inputElement.offsetHeight / 2 +
-            (inputElement.getBoundingClientRect().y -
-              precanvas.getBoundingClientRect().y) *
+            inputElement?.offsetHeight / 2 +
+            (inputElement.getBoundingClientRect()?.y -
+              precanvas.getBoundingClientRect()?.y) *
               precanvasHeightZoom;
 
           line_x =
-            outputElement.offsetWidth / 2 +
-            (outputElement.getBoundingClientRect().x -
-              precanvas.getBoundingClientRect().x) *
+            outputElement?.offsetWidth / 2 +
+            (outputElement.getBoundingClientRect()?.x -
+              precanvas.getBoundingClientRect()?.x) *
               precanvasWitdhZoom;
           line_y =
-            outputElement.offsetHeight / 2 +
-            (outputElement.getBoundingClientRect().y -
-              precanvas.getBoundingClientRect().y) *
+            outputElement?.offsetHeight / 2 +
+            (outputElement.getBoundingClientRect()?.y -
+              precanvas.getBoundingClientRect()?.y) *
               precanvasHeightZoom;
 
           var x = eX;

@@ -1,17 +1,17 @@
 import { ToastNotification } from "@carbon/react";
 
-export default function CompilationErrorToast({ onClose }) {
+export default function ({ title, caption, onClose }) {
   return (
     <ToastNotification
       aria-label="closes notification"
-      caption="Could not compile the computations.py file. Execution will fail. Please fix computations.py to enable its execution."
+      caption={caption}
       kind="error"
       onCloseButtonClick={onClose}
       onClose={onClose}
       role="status"
       statusIconDescription="notification"
       timeout={0}
-      title="Computations Compilation Failed"
+      title={title}
     />
   );
 }

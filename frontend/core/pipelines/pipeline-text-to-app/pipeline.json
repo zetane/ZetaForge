@@ -1,0 +1,538 @@
+{
+  "pipeline": {
+    "text-to-html-app-r6kt1w8j4zfy": {
+      "information": {
+        "id": "text-to-html-app",
+        "name": "Text to HTML App",
+        "description": "Communicates with the OpenAI API to generate an HTML page based on the given prompt and accessible assets.\n\nArgs:\n    prompt (str): The detailed description for the application to be built.\n    api_key (str): The API key to authenticate with the OpenAI API.\n\nReturns:\n    dict: A dictionary containing the generated HTML page.",
+        "system_versions": ["0.1"],
+        "block_version": "block version number",
+        "block_source": "",
+        "block_type": "compute"
+      },
+      "inputs": {
+        "prompt": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "openai-agent-1-tuo6ndtm42rc",
+              "variable": "response"
+            }
+          ]
+        },
+        "api_key": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "password-cra270gb0hn0",
+              "variable": "password"
+            }
+          ]
+        }
+      },
+      "outputs": {
+        "htlm": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "view-html-8qh8d7kxxrph",
+              "variable": "html_path"
+            }
+          ]
+        },
+        "content": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "interface-maker-ool7kd5xa3sw",
+              "variable": "initial_content"
+            }
+          ]
+        }
+      },
+      "action": {
+        "container": {
+          "image": "text-to-html-app",
+          "version": "text-to-html-app-rd6kt1w8j4zfy",
+          "command_line": ["python", "entrypoint.py"]
+        },
+        "resources": {
+          "cpu": {
+            "request": "",
+            "limit": ""
+          },
+          "memory": {
+            "request": "",
+            "limit": ""
+          },
+          "gpu": {
+            "count": 0
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "True",
+          "title_bar": {},
+          "preview": {},
+          "html": "",
+          "pos_x": "1330",
+          "pos_y": "414",
+          "pos_z": "999",
+          "behavior": "modal",
+          "order": {
+            "input": ["prompt", "api_key"],
+            "output": ["htlm", "content"]
+          }
+        }
+      },
+      "events": {}
+    },
+    "openai-agent-1-tuo6ndtm42rc": {
+      "information": {
+        "id": "openai-agent-1",
+        "name": "OpenAI Agent",
+        "description": "Communicates with the OpenAI API to generate a completion based on the given role and prompt.\n\nArgs:\n    role (str): The role of the system for the chat model (e.g., \"You are a copywriter...\").\n    prompt (str): The prompt to be provided to the user in the chat model.\n    api_key (str): The API key to authenticate with the OpenAI API.\n\nReturns:\n    str: The content of the generated response from the OpenAI API.",
+        "system_versions": ["0.1"],
+        "block_version": "block version number",
+        "block_source": "",
+        "block_type": "compute"
+      },
+      "inputs": {
+        "prompt": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "text-n4mzvwd9a94p",
+              "variable": "text"
+            }
+          ]
+        },
+        "api_key": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "password-cra270gb0hn0",
+              "variable": "password"
+            }
+          ]
+        }
+      },
+      "outputs": {
+        "response": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "text-as-html-ttf7h7l5j6rb",
+              "variable": "data_view"
+            },
+            {
+              "block": "text-to-html-app-r6kt1w8j4zfy",
+              "variable": "prompt"
+            }
+          ]
+        }
+      },
+      "action": {
+        "container": {
+          "image": "openai-agent-1",
+          "version": "openai-agent-1-tuo6ndtm42rc",
+          "command_line": ["python", "entrypoint.py"]
+        },
+        "resources": {
+          "cpu": {
+            "request": "",
+            "limit": ""
+          },
+          "memory": {
+            "request": "",
+            "limit": ""
+          },
+          "gpu": {
+            "count": 0
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "True",
+          "title_bar": {},
+          "preview": {},
+          "html": "",
+          "pos_x": "613",
+          "pos_y": "371",
+          "pos_z": "999",
+          "behavior": "modal",
+          "order": {
+            "input": ["prompt", "api_key"],
+            "output": ["response"]
+          }
+        }
+      },
+      "events": {}
+    },
+    "view-html-8qh8d7kxxrph": {
+      "information": {
+        "id": "view-html",
+        "name": "View HTML",
+        "description": "Display the input HTML page.\n\nInputs:\n    html_path: Path to the HTML file to be displayed.\n\nOutputs:\n    dict: A dictionary with the key 'html' and the value being the name of the generated HTML file.",
+        "system_versions": ["0.1"],
+        "block_version": "1.0",
+        "block_source": "core/blocks/view-html",
+        "block_type": "view"
+      },
+      "inputs": {
+        "html_path": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "text-to-html-app-r6kt1w8j4zfy",
+              "variable": "htlm"
+            }
+          ]
+        }
+      },
+      "outputs": {
+        "html": {
+          "type": "Any",
+          "connections": []
+        }
+      },
+      "action": {
+        "container": {
+          "image": "view-html",
+          "version": "view-html-8qh8d7kxxrph",
+          "command_line": ["python", "entrypoint.py"]
+        },
+        "resources": {
+          "cpu": {
+            "request": "",
+            "limit": ""
+          },
+          "memory": {
+            "request": "",
+            "limit": ""
+          },
+          "gpu": {
+            "count": 0
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "true",
+          "title_bar": {
+            "background_color": "#0099ff"
+          },
+          "preview": {
+            "active": "true"
+          },
+          "html": "",
+          "pos_x": "1785",
+          "pos_y": "260",
+          "pos_z": "999",
+          "order": {
+            "input": ["html_path"],
+            "output": ["html"]
+          }
+        },
+        "mode": "modal"
+      },
+      "events": {}
+    },
+    "text-as-html-ttf7h7l5j6rb": {
+      "information": {
+        "id": "text-as-html",
+        "name": "Text as HTML",
+        "description": "Generates an HTML file that displays the provided data and returns the file name.\n\nThis function takes a string, dictionary, or list of dictionaries and generates\nan HTML file to visually present the data. The generated HTML file is saved with\na unique name to avoid conflicts. The HTML content includes styling and scripts\nto format the data for better readability.\n\nParameters:\ndata_view (str, dict, or list): The data to be displayed in the gallery. It can be:\n    - A single string\n    - A single dictionary\n    - A list of strings or dictionaries\n\nReturns:\ndict: A dictionary containing the key 'html' with the value being the name of the\ngenerated HTML file.",
+        "system_versions": ["0.1"],
+        "block_version": "block version number",
+        "block_source": "core/blocks/text-as-html",
+        "block_type": "view"
+      },
+      "inputs": {
+        "data_view": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "openai-agent-1-tuo6ndtm42rc",
+              "variable": "response"
+            }
+          ]
+        }
+      },
+      "outputs": {
+        "html": {
+          "type": "Any",
+          "connections": []
+        }
+      },
+      "action": {
+        "container": {
+          "image": "text-as-html",
+          "version": "text-as-html-ttf7h7l5j6rb",
+          "command_line": ["python", "entrypoint.py"]
+        },
+        "resources": {
+          "cpu": {
+            "request": "",
+            "limit": ""
+          },
+          "memory": {
+            "request": "",
+            "limit": ""
+          },
+          "gpu": {
+            "count": 0
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "True",
+          "title_bar": {
+            "background_color": "#D55908"
+          },
+          "preview": {
+            "active": "true"
+          },
+          "html": "",
+          "pos_x": "989",
+          "pos_y": "258",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "input": ["data_view"],
+            "output": ["html"]
+          }
+        },
+        "mode": "modal"
+      },
+      "events": {}
+    },
+    "text-n4mzvwd9a94p": {
+      "information": {
+        "id": "text",
+        "name": "Text",
+        "description": "Text block parameter input.",
+        "system_versions": ["0.1"],
+        "block_version": "0.1",
+        "block_source": "core/blocks",
+        "block_type": "entry"
+      },
+      "inputs": {},
+      "outputs": {
+        "text": {
+          "type": "str",
+          "connections": [
+            {
+              "block": "openai-agent-1-tuo6ndtm42rc",
+              "variable": "prompt"
+            }
+          ]
+        }
+      },
+      "action": {
+        "container": {
+          "image": "",
+          "version": "",
+          "command_line": []
+        },
+        "parameters": {
+          "text": {
+            "value": "",
+            "type": "str"
+          }
+        },
+        "resources": {
+          "cpu": {
+            "request": "",
+            "limit": ""
+          },
+          "memory": {
+            "request": "",
+            "limit": ""
+          },
+          "gpu": {
+            "count": 0
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "true",
+          "title_bar": {
+            "background_color": "#909090"
+          },
+          "preview": {},
+          "html": "<textarea style='width: 100%; height: 150px;' parameters-text></textarea>",
+          "pos_x": "31",
+          "pos_y": "146",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "input": [],
+            "output": ["text"]
+          }
+        }
+      },
+      "events": {}
+    },
+    "password-cra270gb0hn0": {
+      "information": {
+        "id": "password",
+        "name": "Password",
+        "description": "Password block parameter input.",
+        "system_versions": ["0.1"],
+        "block_version": "0.1",
+        "block_source": "core/blocks",
+        "block_type": "entry"
+      },
+      "inputs": {},
+      "outputs": {
+        "password": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "openai-agent-1-tuo6ndtm42rc",
+              "variable": "api_key"
+            },
+            {
+              "block": "text-to-html-app-r6kt1w8j4zfy",
+              "variable": "api_key"
+            },
+            {
+              "block": "interface-maker-ool7kd5xa3sw",
+              "variable": "api_key"
+            }
+          ]
+        }
+      },
+      "action": {
+        "container": {
+          "image": "",
+          "version": "",
+          "command_line": []
+        },
+        "parameters": {
+          "password": {
+            "value": "",
+            "type": "Any"
+          }
+        },
+        "resources": {
+          "cpu": {
+            "request": "",
+            "limit": ""
+          },
+          "memory": {
+            "request": "",
+            "limit": ""
+          },
+          "gpu": {
+            "count": 0
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "true",
+          "title_bar": {
+            "background_color": "#909090"
+          },
+          "preview": {},
+          "html": "<textarea style='width: 100%; height: 150px;' parameters-password></textarea>",
+          "pos_x": "112",
+          "pos_y": "546",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "input": [],
+            "output": ["password"]
+          }
+        }
+      },
+      "events": {}
+    },
+    "interface-maker-ool7kd5xa3sw": {
+      "information": {
+        "id": "interface-maker",
+        "name": "Interface Maker",
+        "description": "Tool to generate HTML apps interfaces using the OpenAI API.\n\nInputs:\n    api_key (str): API key to be included in the generated HTML page.\n    initial_content (str): Initial HTML content to be embedded in the generated HTML page.\n\nOutputs:\n    dict: A dictionary with the key 'html' and the value being the name of the generated HTML file.",
+        "system_versions": ["0.1"],
+        "block_version": "1.0",
+        "block_source": "",
+        "block_type": "view"
+      },
+      "inputs": {
+        "initial_content": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "text-to-html-app-r6kt1w8j4zfy",
+              "variable": "content"
+            }
+          ]
+        },
+        "api_key": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "password-cra270gb0hn0",
+              "variable": "password"
+            }
+          ]
+        }
+      },
+      "outputs": {
+        "html": {
+          "type": "Any",
+          "connections": []
+        }
+      },
+      "action": {
+        "container": {
+          "image": "interface-maker",
+          "version": "interface-maker-ool7kd5xa3sw",
+          "command_line": ["python", "entrypoint.py"]
+        },
+        "resources": {
+          "cpu": {
+            "request": "",
+            "limit": ""
+          },
+          "memory": {
+            "request": "",
+            "limit": ""
+          },
+          "gpu": {
+            "count": 0
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "true",
+          "title_bar": {
+            "background_color": "#0099ff"
+          },
+          "preview": {
+            "active": "true"
+          },
+          "html": "",
+          "pos_x": "2047",
+          "pos_y": "635",
+          "pos_z": "999",
+          "order": {
+            "input": ["initial_content", "api_key"],
+            "output": ["html"]
+          }
+        },
+        "mode": "modal"
+      },
+      "events": {}
+    }
+  },
+  "sink": "",
+  "build": "",
+  "name": "text-to-app",
+  "id": "pipeline-5zy3w5o9zh8w",
+  "description": "Pipeline to generate an HTML page based on the given prompt and accessible assets. Note: make sure to encapsulate the API key in quotes."
+}
