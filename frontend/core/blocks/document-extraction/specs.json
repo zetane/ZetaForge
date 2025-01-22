@@ -2,10 +2,8 @@
   "information": {
     "id": "document-extraction",
     "name": "Document Extraction",
-    "description": "A code block designed to extract and process data from files in markdown format, converting the content into a structured and analyzable form while preserving key markdown elements and formatting.",
-    "system_versions": [
-      "0.1"
-    ],
+    "description": "This block converts an HTML document into a Markdown format using a document converter tool.\n\n Inputs:\n- `source` (str): Path or URL of the HTML document to convert.\n\n Outputs:\n- `dict`: Contains the converted Markdown result under the key `result`.",
+    "system_versions": ["0.1"],
     "block_version": "block version number",
     "block_source": "core/blocks/document-extraction",
     "block_type": "compute"
@@ -36,11 +34,7 @@
     "container": {
       "image": "document-extraction",
       "version": "latest",
-      "command_line": [
-        "python",
-        "-u",
-        "entrypoint.py"
-      ]
+      "command_line": ["python", "-u", "entrypoint.py"]
     }
   },
   "views": {
@@ -56,12 +50,8 @@
       "pos_z": "999",
       "behavior": "modal",
       "order": {
-        "input": [
-          "source"
-        ],
-        "output": [
-          "result"
-        ]
+        "input": ["source"],
+        "output": ["result"]
       }
     }
   },

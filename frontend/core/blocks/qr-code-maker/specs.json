@@ -2,7 +2,7 @@
   "information": {
     "id": "qr-code-maker",
     "name": "QR Code Maker",
-    "description": "Template block for custom computations.",
+    "description": "Generates a QR code from a given URL and saves it as an image file.\n\nParameters:\n- url (str): The URL to encode into the QR code.\n\nReturns:\n- dict: A dictionary containing the file path to the generated QR code image with the key 'qr_code_path'.",
     "system_versions": ["0.1"],
     "block_version": "block version number",
     "block_source": "core/blocks/qr-code-maker",

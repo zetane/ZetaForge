@@ -2,10 +2,8 @@
   "information": {
     "id": "super-resolution",
     "name": "Super-resolution",
-    "description": "Computes the super-resolved image from the given input image.",
-    "system_versions": [
-      "0.1"
-    ],
+    "description": "Generates a super-resolved image from an input image using a pre-trained SRCNN model. The function saves both the input and super-resolved images in designated directories.\n\nParameters:\n- image_path (str): The path to the input image.\n\nReturns:\n- dict: A dictionary with two keys:\n  - 'result': A list containing the path to the super-resolved image.\n  - 'input_result': A list containing the path to the input image.",
+    "system_versions": ["0.1"],
     "block_version": "block version number",
     "block_source": "core/blocks/super-resolution",
     "block_type": "compute"
@@ -30,10 +28,7 @@
     "container": {
       "image": "super-resolution",
       "version": "latest",
-      "command_line": [
-        "python",
-        "entrypoint.py"
-      ]
+      "command_line": ["python", "entrypoint.py"]
     }
   },
   "views": {
@@ -47,13 +42,8 @@
       "pos_z": "999",
       "behavior": "modal",
       "order": {
-        "input": [
-          "image_path"
-        ],
-        "output": [
-          "result",
-          "input_result"
-        ]
+        "input": ["image_path"],
+        "output": ["result", "input_result"]
       }
     }
   },

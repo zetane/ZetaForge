@@ -2,10 +2,8 @@
   "information": {
     "id": "denoising",
     "name": "Denoising",
-    "description": "Perform denoising on the given image and save the results",
-    "system_versions": [
-      "0.1"
-    ],
+    "description": "This block denoises images using a pre-trained convolutional autoencoder. It accepts a file path to an input image, processes it to add noise, denoises it, and saves both noisy and denoised images.\n\n Inputs:\n- `image_path` (str): Path to the input image.\n\n Outputs:\n- `dict`: Contains paths to the noisy image (`input_result`) and the denoised image (`result`).",
+    "system_versions": ["0.1"],
     "block_version": "block version number",
     "block_source": "core/blocks/denoising",
     "block_type": "compute"
@@ -30,10 +28,7 @@
     "container": {
       "image": "denoising",
       "version": "latest",
-      "command_line": [
-        "python",
-        "entrypoint.py"
-      ]
+      "command_line": ["python", "entrypoint.py"]
     }
   },
   "views": {
@@ -47,13 +42,8 @@
       "pos_z": "999",
       "behavior": "modal",
       "order": {
-        "input": [
-          "image_path"
-        ],
-        "output": [
-          "result",
-          "input_result"
-        ]
+        "input": ["image_path"],
+        "output": ["result", "input_result"]
       }
     }
   },

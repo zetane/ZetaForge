@@ -2,10 +2,8 @@
   "information": {
     "id": "snowflake-api",
     "name": "Snowflake Api",
-    "description": "This is the snowflake api integration block",
-    "system_versions": [
-      "0.1"
-    ],
+    "description": "Fetches data from a Snowflake database using the provided user credentials, database, schema, and query.\n\nParameters:\n- user (str): The Snowflake username.\n- password (str): The Snowflake password.\n- database (str): The name of the Snowflake database.\n- schema (str): The schema within the specified database.\n- query (str): The SQL query to execute.\n\nReturns:\n- dict: A dictionary containing the query results with the key 'result'.",
+    "system_versions": ["0.1"],
     "block_version": "block version number",
     "block_source": "core/blocks/snowflake-api",
     "block_type": "compute"
@@ -48,11 +46,7 @@
     "container": {
       "image": "snowflake-api",
       "version": "snowflake-api-m0cbe3nptd3e",
-      "command_line": [
-        "python",
-        "-u",
-        "entrypoint.py"
-      ]
+      "command_line": ["python", "-u", "entrypoint.py"]
     }
   },
   "views": {

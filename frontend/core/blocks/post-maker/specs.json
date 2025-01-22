@@ -2,7 +2,7 @@
   "information": {
     "id": "post-maker",
     "name": "Post Maker",
-    "description": "Generates a post based on requested content, a theme of the week and message tone.",
+    "description": "Generates social media posts based on provided content, theme, and tone using OpenAI's API.\n\nParameters:\n- content (str): Description of the content to include in the social media posts.\n- theme (str): The overarching theme for the posts (e.g., 'sustainability', 'teamwork').\n- tone (str): The tone of the posts (e.g., 'professional', 'casual').\n- api_key (str): API key for authenticating with OpenAI.\n\nReturns:\n- dict: A dictionary containing the generated posts with keys 'LinkedIn', 'Instagram', 'Facebook', and 'X'.",
     "system_versions": ["0.1"],
     "block_version": "block version number",
     "block_source": "core/blocks/post-maker",

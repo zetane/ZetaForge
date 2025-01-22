@@ -2,10 +2,8 @@
   "information": {
     "id": "meta-llama",
     "name": "Llama",
-    "description": "meta-llama",
-    "system_versions": [
-      "0.1"
-    ],
+    "description": "Generates text completions using a Hugging Face pipeline with the specified model and prompt.\n\nParameters:\nhf_token (str): The Hugging Face authentication token used to access the model.\nmodel_id (str): The ID of the model to use for text generation.\nprompt (str): The input text to generate completions for.\n\nReturns:\ndict: A dictionary containing the generated output under the key 'llama'.",
+    "system_versions": ["0.1"],
     "block_version": "block version number",
     "block_source": "core/blocks/meta-llama",
     "block_type": "compute"
@@ -13,21 +11,15 @@
   "inputs": {
     "hf_token": {
       "type": "Any",
-      "connections": [
-        
-      ]
+      "connections": []
     },
     "model_id": {
       "type": "Any",
-      "connections": [
-        
-      ]
+      "connections": []
     },
     "prompt": {
       "type": "Any",
-      "connections": [
-        
-      ]
+      "connections": []
     }
   },
   "outputs": {
@@ -40,11 +32,7 @@
     "container": {
       "image": "meta-llama-gpu1",
       "version": "latest",
-      "command_line": [
-        "python",
-        "-u",
-        "entrypoint.py"
-      ]
+      "command_line": ["python", "-u", "entrypoint.py"]
     }
   },
   "views": {
@@ -60,14 +48,8 @@
       "pos_z": "999",
       "behavior": "modal",
       "order": {
-        "input": [
-          "hf_token",
-          "model_id",
-          "prompt"
-        ],
-        "output": [
-          "llama"
-        ]
+        "input": ["hf_token", "model_id", "prompt"],
+        "output": ["llama"]
       }
     }
   },

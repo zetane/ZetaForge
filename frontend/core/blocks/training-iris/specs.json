@@ -2,7 +2,7 @@
   "information": {
     "id": "training-iris",
     "name": "Train Iris",
-    "description": "Trains and evaluates a neural network on the iris dataset.",
+    "description": "Trains and evaluates a neural network on the Iris dataset. The function first loads and processes the data, then defines and trains a simple neural network model. After training, it evaluates the model's performance on a test set and returns the validation accuracy.\n\nParameters:\n- epoch (int): The number of training epochs.\n\nReturns:\n- dict: A dictionary with one key 'val_acc' which contains the validation accuracy of the model on the test data.",
     "system_versions": ["0.1"],
     "block_version": "block version number",
     "block_source": "core/blocks/training-iris",
