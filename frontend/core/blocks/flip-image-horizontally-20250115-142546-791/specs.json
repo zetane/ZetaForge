@@ -1,0 +1,52 @@
+{
+    "information": {
+        "id": "flip-image-horizontally",
+        "name": "Flip image horizontally",
+        "description": "Flips an image horizontally.\n\nThis function takes the path to an image file, flips the image horizontally,\nand saves the flipped image to a new file. The path to the new image file is returned.\n\nParameters:\nimage_path (str): The file path to the image that needs to be flipped horizontally.\n\nReturns:\ndict: A dictionary containing the path to the new image file with the key 'flipped_image_path'.",
+        "system_versions": [
+            "0.1"
+        ],
+        "block_version": "1.0",
+        "block_source": "core/blocks/flip-image-horizontally-20250115-142546-791",
+        "block_type": "compute"
+    },
+    "inputs": {
+        "image_path": {
+            "type": "file",
+            "connections": [],
+            "relays": []
+        }
+    },
+    "outputs": {
+        "flipped_image_path": {
+            "type": "str",
+            "connections": [],
+            "relays": []
+        }
+    },
+    "action": {
+        "container": {
+            "image": "flip-image-horizontally",
+            "version": "latest",
+            "command_line": [
+                "python",
+                "entrypoint.py"
+            ]
+        }
+    },
+    "views": {
+        "node": {
+            "behavior": "modal",
+            "active": "True",
+            "title_bar": {
+                "background_color": "#228B22"
+            },
+            "preview": {},
+            "html": "",
+            "pos_x": "0",
+            "pos_y": "0",
+            "pos_z": "999"
+        }
+    },
+    "events": {}
+}

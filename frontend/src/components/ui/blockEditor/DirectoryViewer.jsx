@@ -269,7 +269,11 @@ export default function DirectoryViewer({ blockPath, blockKey }) {
             fetchFileSystem();
           } catch (error) {
             console.error(error);
-            setCompilationErrorToast(true);
+            setCompilationErrorToast({
+              show: true,
+              title: "File Save Failed",
+              caption: `Failed to compile python code: ${error}`,
+            });
           }
         }
       })

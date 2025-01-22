@@ -11,7 +11,7 @@ import {
   runTest,
   saveBlockSpecs,
   updateBlockFile,
-} from "./blockSerialization.js";
+} from "./blockSerialization";
 import { getHistory, getIndex, updateHistory, updateIndex } from "./chat.js";
 import { syncExecutionResults } from "./execution";
 import { readPipelines, readSpecs } from "./fileSystem.js";
