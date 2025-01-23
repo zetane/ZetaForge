@@ -1,4 +1,4 @@
-package main
+package zjson
 
 type BlockInformation struct {
 	Id             string   `json:"id"`
@@ -12,7 +12,7 @@ type BlockInformation struct {
 
 type PipelineInformation struct {
 	Name           string `json:"name"`
-	Description    string `json:"description"`
+	Description    string `json:"description,omitempty"`
 	SystemVersions string `json:"system_versions"`
 	Source         string `json:"source"`
 	Type           string `json:"type"`
@@ -40,11 +40,27 @@ type Command struct {
 	Dir  string `json:"dir,omitempty"`
 }
 
+type ResourceQuantity struct {
+	Request string `json:"request"`
+	Limit   string `json:"limit"`
+}
+
+type GPU struct {
+	Count int `json:"count"`
+}
+
+type Resources struct {
+	CPU    ResourceQuantity `json:"cpu,omitempty"`
+	Memory ResourceQuantity `json:"memory,omitempty"`
+	GPU    GPU              `json:"gpu,omitempty"`
+}
+
 type Action struct {
 	Container  Container            `json:"container,omitempty"`
 	Command    Command              `json:"command,omitempty"` // commmand replaces docker, actual command,deer paremeter: if the command is empty, i
 	Pipeline   map[string]Block     `json:"pipeline,omitempty"`
 	Parameters map[string]Parameter `json:"parameters,omitempty"`
+	Resources  Resources            `json:"resources,omitempty"`
 }
 
 type TitleBar struct {
@@ -97,6 +113,38 @@ type Pipeline struct {
 	Id       string           `json:"id"`
 	Name     string           `json:"name"`
 	Pipeline map[string]Block `json:"pipeline"`
-	Sink     string           `json:"sink"` // sink is being to write history
+	Sink     string           `json:"sink"`
 	Build    string           `json:"build"`
+}
+
+type Execution struct {
+	Id         string             `json:"id"`
+	Pipeline   Pipeline           `json:"pipeline"`
+	MerkleTree PipelineMerkleTree `json:"merkleTree"`
+	Build      bool               `json:"build"`
+}
+
+type BuildContextStatusRequest struct {
+	Rebuild    bool               `json:"rebuild"`
+	Pipeline   Pipeline           `json:"pipeline"`
+	MerkleTree PipelineMerkleTree `json:"merkleTree"`
+}
+
+type BuildContextStatusResponse struct {
+	BlockKey   string `json:"blockKey"`
+	IsUploaded bool   `json:"isUploaded"`
+	S3Key      string `json:"s3Key"`
+	Hash       string `json:"hash"`
+}
+
+type PipelineMerkleTree struct {
+	Hash   string                        `json:"hash"`
+	Blocks map[string]PipelineMerkleTree `json:"blocks,omitempty"`
+	Files  DirectoryMerkleTree           `json:"files,omitempty"`
+}
+
+type DirectoryMerkleTree struct {
+	Hash     string                `json:"hash"`
+	Path     string                `json:"path"`
+	Children []DirectoryMerkleTree `json:"children,omitempty"`
 }
