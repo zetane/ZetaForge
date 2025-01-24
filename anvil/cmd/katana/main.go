@@ -25,8 +25,7 @@ Description:
     - docker: Containerizes the execution using Docker
 
   By default, Katana is immutable and will copy your pipeline to a history folder and
-  execute in that folder. By default, only output files will be preserved per run. You can
-  preserve full history via the -history flag.
+  execute in that folder. You can preserve full history via the -history flag.
 
 Examples:
   # Run a pipeline using system dependencies
@@ -58,7 +57,7 @@ func main() {
 
 	// Define flags
 	flag.StringVar(&opts.mode, "mode", "default", "Execution mode: default, uv, or docker")
-	flag.StringVar(&opts.mode, "history", "false", "Preserve full history of runs")
+	flag.BoolVar(&opts.history, "history", false, "Preserve full history of runs")
 	flag.BoolVar(&opts.verbose, "verbose", false, "Enable verbose logging")
 	flag.BoolVar(&opts.noCache, "no-cache", false, "Disable caching (applies to uv and docker modes)")
 	flag.StringVar(&opts.workingDir, "work-dir", "", "Custom working directory (default: /tmp/katana)")
@@ -108,6 +107,7 @@ func main() {
 	// Set up execution options
 	execOpts := katana.Options{
 		Mode:         opts.mode,
+		History:      opts.history,
 		Args:         argsKeyVal,
 		PipelinePath: pipelinePath,
 		Verbose:      opts.verbose,

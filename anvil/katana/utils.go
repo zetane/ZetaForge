@@ -121,141 +121,171 @@ func copyFile(sourcePath, targetPath string) error {
 	return os.Chmod(targetPath, sourceInfo.Mode())
 }
 
-
 type fileInfo struct {
-    exists bool
-    hash   string
+	exists bool
+	hash   string
 }
 
 // getDirectoryContents returns a map of files to their content hashes
 func getDirectoryContents(dir string) (map[string]fileInfo, error) {
-    contents := make(map[string]fileInfo)
-    err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-        if err != nil {
-            return err
-        }
+	contents := make(map[string]fileInfo)
+	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
 
-        relPath, err := filepath.Rel(dir, path)
-        if err != nil {
-            return err
-        }
+		relPath, err := filepath.Rel(dir, path)
+		if err != nil {
+			return err
+		}
 
-        // Skip the root directory itself
-        if relPath == "." {
-            return nil
-        }
+		// Skip the root directory itself
+		if relPath == "." {
+			return nil
+		}
 
-        // For directories, just mark that they exist
-        if info.IsDir() {
-            contents[relPath] = fileInfo{exists: true}
-            return nil
-        }
+		// For directories, just mark that they exist
+		if info.IsDir() {
+			contents[relPath] = fileInfo{exists: true}
+			return nil
+		}
 
-        // For files, compute hash
-        hash, err := getFileHash(path)
-        if err != nil {
-            return err
-        }
+		// For files, compute hash
+		hash, err := getFileHash(path)
+		if err != nil {
+			return err
+		}
 
-        contents[relPath] = fileInfo{exists: true, hash: hash}
-        return nil
-    })
-    return contents, err
+		contents[relPath] = fileInfo{exists: true, hash: hash}
+		return nil
+	})
+	return contents, err
 }
 
 // getFileHash returns a hash of the file contents
 func getFileHash(path string) (string, error) {
-    data, err := os.ReadFile(path)
-    if err != nil {
-        return "", err
-    }
-    hash := sha256.Sum256(data)
-    return fmt.Sprintf("%x", hash), nil
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+	hash := sha256.Sum256(data)
+	return fmt.Sprintf("%x", hash), nil
 }
 
 // shouldKeepFile determines if a file should be kept based on original and current state
 func shouldKeepFile(path string, originalFiles, currentFiles map[string]fileInfo) bool {
-    orig, wasOriginal := originalFiles[path]
-    curr, stillExists := currentFiles[path]
+	orig, wasOriginal := originalFiles[path]
+	curr, stillExists := currentFiles[path]
 
-    // Keep if it's new
-    if !wasOriginal && stillExists {
-        return true
-    }
+	// Keep if it's new
+	if !wasOriginal && stillExists {
+		return true
+	}
 
-    // Keep if it changed
-    if wasOriginal && stillExists && orig.hash != curr.hash {
-        return true
-    }
+	// Keep if it changed
+	if wasOriginal && stillExists && orig.hash != curr.hash {
+		return true
+	}
 
-    return false
+	return false
 }
 
-// cleanup removes unchanged files while preserving new and modified files
+// patternsToClean defines paths that should always be removed
+var patternsToClean = []string{
+	"__pycache__",
+	"*.pyc",
+	".pytest_cache",
+	"*.pyo",
+	// Add any other patterns here
+}
+
+// cleanup removes unchanged files and specified patterns while preserving new and modified files
 func cleanup(executionDir string, originalFiles map[string]fileInfo) error {
-    // Get current state
-    currentFiles, err := getDirectoryContents(executionDir)
-    if err != nil {
-        return fmt.Errorf("failed to get current directory contents: %w", err)
-    }
+	// Get current state
+	currentFiles, err := getDirectoryContents(executionDir)
+	if err != nil {
+		return fmt.Errorf("failed to get current directory contents: %w", err)
+	}
 
-    // Build list of files to remove
-    var toRemove []string
-    for path, origInfo := range originalFiles {
-        fullPath := filepath.Join(executionDir, path)
+	var toRemove []string
+	err = filepath.Walk(executionDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
 
-        // Skip directories for now
-        if origInfo.hash == "" {
-            continue
-        }
+		relPath, err := filepath.Rel(executionDir, path)
+		if err != nil {
+			return err
+		}
 
-        // Remove only if file is unchanged
-        if !shouldKeepFile(path, originalFiles, currentFiles) {
-            toRemove = append(toRemove, fullPath)
-        }
-    }
+		// Skip root directory
+		if relPath == "." {
+			return nil
+		}
 
-    // Sort paths by length in reverse order to handle nested files first
-    sort.Slice(toRemove, func(i, j int) bool {
-        return len(toRemove[i]) > len(toRemove[j])
-    })
+		// Check if path matches any patterns to clean
+		for _, pattern := range patternsToClean {
+			matched, err := filepath.Match(pattern, info.Name())
+			if err != nil {
+				return err
+			}
+			if matched || info.Name() == pattern {
+				if info.IsDir() {
+					toRemove = append(toRemove, path)
+					return filepath.SkipDir
+				}
+				toRemove = append(toRemove, path)
+				return nil
+			}
+		}
 
-    // Remove files
-    for _, path := range toRemove {
-        if err := os.Remove(path); err != nil {
-            return fmt.Errorf("failed to remove %s: %w", path, err)
-        }
-    }
+		// If not a pattern to clean, check if it's an unchanged original file
+		if !info.IsDir() && !shouldKeepFile(relPath, originalFiles, currentFiles) {
+			toRemove = append(toRemove, path)
+		}
 
-    // Clean up empty directories
-    err = filepath.Walk(executionDir, func(path string, info os.FileInfo, err error) error {
-        if err != nil {
-            return err
-        }
+		return nil
+	})
 
-        if !info.IsDir() {
-            return nil
-        }
+	if err != nil {
+		return fmt.Errorf("failed to walk directory: %w", err)
+	}
 
-        // Skip the root directory
-        if path == executionDir {
-            return nil
-        }
+	// Sort paths by length in reverse order to handle nested paths first
+	sort.Slice(toRemove, func(i, j int) bool {
+		return len(toRemove[i]) > len(toRemove[j])
+	})
 
-        // Check if directory is empty
-        entries, err := os.ReadDir(path)
-        if err != nil {
-            return err
-        }
+	// Remove files and directories
+	for _, path := range toRemove {
+		if err := os.RemoveAll(path); err != nil {
+			return fmt.Errorf("failed to remove %s: %w", path, err)
+		}
+	}
 
-        if len(entries) == 0 {
-            if err := os.Remove(path); err != nil {
-                return fmt.Errorf("failed to remove empty directory %s: %w", path, err)
-            }
-        }
+	// Clean up any remaining empty directories
+	err = filepath.Walk(executionDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
 
-        return nil
-    })
+		if !info.IsDir() || path == executionDir {
+			return nil
+		}
 
-    return err
+		entries, err := os.ReadDir(path)
+		if err != nil {
+			return err
+		}
+
+		if len(entries) == 0 {
+			if err := os.Remove(path); err != nil {
+				return fmt.Errorf("failed to remove empty directory %s: %w", path, err)
+			}
+		}
+
+		return nil
+	})
+
+	return err
 }

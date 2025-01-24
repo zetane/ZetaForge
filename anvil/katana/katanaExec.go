@@ -192,8 +192,6 @@ func (t *Task) Execute(args Dict, executionDir string, opts Options) (Dict, erro
 		for _, v := range data {
 			outputs[key] = v
 		}
-
-		os.Remove(filepath.Join(TMPPATH, value) + ".txt")
 	}
 
 	return outputs, nil
