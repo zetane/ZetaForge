@@ -49,46 +49,81 @@ func ensureUV() error {
 	return nil
 }
 
-// SetupUVEnvironment creates and configures a UV virtual environment
-func setupUVEnvironment(scriptDir string, opts Options) error {
-	uvEnvPath := filepath.Join(scriptDir, ".venv")
+func getBinPath(venvPath string) string {
+	if runtime.GOOS == "windows" {
+		return filepath.Join(venvPath, "Scripts")
+	}
+	return filepath.Join(venvPath, "bin")
+}
 
-	// Create UV environment if it does not exist
-	if _, err := os.Stat(uvEnvPath); os.IsNotExist(err) {
-		// Create the venv
-		cmd := exec.Command("uv", "venv", uvEnvPath)
-		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("failed to create UV environment: %w", err)
-		}
+func getPythonExecutable(venvPath string) string {
+	if runtime.GOOS == "windows" {
+		return filepath.Join(getBinPath(venvPath), "python.exe")
+	}
+	return filepath.Join(getBinPath(venvPath), "python")
+}
 
-		// Generate lockfile first
-		cmd = exec.Command("uv", "pip", "compile", "requirements.txt", "-o", "requirements.txt")
-		cmd.Dir = scriptDir
-		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("failed to compile requirements: %w", err)
-		}
+func getPathSeparator() string {
+	if runtime.GOOS == "windows" {
+		return ";"
+	}
+	return ":"
+}
+
+type UVCommand struct {
+	Cmd           *exec.Cmd
+	AdditionalEnv []string
+}
+
+func runWithUV(blockId string, scriptDir string, opts Options) UVCommand {
+	// Create the venv
+	venvPath := filepath.Join(scriptDir, ".venv")
+	cmd := exec.Command("uv", "venv", "--allow-existing")
+	cmd.Dir = scriptDir
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Fatalf("failed to create UV environment: %v\nOutput: %s", err, string(out))
 	}
 
 	// Check for requirements.txt
 	requirementsFile := filepath.Join(scriptDir, "requirements.txt")
+	log.Printf("[%v] Installing requirements.txt in %v", blockId, requirementsFile)
 	if _, err := os.Stat(requirementsFile); err == nil {
-		var cmd *exec.Cmd
-		cmd = exec.Command("uv", "pip", "install", "-r", requirementsFile)
+		// Use the specific venv path for pip install
+		cmd = exec.Command("uv", "pip", "install", "-r", "requirements.txt")
 		cmd.Dir = scriptDir
-		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("failed to install dependencies: %w", err)
+		out, err := cmd.CombinedOutput()
+		log.Printf("[%v] Installed: %v", blockId, string(out))
+		if err != nil {
+			log.Fatalf("failed to install dependencies: %v\nOutput: %s", err, string(out))
 		}
 	} else {
 		fmt.Println("No requirements.txt found. Skipping dependency installation.")
 	}
 
-	return nil
-}
-
-// RunWithUV runs a python script using the UV environment
-func runWithUV(blockId string, scriptDir string, opts Options) *exec.Cmd {
-	cmd := exec.Command("uv", "run", "entrypoint.py", blockId, opts.Mode)
+	// Set up the final command with the specific virtual environment
+	cmd = exec.Command("uv", "run", "entrypoint.py", blockId, opts.Runner)
 	cmd.Dir = scriptDir
 
-	return cmd
+	// Prepare additional environment variables
+	newPath := getBinPath(venvPath) + getPathSeparator() + os.Getenv("PATH")
+	var additionalEnv []string
+
+	// Windows uses different environment variable names
+	if runtime.GOOS == "windows" {
+		additionalEnv = []string{
+			fmt.Sprintf("VIRTUAL_ENV=%s", venvPath),
+			fmt.Sprintf("Path=%s", newPath), // Windows uses 'Path' instead of 'PATH'
+		}
+	} else {
+		additionalEnv = []string{
+			fmt.Sprintf("VIRTUAL_ENV=%s", venvPath),
+			fmt.Sprintf("PATH=%s", newPath),
+		}
+	}
+
+	return UVCommand{
+		Cmd:           cmd,
+		AdditionalEnv: additionalEnv,
+	}
 }

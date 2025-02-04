@@ -1,7 +1,7 @@
 package katana
 
 import (
-	"crypto/sha256"
+	"crypto/sha1"
 	"fmt"
 	"io"
 	"os"
@@ -9,37 +9,44 @@ import (
 	"sort"
 )
 
+var skipPatterns []string
+var skipExact = map[string]bool{
+	"history":       true,
+	".git":          true,
+	".gitignore":    true,
+	".DS_Store":     true,
+	"__pycache__":   true,
+	"node_modules":  true,
+	".env":          true,
+	".vscode":       true,
+	".idea":         true,
+	".pytest_cache": true,
+	".coverage":     true,
+	".venv":         true,
+}
+
+func init() {
+	skipPatterns = []string{
+		"*.pyc",
+		"*.pyo",
+		"*.pyd",
+		"*.so",
+		"*.dll",
+		"*.class",
+	}
+}
+
 func shouldSkipPath(path string) bool {
-	// Get the base name of the path
 	base := filepath.Base(path)
 
-	// List of paths/patterns to skip
-	skipPaths := []string{
-		"history",       // Skip history folder
-		".git",          // Skip git folder
-		".gitignore",    // Skip git files
-		".DS_Store",     // Skip Mac OS system files
-		"__pycache__",   // Skip Python cache
-		"node_modules",  // Skip node modules
-		".env",          // Skip environment files
-		".vscode",       // Skip VS Code settings
-		".idea",         // Skip IntelliJ settings
-		"*.pyc",         // Skip Python compiled files
-		"*.pyo",         // Skip Python optimized files
-		"*.pyd",         // Skip Python dynamic libraries
-		"*.so",          // Skip shared objects
-		"*.dll",         // Skip DLL files
-		"*.class",       // Skip Java class files
-		".pytest_cache", // Skip pytest cache
-		".coverage",     // Skip coverage files
+	// Check exact matches first (faster)
+	if skipExact[base] {
+		return true
 	}
 
-	// Check if the path matches any of the skip patterns
-	for _, skip := range skipPaths {
-		if matched, _ := filepath.Match(skip, base); matched {
-			return true
-		}
-		if base == skip {
+	// Then check patterns
+	for _, pattern := range skipPatterns {
+		if matched, _ := filepath.Match(pattern, base); matched {
 			return true
 		}
 	}
@@ -48,18 +55,15 @@ func shouldSkipPath(path string) bool {
 }
 
 func copyDirectory(sourceDir, targetDir string) error {
-	// Create the target directory if it doesn't exist
 	if err := os.MkdirAll(targetDir, 0755); err != nil {
 		return fmt.Errorf("failed to create target directory: %w", err)
 	}
 
-	// Walk through the source directory
 	return filepath.Walk(sourceDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
-		// Skip if path should be ignored
 		if shouldSkipPath(path) {
 			if info.IsDir() {
 				return filepath.SkipDir
@@ -67,52 +71,43 @@ func copyDirectory(sourceDir, targetDir string) error {
 			return nil
 		}
 
-		// Get the relative path from the source directory
 		relPath, err := filepath.Rel(sourceDir, path)
 		if err != nil {
 			return fmt.Errorf("failed to get relative path: %w", err)
 		}
 
-		// Create the target path
 		targetPath := filepath.Join(targetDir, relPath)
 
 		if info.IsDir() {
-			// Create directory in target
 			return os.MkdirAll(targetPath, info.Mode())
 		} else {
-			// Copy file
 			return copyFile(path, targetPath)
 		}
 	})
 }
 
 func copyFile(sourcePath, targetPath string) error {
-	// Skip if the file should be ignored
 	if shouldSkipPath(sourcePath) {
 		return nil
 	}
 
-	// Open the source file
 	source, err := os.Open(sourcePath)
 	if err != nil {
 		return fmt.Errorf("failed to open source file: %w", err)
 	}
 	defer source.Close()
 
-	// Create the target file
 	target, err := os.Create(targetPath)
 	if err != nil {
 		return fmt.Errorf("failed to create target file: %w", err)
 	}
 	defer target.Close()
 
-	// Copy the contents
-	_, err = io.Copy(target, source)
-	if err != nil {
+	buf := make([]byte, 32*1024)
+	if _, err := io.CopyBuffer(target, source, buf); err != nil {
 		return fmt.Errorf("failed to copy file contents: %w", err)
 	}
 
-	// Copy file permissions
 	sourceInfo, err := os.Stat(sourcePath)
 	if err != nil {
 		return fmt.Errorf("failed to get source file info: %w", err)
@@ -126,7 +121,6 @@ type fileInfo struct {
 	hash   string
 }
 
-// getDirectoryContents returns a map of files to their content hashes
 func getDirectoryContents(dir string) (map[string]fileInfo, error) {
 	contents := make(map[string]fileInfo)
 	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
@@ -134,23 +128,35 @@ func getDirectoryContents(dir string) (map[string]fileInfo, error) {
 			return err
 		}
 
+		// Cache the FileInfo
+		if info == nil {
+			info, err = os.Lstat(path)
+			if err != nil {
+				return err
+			}
+		}
+
 		relPath, err := filepath.Rel(dir, path)
 		if err != nil {
 			return err
 		}
 
-		// Skip the root directory itself
 		if relPath == "." {
 			return nil
 		}
 
-		// For directories, just mark that they exist
+		if shouldSkipPath(path) {
+			if info.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
 		if info.IsDir() {
 			contents[relPath] = fileInfo{exists: true}
 			return nil
 		}
 
-		// For files, compute hash
 		hash, err := getFileHash(path)
 		if err != nil {
 			return err
@@ -162,14 +168,30 @@ func getDirectoryContents(dir string) (map[string]fileInfo, error) {
 	return contents, err
 }
 
-// getFileHash returns a hash of the file contents
 func getFileHash(path string) (string, error) {
-	data, err := os.ReadFile(path)
+	file, err := os.Open(path)
 	if err != nil {
 		return "", err
 	}
-	hash := sha256.Sum256(data)
-	return fmt.Sprintf("%x", hash), nil
+	defer file.Close()
+
+	hash := sha1.New()
+	buf := make([]byte, 32*1024)
+
+	for {
+		n, err := file.Read(buf)
+		if n > 0 {
+			hash.Write(buf[:n])
+		}
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return fmt.Sprintf("%x", hash.Sum(nil)), nil
 }
 
 // shouldKeepFile determines if a file should be kept based on original and current state
@@ -199,15 +221,16 @@ var patternsToClean = []string{
 	// Add any other patterns here
 }
 
-// cleanup removes unchanged files and specified patterns while preserving new and modified files
-func cleanup(executionDir string, originalFiles map[string]fileInfo) error {
+func getFileChanges(executionDir string, originalFiles map[string]fileInfo) (map[string]string, map[string]string, error) {
+	changedOrNew := make(map[string]string) // map[relativePath]absolutePath
+	unchanged := make(map[string]string)    // map[relativePath]absolutePath
+
 	// Get current state
 	currentFiles, err := getDirectoryContents(executionDir)
 	if err != nil {
-		return fmt.Errorf("failed to get current directory contents: %w", err)
+		return nil, nil, fmt.Errorf("failed to get current directory contents: %w", err)
 	}
 
-	var toRemove []string
 	err = filepath.Walk(executionDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -230,25 +253,39 @@ func cleanup(executionDir string, originalFiles map[string]fileInfo) error {
 				return err
 			}
 			if matched || info.Name() == pattern {
+				unchanged[relPath] = path
 				if info.IsDir() {
-					toRemove = append(toRemove, path)
 					return filepath.SkipDir
 				}
-				toRemove = append(toRemove, path)
 				return nil
 			}
 		}
 
-		// If not a pattern to clean, check if it's an unchanged original file
-		if !info.IsDir() && !shouldKeepFile(relPath, originalFiles, currentFiles) {
-			toRemove = append(toRemove, path)
+		// If not a pattern to clean, check if it's changed or unchanged
+		if !info.IsDir() {
+			if shouldKeepFile(relPath, originalFiles, currentFiles) {
+				changedOrNew[relPath] = path
+			} else {
+				unchanged[relPath] = path
+			}
 		}
 
 		return nil
 	})
 
 	if err != nil {
-		return fmt.Errorf("failed to walk directory: %w", err)
+		return nil, nil, fmt.Errorf("failed to walk directory: %w", err)
+	}
+
+	return changedOrNew, unchanged, nil
+}
+
+// cleanup removes unchanged files and specified patterns
+func cleanup(unchangedFiles map[string]string) error {
+	// Convert map to slice for sorting
+	toRemove := make([]string, 0, len(unchangedFiles))
+	for _, absPath := range unchangedFiles {
+		toRemove = append(toRemove, absPath)
 	}
 
 	// Sort paths by length in reverse order to handle nested paths first
@@ -263,29 +300,58 @@ func cleanup(executionDir string, originalFiles map[string]fileInfo) error {
 		}
 	}
 
-	// Clean up any remaining empty directories
-	err = filepath.Walk(executionDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
+	return nil
+}
+
+// copyChangedFiles copies all changed or new files to a target directory
+func copyChangedFiles(targetDir string, changedFiles map[string]string) error {
+	if err := os.MkdirAll(targetDir, 0755); err != nil {
+		return fmt.Errorf("failed to create target directory: %w", err)
+	}
+
+	for relPath, sourcePath := range changedFiles {
+		targetPath := filepath.Join(targetDir, relPath)
+
+		// Create parent directories if they don't exist
+		targetParentDir := filepath.Dir(targetPath)
+		if err := os.MkdirAll(targetParentDir, 0755); err != nil {
+			return fmt.Errorf("failed to create directory structure for %s: %w", targetPath, err)
 		}
 
-		if !info.IsDir() || path == executionDir {
-			return nil
+		if err := copyFileAll(sourcePath, targetPath); err != nil {
+			return fmt.Errorf("failed to copy %s to %s: %w", sourcePath, targetPath, err)
 		}
+	}
 
-		entries, err := os.ReadDir(path)
-		if err != nil {
-			return err
-		}
+	return nil
+}
 
-		if len(entries) == 0 {
-			if err := os.Remove(path); err != nil {
-				return fmt.Errorf("failed to remove empty directory %s: %w", path, err)
-			}
-		}
+// Helper function to copy a single file
+func copyFileAll(src, dst string) error {
+	sourceFile, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer sourceFile.Close()
 
-		return nil
-	})
+	targetFile, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer targetFile.Close()
 
-	return err
+	if _, err := io.Copy(targetFile, sourceFile); err != nil {
+		return err
+	}
+
+	sourceInfo, err := os.Stat(src)
+	if err != nil {
+		return err
+	}
+
+	if err := os.Chmod(dst, sourceInfo.Mode()); err != nil {
+		return err
+	}
+
+	return os.Chtimes(dst, sourceInfo.ModTime(), sourceInfo.ModTime())
 }

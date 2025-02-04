@@ -50,11 +50,11 @@ type KeyValue struct {
 
 // Options configures how the execution runs
 type Options struct {
-	// Mode specifies the execution environment: "default", "uv", or "docker"
+	// Mode specifies the history: "full", "partial", or "prod"
 	Mode string
 
-	// What to do with the history
-	History bool
+	// Picks the runner: "docker", "uv", or "default"
+	Runner string
 
 	// Args contains parameter key-value pairs
 	Args []KeyValue
@@ -122,11 +122,11 @@ func prepareHistoryFolder(pipelinePath string) string {
 func execCommand(cmd string, execDir string, blockId string, args Dict, opts Options) error {
 	var command *exec.Cmd
 	var commandArgs []string
+	var additionalEnv []string
 
 	// Build the command arguments from the args
 	for key, value := range args {
 		commandArgs = append(commandArgs, key+"="+value)
-		fmt.Println(commandArgs)
 	}
 	// Convert the paths to absolute paths
 	absExecDir, err := filepath.Abs(execDir) // this should point to the block folder where computations.py is located
@@ -139,7 +139,7 @@ func execCommand(cmd string, execDir string, blockId string, args Dict, opts Opt
 		log.Fatalf("Failed to get absolute path for history subfolder: %v", err)
 	}
 
-	if opts.Mode == "docker" {
+	if opts.Runner == "docker" {
 		// Mount the block folder to ensure Docker has access to computations.py
 		directoryMerkle, _ := computeDirectoryMerkleTree(absExecDir)
 		dockerImage := filepath.Base(absExecDir) + ":" + directoryMerkle.Hash
@@ -148,9 +148,11 @@ func execCommand(cmd string, execDir string, blockId string, args Dict, opts Opt
 			"-v", absExecDir+":/app",
 			dockerImage,
 			"python", "/app/entrypoint.py", // Execute entrypoint.py inside Docker
-			opts.Mode)
-	} else if opts.Mode == "uv" {
-		command = runWithUV(blockId, absExecDir, opts)
+			opts.Runner)
+	} else if opts.Runner == "uv" {
+		uvCmd := runWithUV(blockId, absExecDir, opts)
+		command = uvCmd.Cmd
+		additionalEnv = uvCmd.AdditionalEnv
 	} else {
 		command = exec.Command(cmd)
 	}
@@ -160,18 +162,18 @@ func execCommand(cmd string, execDir string, blockId string, args Dict, opts Opt
 
 	// Set environment variables
 	command.Env = os.Environ()
+	command.Env = append(command.Env, additionalEnv...)
 	command.Env = append(command.Env, "_blockid_="+blockId)
 
 	// Execute the command and capture output
 	output, err := command.CombinedOutput()
-	log.Println("Output: ", string(output))
+	log.Printf("[%v] Output: %v", blockId, string(output))
 	return err
 }
 
 func (t *Task) Execute(args Dict, executionDir string, opts Options) (Dict, error) {
 	inputs := make(Dict)
 	for key, value := range t.MapIn {
-		fmt.Println(key, value)
 		inputs[value] = args[key]
 	}
 
@@ -181,8 +183,9 @@ func (t *Task) Execute(args Dict, executionDir string, opts Options) (Dict, erro
 		return outputs, err
 	}
 
-	for key, value := range t.MapOut {
-		bytes, err := os.ReadFile(filepath.Join(executionDir, t.Name, value) + ".txt")
+	for key, _ := range t.MapOut {
+		fullName := filepath.Join(executionDir, t.Name, key)
+		bytes, err := os.ReadFile(fullName + ".txt")
 
 		if err != nil {
 			return outputs, err
@@ -198,6 +201,7 @@ func (t *Task) Execute(args Dict, executionDir string, opts Options) (Dict, erro
 }
 
 func deployTask(pipeline *zjson.Pipeline, executionDir string, opts Options) (Execution, func()) {
+	//ctx, cancel := context.WithCancel(context.Background())
 	tasks := make(map[string]*Task)
 	inputs := make(map[string]*Param)
 	outputs := make(map[string]<-chan TaskMessage)
@@ -205,8 +209,8 @@ func deployTask(pipeline *zjson.Pipeline, executionDir string, opts Options) (Ex
 	for name, block := range pipeline.Pipeline {
 		name := name
 		block := block
+		log.Printf("[%v] Deploying..", name)
 		blockPath := filepath.Join(executionDir, name)
-		blockId := block.Information.Id
 		cmd := block.Action.Command.Exec
 		var blockExecDir string
 		if block.Action.Container.Image != "" {
@@ -226,14 +230,8 @@ func deployTask(pipeline *zjson.Pipeline, executionDir string, opts Options) (Ex
 			// TODO: More robust handling of Command vs Container
 			// specifically around uv vs docker modes
 			// e.g. why do we have an entrypoint.py if the user is giving the command?
-			if opts.Mode == "uv" {
-				err := setupUVEnvironment(blockPath, opts)
-				if err != nil {
-					log.Fatalf("Unable to setup UV environment for %v", blockPath)
-				}
-			}
 			tasks[name] = &Task{Name: name, Exec: func(args Dict) error {
-				return execCommand(cmd, blockExecDir, blockId, args, opts)
+				return execCommand(cmd, blockExecDir, name, args, opts)
 			}}
 		} else if len(block.Action.Parameters) > 0 {
 			// Iterate over block parameters
@@ -262,7 +260,7 @@ func deployTask(pipeline *zjson.Pipeline, executionDir string, opts Options) (Ex
 			}
 			// fmt.Println("writing entrypoint to :", name)
 			tasks[name] = &Task{Name: name, Exec: func(args Dict) error {
-				return execCommand(cmd, blockExecDir, blockId, args, opts)
+				return execCommand(cmd, blockExecDir, name, args, opts)
 			}}
 		} else {
 			log.Fatal("Unknown block")
@@ -297,11 +295,11 @@ func deployTask(pipeline *zjson.Pipeline, executionDir string, opts Options) (Ex
 					task.MapOut[name+label] = block.Information.Id + "-" + label
 				}
 			}
-			log.Printf("Task: %v", task)
 		}
 	}
 
 	for _, task := range tasks {
+		log.Printf("[%v] Running task..", task.Name)
 		go runTask(task, executionDir, opts)
 	}
 
@@ -340,45 +338,41 @@ func deployTask(pipeline *zjson.Pipeline, executionDir string, opts Options) (Ex
 func runTask(task *Task, executionDir string, opts Options) {
 	args := make(Dict, len(task.In))
 
-	for {
-		var executionError error // initially (0x0 , 0x0)
-		for i := 0; i < len(task.In); i++ {
-			//fmt.Print("\nin run task for task: ", task.Name, "\tCurrent Task.in: ", task.In[i])
-			arg, ok := <-task.In[i]
-			//fmt.Println("\t>>ARG , OK: ", arg, ok)
-			if !ok {
-				for _, next := range task.Out {
-					close(next)
-				}
-				return
-			}
-			maps.Copy(args, arg.Dict)
-
-			if arg.Err != nil {
-				executionError = arg.Err
-			}
-		}
-
-		if executionError != nil {
+	// Only execute once
+	var executionError error
+	for i := 0; i < len(task.In); i++ {
+		arg, ok := <-task.In[i]
+		if !ok {
 			for _, next := range task.Out {
-				next <- TaskMessage{Err: executionError}
+				close(next)
 			}
-
-			continue
+			return
 		}
+		maps.Copy(args, arg.Dict)
 
-		dict, err := task.Execute(args, executionDir, opts)
-		// fmt.Println("Executed the task: ", task.Name)
-
-		if err != nil {
-			err = fmt.Errorf("\n\ntask %s: %w", task.Name, err)
+		if arg.Err != nil {
+			executionError = arg.Err
 		}
+	}
 
-		message := TaskMessage{Dict: dict, Err: err}
-
+	if executionError != nil {
 		for _, next := range task.Out {
-			next <- message
+			next <- TaskMessage{Err: executionError}
 		}
+		return // Exit after sending error
+	}
+
+	dict, err := task.Execute(args, executionDir, opts)
+
+	if err != nil {
+		err = fmt.Errorf("\n\ntask %s: %w", task.Name, err)
+	}
+
+	message := TaskMessage{Dict: dict, Err: err}
+
+	// Send to all outputs and exit
+	for _, next := range task.Out {
+		next <- message
 	}
 }
 
@@ -494,24 +488,25 @@ func Run(opts Options) error {
 	}
 
 	if opts.Verbose {
-		log.Printf("Starting katana execution in %s mode\n", opts.Mode)
-		log.Printf("Working directory: %s\n", opts.WorkingDir)
+		log.Printf("Starting katana execution with runner %s\n", opts.Runner)
 	}
 
-	executionDir, pipeline, err := setupExecution(opts)
+	executionDir, fullHistoryDir, pipeline, err := setupExecution(opts)
 	if err != nil {
 		log.Fatalf("Failed to setup execution: %v", err)
 	}
 
 	// Get the initial state of the execution directory
+	log.Println("Reading execution dir..")
 	originalFiles, err := getDirectoryContents(executionDir)
 	if err != nil {
 		return fmt.Errorf("failed to get initial directory contents: %w", err)
 	}
 
 	// Run the pipeline
+	log.Println("Running pipeline..")
 	var runErr error
-	switch opts.Mode {
+	switch opts.Runner {
 	case "docker":
 		dockerImageName := "katana-" + pipeline.Id
 		runDocker(opts.PipelinePath, dockerImageName, opts)
@@ -527,9 +522,20 @@ func Run(opts Options) error {
 	}
 
 	// Check history toggle, if we don't want history, purge copied files
-	if runErr == nil && !opts.History {
-		if err := cleanup(executionDir, originalFiles); err != nil {
-			return fmt.Errorf("failed to cleanup directory: %w", err)
+	if runErr == nil {
+		changedFiles, unchangedFiles, err := getFileChanges(executionDir, originalFiles)
+		if err != nil {
+			log.Fatalf("Failed to identify file changes: %v", err)
+		}
+		if opts.Mode == "partial" {
+			if err := cleanup(unchangedFiles); err != nil {
+				return fmt.Errorf("failed to cleanup directory: %w", err)
+			}
+		}
+		if opts.Mode == "prod" {
+			if err := copyChangedFiles(fullHistoryDir, changedFiles); err != nil {
+				log.Fatalf("Failed to copy changed files: %v", err)
+			}
 		}
 	}
 

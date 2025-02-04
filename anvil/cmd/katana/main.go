@@ -18,24 +18,28 @@ Usage:
   katana [flags] <pipeline-directory> [param:value ...]
 
 Description:
-  Katana executes computational graphs defined in pipeline.json files. It can run in
-  three different modes:
+  Katana executes computational graphs defined in pipeline.json files. It can run
+  with three different executors:
     - default: Uses system dependencies (python, libraries, etc.)
     - uv: Uses uv to manage Python virtual environments and dependencies
     - docker: Containerizes the execution using Docker
 
   By default, Katana is immutable and will copy your pipeline to a history folder and
-  execute in that folder. You can preserve full history via the -history flag.
+  execute in that folder. You can preserve only partial history with -mode partial.
+  You can run in the working directory and have no immutability with -mode prod.
 
 Examples:
   # Run a pipeline using system dependencies
   katana ./my-pipeline input:data.csv
 
   # Run with uv for dependency management
-  katana -mode uv ./my-pipeline input:data.csv
+  katana -runner uv ./my-pipeline input:data.csv
+
+  # Run with uv in production
+  katana -runner uv -mode prod ./my-pipeline input:data.csv
 
   # Run in Docker mode
-  katana -mode docker ./my-pipeline input:data.csv
+  katana -runner docker ./my-pipeline input:data.csv
 
 Parameters:
   <pipeline-directory>    Directory containing pipeline.json and related files
@@ -44,8 +48,8 @@ Parameters:
 Flags:`
 
 type options struct {
+	runner     string
 	mode       string
-	history    bool
 	verbose    bool
 	noCache    bool
 	workingDir string
@@ -56,8 +60,8 @@ func main() {
 	opts := options{}
 
 	// Define flags
-	flag.StringVar(&opts.mode, "mode", "default", "Execution mode: default, uv, or docker")
-	flag.BoolVar(&opts.history, "history", false, "Preserve full history of runs")
+	flag.StringVar(&opts.runner, "runner", "default", "Execution mode: default, uv, or docker")
+	flag.StringVar(&opts.mode, "mode", "full", "Preserve full history of runs")
 	flag.BoolVar(&opts.verbose, "verbose", false, "Enable verbose logging")
 	flag.BoolVar(&opts.noCache, "no-cache", false, "Disable caching (applies to uv and docker modes)")
 	flag.StringVar(&opts.workingDir, "work-dir", "", "Custom working directory (default: /tmp/katana)")
@@ -77,9 +81,9 @@ func main() {
 	}
 
 	// Validate mode
-	validModes := map[string]bool{"default": true, "uv": true, "docker": true}
+	validModes := map[string]bool{"full": true, "partial": true, "prod": true}
 	if !validModes[opts.mode] {
-		log.Fatalf("Invalid mode: %s. Must be one of: default, uv, docker", opts.mode)
+		log.Fatalf("Invalid mode: %s. Must be one of: full, partial, prod", opts.mode)
 	}
 
 	// Need at least the pipeline directory
@@ -107,7 +111,7 @@ func main() {
 	// Set up execution options
 	execOpts := katana.Options{
 		Mode:         opts.mode,
-		History:      opts.history,
+		Runner:       opts.runner,
 		Args:         argsKeyVal,
 		PipelinePath: pipelinePath,
 		Verbose:      opts.verbose,

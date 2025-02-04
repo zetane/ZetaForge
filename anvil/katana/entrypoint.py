@@ -16,7 +16,6 @@ def main():
     args_dict = {}
     for arg in sys.argv[3:]:
         key, value = arg.split('=')
-        print(key, value)
         if value.isdigit():
             args_dict[key] = int(value)
         else:
@@ -25,18 +24,12 @@ def main():
             except ValueError:
                 args_dict[key] = str(value)  # Leave as string if conversion fails
 
-    print("Args: ", args_dict)
     args_dict_copy = args_dict.copy()
 
     if(sys.argv[2] == "docker"):
         for key, value in args_dict_copy.items():
             if "\\" in str(value):  # Check if value is an absolute path
-                print("CHECKED")
                 args_dict_copy[key] = value.split("\\")[-1]  # Extract the last part of the path (the file name)
-
-    # Ensure images parameter is a Python list (if it's passed as a string)
-    if 'images' in args_dict_copy and isinstance(args_dict_copy['images'], str):
-        args_dict_copy['images'] = json.loads(args_dict_copy['images'])
 
     # Fetch outputs from pipeline.json and get the corresponding parameters
     for key in inspect.signature(compute).parameters.keys():
@@ -52,7 +45,7 @@ def main():
     outputs = compute(*params)
 
     for key, value in outputs.items():
-        output_file_path = os.path.join(f"{block_id}-{key}.txt")
+        output_file_path = os.path.join(f"{block_id}{key}.txt")
 
         with open(output_file_path, "w") as file:
             file.write(json.dumps({key: value}))

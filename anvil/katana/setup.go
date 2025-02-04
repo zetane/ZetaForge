@@ -4,6 +4,7 @@ package katana
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"server/zjson"
@@ -72,50 +73,60 @@ func processInputs(pipeline *zjson.Pipeline, args []KeyValue, inputMappings map[
 	return nil
 }
 
-func setupExecution(opts Options) (string, *zjson.Pipeline, error) {
+func setupExecution(opts Options) (string, string, *zjson.Pipeline, error) {
 	// Create execution directory
+	log.Println("Starting setup..")
 	historyDir := filepath.Join(opts.PipelinePath, "history")
 	timestamp := time.Now().Format("2006-01-02_15-04-05")
-	executionDir := filepath.Join(historyDir, timestamp)
-	if err := os.MkdirAll(executionDir, os.ModePerm); err != nil {
-		return "", nil, fmt.Errorf("failed to create execution directory: %w", err)
+	fullHistory := filepath.Join(historyDir, timestamp)
+	executionDir := fullHistory
+	if err := os.MkdirAll(fullHistory, os.ModePerm); err != nil {
+		return "", "", nil, fmt.Errorf("failed to create execution directory: %w", err)
 	}
+	log.Printf("Wrote history folder to %v", fullHistory)
 
 	// Read and parse pipeline
 	data, err := os.ReadFile(filepath.Join(opts.PipelinePath, "pipeline.json"))
 	if err != nil {
-		return "", nil, fmt.Errorf("failed to read pipeline: %w", err)
+		return "", "", nil, fmt.Errorf("failed to read pipeline: %w", err)
 	}
 
 	var pipeline zjson.Pipeline
 	if err := json.Unmarshal(data, &pipeline); err != nil {
-		return "", nil, fmt.Errorf("failed to parse pipeline: %w", err)
+		return "", "", nil, fmt.Errorf("failed to parse pipeline: %w", err)
 	}
 
 	// Copy pipeline files to execution directory
-	if err := copyDirectory(opts.PipelinePath, executionDir); err != nil {
-		return "", nil, fmt.Errorf("failed to copy pipeline files: %w", err)
+	if opts.Mode == "prod" {
+		// Dangerously set our dir to the pipeline dir
+		executionDir = opts.PipelinePath
+	} else {
+		if err := copyDirectory(opts.PipelinePath, executionDir); err != nil {
+			return "", "", nil, fmt.Errorf("failed to copy pipeline files: %w", err)
+		}
 	}
 
 	// Build input mappings
 	inputMappings := buildInputMappings(&pipeline)
 
 	// Process inputs and update pipeline
+	log.Println("Processing inputs..")
 	if err := processInputs(&pipeline, opts.Args, inputMappings, executionDir); err != nil {
-		return "", nil, fmt.Errorf("failed to process inputs: %w", err)
+		return "", "", nil, fmt.Errorf("failed to process inputs: %w", err)
 	}
 
 	// Write updated pipeline back to execution directory
 	updatedPipelineData, err := json.MarshalIndent(pipeline, "", "  ")
 	if err != nil {
-		return "", nil, fmt.Errorf("failed to marshal updated pipeline: %w", err)
+		return "", "", nil, fmt.Errorf("failed to marshal updated pipeline: %w", err)
 	}
 
-	if err := os.WriteFile(filepath.Join(executionDir, "pipeline.json"), updatedPipelineData, 0644); err != nil {
-		return "", nil, fmt.Errorf("failed to write updated pipeline: %w", err)
+	log.Println("Writing pipeline..")
+	if err := os.WriteFile(filepath.Join(fullHistory, "pipeline.json"), updatedPipelineData, 0644); err != nil {
+		return "", "", nil, fmt.Errorf("failed to write updated pipeline: %w", err)
 	}
 
-	return executionDir, &pipeline, nil
+	return executionDir, fullHistory, &pipeline, nil
 }
 
 // resolveAndVerifyPath converts a relative path to absolute and verifies the file exists
