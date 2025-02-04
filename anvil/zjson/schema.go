@@ -35,6 +35,11 @@ type Container struct {
 	CommandLine []string `json:"command_line"`
 }
 
+type Command struct {
+	Exec string `json:"exec"`
+	Dir  string `json:"dir,omitempty"`
+}
+
 type ResourceQuantity struct {
 	Request string `json:"request"`
 	Limit   string `json:"limit"`
@@ -52,6 +57,7 @@ type Resources struct {
 
 type Action struct {
 	Container  Container            `json:"container,omitempty"`
+	Command    Command              `json:"command,omitempty"` // commmand replaces docker, actual command,deer paremeter: if the command is empty, i
 	Pipeline   map[string]Block     `json:"pipeline,omitempty"`
 	Parameters map[string]Parameter `json:"parameters,omitempty"`
 	Resources  Resources            `json:"resources,omitempty"`
