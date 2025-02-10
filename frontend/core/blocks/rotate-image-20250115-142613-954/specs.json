@@ -1,0 +1,57 @@
+{
+    "information": {
+        "id": "rotate-image",
+        "name": "Rotate image",
+        "description": "Rotates an image by a specified number of degrees.\n\nParameters:\nimage_path (str): The file path to the image that needs to be rotated.\ndegrees (int): The number of degrees to rotate the image. Positive values rotate the image clockwise, while negative values rotate it counterclockwise.\n\nReturns:\ndict: A dictionary with the key 'rotated_image_path' and the value as the file path to the rotated image.",
+        "system_versions": [
+            "0.1"
+        ],
+        "block_version": "1.0",
+        "block_source": "core/blocks/rotate-image-20250115-142613-954",
+        "block_type": "compute"
+    },
+    "inputs": {
+        "image_path": {
+            "type": "file",
+            "connections": [],
+            "relays": []
+        },
+        "degrees": {
+            "type": "int",
+            "connections": [],
+            "relays": []
+        }
+    },
+    "outputs": {
+        "rotated_image_path": {
+            "type": "file",
+            "connections": [],
+            "relays": []
+        }
+    },
+    "action": {
+        "container": {
+            "image": "rotate-image",
+            "version": "latest",
+            "command_line": [
+                "python",
+                "entrypoint.py"
+            ]
+        }
+    },
+    "views": {
+        "node": {
+            "behavior": "modal",
+            "active": "True",
+            "title_bar": {
+                "background_color": "#228B22"
+            },
+            "preview": {},
+            "html": "",
+            "pos_x": "0",
+            "pos_y": "0",
+            "pos_z": "999"
+        }
+    },
+    "events": {}
+}
