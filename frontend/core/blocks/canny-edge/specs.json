@@ -2,8 +2,7 @@
   "information": {
     "id": "canny-edge",
     "name": "Canny Edge",
-    "description": "Computes the Canny edge detection on an image at various thresholds and saves the results.",
-    "block_version": "block version number",
+"description": "Applies Canny edge detection to an image over a range of threshold values.\n\nParameters:\nimage_path (str): The file path to the input image on which edge detection will be applied.\nrange_min (int): The minimum threshold value for the edge detection process.\nrange_max (int): The maximum threshold value for the edge detection process.\nstep (int): The step size to increment the threshold value for each iteration.\n\nReturns:\ndict: A dictionary containing the file paths of the processed images with edge detection applied, stored under the key 'image_paths'.",    "block_version": "block version number",
     "block_source": "core/blocks/canny-edge",
     "block_type": "compute",
     "system_versions": ["0.1"]

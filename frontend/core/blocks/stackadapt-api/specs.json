@@ -2,10 +2,8 @@
   "information": {
     "id": "stackadapt-api",
     "name": "Stack Adapt",
-    "description": "This block facilitates seamless integration with a StackAdapt account using their API, enabling secure authentication, efficient data retrieval, and streamlined interaction with StackAdapt's advertising and analytics platform.",
-    "system_versions": [
-      "0.1"
-    ],
+    "description": "Fetches and processes a GraphQL schema from a specified API, then saves the extracted schema fields into a CSV file.\n\nParameters:\n- api_url (str): The URL of the GraphQL API.\n- api_key (str): The API key for authentication with the API.\n- introspection_query (str): The GraphQL introspection query to retrieve the schema.\n- filename (str): The name of the CSV file where the schema data will be saved.\n\nReturns:\n- dict: A dictionary containing two keys:\n  - 'dataframe': A list of schema field details in dictionary format.\n  - 'csv_file': The file path where the schema data was saved.",
+    "system_versions": ["0.1"],
     "block_version": "block version number",
     "block_source": "core/blocks/stackadapt-api",
     "block_type": "compute"
@@ -42,11 +40,7 @@
     "container": {
       "image": "stackadapt-api",
       "version": "latest",
-      "command_line": [
-        "python",
-        "-u",
-        "entrypoint.py"
-      ]
+      "command_line": ["python", "-u", "entrypoint.py"]
     }
   },
   "views": {
@@ -62,16 +56,8 @@
       "pos_z": "999",
       "behavior": "modal",
       "order": {
-        "input": [
-          "api_url",
-          "api_key",
-          "introspection_query",
-          "filename"
-        ],
-        "output": [
-          "dataframe",
-          "csv_file"
-        ]
+        "input": ["api_url", "api_key", "introspection_query", "filename"],
+        "output": ["dataframe", "csv_file"]
       }
     }
   },

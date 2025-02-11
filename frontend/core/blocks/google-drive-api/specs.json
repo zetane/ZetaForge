@@ -2,10 +2,8 @@
   "information": {
     "id": "google-drive-api",
     "name": "Google Drive Api",
-    "description": "A block that provides the link between your google drive account to do CRUD operations.",
-    "system_versions": [
-      "0.1"
-    ],
+    "description": "This block fetches files or folders from Google Drive using the Google Drive API. It supports authenticated access and retrieves the names and IDs of specified item types.\n\n Inputs:\n- `item_type` (str): Specifies the type of items to fetch, either 'files' or 'folders'.\n\n Outputs:\n- `dict`: Contains `result_list` (list of dictionaries with item names and IDs) and `item_type` (the requested item type).",
+    "system_versions": ["0.1"],
     "block_version": "block version number",
     "block_source": "core/blocks/google-drive-api",
     "block_type": "compute"
@@ -38,11 +36,7 @@
     "container": {
       "image": "google-drive-api",
       "version": "Latest",
-      "command_line": [
-        "python",
-        "-u",
-        "entrypoint.py"
-      ]
+      "command_line": ["python", "-u", "entrypoint.py"]
     }
   },
   "views": {
