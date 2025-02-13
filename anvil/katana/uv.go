@@ -9,17 +9,69 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 )
 
-// ensureUV checks if uv is installed and installs it if not
-func ensureUV() error {
-	// First check if uv is already installed
-	if _, err := exec.LookPath("uv"); err == nil {
-		return nil // uv is already installed
+func ensureUV(uvPath string) (string, error) {
+	// If custom path is provided, check if uv exists there
+	if uvPath != "" {
+		absPath, err := filepath.Abs(uvPath)
+		if err != nil {
+			return "", fmt.Errorf("failed to resolve absolute path for %s: %v", uvPath, err)
+		}
+		if _, err := os.Stat(absPath); err == nil {
+			cmd := exec.Command(absPath, "--version")
+			if err := cmd.Run(); err == nil {
+				return absPath, nil // Custom uv path is valid and executable
+			}
+			return "", fmt.Errorf("provided uv binary at %s exists but is not executable", absPath)
+		}
+		return "", fmt.Errorf("provided uv binary not found at %s", absPath)
+	}
+
+	// On Windows, check common installation locations first
+	if runtime.GOOS == "windows" {
+		// Get LOCALAPPDATA path
+		localAppData := os.Getenv("LOCALAPPDATA")
+		if localAppData != "" {
+			commonPaths := []string{
+				filepath.Join(localAppData, "uv", "bin", "uv.exe"),
+				filepath.Join(localAppData, "Programs", "uv", "uv.exe"),
+			}
+
+			// Check each potential path
+			for _, path := range commonPaths {
+				if _, err := os.Stat(path); err == nil {
+					cmd := exec.Command(path, "--version")
+					if err := cmd.Run(); err == nil {
+						// Found a working UV installation, add its directory to PATH
+						uvDir := filepath.Dir(path)
+						currentPath := os.Getenv("PATH")
+						if !strings.Contains(currentPath, uvDir) {
+							os.Setenv("PATH", uvDir+string(os.PathListSeparator)+currentPath)
+						}
+						return path, nil
+					}
+				}
+			}
+		}
+
+		// Also check if UV is in the system PATH
+		cmd := exec.Command("where", "uv.exe")
+		if output, err := cmd.Output(); err == nil {
+			uvPath := strings.TrimSpace(strings.Split(string(output), "\n")[0]) // Take first match if multiple
+			if uvPath != "" {
+				return uvPath, nil // UV found in PATH
+			}
+		}
+	} else {
+		// Non-Windows systems just check PATH
+		if path, err := exec.LookPath("uv"); err == nil {
+			return path, nil
+		}
 	}
 
 	log.Println("uv not found, installing...")
-
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
 		cmd = exec.Command("powershell", "-ExecutionPolicy", "ByPass", "-c",
@@ -29,7 +81,6 @@ func ensureUV() error {
 			"curl -LsSf https://astral.sh/uv/install.sh | sh")
 	}
 
-	// Capture both stdout and stderr
 	var out bytes.Buffer
 	var stderr bytes.Buffer
 	cmd.Stdout = &out
@@ -37,16 +88,37 @@ func ensureUV() error {
 	cmd.Env = os.Environ()
 
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to install uv: %v\nstderr: %s", err, stderr.String())
+		return "", fmt.Errorf("failed to install uv: %v\nstderr: %s", err, stderr.String())
 	}
 
-	// Verify installation
-	if _, err := exec.LookPath("uv"); err != nil {
-		return fmt.Errorf("uv installation appeared to succeed but 'uv' command not found in PATH")
+	// After installation, find the binary path
+	var installedPath string
+	if runtime.GOOS == "windows" {
+		localAppData := os.Getenv("LOCALAPPDATA")
+		if localAppData != "" {
+			uvPath := filepath.Join(localAppData, "uv", "bin", "uv.exe")
+			if _, err := os.Stat(uvPath); err == nil {
+				uvDir := filepath.Dir(uvPath)
+				currentPath := os.Getenv("PATH")
+				if !strings.Contains(currentPath, uvDir) {
+					os.Setenv("PATH", uvDir+string(os.PathListSeparator)+currentPath)
+				}
+				installedPath = uvPath
+			}
+		}
 	}
 
-	log.Println("uv installed successfully")
-	return nil
+	// If we couldn't find the exact path after installation, try LookPath
+	if installedPath == "" {
+		var err error
+		installedPath, err = exec.LookPath("uv")
+		if err != nil {
+			return "", fmt.Errorf("uv installation appeared to succeed but 'uv' command not found in PATH")
+		}
+	}
+
+	log.Println("uv installed successfully at", installedPath)
+	return installedPath, nil
 }
 
 func getBinPath(venvPath string) string {
@@ -75,10 +147,10 @@ type UVCommand struct {
 	AdditionalEnv []string
 }
 
-func runWithUV(blockId string, scriptDir string, opts Options) UVCommand {
+func runWithUV(blockId string, scriptDir string, uvPath string, opts Options) UVCommand {
 	// Create the venv
 	venvPath := filepath.Join(scriptDir, ".venv")
-	cmd := exec.Command("uv", "venv", "--allow-existing")
+	cmd := exec.Command(uvPath, "venv", "--allow-existing")
 	cmd.Dir = scriptDir
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -90,7 +162,7 @@ func runWithUV(blockId string, scriptDir string, opts Options) UVCommand {
 	log.Printf("[%v] Installing requirements.txt in %v", blockId, requirementsFile)
 	if _, err := os.Stat(requirementsFile); err == nil {
 		// Use the specific venv path for pip install
-		cmd = exec.Command("uv", "pip", "install", "-r", "requirements.txt")
+		cmd = exec.Command(uvPath, "pip", "install", "-r", "requirements.txt")
 		cmd.Dir = scriptDir
 		out, err := cmd.CombinedOutput()
 		log.Printf("[%v] Installed: %v", blockId, string(out))
@@ -102,11 +174,12 @@ func runWithUV(blockId string, scriptDir string, opts Options) UVCommand {
 	}
 
 	// Set up the final command with the specific virtual environment
-	cmd = exec.Command("uv", "run", "entrypoint.py", blockId, opts.Runner)
+	cmd = exec.Command(uvPath, "run", "entrypoint.py", blockId, opts.Runner)
 	cmd.Dir = scriptDir
 
 	// Prepare additional environment variables
-	newPath := getBinPath(venvPath) + getPathSeparator() + os.Getenv("PATH")
+	uvDir := filepath.Dir(uvPath)
+	newPath := getBinPath(venvPath) + getPathSeparator() + uvDir + getPathSeparator() + os.Getenv("PATH")
 	var additionalEnv []string
 
 	// Windows uses different environment variable names

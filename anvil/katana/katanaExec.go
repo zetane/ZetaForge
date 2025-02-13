@@ -70,6 +70,8 @@ type Options struct {
 
 	// WorkingDir specifies a custom working directory (default: /tmp/katana)
 	WorkingDir string
+
+	UVPath string
 }
 
 func copyToHistoryFolder(historySubfolder string, filePaths []string) {
@@ -150,7 +152,7 @@ func execCommand(cmd string, execDir string, blockId string, args Dict, opts Opt
 			"python", "/app/entrypoint.py", // Execute entrypoint.py inside Docker
 			opts.Runner)
 	} else if opts.Runner == "uv" {
-		uvCmd := runWithUV(blockId, absExecDir, opts)
+		uvCmd := runWithUV(blockId, absExecDir, opts.UVPath, opts)
 		command = uvCmd.Cmd
 		additionalEnv = uvCmd.AdditionalEnv
 	} else {
@@ -444,7 +446,7 @@ func runLocalPipelineInDocker(pipelinePath string, historySubfolder string, opts
 	if err != nil {
 		log.Println("Error running docker pipeline:", err)
 	} else {
-		log.Println("COMPLETED:", result)
+		log.Println("Completed running", result)
 	}
 
 	release()
@@ -457,7 +459,7 @@ func runDefault(pipeline *zjson.Pipeline, executionDir string, opts Options) {
 	if err != nil {
 		log.Fatal(err)
 	} else {
-		log.Println("COMPLETED:", result)
+		log.Println("Completed running", result)
 	}
 
 	release()
@@ -512,7 +514,7 @@ func Run(opts Options) error {
 		runDocker(opts.PipelinePath, dockerImageName, opts)
 	case "uv":
 		log.Println("Running pipeline in uv mode")
-		if err := ensureUV(); err != nil {
+		if opts.UVPath, err = ensureUV(opts.UVPath); err != nil {
 			runErr = fmt.Errorf("failed to ensure uv is installed: %w", err)
 		} else {
 			runDefault(pipeline, executionDir, opts)
