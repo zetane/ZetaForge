@@ -1,6 +1,7 @@
 package katana
 
 import (
+	"bufio"
 	_ "embed"
 	"encoding/json"
 	"fmt"
@@ -167,10 +168,39 @@ func execCommand(cmd string, execDir string, blockId string, args Dict, opts Opt
 	command.Env = append(command.Env, additionalEnv...)
 	command.Env = append(command.Env, "_blockid_="+blockId)
 
-	// Execute the command and capture output
-	output, err := command.CombinedOutput()
-	log.Printf("[%v] Output: %v", blockId, string(output))
-	return err
+	// Set up pipes for stdout and stderr
+    stdout, err := command.StdoutPipe()
+    if err != nil {
+        return fmt.Errorf("failed to create stdout pipe: %v", err)
+    }
+    stderr, err := command.StderrPipe()
+    if err != nil {
+        return fmt.Errorf("failed to create stderr pipe: %v", err)
+    }
+
+    // Start the command
+    if err := command.Start(); err != nil {
+        return fmt.Errorf("failed to start command: %v", err)
+    }
+
+    // Create a scanner for stdout
+    go func() {
+        scanner := bufio.NewScanner(stdout)
+        for scanner.Scan() {
+            log.Printf("[%v] Output: %v", blockId, scanner.Text())
+        }
+    }()
+
+    // Create a scanner for stderr
+    go func() {
+        scanner := bufio.NewScanner(stderr)
+        for scanner.Scan() {
+            log.Printf("[%v] Error: %v", blockId, scanner.Text())
+        }
+    }()
+
+    // Wait for the command to complete
+    return command.Wait()
 }
 
 func (t *Task) Execute(args Dict, executionDir string, opts Options) (Dict, error) {

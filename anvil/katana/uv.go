@@ -187,11 +187,13 @@ func runWithUV(blockId string, scriptDir string, uvPath string, opts Options) UV
 		additionalEnv = []string{
 			fmt.Sprintf("VIRTUAL_ENV=%s", venvPath),
 			fmt.Sprintf("Path=%s", newPath), // Windows uses 'Path' instead of 'PATH'
+			"PYTHONUNBUFFERED=1",
 		}
 	} else {
 		additionalEnv = []string{
 			fmt.Sprintf("VIRTUAL_ENV=%s", venvPath),
 			fmt.Sprintf("PATH=%s", newPath),
+			"PYTHONUNBUFFERED=1",
 		}
 	}
 
