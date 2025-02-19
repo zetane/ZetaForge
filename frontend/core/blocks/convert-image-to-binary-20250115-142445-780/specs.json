@@ -1,0 +1,58 @@
+{
+    "information": {
+        "id": "convert-image-to-binary",
+        "name": "Convert image to binary",
+        "description": "Convert a grayscale image to a binary image using a specified threshold.\n\nParameters:\nimage_path (str): The file path to the grayscale image that needs to be converted to binary.\nthreshold (int): The threshold value used to convert the grayscale image to binary. Pixel values greater than or equal to this threshold will be set to white, otherwise black.\n\nReturns:\ndict: A dictionary with the key 'binary_image_path' and the value being the file path to the resulting binary image after conversion.",
+        "system_versions": [
+            "0.1"
+        ],
+        "block_version": "1.0",
+        "block_source": "core/blocks/convert-image-to-binary-20250115-142445-780",
+        "block_type": "compute"
+    },
+    "inputs": {
+        "image_path": {
+            "type": "file",
+            "connections": [],
+            "relays": []
+        },
+        "threshold": {
+            "type": "int",
+            "connections": [],
+            "relays": []
+        }
+    },
+    "outputs": {
+        "binary_image_path": {
+            "type": "str",
+            "connections": [],
+            "relays": []
+        }
+    },
+    "action": {
+        "container": {
+            "image": "convert-image-to-binary",
+            "version": "latest",
+            "command_line": [
+                "python",
+                "-u",
+                "entrypoint.py"
+            ]
+        }
+    },
+    "views": {
+        "node": {
+            "behavior": "modal",
+            "active": "True",
+            "title_bar": {
+                "background_color": "#228B22"
+            },
+            "preview": {},
+            "html": "",
+            "pos_x": "0",
+            "pos_y": "0",
+            "pos_z": "999"
+        }
+    },
+    "events": {}
+}

@@ -51,9 +51,7 @@ export default function AgentPrompt() {
         apiKey: openAIApiKey,
       };
 
-      console.log(data);
       const response = await callAgent.mutateAsync(data);
-      console.log(response);
 
       chatHistory.addPrompt(newPrompt, response);
       await fileBuffer.updateSave(response);
@@ -64,15 +62,14 @@ export default function AgentPrompt() {
       selectedPrompt.unselect();
       setTextArea("");
     } catch (error) {
-      console.log(error);
       setCompilationError({
         show: true,
         title: error.message,
         caption: error.data?.details,
       });
-    } finally {
-      setIsLoading(false);
     }
+
+    setIsLoading(false);
   };
 
   const handleKeyDown = (e) => {
