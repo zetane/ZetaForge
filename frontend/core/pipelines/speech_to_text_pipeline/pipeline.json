@@ -1,0 +1,321 @@
+{
+  "pipeline": {
+    "speech-to-text-kl3gss2epz68": {
+      "information": {
+        "id": "speech-to-text",
+        "name": "Speech To Text",
+        "description": "Template block for custom computations.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks/speech-to-text",
+        "block_type": "compute"
+      },
+      "inputs": {
+        "audio_path": {
+          "type": "str",
+          "connections": [
+            {
+              "block": "parameter-2fs0aai8msy0",
+              "variable": "parameter"
+            }
+          ]
+        },
+        "openai_api_key": {
+          "type": "str",
+          "connections": [
+            {
+              "block": "parameter-2esubd334in7",
+              "variable": "parameter"
+            }
+          ]
+        }
+      },
+      "outputs": {
+        "result": {
+          "type": "List[file]",
+          "connections": [
+            {
+              "block": "view-text-7g62wngr8km9",
+              "variable": "data_view"
+            }
+          ]
+        }
+      },
+      "action": {
+        "container": {
+          "image": "speech-to-text",
+          "version": "speech-to-text-kl3gss2epz68",
+          "command_line": [
+            "python",
+            "-u",
+            "entrypoint.py"
+          ]
+        },
+        "resources": {
+          "cpu": {
+            "request": "",
+            "limit": ""
+          },
+          "memory": {
+            "request": "",
+            "limit": ""
+          },
+          "gpu": {
+            "count": 0
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "True or False",
+          "title_bar": {
+            "background_color": "#6b2be0"
+          },
+          "preview": {},
+          "html": "",
+          "pos_x": "1315.891183556828",
+          "pos_y": "606.1790555366186",
+          "pos_z": "999",
+          "behavior": "modal",
+          "order": {
+            "input": [
+              "audio_path",
+              "openai_api_key"
+            ],
+            "output": [
+              "result"
+            ]
+          }
+        }
+      },
+      "events": {}
+    },
+    "parameter-2fs0aai8msy0": {
+      "information": {
+        "id": "parameter",
+        "name": "Parameter",
+        "description": "Parameter input.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks",
+        "block_type": "entry"
+      },
+      "inputs": {},
+      "outputs": {
+        "parameter": {
+          "type": "str",
+          "connections": [
+            {
+              "block": "speech-to-text-kl3gss2epz68",
+              "variable": "audio_path"
+            }
+          ]
+        }
+      },
+      "action": {
+        "container": {
+          "image": "",
+          "version": "",
+          "command_line": []
+        },
+        "parameters": {
+          "parameter": {
+            "value": "\"I_want_a_cat.wav\"",
+            "type": "str"
+          }
+        },
+        "resources": {
+          "cpu": {
+            "request": "",
+            "limit": ""
+          },
+          "memory": {
+            "request": "",
+            "limit": ""
+          },
+          "gpu": {
+            "count": 0
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "true",
+          "title_bar": {
+            "background_color": "#909090"
+          },
+          "preview": {},
+          "html": "<input type='text' value='abcd' parameters-parameter/>",
+          "pos_x": "575",
+          "pos_y": "398",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "input": [],
+            "output": [
+              "parameter"
+            ]
+          }
+        }
+      },
+      "events": {}
+    },
+    "parameter-2esubd334in7": {
+      "information": {
+        "id": "parameter",
+        "name": "Parameter",
+        "description": "Parameter input.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks",
+        "block_type": "entry"
+      },
+      "inputs": {},
+      "outputs": {
+        "parameter": {
+          "type": "str",
+          "connections": [
+            {
+              "block": "speech-to-text-kl3gss2epz68",
+              "variable": "openai_api_key"
+            }
+          ]
+        }
+      },
+      "action": {
+        "container": {
+          "image": "",
+          "version": "",
+          "command_line": []
+        },
+        "parameters": {
+          "parameter": {
+            "value": "",
+            "type": "str"
+          }
+        },
+        "resources": {
+          "cpu": {
+            "request": "",
+            "limit": ""
+          },
+          "memory": {
+            "request": "",
+            "limit": ""
+          },
+          "gpu": {
+            "count": 0
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "true",
+          "title_bar": {
+            "background_color": "#909090"
+          },
+          "preview": {},
+          "html": "<input type='text' value='abcd' parameters-parameter/>",
+          "pos_x": "594",
+          "pos_y": "749",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "input": [],
+            "output": [
+              "parameter"
+            ]
+          }
+        }
+      },
+      "events": {}
+    },
+    "view-text-7g62wngr8km9": {
+      "information": {
+        "id": "view-text",
+        "name": "View Text",
+        "description": "Text data viewer",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks/view-text",
+        "block_type": "view"
+      },
+      "inputs": {
+        "data_view": {
+          "type": "List[file]",
+          "connections": [
+            {
+              "block": "speech-to-text-kl3gss2epz68",
+              "variable": "result"
+            }
+          ]
+        }
+      },
+      "outputs": {
+        "html": {
+          "type": "file",
+          "connections": []
+        }
+      },
+      "action": {
+        "container": {
+          "image": "view-text",
+          "version": "view-text-7g62wngr8km9",
+          "command_line": [
+            "python",
+            "-u",
+            "entrypoint.py"
+          ]
+        },
+        "resources": {
+          "cpu": {
+            "request": "",
+            "limit": ""
+          },
+          "memory": {
+            "request": "",
+            "limit": ""
+          },
+          "gpu": {
+            "count": 0
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "True",
+          "title_bar": {
+            "background_color": "#D55908"
+          },
+          "preview": {
+            "active": "true"
+          },
+          "html": "",
+          "pos_x": "2078",
+          "pos_y": "616",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "output": [
+              "html"
+            ],
+            "input": [
+              "data_view"
+            ]
+          }
+        },
+        "mode": "modal"
+      },
+      "events": {}
+    }
+  },
+  "sink": "",
+  "build": "",
+  "name": "speech_to_text_pipeline",
+  "id": "pipeline-swelyoapnqqt"
+}

@@ -1,0 +1,321 @@
+{
+  "pipeline": {
+    "parameter-ujsaceiv9l8j": {
+      "information": {
+        "id": "parameter",
+        "name": "Parameter",
+        "description": "Parameter input.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks",
+        "block_type": "entry"
+      },
+      "inputs": {},
+      "outputs": {
+        "parameter": {
+          "type": "str",
+          "connections": [
+            {
+              "block": "audio-to-image-4oippnh3g1pu",
+              "variable": "audio_path"
+            }
+          ]
+        }
+      },
+      "action": {
+        "container": {
+          "image": "",
+          "version": "",
+          "command_line": []
+        },
+        "parameters": {
+          "parameter": {
+            "value": "\"I_want_a_cat.wav\"",
+            "type": "str"
+          }
+        },
+        "resources": {
+          "cpu": {
+            "request": "",
+            "limit": ""
+          },
+          "memory": {
+            "request": "",
+            "limit": ""
+          },
+          "gpu": {
+            "count": 0
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "true",
+          "title_bar": {
+            "background_color": "#909090"
+          },
+          "preview": {},
+          "html": "<input type='text' value='abcd' parameters-parameter/>",
+          "pos_x": "630",
+          "pos_y": "435",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "input": [],
+            "output": [
+              "parameter"
+            ]
+          }
+        }
+      },
+      "events": {}
+    },
+    "parameter-rvughst28ayf": {
+      "information": {
+        "id": "parameter",
+        "name": "Parameter",
+        "description": "Parameter input.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks",
+        "block_type": "entry"
+      },
+      "inputs": {},
+      "outputs": {
+        "parameter": {
+          "type": "str",
+          "connections": [
+            {
+              "block": "audio-to-image-4oippnh3g1pu",
+              "variable": "openai_api_key"
+            }
+          ]
+        }
+      },
+      "action": {
+        "container": {
+          "image": "",
+          "version": "",
+          "command_line": []
+        },
+        "parameters": {
+          "parameter": {
+            "value": " ",
+            "type": "str"
+          }
+        },
+        "resources": {
+          "cpu": {
+            "request": "",
+            "limit": ""
+          },
+          "memory": {
+            "request": "",
+            "limit": ""
+          },
+          "gpu": {
+            "count": 0
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "true",
+          "title_bar": {
+            "background_color": "#909090"
+          },
+          "preview": {},
+          "html": "<input type='text' value='abcd' parameters-parameter/>",
+          "pos_x": "646",
+          "pos_y": "765",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "input": [],
+            "output": [
+              "parameter"
+            ]
+          }
+        }
+      },
+      "events": {}
+    },
+    "view-images-c4ftry5wcdff": {
+      "information": {
+        "id": "view-images",
+        "name": "View Images",
+        "description": "Generates an HTML file with a unique name and returns the file name.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks/view-images",
+        "block_type": "view"
+      },
+      "inputs": {
+        "image_paths_view": {
+          "type": "List[file]",
+          "connections": [
+            {
+              "block": "audio-to-image-4oippnh3g1pu",
+              "variable": "result"
+            }
+          ]
+        }
+      },
+      "outputs": {
+        "html": {
+          "type": "file",
+          "connections": []
+        }
+      },
+      "action": {
+        "container": {
+          "image": "view-images",
+          "version": "view-images-c4ftry5wcdff",
+          "command_line": [
+            "python",
+            "-u",
+            "entrypoint.py"
+          ]
+        },
+        "resources": {
+          "cpu": {
+            "request": "",
+            "limit": ""
+          },
+          "memory": {
+            "request": "",
+            "limit": ""
+          },
+          "gpu": {
+            "count": 0
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "True or False",
+          "title_bar": {
+            "background_color": "#D55908"
+          },
+          "preview": {
+            "active": "true"
+          },
+          "html": "",
+          "pos_x": "1974.606007620282",
+          "pos_y": "668.6243366768621",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "input": [
+              "image_paths_view"
+            ],
+            "output": [
+              "html"
+            ]
+          }
+        },
+        "mode": "modal"
+      },
+      "events": {}
+    },
+    "audio-to-image-4oippnh3g1pu": {
+      "information": {
+        "id": "audio-to-image",
+        "name": "Audio To Image",
+        "description": "Template block for custom computations.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks/audio-to-image",
+        "block_type": "compute"
+      },
+      "inputs": {
+        "audio_path": {
+          "type": "str",
+          "connections": [
+            {
+              "block": "parameter-ujsaceiv9l8j",
+              "variable": "parameter"
+            }
+          ]
+        },
+        "openai_api_key": {
+          "type": "str",
+          "connections": [
+            {
+              "block": "parameter-rvughst28ayf",
+              "variable": "parameter"
+            }
+          ]
+        }
+      },
+      "outputs": {
+        "result": {
+          "type": "List[file]",
+          "connections": [
+            {
+              "block": "view-images-c4ftry5wcdff",
+              "variable": "image_paths_view"
+            }
+          ]
+        }
+      },
+      "action": {
+        "container": {
+          "image": "audio-to-image",
+          "version": "audio-to-image-4oippnh3g1pu",
+          "command_line": [
+            "python",
+            "-u",
+            "entrypoint.py"
+          ]
+        },
+        "resources": {
+          "cpu": {
+            "request": "",
+            "limit": ""
+          },
+          "memory": {
+            "request": "",
+            "limit": ""
+          },
+          "gpu": {
+            "count": 0
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "True or False",
+          "title_bar": {
+            "background_color": "#6b2be0"
+          },
+          "preview": {},
+          "html": "",
+          "pos_x": "1319",
+          "pos_y": "604",
+          "pos_z": "999",
+          "behavior": "modal",
+          "order": {
+            "input": [
+              "audio_path",
+              "openai_api_key"
+            ],
+            "output": [
+              "result"
+            ]
+          }
+        }
+      },
+      "events": {}
+    }
+  },
+  "sink": "",
+  "build": "",
+  "name": "audio_to_image_pipeline",
+  "id": "pipeline-13jet9v3km9h"
+}
