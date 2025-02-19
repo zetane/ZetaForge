@@ -46,7 +46,10 @@
     "container": {
       "image": "hf-image-classification-inference",
       "version": "latest",
-      "command_line": ["python", "entrypoint.py"]
+      "command_line": [
+      "python",
+      "-u",
+      "entrypoint.py"]
     }
   },
   "views": {
