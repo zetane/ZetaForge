@@ -1,5 +1,9 @@
 package zjson
 
+import (
+	jsoniter "github.com/json-iterator/go"
+)
+
 type BlockInformation struct {
 	Id             string   `json:"id"`
 	Name           string   `json:"name"`
@@ -35,6 +39,11 @@ type Container struct {
 	CommandLine []string `json:"command_line"`
 }
 
+type Command struct {
+	Exec string `json:"exec"`
+	Dir  string `json:"dir,omitempty"`
+}
+
 type ResourceQuantity struct {
 	Request string `json:"request"`
 	Limit   string `json:"limit"`
@@ -52,6 +61,7 @@ type Resources struct {
 
 type Action struct {
 	Container  Container            `json:"container,omitempty"`
+	Command    Command              `json:"command,omitempty"` // commmand replaces docker, actual command,deer paremeter: if the command is empty, i
 	Pipeline   map[string]Block     `json:"pipeline,omitempty"`
 	Parameters map[string]Parameter `json:"parameters,omitempty"`
 	Resources  Resources            `json:"resources,omitempty"`
@@ -89,9 +99,9 @@ type Parameter struct {
 }
 
 type Event struct {
-	Inputs  map[string]string `json:"inputs,omitempty"`
-	Outputs map[string]string `json:"outputs,omitempty"`
-	Log     []string          `json:"log,omitempty"`
+	Inputs  map[string]string              `json:"inputs,omitempty"`
+	Outputs map[string]jsoniter.RawMessage `json:"outputs,omitempty"`
+	Log     []string                       `json:"log,omitempty"`
 }
 
 type Block struct {
