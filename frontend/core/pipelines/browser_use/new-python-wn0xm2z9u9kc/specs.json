@@ -1,0 +1,112 @@
+{
+  "information": {
+    "id": "new-python",
+    "name": "New Python",
+    "description": "Template block for custom computations.",
+    "system_versions": [
+      "0.1"
+    ],
+    "block_version": "block version number",
+    "block_source": "core/blocks/new-python",
+    "block_type": "compute"
+  },
+  "inputs": {
+    "prompt": {
+      "type": "str",
+      "connections": [
+        {
+          "block": "parameter-h95tq9s56zt6",
+          "variable": "parameter"
+        }
+      ]
+    }
+  },
+  "outputs": {
+    "result_url": {
+      "type": "list",
+      "connections": [
+        {
+          "block": "text-as-html-hy49x1vc00c8",
+          "variable": "result_url"
+        }
+      ]
+    },
+    "result_extracted_content": {
+      "type": "list",
+      "connections": [
+        {
+          "block": "text-as-html-hy49x1vc00c8",
+          "variable": "result_extracted_content"
+        }
+      ]
+    },
+    "final_result": {
+      "type": "list",
+      "connections": [
+        {
+          "block": "text-as-html-hy49x1vc00c8",
+          "variable": "final_result"
+        }
+      ]
+    },
+    "img_path": {
+      "type": "list",
+      "connections": [
+        {
+          "block": "view-images-dsz8w8v6ornh",
+          "variable": "image_paths_view"
+        }
+      ]
+    }
+  },
+  "action": {
+    "container": {
+      "image": "new-python",
+      "version": "new-python-wn0xm2z9u9kc",
+      "command_line": [
+        "python",
+        "-u",
+        "entrypoint.py"
+      ]
+    },
+    "resources": {
+      "cpu": {
+        "request": "",
+        "limit": ""
+      },
+      "memory": {
+        "request": "",
+        "limit": ""
+      },
+      "gpu": {
+        "count": 0
+      }
+    }
+  },
+  "views": {
+    "node": {
+      "active": "True or False",
+      "title_bar": {
+        "background_color": "#6b2be0"
+      },
+      "preview": {},
+      "html": "",
+      "pos_x": "1047",
+      "pos_y": "355",
+      "pos_z": "999",
+      "behavior": "modal",
+      "order": {
+        "input": [
+          "prompt"
+        ],
+        "output": [
+          "result_url",
+          "result_extracted_content",
+          "final_result",
+          "img_path"
+        ]
+      }
+    }
+  },
+  "events": {}
+}
