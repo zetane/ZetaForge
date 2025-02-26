@@ -1,0 +1,79 @@
+{
+  "information": {
+    "id": "view-images",
+    "name": "View Images",
+    "description": "Generates an HTML file with a unique name and returns the file name.",
+    "system_versions": [
+      "0.1"
+    ],
+    "block_version": "block version number",
+    "block_source": "core/blocks/view-images",
+    "block_type": "view"
+  },
+  "inputs": {
+    "image_paths_view": {
+      "type": "List[file]",
+      "connections": [
+        {
+          "block": "new-python-wn0xm2z9u9kc",
+          "variable": "img_path"
+        }
+      ]
+    }
+  },
+  "outputs": {
+    "html": {
+      "type": "file",
+      "connections": []
+    }
+  },
+  "action": {
+    "container": {
+      "image": "view-images",
+      "version": "view-images-dsz8w8v6ornh",
+      "command_line": [
+        "python",
+        "-u",
+        "entrypoint.py"
+      ]
+    },
+    "resources": {
+      "cpu": {
+        "request": "",
+        "limit": ""
+      },
+      "memory": {
+        "request": "",
+        "limit": ""
+      },
+      "gpu": {
+        "count": 0
+      }
+    }
+  },
+  "views": {
+    "node": {
+      "active": "True or False",
+      "title_bar": {
+        "background_color": "#D55908"
+      },
+      "preview": {
+        "active": "true"
+      },
+      "html": "",
+      "pos_x": "1797",
+      "pos_y": "762",
+      "pos_z": "999, this is the z-index for 2D canvas",
+      "order": {
+        "input": [
+          "image_paths_view"
+        ],
+        "output": [
+          "html"
+        ]
+      }
+    },
+    "mode": "modal"
+  },
+  "events": {}
+}

@@ -1,0 +1,369 @@
+{
+  "pipeline": {
+    "new-python-wn0xm2z9u9kc": {
+      "information": {
+        "id": "new-python",
+        "name": "New Python",
+        "description": "Template block for custom computations.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks/new-python",
+        "block_type": "compute"
+      },
+      "inputs": {
+        "prompt": {
+          "type": "str",
+          "connections": [
+            {
+              "block": "parameter-h95tq9s56zt6",
+              "variable": "parameter"
+            }
+          ]
+        }
+      },
+      "outputs": {
+        "result_url": {
+          "type": "list",
+          "connections": [
+            {
+              "block": "text-as-html-hy49x1vc00c8",
+              "variable": "result_url"
+            }
+          ]
+        },
+        "result_extracted_content": {
+          "type": "list",
+          "connections": [
+            {
+              "block": "text-as-html-hy49x1vc00c8",
+              "variable": "result_extracted_content"
+            }
+          ]
+        },
+        "final_result": {
+          "type": "list",
+          "connections": [
+            {
+              "block": "text-as-html-hy49x1vc00c8",
+              "variable": "final_result"
+            }
+          ]
+        },
+        "img_path": {
+          "type": "list",
+          "connections": [
+            {
+              "block": "view-images-dsz8w8v6ornh",
+              "variable": "image_paths_view"
+            }
+          ]
+        }
+      },
+      "action": {
+        "container": {
+          "image": "new-python",
+          "version": "new-python-wn0xm2z9u9kc",
+          "command_line": [
+            "python",
+            "-u",
+            "entrypoint.py"
+          ]
+        },
+        "resources": {
+          "cpu": {
+            "request": "",
+            "limit": ""
+          },
+          "memory": {
+            "request": "",
+            "limit": ""
+          },
+          "gpu": {
+            "count": 0
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "True or False",
+          "title_bar": {
+            "background_color": "#6b2be0"
+          },
+          "preview": {},
+          "html": "",
+          "pos_x": "1047",
+          "pos_y": "355",
+          "pos_z": "999",
+          "behavior": "modal",
+          "order": {
+            "input": [
+              "prompt"
+            ],
+            "output": [
+              "result_url",
+              "result_extracted_content",
+              "final_result",
+              "img_path"
+            ]
+          }
+        }
+      },
+      "events": {}
+    },
+    "text-as-html-hy49x1vc00c8": {
+      "information": {
+        "id": "text-as-html",
+        "name": "Text as HTML",
+        "description": "Generates an HTML file that displays multiple results lists, merging them into one list.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks/text-as-html",
+        "block_type": "view"
+      },
+      "inputs": {
+        "result_url": {
+          "type": "list",
+          "connections": [
+            {
+              "block": "new-python-wn0xm2z9u9kc",
+              "variable": "result_url"
+            }
+          ]
+        },
+        "result_extracted_content": {
+          "type": "list",
+          "connections": [
+            {
+              "block": "new-python-wn0xm2z9u9kc",
+              "variable": "result_extracted_content"
+            }
+          ]
+        },
+        "final_result": {
+          "type": "list",
+          "connections": [
+            {
+              "block": "new-python-wn0xm2z9u9kc",
+              "variable": "final_result"
+            }
+          ]
+        }
+      },
+      "outputs": {
+        "html": {
+          "type": "file",
+          "connections": []
+        }
+      },
+      "action": {
+        "container": {
+          "image": "text-as-html",
+          "version": "text-as-html-hy49x1vc00c8",
+          "command_line": [
+            "python",
+            "-u",
+            "entrypoint.py"
+          ]
+        },
+        "resources": {
+          "cpu": {
+            "request": "",
+            "limit": ""
+          },
+          "memory": {
+            "request": "",
+            "limit": ""
+          },
+          "gpu": {
+            "count": 0
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "True",
+          "title_bar": {
+            "background_color": "#D55908"
+          },
+          "preview": {
+            "active": "true"
+          },
+          "html": "",
+          "pos_x": "1785",
+          "pos_y": "251",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "input": [
+              "result_url",
+              "result_extracted_content",
+              "final_result"
+            ],
+            "output": [
+              "html"
+            ]
+          }
+        },
+        "mode": "modal"
+      },
+      "events": {}
+    },
+    "view-images-dsz8w8v6ornh": {
+      "information": {
+        "id": "view-images",
+        "name": "View Images",
+        "description": "Generates an HTML file with a unique name and returns the file name.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks/view-images",
+        "block_type": "view"
+      },
+      "inputs": {
+        "image_paths_view": {
+          "type": "List[file]",
+          "connections": [
+            {
+              "block": "new-python-wn0xm2z9u9kc",
+              "variable": "img_path"
+            }
+          ]
+        }
+      },
+      "outputs": {
+        "html": {
+          "type": "file",
+          "connections": []
+        }
+      },
+      "action": {
+        "container": {
+          "image": "view-images",
+          "version": "view-images-dsz8w8v6ornh",
+          "command_line": [
+            "python",
+            "-u",
+            "entrypoint.py"
+          ]
+        },
+        "resources": {
+          "cpu": {
+            "request": "",
+            "limit": ""
+          },
+          "memory": {
+            "request": "",
+            "limit": ""
+          },
+          "gpu": {
+            "count": 0
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "True",
+          "title_bar": {
+            "background_color": "#D55908"
+          },
+          "preview": {
+            "active": "true"
+          },
+          "html": "",
+          "pos_x": "1797",
+          "pos_y": "762",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "input": [
+              "image_paths_view"
+            ],
+            "output": [
+              "html"
+            ]
+          }
+        },
+        "mode": "modal"
+      },
+      "events": {}
+    },
+    "parameter-h95tq9s56zt6": {
+      "information": {
+        "id": "parameter",
+        "name": "Parameter",
+        "description": "Parameter input.",
+        "system_versions": [
+          "0.1"
+        ],
+        "block_version": "block version number",
+        "block_source": "core/blocks",
+        "block_type": "entry"
+      },
+      "inputs": {},
+      "outputs": {
+        "parameter": {
+          "type": "Any",
+          "connections": [
+            {
+              "block": "new-python-wn0xm2z9u9kc",
+              "variable": "prompt"
+            }
+          ]
+        }
+      },
+      "action": {
+        "container": {
+          "image": "",
+          "version": "",
+          "command_line": []
+        },
+        "parameters": {
+          "parameter": {
+            "value": "\"Go to Reddit, search for 'browser-use', click on the first post and return the first comment.\"",
+            "type": "Any"
+          }
+        },
+        "resources": {
+          "cpu": {
+            "request": "",
+            "limit": ""
+          },
+          "memory": {
+            "request": "",
+            "limit": ""
+          },
+          "gpu": {
+            "count": 0
+          }
+        }
+      },
+      "views": {
+        "node": {
+          "active": "true",
+          "title_bar": {
+            "background_color": "#909090"
+          },
+          "preview": {},
+          "html": "<input type='text' value='abcd' parameters-parameter/>",
+          "pos_x": "553",
+          "pos_y": "241",
+          "pos_z": "999, this is the z-index for 2D canvas",
+          "order": {
+            "input": [],
+            "output": [
+              "parameter"
+            ]
+          }
+        }
+      },
+      "events": {}
+    }
+  },
+  "sink": "",
+  "build": "",
+  "name": "browser_use",
+  "id": "pipeline-k78z63ntcbj4"
+}
