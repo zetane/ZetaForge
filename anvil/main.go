@@ -52,7 +52,6 @@ type Config struct {
 	Cloud           Cloud `json:"Cloud,omitempty"`
 }
 
-
 type Local struct {
 	BucketPort int
 	Driver     string
@@ -353,13 +352,7 @@ func checkVisited(v reflect.Value, visited map[uintptr]bool) bool {
 	return false
 }
 
-var json jsoniter.API
-
-func init() {
-	json = jsoniter.Config{
-		SortMapKeys: false,
-	}.Froze()
-}
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 func validateJson[D any](body io.ReadCloser) (D, HTTPError) {
 	var data D
@@ -841,6 +834,26 @@ func main() {
 		}
 
 		ctx.JSON(http.StatusOK, response)
+	})
+	pipeline.GET("/:uuid/:hash/", func(ctx *gin.Context) {
+		prefix := getPrefix(ctx)
+		uuid := ctx.Param("uuid")
+		hash := ctx.Param("hash")
+
+		res, err := getPipeline(ctx.Request.Context(), db, prefix, uuid, hash)
+		if err != nil {
+			log.Printf("failed to get pipeline; err=%v", err)
+			ctx.String(err.(HTTPError).Status(), err.Error())
+			return
+		}
+
+		pipeline, err := newResponsePipeline(res)
+		if err != nil {
+			ctx.String(err.(HTTPError).Status(), err.Error())
+			return
+		}
+
+		ctx.JSON(http.StatusOK, pipeline)
 	})
 	pipeline.GET("/:uuid/:hash/:index", func(ctx *gin.Context) {
 		prefix := getPrefix(ctx)

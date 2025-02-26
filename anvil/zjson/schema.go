@@ -1,5 +1,9 @@
 package zjson
 
+import (
+	jsoniter "github.com/json-iterator/go"
+)
+
 type BlockInformation struct {
 	Id             string   `json:"id"`
 	Name           string   `json:"name"`
@@ -95,9 +99,9 @@ type Parameter struct {
 }
 
 type Event struct {
-	Inputs  map[string]string `json:"inputs,omitempty"`
-	Outputs map[string]string `json:"outputs,omitempty"`
-	Log     []string          `json:"log,omitempty"`
+	Inputs  map[string]string              `json:"inputs,omitempty"`
+	Outputs map[string]jsoniter.RawMessage `json:"outputs,omitempty"`
+	Log     []string                       `json:"log,omitempty"`
 }
 
 type Block struct {

@@ -27,6 +27,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"github.com/go-cmd/cmd"
+	jsoniter "github.com/json-iterator/go"
 	"golang.org/x/sync/errgroup"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/clientcmd"
@@ -160,12 +161,12 @@ func results(ctx context.Context, db *sql.DB, execution int64, pipeline zjson.Pi
 		if node.Type == "Pod" {
 			block := pipeline.Pipeline[node.TemplateName]
 			block.Events.Inputs = make(map[string]string)
-			block.Events.Outputs = make(map[string]string)
+			block.Events.Outputs = make(map[string]jsoniter.RawMessage)
 			for _, parameter := range node.Inputs.Parameters {
 				block.Events.Inputs[string(parameter.Name)] = string(*parameter.Value)
 			}
 			for _, parameter := range node.Outputs.Parameters {
-				block.Events.Outputs[string(parameter.Name)] = string(*parameter.Value)
+				block.Events.Outputs[string(parameter.Name)] = jsoniter.RawMessage(*parameter.Value)
 			}
 			pipeline.Pipeline[node.TemplateName] = block
 		}
