@@ -2,10 +2,8 @@
   "information": {
     "id": "image-to-text",
     "name": "Image Text",
-    "description": "A block that generates an HTML file with an input image and explanation of that image.",
-    "system_versions": [
-      "0.1"
-    ],
+    "description": "Processes an input image by generating a caption and copying the image to a specified destination directory.\n\nParameters:\nimage_path (str): The file path to the input image to process.\n\nReturns:\ndict: A dictionary containing two keys:\n- 'image_list': A list with the file path of the copied image in the destination directory.\n- 'caption': A list containing the caption generated from the image using a Vision Transformer and GPT-2 model.",
+    "system_versions": ["0.1"],
     "block_version": "block version number",
     "block_source": "core/blocks/image-to-text",
     "block_type": "compute"
@@ -33,11 +31,7 @@
     "container": {
       "image": "image-to-text",
       "version": "Latest",
-      "command_line": [
-        "python",
-        "-u",
-        "entrypoint.py"
-      ]
+      "command_line": ["python", "-u", "entrypoint.py"]
     }
   },
   "views": {

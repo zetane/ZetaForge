@@ -2,10 +2,8 @@
   "information": {
     "id": "watermarker",
     "name": "Watermarker",
-    "description": "Computes the watermark for the given image.",
-    "system_versions": [
-      "0.1"
-    ],
+    "description": "Adds a watermark to an image based on the provided text and position. The function opens the input image, adds the specified watermark text in the chosen position, and saves the watermarked image to the output directory. The watermark is semi-transparent with a customizable transparency level.\n\nParameters:\n- image_path (str): The path to the input image.\n- watermark_text (str): The text of the watermark.\n- position (str): The position of the watermark ('bottom_right', 'bottom_left', 'top_right', 'top_left', 'center').\n\nReturns:\n- dict: A dictionary containing the path of the watermarked image with the key 'result'.",
+    "system_versions": ["0.1"],
     "block_version": "block version number",
     "block_source": "core/blocks/watermarker",
     "block_type": "compute"
@@ -34,10 +32,7 @@
     "container": {
       "image": "watermarker",
       "version": "latest",
-      "command_line": [
-        "python",
-        "entrypoint.py"
-      ]
+      "command_line": ["python", "entrypoint.py"]
     }
   },
   "views": {
@@ -51,14 +46,8 @@
       "pos_z": "999",
       "behavior": "modal",
       "order": {
-        "input": [
-          "image_path",
-          "watermark_text",
-          "position"
-        ],
-        "output": [
-          "result"
-        ]
+        "input": ["image_path", "watermark_text", "position"],
+        "output": ["result"]
       }
     }
   },

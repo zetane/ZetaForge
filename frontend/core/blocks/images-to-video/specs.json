@@ -2,7 +2,7 @@
   "information": {
     "id": "images-to-video",
     "name": "Images to Video",
-    "description": "This function takes a list of image filepaths and compiles them into a video file.",
+    "description": "Creates a video from a list of image file paths and re-encodes it using the H.264 codec.\n\nParameters:\nimages (list): A list of file paths to the input images that will be compiled into the video.\n\nReturns:\ndict: A dictionary containing the following key:\n- 'video_path': The file path to the final H.264 encoded video.",
     "system_versions": ["0.1"],
     "block_version": "block version number",
     "block_source": "core/blocks/images-to-video",

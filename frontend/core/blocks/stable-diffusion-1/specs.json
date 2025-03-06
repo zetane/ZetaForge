@@ -2,7 +2,7 @@
   "information": {
     "id": "stable-diffusion-1",
     "name": "Stable Diffusion",
-    "description": "This block generates images based on a text prompt using Stable Diffusion from the Stability AI API.",
+    "description": "Generates an image based on a text prompt using the Stable Diffusion model from Stability AI.\n\nParameters:\n- api_key (str): The API key for authentication with the Stability API.\n- prompt (str): The text prompt describing the image to be generated.\n\nReturns:\n- dict: A dictionary containing the path to the generated image with the key 'image_path'.",
     "system_versions": ["0.1"],
     "block_version": "block version number",
     "block_source": "core/blocks/stable-diffusion-1",
