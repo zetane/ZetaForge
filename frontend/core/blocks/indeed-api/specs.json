@@ -2,7 +2,7 @@
   "information": {
     "id": "indeed-api",
     "name": "Indeed API",
-    "description": "This block will fetch the job details from Indeed API",
+    "description": "This block will fetch the job details from Indeed API.",
     "system_versions": ["0.1"],
     "block_version": "block version number",
     "block_source": "core/blocks/indeed-api",
@@ -14,14 +14,19 @@
       "connections": [],
       "relays": []
     },
-    "authtoken": {
+    "client_id": {
+      "type": "Any",
+      "connections": [],
+      "relays": []
+    },
+    "secret" : {
       "type": "Any",
       "connections": [],
       "relays": []
     }
   },
   "outputs": {
-    "final": {
+    "response": {
       "type": "Any",
       "connections": [],
       "relays": []
@@ -38,9 +43,7 @@
     "node": {
       "behavior": "modal",
       "active": "True or False",
-      "title_bar": {
-        "background_color": "#6b2be0"
-      },
+      "title_bar": {},
       "preview": {},
       "html": "",
       "pos_x": "300",
