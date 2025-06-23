@@ -26,7 +26,10 @@
     "container": {
       "image": "image-classifier",
       "version": "latest",
-      "command_line": ["python", "entrypoint.py"]
+      "command_line": [
+      "python", 
+      "-u",
+      "entrypoint.py"]
     }
   },
   "views": {
