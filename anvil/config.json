@@ -1,7 +1,7 @@
 {
 	"IsLocal":true,
 	"IsDev": true,
-	"ServerPort": 8080,
+	"ServerPort": 8082,
 	"KanikoImage":"gcr.io/kaniko-project/executor:latest",
 	"WorkDir":"/app",
 	"FileDir":"/files",
